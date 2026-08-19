@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Player Page - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=17" />
+  <style>
+    .player-layout { display: grid; grid-template-columns: 1fr 1.6fr; gap: 24px; align-items: stretch; }
+    .player-layout.equal-cols { grid-template-columns: 1fr 1fr; }
+    .player-layout > div { display: flex; flex-direction: column; }
+    #percentiles-mount, #right-panel-mount { flex: 1; display: flex; flex-direction: column; }
+    #percentiles-mount > .rt-panel, #percentiles-mount > .pct-card { flex: 1; }
+    .movement-plot-card { flex: 1; display: flex; flex-direction: column; min-height: 560px; }
+    .swing-field-card { flex: 1; display: flex; flex-direction: column; }
+    .movement-plot-row { display: flex; gap: 14px; flex: 1; }
+    .movement-plot-svg-wrap { flex: 1; min-width: 0; display: flex; }
+    /* table.data-table {width:100%} in theme.css otherwise wins on
+       specificity (element+class beats a lone class) and the summary table
+       swallows the whole row, leaving zero width for the plot next to it. */
+    .movement-plot-side-col { width: 190px; flex: 0 0 190px; display: flex; flex-direction: column; gap: 18px; margin-top: 10px; }
+    .movement-plot-side-col table.movement-summary-table { width: 100%; }
+    @media (max-width: 900px) { .player-layout { grid-template-columns: 1fr; } .movement-plot-row { flex-direction: column; } .movement-plot-side-col { width: 100%; } }
+    .movement-plot-caption { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+    .pitch-usage-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); margin-bottom: 8px; }
+    .pitch-usage-header { display: grid; grid-template-columns: 1fr 40px 1fr; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-muted); margin-bottom: 8px; }
+    .pitch-usage-header span:first-child { text-align: right; }
+    .pitch-usage-header span:nth-child(2) { text-align: center; }
+    .pitch-usage-header span:last-child { text-align: left; }
+    .pitch-usage-row { display: grid; grid-template-columns: 1fr 40px 1fr; align-items: center; gap: 6px; margin-bottom: 7px; }
+    .pitch-usage-bar-l { display: flex; justify-content: flex-end; }
+    .pitch-usage-bar-r { display: flex; justify-content: flex-start; }
+    .pitch-usage-fill {
+      height: 20px; border-radius: 5px; color: #fff; font-weight: 800; font-size: 10.5px; line-height: 1;
+      display: flex; align-items: center; justify-content: flex-end; padding: 0 6px; min-width: 30px; white-space: nowrap;
+    }
+    .pitch-usage-bar-r .pitch-usage-fill { justify-content: flex-start; }
+    .pitch-usage-pill { text-align: center; font-weight: 800; font-size: 10.5px; line-height: 1; color: #fff; border-radius: 5px; padding: 5px 0; }
+    footer.caveats { margin-top: 40px; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px; }
+
+    .stuff-breakdown-card { margin-top: 16px; }
+    table.stuff-breakdown-table td, table.stuff-breakdown-table th { text-align: center; }
+    table.stuff-breakdown-table td.stuff-row-label { text-align: left; font-weight: 700; color: var(--forest-dark); }
+    table.stuff-breakdown-table th:first-child { text-align: left; }
+    .gauge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+    .gauge-card { position: relative; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+    .gauge-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
+    .gauge-body { text-align: center; margin-top: 2px; }
+    .gauge-body svg { display: block; margin: 0 auto; }
+    .gauge-value { font-size: 20px; font-weight: 800; color: var(--forest-dark); }
+    .gauge-avg { font-size: 11px; color: var(--text-muted); }
+    .gauge-archetype {
+      position: absolute; top: 7px; right: 8px;
+      background: var(--bark-tint); border: 1px solid var(--bark); color: var(--bark-dark);
+      font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px;
+      padding: 2px 7px; border-radius: 20px; white-space: nowrap;
+    }
+    .spray-chart-caption { font-size: 12px; color: var(--text-muted); margin-top: 8px; margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="page">
+    <h1>Player Page</h1>
+
+    <div class="controls-row">
+      <div style="min-width:320px; flex:1; max-width:420px;">
+        <span class="control-label">Player</span>
+        <div class="player-search">
+          <input type="text" class="player-search-input" id="player-search-input" placeholder="Search any pitcher or hitter..." autocomplete="off" />
+          <div class="player-search-dropdown" id="player-search-dropdown"></div>
+        </div>
+      </div>
+      <div>
+        <span class="control-label" id="split-label">Opponent bats</span>
+        <div class="toggle-group" id="split-toggle">
+          <button data-value="ALL" class="active">ALL</button>
+          <button data-value="L">L</button>
+          <button data-value="R">R</button>
+        </div>
+      </div>
+      <div>
+        <span class="control-label">Season</span>
+        <select id="season-select"></select>
+      </div>
+    </div>
+
+    <div id="player-card-mount"></div>
+    <div id="stuff-breakdown-mount"></div>
+
+    <div class="player-layout section" id="player-layout">
+      <div>
+        <h2>Percentiles</h2>
+        <div id="percentiles-mount"></div>
+      </div>
+      <div>
+        <h2 id="right-panel-title">Movement Plot</h2>
+        <div id="right-panel-mount"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 id="table-title">Pitch Table</h2>
+      <div id="table-caption" class="muted" style="font-size:12px; margin-bottom:6px;"></div>
+      <div id="table-mount" style="overflow-x:auto;"></div>
+    </div>
+
+    <footer class="caveats">
+      wRC+, xFIP, and Barrel% are approximations (no park factors; hardcoded historical constants where FanGraphs
+      data isn't available). Stuff+ is a first-pass per-pitch-type regression model, not a production-grade one.
+      Treat all three as directionally useful, not authoritative.
+    </footer>
+  </div>
+
+  <script src="js/api.js?v=17"></script>
+  <script src="js/gradient.js?v=17"></script>
+  <script src="js/nav.js?v=101"></script>
+  <script src="js/player-search.js?v=17"></script>
+  <script src="js/season-select.js?v=17"></script>
+  <script src="js/player.js?v=19"></script>
+</body>
+</html>

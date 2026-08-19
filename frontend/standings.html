@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Standings - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=8" />
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="page">
+    <h1>Standings</h1>
+
+    <div class="controls-row">
+      <div class="toggle-group" id="league-toggle">
+        <button data-value="AL" class="active">AL</button>
+        <button data-value="NL">NL</button>
+      </div>
+      <div>
+        <span class="control-label">Season</span>
+        <select id="season-select"></select>
+      </div>
+    </div>
+
+    <div class="muted" style="font-size:12px; margin-bottom:10px;">
+      Best overall record in the league highlighted in gold. Standings computed from full-season game results
+      via the site's own data, not a live standings feed - refresh with the "Refresh data" button after re-running
+      the ingestion scripts.
+    </div>
+
+    <div id="divisions-mount"></div>
+  </div>
+
+  <script src="js/api.js?v=9"></script>
+  <script src="js/gradient.js?v=9"></script>
+  <script src="js/nav.js?v=101"></script>
+  <script src="js/season-select.js?v=9"></script>
+  <script src="js/standings.js?v=9"></script>
+</body>
+</html>

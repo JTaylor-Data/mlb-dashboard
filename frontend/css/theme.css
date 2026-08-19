@@ -1,0 +1,558 @@
+/* Design tokens - dark forest green / warm parchment cream / bark brown
+   ("woodsy"), updated 2026-08-17. Structural/decorative only. Functional
+   DATA colors (percentile gradient, pitch-type colors, run-diff, good/bad
+   grade colors) are defined separately in gradient.js/player.js and applied
+   inline or via dedicated classes - never overridden here. Decorative RANK
+   accents (Top 100 plaques, best-record highlight, walk-off badge, podium
+   rows) are NOT data-encoding and were deliberately moved off gold onto the
+   --bark family below to fit the woodsy palette. */
+:root {
+  --bg: #f7f1e6;
+  --surface: #ffffff;
+  --surface-alt: #efe4d0;
+  --forest: #1b4332;
+  --forest-dark: #123023;
+  --forest-light: #2d6a4f;
+  --bark: #6b4423;
+  --bark-dark: #3f2712;
+  --bark-light: #a87a48;
+  --bark-tint: #f0e2c8;
+  --text: #1a1f1c;
+  --text-muted: #6b6153;
+  --border: #ddceac;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(27, 67, 50, 0.08);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-size: 15px;
+}
+
+a { color: var(--forest-light); }
+
+.page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+}
+
+h1, h2, h3 {
+  color: var(--forest-dark);
+  font-weight: 800;
+  margin: 0 0 12px;
+}
+h1 { font-size: 26px; margin-top: 20px; }
+h2 { font-size: 18px; }
+h3 { font-size: 15px; }
+
+.section {
+  margin-top: 28px;
+}
+
+.muted { color: var(--text-muted); }
+
+/* --- Nav --- */
+#nav {
+  background: var(--forest);
+  color: #f5f3ee;
+}
+.nav-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 56px;
+}
+.nav-brand {
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+.nav-links {
+  display: flex;
+  gap: 4px;
+  flex: 1;
+}
+.nav-links a {
+  color: #d7e5dc;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 6px;
+}
+.nav-links a:hover {
+  background: rgba(255,255,255,0.08);
+  color: #ffffff;
+}
+.nav-links a.active {
+  background: var(--forest-light);
+  color: #ffffff;
+}
+.nav-meta {
+  font-size: 12px;
+  color: #cfe0d5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  white-space: nowrap;
+}
+.nav-refresh {
+  background: var(--forest-light);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.nav-refresh:hover { background: #386f52; }
+.nav-refresh:disabled { opacity: 0.6; cursor: default; }
+
+/* --- Controls --- */
+.toggle-group {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.toggle-group button {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  padding: 7px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.toggle-group button + button { border-left: 1px solid var(--border); }
+.toggle-group button.active {
+  background: var(--forest);
+  color: #fff;
+}
+
+select, input[type="date"] {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 14px 0;
+}
+.control-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 4px;
+  display: block;
+}
+
+/* --- Card --- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px 20px;
+}
+
+.player-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.player-card-id {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 180px;
+}
+.player-card-id img { width: 46px; height: 46px; }
+.player-card-name { font-size: 21px; font-weight: 800; color: var(--forest-dark); }
+.player-card-stats { display: flex; flex-wrap: wrap; gap: 4px; }
+.stat-block { text-align: center; padding: 0 14px; }
+.stat-block-label { font-size: 11px; color: var(--text-muted); }
+.stat-block-value { font-size: 18px; font-weight: 700; color: var(--text); }
+
+.badge {
+  text-align: center;
+  border: 2px solid var(--forest);
+  border-radius: 10px;
+  padding: 5px 14px;
+}
+.badge-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; }
+.badge-value { font-size: 20px; font-weight: 800; color: var(--forest-dark); }
+
+/* --- Percentile bars --- */
+.pct-group-header {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 16px 0 8px;
+}
+.pct-row { margin-bottom: 16px; }
+.pct-row-top {
+  display: flex;
+  justify-content: space-between;
+  font-size: 15.5px;
+  margin-bottom: 5px;
+  color: var(--text);
+  font-weight: 600;
+}
+.pct-track {
+  background: #e5e7eb;
+  border-radius: 8px;
+  height: 23px;
+  width: 100%;
+}
+.pct-fill {
+  border-radius: 8px;
+  height: 23px;
+}
+
+/* --- Tables --- */
+table.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+table.data-table th {
+  text-align: center;
+  padding: 6px 8px;
+  border-bottom: 2px solid var(--border);
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+table.data-table th:first-child { text-align: left; }
+table.data-table td {
+  text-align: center;
+  padding: 7px 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+}
+table.data-table td.pitch-type-cell {
+  text-align: left;
+  font-weight: 700;
+  color: #fff;
+}
+table.data-table tr.league-avg-row {
+  font-weight: 700;
+  border-top: 2px solid var(--border);
+}
+table.data-table tr.league-avg-row td { color: var(--text); }
+
+/* --- Movement summary table (Player page, pitcher movement plot) --- */
+table.movement-summary-table {
+  border-radius: 10px; overflow: hidden; box-shadow: var(--shadow); border: 1px solid var(--border);
+}
+table.movement-summary-table thead th {
+  background: var(--forest); color: #f0ede4; font-size: 10.5px; padding: 9px 8px; border-bottom: none;
+}
+table.movement-summary-table tbody td {
+  padding: 9px 8px; font-size: 13.5px; font-weight: 700; color: var(--forest-dark); border-bottom: 1px solid var(--border);
+}
+table.movement-summary-table tbody tr:last-child td { border-bottom: none; }
+table.movement-summary-table tbody tr:nth-child(even) td { background: var(--bg); }
+table.movement-summary-table tbody tr:nth-child(odd) td { background: var(--surface); }
+table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spacing: 0.3px; font-size: 12.5px; }
+
+/* --- Standings --- */
+.division-table td.team-cell { text-align: left; font-weight: 600; }
+.division-table tr.best-record {
+  background: var(--bark-tint);
+  box-shadow: inset 4px 0 0 var(--bark);
+}
+.division-table img.team-logo { width: 26px; height: 26px; vertical-align: middle; }
+
+/* --- Top Performers --- */
+.performers-list {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+.performer-row {
+  display: grid;
+  grid-template-columns: 32px 46px 240px repeat(6, 1fr) 84px;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.performer-row:last-child { border-bottom: none; }
+.performer-rank { font-size: 20px; font-weight: 800; color: var(--text-muted); }
+.performer-row img.team-logo { width: 42px; height: 42px; }
+.performer-name { font-size: 19px; font-weight: 800; color: var(--forest-dark); line-height: 1.25; }
+.performer-sub { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
+.stat-cell { text-align: center; }
+.stat-cell-value { font-size: 18px; font-weight: 700; color: var(--text); }
+.stat-cell-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.wpa-cell { text-align: right; }
+.walkoff-badge {
+  background: var(--bark);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 6px;
+}
+
+.empty-state { color: var(--text-muted); padding: 20px 0; }
+
+.player-card-handedness {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 8px;
+  align-self: center;
+}
+
+/* --- Pitcher Results/Traits panel: boxed, green(good)/red(bad) bars with a
+   percentile badge riding the end of the fill. Distinct on purpose from the
+   batter panel's blue-grey-red gradient bars (kept as-is elsewhere). --- */
+.rt-panel { display: flex; flex-direction: column; gap: 18px; justify-content: space-between; }
+.rt-section-title {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.rt-row {
+  display: grid;
+  grid-template-columns: 102px 1fr 76px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 17px;
+}
+.rt-label { font-size: 14.5px; font-weight: 600; color: var(--text); }
+.rt-track {
+  position: relative;
+  background: #e9e7df;
+  border-radius: 9px;
+  height: 12px;
+}
+.rt-fill { height: 12px; border-radius: 9px; }
+.rt-badge {
+  position: absolute;
+  top: 50%;
+  width: 29px;
+  height: 29px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 3px var(--surface);
+}
+.rt-value { font-size: 14.5px; color: var(--text-muted); text-align: right; }
+
+/* --- Player search (autocomplete, replaces the role-toggle + giant <select>) --- */
+.player-search { position: relative; }
+.player-search-input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 14px;
+  background: var(--surface);
+  color: var(--text);
+  font-family: inherit;
+}
+.player-search-input:focus { outline: 2px solid var(--forest-light); outline-offset: -1px; }
+.player-search-dropdown {
+  display: none;
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 320px;
+  overflow-y: auto;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(20, 30, 25, 0.15);
+}
+.player-search-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+}
+.player-search-item:last-child { border-bottom: none; }
+.player-search-item:hover, .player-search-item.active { background: var(--surface-alt); }
+.player-search-role {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--forest-light);
+  background: rgba(27, 67, 50, 0.1);
+  border-radius: 4px;
+  padding: 2px 6px;
+}
+.player-search-empty { padding: 10px 12px; font-size: 13px; color: var(--text-muted); }
+
+/* --- Prospects --- */
+.prospects-list {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow-x: auto;
+}
+.prospect-row {
+  display: grid;
+  /* minmax(...,1fr) on the name column, not a bare 1fr, so it can't be
+     squeezed to 0 on a narrow window - below that minimum the row overflows
+     .prospects-list's own scrollbar instead of wrapping the name onto
+     several lines and throwing every row to a different, inconsistent
+     height (this happened for real: a bare 1fr collapsed to 0px whenever
+     the fixed tracks alone exceeded the available width). */
+  grid-template-columns: 30px 38px minmax(150px, 1fr) 48px 40px 60px 40px 50px 50px 56px 76px;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  min-width: fit-content;
+}
+.prospect-row:last-child { border-bottom: none; }
+.prospect-row { cursor: pointer; }
+.prospect-row:hover { background: var(--surface-alt); }
+.prospect-row.top100 { background: var(--bark-tint); box-shadow: inset 4px 0 0 var(--bark); }
+.prospect-row.top100:hover { background: #e8d5ae; }
+.prospect-row.selected { box-shadow: inset 4px 0 0 var(--forest); background: #e3ead9; }
+.prospect-row.selected.top100 { box-shadow: inset 4px 0 0 var(--forest); }
+.prospect-rank { font-size: 17px; font-weight: 800; color: var(--text-muted); }
+.prospect-row img.prospect-headshot {
+  width: 38px; height: 38px; border-radius: 50%; object-fit: cover; background: var(--surface-alt);
+}
+.prospect-name-block { white-space: nowrap; }
+.prospect-name { font-size: 15.5px; font-weight: 800; color: var(--forest-dark); }
+.prospect-sub {
+  font-size: 10.5px; color: var(--text-muted); font-weight: 600;
+  display: flex; align-items: center; gap: 5px; margin-top: 2px;
+}
+.prospect-sub img.team-logo { width: 15px; height: 15px; }
+.prospect-cell { text-align: center; }
+.prospect-cell-value { font-size: 14.5px; font-weight: 700; color: var(--text); }
+.prospect-cell-label { font-size: 9.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.top100-plaque {
+  text-align: center;
+  border: 2px solid var(--bark);
+  background: var(--bark-tint);
+  border-radius: 8px;
+  padding: 3px 6px;
+}
+.top100-plaque-label {
+  font-size: 8.5px; color: var(--bark-dark); letter-spacing: 0.4px; font-weight: 700; text-transform: uppercase;
+}
+.top100-plaque-value { font-size: 15px; font-weight: 800; color: var(--bark-dark); }
+
+.prospects-layout { display: flex; gap: 24px; align-items: flex-start; }
+.prospects-main { flex: 1; min-width: 0; }
+.prospects-detail { width: 440px; flex-shrink: 0; position: sticky; top: 76px; }
+.prospects-detail:empty { display: none; }
+
+.scouting-card { display: flex; flex-direction: column; gap: 4px; padding: 24px 26px; }
+.scouting-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.scouting-card-header img.scouting-headshot {
+  width: 68px; height: 68px; border-radius: 50%; object-fit: cover; background: var(--surface-alt);
+}
+.scouting-card-header .prospect-name { font-size: 21px; }
+.scouting-card-header .prospect-sub { font-size: 12.5px; margin-top: 5px; }
+.scouting-card-header .prospect-sub img.team-logo { width: 17px; height: 17px; }
+.scouting-overall { display: flex; justify-content: center; margin: 10px 0 4px; }
+.scouting-overall .badge { padding: 8px 24px; }
+.scouting-overall .badge-label { font-size: 11.5px; }
+.scouting-overall .badge-value { font-size: 30px; }
+.scouting-report-text { font-size: 14.5px; line-height: 1.65; color: var(--text); margin-top: 14px; }
+.scouting-report-text p { margin: 0 0 12px; }
+.scouting-video-link {
+  display: inline-block; font-size: 13.5px; font-weight: 700; color: var(--forest-light); margin-top: 4px;
+}
+
+.grade-panel { display: flex; flex-direction: column; gap: 20px; margin-top: 16px; }
+.grade-row { display: grid; grid-template-columns: 98px 1fr; align-items: center; gap: 16px; }
+.grade-label { font-size: 16px; font-weight: 700; color: var(--text); }
+.grade-track { position: relative; background: #e9e0cb; border-radius: 10px; height: 20px; }
+.grade-fill { height: 20px; border-radius: 10px; }
+.grade-badge {
+  position: absolute; top: 50%; width: 36px; height: 36px; border-radius: 50%; color: #fff;
+  font-size: 14px; font-weight: 800; line-height: 1; display: flex; align-items: center; justify-content: center;
+  transform: translate(-50%, -50%); box-shadow: 0 0 0 3px var(--surface);
+}
+
+/* --- Farm Rankings --- */
+.farm-table-wrap {
+  border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden;
+  background: var(--surface); box-shadow: var(--shadow);
+}
+table.farm-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+table.farm-table thead th {
+  background: var(--forest); color: #f0ede4; text-align: left; padding: 12px 16px;
+  font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap;
+}
+table.farm-table thead th.center-col { text-align: center; }
+table.farm-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.farm-table tbody tr:last-child td { border-bottom: none; }
+table.farm-table td.center-col { text-align: center; }
+table.farm-table tr.farm-row { cursor: pointer; transition: background 0.1s; }
+table.farm-table tr.farm-row:nth-child(odd) { background: #fbf7ef; }
+table.farm-table tr.farm-row:hover { background: var(--bark-tint); }
+table.farm-table tr.farm-row.farm-best { box-shadow: inset 4px 0 0 var(--bark); }
+table.farm-table img.team-logo { width: 28px; height: 28px; vertical-align: middle; }
+.farm-rank-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 50%; font-weight: 800; font-size: 14px; line-height: 1;
+  background: var(--surface-alt); color: var(--forest-dark); border: 1px solid var(--border);
+}
+.farm-row.farm-best .farm-rank-badge { background: var(--bark); color: #fff; border-color: var(--bark); }
+.farm-team-cell { font-weight: 700; color: var(--forest-dark); font-size: 14.5px; }
+.farm-score-cell { font-weight: 800; color: var(--text); font-size: 15px; }
+.farm-chips-cell { display: flex; flex-wrap: wrap; gap: 6px; max-width: 420px; }
+.farm-chip {
+  font-size: 10.5px; font-weight: 700; color: var(--bark-dark); background: var(--bark-tint);
+  border: 1px solid var(--bark-light); border-radius: 20px; padding: 3px 9px; white-space: nowrap;
+}

@@ -1,0 +1,320 @@
+{
+  "built_at": "2026-08-18 00:30:31",
+  "season": 2021,
+  "methodology": {
+    "decision_point_feet_from_plate": 23.5,
+    "min_pitches_per_type": 100,
+    "distance_floor_inches": 1.8,
+    "n_pitchers_scored": 566,
+    "scale_note": "tunneling_plus = geometric mean of THREE components - release_similarity_plus (close at release), decision_similarity_plus (close at the decision point), and plate_separation_plus (far apart at the plate) - each independently scaled 100=league average, same convention as Stuff+/wRC+. All distances are the full pairwise mean between every real pitch of type A and every real pitch of type B (not centroid-to-centroid, which understates true separation by averaging away real command variance), in inches; decision point in feet. FF/SI-involving pairs count 2x toward the pitcher-level composite (not toward the league baselines) - a hitter's read is built primarily against the fastball/sinker, so how well an offspeed pitch tunnels with THAT matters more than how two offspeed pitches tunnel with each other."
+  },
+  "split_half_reliability": {
+    "1": {
+      "n": 389,
+      "correlation": 0.9106065314723983
+    },
+    "2": {
+      "n": 189,
+      "correlation": 0.929949090916936
+    },
+    "3": {
+      "n": 189,
+      "correlation": 0.929949090916936
+    }
+  },
+  "outcome_validity": {
+    "n_qualified": 563,
+    "min_pitches_qualify": 300,
+    "correlation_with_overall_stuff": 0.08025148845141368,
+    "outcomes": {
+      "whiff_pct": {
+        "raw_correlation": 0.20035011264327685,
+        "partial_correlation_stuff_removed": 0.18976964769698987
+      },
+      "chase_pct": {
+        "raw_correlation": 0.21500026790669502,
+        "partial_correlation_stuff_removed": 0.20118400177054738
+      },
+      "swstr_pct": {
+        "raw_correlation": 0.26582912596968583,
+        "partial_correlation_stuff_removed": 0.27302484414943395
+      },
+      "k_minus_bb_pct": {
+        "raw_correlation": 0.17650654088653966,
+        "partial_correlation_stuff_removed": 0.16131209560325477
+      },
+      "xwoba": {
+        "raw_correlation": -0.1052710773509754,
+        "partial_correlation_stuff_removed": -0.07056642557510298
+      }
+    }
+  },
+  "sequential_same_at_bat_test": {
+    "n_consecutive_different_type_pitches": 553546,
+    "n_with_known_pair_ratio": 274673,
+    "whiff_rate_by_tunnel_ratio_tercile": {
+      "low": {
+        "whiff_rate": 0.1236230777620242,
+        "n": 91690
+      },
+      "mid": {
+        "whiff_rate": 0.1235418008009865,
+        "n": 91637
+      },
+      "high": {
+        "whiff_rate": 0.13573664966172574,
+        "n": 91346
+      }
+    },
+    "low_vs_high_z_score": 7.714153832211028,
+    "interpretation": "Positive z means pitch pairs the model scores as MORE tunneled produce a higher whiff rate on the second pitch of the sequence, in real same-at-bat sequences - the specific causal pathway the model claims to capture, tested directly rather than inferred from a league-wide aggregate."
+  },
+  "worked_examples": {
+    "highest_tunneling": [
+      {
+        "pitcher_id": 521230,
+        "name": "Liam Hendriks",
+        "tunneling_plus": 109.91471910493588,
+        "release_consistency": 1.9382101598881345,
+        "n_pairs": 3,
+        "total_pitches": 1144
+      },
+      {
+        "pitcher_id": 594798,
+        "name": "Jacob deGrom",
+        "tunneling_plus": 107.42057256435793,
+        "release_consistency": 1.7849940342715966,
+        "n_pairs": 3,
+        "total_pitches": 1272
+      },
+      {
+        "pitcher_id": 605488,
+        "name": "Jeffrey Springs",
+        "tunneling_plus": 107.40116231131768,
+        "release_consistency": 3.3199780510014074,
+        "n_pairs": 3,
+        "total_pitches": 765
+      },
+      {
+        "pitcher_id": 608718,
+        "name": "Brent Suter",
+        "tunneling_plus": 106.44805291181635,
+        "release_consistency": 2.199768677193076,
+        "n_pairs": 3,
+        "total_pitches": 1118
+      },
+      {
+        "pitcher_id": 571760,
+        "name": "Andrew Heaney",
+        "tunneling_plus": 106.17961233033617,
+        "release_consistency": 4.3850955800108045,
+        "n_pairs": 3,
+        "total_pitches": 2239
+      },
+      {
+        "pitcher_id": 676684,
+        "name": "Will Vest",
+        "tunneling_plus": 106.00870942504392,
+        "release_consistency": 2.2545998283047926,
+        "n_pairs": 3,
+        "total_pitches": 625
+      },
+      {
+        "pitcher_id": 608716,
+        "name": "Drew Steckenrider",
+        "tunneling_plus": 105.9697786428277,
+        "release_consistency": 1.7137353283136236,
+        "n_pairs": 3,
+        "total_pitches": 1008
+      },
+      {
+        "pitcher_id": 641927,
+        "name": "Bailey Ober",
+        "tunneling_plus": 105.93228881644619,
+        "release_consistency": 2.170270367528826,
+        "n_pairs": 10,
+        "total_pitches": 1476
+      },
+      {
+        "pitcher_id": 501381,
+        "name": "Michael Pineda",
+        "tunneling_plus": 105.77792943360176,
+        "release_consistency": 2.8142312949343955,
+        "n_pairs": 3,
+        "total_pitches": 1707
+      },
+      {
+        "pitcher_id": 595014,
+        "name": "Blake Treinen",
+        "tunneling_plus": 105.72130515224642,
+        "release_consistency": 1.8950674657494715,
+        "n_pairs": 3,
+        "total_pitches": 1129
+      }
+    ],
+    "lowest_tunneling": [
+      {
+        "pitcher_id": 448179,
+        "name": "Rich Hill",
+        "tunneling_plus": 84.77903763052063,
+        "release_consistency": 6.297019103265181,
+        "n_pairs": 3,
+        "total_pitches": 2276
+      },
+      {
+        "pitcher_id": 433589,
+        "name": "Yusmeiro Petit",
+        "tunneling_plus": 85.59097045187121,
+        "release_consistency": 9.995230592876942,
+        "n_pairs": 6,
+        "total_pitches": 1081
+      },
+      {
+        "pitcher_id": 665854,
+        "name": "Luis Oviedo",
+        "tunneling_plus": 90.96866590409425,
+        "release_consistency": 7.097938390232541,
+        "n_pairs": 3,
+        "total_pitches": 551
+      },
+      {
+        "pitcher_id": 669952,
+        "name": "Mitch White",
+        "tunneling_plus": 91.40683503903861,
+        "release_consistency": 10.670148180145963,
+        "n_pairs": 3,
+        "total_pitches": 733
+      },
+      {
+        "pitcher_id": 622088,
+        "name": "Tejay Antone",
+        "tunneling_plus": 91.66789281667968,
+        "release_consistency": 3.492324770139165,
+        "n_pairs": 3,
+        "total_pitches": 529
+      },
+      {
+        "pitcher_id": 656638,
+        "name": "Alex Lange",
+        "tunneling_plus": 92.91507165207877,
+        "release_consistency": 8.840913441399385,
+        "n_pairs": 3,
+        "total_pitches": 672
+      },
+      {
+        "pitcher_id": 622503,
+        "name": "Nabil Crismatt",
+        "tunneling_plus": 93.18352805716715,
+        "release_consistency": 3.7115965742056805,
+        "n_pairs": 6,
+        "total_pitches": 1335
+      },
+      {
+        "pitcher_id": 669302,
+        "name": "Logan Gilbert",
+        "tunneling_plus": 93.28090802512365,
+        "release_consistency": 8.275647349744387,
+        "n_pairs": 6,
+        "total_pitches": 2054
+      },
+      {
+        "pitcher_id": 493603,
+        "name": "Adam Ottavino",
+        "tunneling_plus": 93.47726067381288,
+        "release_consistency": 3.2200355320430134,
+        "n_pairs": 3,
+        "total_pitches": 1158
+      },
+      {
+        "pitcher_id": 594987,
+        "name": "Casey Sadler",
+        "tunneling_plus": 93.67702808390048,
+        "release_consistency": 2.5131327223208886,
+        "n_pairs": 3,
+        "total_pitches": 600
+      }
+    ],
+    "most_release_consistent": [
+      {
+        "pitcher_id": 669456,
+        "name": "Shane Bieber",
+        "tunneling_plus": 105.14906736671601,
+        "release_consistency": 1.624009667173679,
+        "n_pairs": 3,
+        "total_pitches": 1436
+      },
+      {
+        "pitcher_id": 608716,
+        "name": "Drew Steckenrider",
+        "tunneling_plus": 105.9697786428277,
+        "release_consistency": 1.7137353283136236,
+        "n_pairs": 3,
+        "total_pitches": 1008
+      },
+      {
+        "pitcher_id": 572193,
+        "name": "Ryan Tepera",
+        "tunneling_plus": 103.79121188726363,
+        "release_consistency": 1.7666290856883344,
+        "n_pairs": 6,
+        "total_pitches": 1000
+      },
+      {
+        "pitcher_id": 660365,
+        "name": "Hyeon-Jong Yang",
+        "tunneling_plus": 100.4454692633733,
+        "release_consistency": 1.7843982616369702,
+        "n_pairs": 3,
+        "total_pitches": 595
+      },
+      {
+        "pitcher_id": 594798,
+        "name": "Jacob deGrom",
+        "tunneling_plus": 107.42057256435793,
+        "release_consistency": 1.7849940342715966,
+        "n_pairs": 3,
+        "total_pitches": 1272
+      },
+      {
+        "pitcher_id": 543294,
+        "name": "Kyle Hendricks",
+        "tunneling_plus": 102.01881807738577,
+        "release_consistency": 1.7861767522191014,
+        "n_pairs": 6,
+        "total_pitches": 2809
+      },
+      {
+        "pitcher_id": 608717,
+        "name": "Chris Stratton",
+        "tunneling_plus": 103.99130926914164,
+        "release_consistency": 1.828125575836557,
+        "n_pairs": 6,
+        "total_pitches": 1406
+      },
+      {
+        "pitcher_id": 595014,
+        "name": "Blake Treinen",
+        "tunneling_plus": 105.72130515224642,
+        "release_consistency": 1.8950674657494715,
+        "n_pairs": 3,
+        "total_pitches": 1129
+      },
+      {
+        "pitcher_id": 622694,
+        "name": "Elieser Hern\u00e1ndez",
+        "tunneling_plus": 101.23144423170248,
+        "release_consistency": 1.925199014268156,
+        "n_pairs": 3,
+        "total_pitches": 803
+      },
+      {
+        "pitcher_id": 628317,
+        "name": "Kenta Maeda",
+        "tunneling_plus": 103.48456310247077,
+        "release_consistency": 1.9306164606186305,
+        "n_pairs": 6,
+        "total_pitches": 1819
+      }
+    ]
+  }
+}

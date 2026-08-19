@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Stuff+ Model - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=17" />
+  <style>
+    .sm-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 1000px) { .sm-layout { grid-template-columns: 1fr; } }
+    .sm-blurb { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
+    .sm-cv-table td, .sm-cv-table th { text-align: right; }
+    .sm-cv-table td:first-child, .sm-cv-table th:first-child { text-align: left; }
+
+    .sm-imp-row { display: grid; grid-template-columns: 150px 1fr 56px; align-items: center; gap: 10px; margin-bottom: 9px; }
+    .sm-imp-label { font-size: 13px; font-weight: 600; color: var(--text); }
+    .sm-imp-track { position: relative; background: #e9e7df; border-radius: 6px; height: 12px; }
+    .sm-imp-fill { position: absolute; top: 0; left: 0; height: 12px; border-radius: 6px; background: var(--forest); }
+    .sm-imp-val { font-size: 12px; color: var(--text-muted); text-align: right; }
+
+    .sm-pitch-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; background: var(--surface); }
+    .sm-pitch-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+    .sm-pitch-name { font-size: 15px; font-weight: 800; color: var(--forest-dark); }
+    .sm-pitch-meta { font-size: 12px; color: var(--text-muted); }
+    .sm-pitch-stuff { font-size: 20px; font-weight: 800; }
+
+    .shap-row { display: grid; grid-template-columns: 168px 1fr 60px; align-items: center; gap: 10px; margin-bottom: 7px; }
+    .shap-label { font-size: 12.5px; color: var(--text); }
+    .shap-track { position: relative; background: #e9e7df; border-radius: 6px; height: 13px; }
+    .shap-zero { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--border); }
+    .shap-bar { position: absolute; top: 0; height: 13px; border-radius: 6px; }
+    .shap-val { font-size: 12px; font-weight: 700; text-align: right; }
+    .shap-val.pos { color: #1a7f37; }
+    .shap-val.neg { color: #c9302c; }
+
+    #sm-status { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+
+    .sm-shrink-row { display: grid; grid-template-columns: 60px 1fr 50px; align-items: center; gap: 10px; margin-bottom: 7px; }
+    .sm-shrink-label { font-size: 12.5px; font-weight: 700; color: var(--text); }
+    .sm-shrink-track { position: relative; background: #e9e7df; border-radius: 6px; height: 11px; }
+    .sm-shrink-fill { position: absolute; top: 0; left: 0; height: 11px; border-radius: 6px; background: var(--bark); }
+    .sm-shrink-val { font-size: 12px; color: var(--text-muted); text-align: right; }
+    .sm-shrink-fallback { font-size: 11.5px; color: var(--text-muted); font-style: italic; }
+
+    .sm-pv-table th, .sm-pv-table td { text-align: right; }
+    .sm-pv-table td:first-child, .sm-pv-table th:first-child { text-align: left; }
+    .sm-pv-table td.best { font-weight: 800; color: var(--forest-dark); }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="page">
+    <h1>Stuff+ Model</h1>
+    <p class="sm-blurb">
+      v2: one gradient-boosted (LightGBM) model across every pitch type, trained on
+      <code>delta_run_exp</code> (linear-weights run value per pitch, not just batted balls) using only the pitch's
+      own physical characteristics - velo, movement, spin, release point, and an approach-angle residual with plate
+      height's effect subtracted out. No location, count, or pitcher identity is fed in - see the model report below
+      for exactly what is. Replaces v1 (separate plain-OLS regression per pitch type, no cross-validation).
+    </p>
+
+    <div class="sm-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Cross-Validation (leave-one-season-out, 2021-2025)</h3>
+        <table class="data-table sm-cv-table" id="sm-cv-table"></table>
+        <div id="sm-cv-summary" style="margin-top:10px; font-size:13px; color:var(--text-muted);"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Global Feature Importance (mean |SHAP|)</h3>
+        <div id="sm-importance-mount"></div>
+      </div>
+    </div>
+
+    <div class="sm-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Small-Sample Shrinkage</h3>
+        <p class="sm-blurb">
+          A pitcher's raw sample mean gets pulled toward the pitch type's league average when the sample is small -
+          less so for a type where pitch-to-pitch variation is naturally tiny (a small K below), more so where it
+          isn't. Reliability at n pitches = n / (n + K).
+        </p>
+        <div id="sm-shrinkage-mount"></div>
+        <div class="sm-shrink-fallback" id="sm-shrinkage-fallback"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Predictive Validity: v1 vs. v2</h3>
+        <p class="sm-blurb" id="sm-pv-blurb"></p>
+        <div id="sm-pv-mount"></div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <h3 style="margin-top:0;">Inspect a Pitcher</h3>
+      <div class="controls-row">
+        <div style="min-width:320px; flex:1; max-width:420px;">
+          <span class="control-label">Pitcher</span>
+          <div class="player-search">
+            <input type="text" class="player-search-input" id="player-search-input" placeholder="Search any pitcher..." autocomplete="off" />
+            <div class="player-search-dropdown" id="player-search-dropdown"></div>
+          </div>
+        </div>
+        <div>
+          <span class="control-label">Season</span>
+          <select id="season-select"></select>
+        </div>
+      </div>
+      <div id="sm-status"></div>
+      <div id="sm-pitcher-mount" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=17"></script>
+  <script src="js/nav.js?v=101"></script>
+  <script src="js/player-search.js?v=17"></script>
+  <script src="js/season-select.js?v=17"></script>
+  <script src="js/stuff-model.js?v=18"></script>
+</body>
+</html>

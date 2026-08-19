@@ -1,0 +1,14 @@
+# Data (large, regenerable via pull scripts)
+mlb_data.db
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db

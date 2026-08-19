@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Splits Explorer - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=9" />
+  <style>
+    .page.wide { max-width: 1700px; }
+    .splits-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    table.splits-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+    table.splits-table thead th {
+      background: #33352f;
+      color: #f0ede4;
+      text-align: right;
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    table.splits-table thead th:first-child { text-align: left; }
+    table.splits-table tbody td {
+      text-align: right;
+      padding: 11px 16px;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    table.splits-table tbody td:first-child {
+      text-align: left;
+      font-weight: 700;
+      color: var(--forest-dark);
+    }
+    table.splits-table tbody tr:nth-child(odd) { background: #f6f1e6; }
+    table.splits-table tbody tr:nth-child(even) { background: var(--surface); }
+    table.splits-table tbody tr:hover { background: #ece3cd; }
+    table.splits-table tbody td.overall-col { color: var(--text-muted); font-style: italic; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="page wide">
+    <h1>Splits Explorer</h1>
+
+    <div class="controls-row">
+      <div style="min-width:300px; flex:1; max-width:400px;">
+        <span class="control-label">Player</span>
+        <div class="player-search">
+          <input type="text" class="player-search-input" id="player-search-input" placeholder="Search any pitcher or hitter..." autocomplete="off" />
+          <div class="player-search-dropdown" id="player-search-dropdown"></div>
+        </div>
+      </div>
+      <div>
+        <span class="control-label">Split by</span>
+        <select id="split-by-select"></select>
+      </div>
+      <div>
+        <span class="control-label">Pitch type</span>
+        <select id="pitch-type-select"></select>
+      </div>
+      <div>
+        <span class="control-label">Season</span>
+        <select id="season-select"></select>
+      </div>
+    </div>
+
+    <h2 id="results-title"></h2>
+    <div class="splits-card" id="table-mount" style="overflow-x:auto;"></div>
+  </div>
+
+  <script src="js/api.js?v=9"></script>
+  <script src="js/gradient.js?v=9"></script>
+  <script src="js/nav.js?v=101"></script>
+  <script src="js/player-search.js?v=9"></script>
+  <script src="js/season-select.js?v=9"></script>
+  <script src="js/splits.js?v=9"></script>
+</body>
+</html>

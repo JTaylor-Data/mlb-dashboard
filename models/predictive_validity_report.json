@@ -1,0 +1,99 @@
+{
+  "trained_at": "2026-08-17 14:28:44",
+  "score_season": 2024,
+  "outcome_season": 2025,
+  "description": "Does each pitcher's 2024 Stuff+ predict their real 2025 results? v2 is scored by a model trained on every season EXCEPT 2024 (honest out-of-sample - the live site's model, unlike this one, is trained on all seasons including this one). v1 is in-sample, exactly as it always worked in production - v1 never had a train/test split concept, so this is not an unfair advantage to v2.",
+  "n_total_pitchers": 501,
+  "results_by_min_pitches": {
+    "100": {
+      "n_qualified": 469,
+      "correlations": {
+        "xwoba": {
+          "v1": -0.26599086429551777,
+          "v2_unshrunk": -0.37829368290719034,
+          "v2_shrunk": -0.3783379359673327
+        },
+        "whiff_pct": {
+          "v1": 0.33842458030629985,
+          "v2_unshrunk": 0.3830727283041154,
+          "v2_shrunk": 0.3840212680945363
+        },
+        "swstr_pct": {
+          "v1": 0.3355395943916876,
+          "v2_unshrunk": 0.4153130237027852,
+          "v2_shrunk": 0.4160135653011157
+        },
+        "k_minus_bb_pct": {
+          "v1": 0.27004271851170153,
+          "v2_unshrunk": 0.37486164273449385,
+          "v2_shrunk": 0.37492994392136014
+        },
+        "chase_pct": {
+          "v1": 0.17887652986471836,
+          "v2_unshrunk": 0.20576592242460073,
+          "v2_shrunk": 0.20580621382324457
+        }
+      }
+    },
+    "200": {
+      "n_qualified": 430,
+      "correlations": {
+        "xwoba": {
+          "v1": -0.27686672216850694,
+          "v2_unshrunk": -0.38491746978563685,
+          "v2_shrunk": -0.3848657179757786
+        },
+        "whiff_pct": {
+          "v1": 0.3399396557283483,
+          "v2_unshrunk": 0.4031720370188723,
+          "v2_shrunk": 0.40347540854726544
+        },
+        "swstr_pct": {
+          "v1": 0.3337539948062435,
+          "v2_unshrunk": 0.4327384921700477,
+          "v2_shrunk": 0.4328381857404891
+        },
+        "k_minus_bb_pct": {
+          "v1": 0.2714701861201736,
+          "v2_unshrunk": 0.37949679028143796,
+          "v2_shrunk": 0.3795452147202841
+        },
+        "chase_pct": {
+          "v1": 0.17661198517450427,
+          "v2_unshrunk": 0.20918897881429188,
+          "v2_shrunk": 0.2091395115371291
+        }
+      }
+    },
+    "300": {
+      "n_qualified": 406,
+      "correlations": {
+        "xwoba": {
+          "v1": -0.2625692298861609,
+          "v2_unshrunk": -0.3761581313244122,
+          "v2_shrunk": -0.37603035986172
+        },
+        "whiff_pct": {
+          "v1": 0.3346038547193256,
+          "v2_unshrunk": 0.40445107642423206,
+          "v2_shrunk": 0.4046258187392551
+        },
+        "swstr_pct": {
+          "v1": 0.33136306216219147,
+          "v2_unshrunk": 0.4340450629288899,
+          "v2_shrunk": 0.4340289578806124
+        },
+        "k_minus_bb_pct": {
+          "v1": 0.25225415802148204,
+          "v2_unshrunk": 0.36289417284297254,
+          "v2_shrunk": 0.3630335322037283
+        },
+        "chase_pct": {
+          "v1": 0.18251918622141688,
+          "v2_unshrunk": 0.21951594093782814,
+          "v2_shrunk": 0.2193181780344521
+        }
+      }
+    }
+  }
+}

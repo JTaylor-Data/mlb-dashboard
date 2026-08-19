@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Top Performers - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=8" />
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="page">
+    <h1>Top Performers</h1>
+
+    <div class="controls-row">
+      <div>
+        <span class="control-label">Date</span>
+        <input type="date" id="date-input" />
+      </div>
+    </div>
+
+    <div class="muted" style="font-size:12px; margin-bottom:14px;">
+      Ranked by WPA (Win Probability Added), straight from Statcast's own per-pitch win expectancy - not modeled
+      by us. Box score stats and season OPS/ERA are live, official numbers from the MLB Stats API, not
+      reconstructed from Statcast.
+    </div>
+
+    <div id="performers-mount"></div>
+  </div>
+
+  <script src="js/api.js?v=8"></script>
+  <script src="js/gradient.js?v=8"></script>
+  <script src="js/nav.js?v=101"></script>
+  <script src="js/top-performers.js?v=8"></script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tunneling+ Model - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=17" />
+  <style>
+    .tn-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 1000px) { .tn-layout { grid-template-columns: 1fr; } }
+    .tn-blurb { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; margin-bottom: 14px; }
+    .tn-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .tn-meta-item { background: var(--surface-alt); border-radius: 8px; padding: 8px 10px; }
+    .tn-meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
+    .tn-meta-value { font-size: 17px; font-weight: 800; color: var(--forest-dark); }
+
+    .tn-table th, .tn-table td { text-align: right; }
+    .tn-table td:first-child, .tn-table th:first-child { text-align: left; }
+    .tn-table td.best { font-weight: 800; color: var(--forest-dark); }
+
+    .tn-seq-bar-row { display: grid; grid-template-columns: 50px 1fr 60px; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .tn-seq-track { position: relative; background: #e9e7df; border-radius: 6px; height: 14px; }
+    .tn-seq-fill { position: absolute; top: 0; left: 0; height: 14px; border-radius: 6px; background: var(--forest); }
+    .tn-seq-note { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+    .tn-arsenal-head { margin-bottom: 10px; font-size: 14px; }
+    .tn-pair-table td.plus-best { font-weight: 800; color: var(--bark-dark); }
+    .tn-pair-table tr.tn-anchor-row { background: var(--bark-tint); }
+
+    #tn-status { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="page">
+    <h1>Tunneling+ Model</h1>
+    <p class="tn-blurb">
+      v1, first pass - a self-directed model, not built to any outside spec. Measures pitch-pair <b>tunneling</b>: how
+      close together two of a pitcher's pitch types are (in inches, full pairwise average across every real pitch of
+      each type - not a distance between averages) at the point a hitter has to commit to swinging (~23.5 ft from the
+      plate), versus how far apart they actually end up at the plate. <b>Tunneling+</b> is the geometric mean of
+      <b>Decision Sim+</b> (close at the decision point) and <b>Plate Sep+</b> (different late), each scaled
+      100=league average, same convention as Stuff+/wRC+. A pair needs to be reasonably good at both to score well;
+      one strong half can't fully carry a weak one. <b>Release Sim+</b> is also shown (close at release) but isn't
+      part of the score - tested as a third factor and dropped after it measurably weakened the model's validated
+      predictive power, see the PDF's Section 3.3. Pairs involving the four-seam or sinker (a hitter's primary read)
+      count double toward a pitcher's headline score - shaded pairs in the arsenal table below. Physics-derived from
+      Statcast's own trajectory fit (the same constant-acceleration model this site's VAA metric already uses), not a
+      proxy or a black box - see the validation results below and the full methodology PDF for the complete
+      reasoning.
+    </p>
+
+    <div class="tn-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Methodology</h3>
+        <div class="tn-meta-grid" id="tn-meta-mount"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Split-Half Reliability</h3>
+        <table class="data-table tn-table" id="tn-reliability-table"></table>
+        <div class="tn-seq-note">Correlation between the score computed on two independent random halves of each pitcher's pitches - is this measuring something stable, or noise?</div>
+      </div>
+    </div>
+
+    <div class="tn-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Does It Predict Real Outcomes?</h3>
+        <table class="data-table tn-table" id="tn-validity-table"></table>
+        <div class="tn-seq-note" id="tn-validity-note"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Sequential Same-At-Bat Test</h3>
+        <div id="tn-seq-mount"></div>
+        <div class="tn-seq-note" id="tn-seq-note"></div>
+      </div>
+    </div>
+
+    <div class="tn-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Highest Tunneling+</h3>
+        <table class="data-table tn-table" id="tn-top-table"></table>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Lowest Tunneling+</h3>
+        <table class="data-table tn-table" id="tn-bottom-table"></table>
+      </div>
+    </div>
+
+    <div class="card section">
+      <h3 style="margin-top:0;">Inspect a Pitcher</h3>
+      <div class="controls-row">
+        <div style="min-width:320px; flex:1; max-width:420px;">
+          <span class="control-label">Pitcher</span>
+          <div class="player-search">
+            <input type="text" class="player-search-input" id="player-search-input" placeholder="Search any pitcher..." autocomplete="off" />
+            <div class="player-search-dropdown" id="player-search-dropdown"></div>
+          </div>
+        </div>
+        <div>
+          <span class="control-label">Season</span>
+          <select id="season-select"></select>
+        </div>
+      </div>
+      <div id="tn-status"></div>
+      <div id="tn-pitcher-mount" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=17"></script>
+  <script src="js/nav.js?v=101"></script>
+  <script src="js/player-search.js?v=17"></script>
+  <script src="js/season-select.js?v=17"></script>
+  <script src="js/tunneling-model.js?v=6"></script>
+</body>
+</html>

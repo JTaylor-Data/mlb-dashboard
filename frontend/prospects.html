@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Prospects - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=10" />
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="page">
+    <h1>Top Prospects</h1>
+
+    <div class="controls-row">
+      <div class="toggle-group" id="view-toggle">
+        <button data-value="league" class="active">League Wide</button>
+        <button data-value="team">Team Specific</button>
+        <button data-value="farm">Farm Rankings</button>
+        <button data-value="performers">Top Performers</button>
+      </div>
+      <div id="team-select-wrap" style="display:none;">
+        <select id="team-select"></select>
+      </div>
+      <div id="date-wrap" style="display:none;">
+        <input type="date" id="performers-date-input" />
+      </div>
+      <div id="search-wrap" style="min-width:260px; flex:1; max-width:340px;">
+        <div class="player-search">
+          <input type="text" class="player-search-input" id="prospect-search-input" placeholder="Find a player on this list..." autocomplete="off" />
+          <div class="player-search-dropdown" id="prospect-search-dropdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="muted" style="font-size:12px; margin-bottom:14px;" id="page-caption">
+      Rankings from MLB Pipeline. Season stat line (GP/K%/BB%/OPS or ERA) is real MLB Stats API data at the
+      prospect's current level. Scouting grades/report are MLB Pipeline write-ups as carried on Baseball Savant.
+      Farm Rankings is a self-computed score (not an official Pipeline list) - see the tab for how it's built.
+      Click any player for their scouting card.
+    </div>
+
+    <div class="prospects-layout">
+      <div class="prospects-main" id="prospects-mount"></div>
+      <div class="prospects-detail" id="detail-mount"></div>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=10"></script>
+  <script src="js/nav.js?v=101"></script>
+  <script src="js/prospects.js?v=10"></script>
+</body>
+</html>

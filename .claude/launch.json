@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "mlb-dashboard-streamlit-legacy",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "streamlit", "run", "dashboard.py", "--server.headless", "true"],
+      "port": 8501
+    },
+    {
+      "name": "mlb-dashboard-api",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "api.main:app", "--port", "8010"],
+      "port": 8010
+    }
+  ]
+}

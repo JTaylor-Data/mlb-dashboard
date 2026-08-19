@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Compare - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=9" />
+  <style>
+    .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 900px) { .compare-grid { grid-template-columns: 1fr; } }
+    .compare-player-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .compare-player-header img { width: 32px; height: 32px; }
+    .compare-player-header .name { font-size: 18px; font-weight: 800; color: var(--forest-dark); }
+    .compare-select-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="page">
+    <h1>Compare</h1>
+    <div class="muted" style="font-size:12px; margin-bottom:14px;">Batter vs. batter, swing decisions and batted-ball outcomes. Percentiles recompute with the split toggle.</div>
+
+    <div class="controls-row">
+      <span class="control-label">Split (opposing pitcher throws)</span>
+      <div class="toggle-group" id="split-toggle">
+        <button data-value="ALL" class="active">ALL</button>
+        <button data-value="L">L</button>
+        <button data-value="R">R</button>
+      </div>
+      <span class="control-label" style="margin-left:16px;">Season</span>
+      <select id="season-select"></select>
+    </div>
+
+    <div class="compare-grid section">
+      <div>
+        <div class="compare-select-row">
+          <span class="control-label">Player A</span>
+          <div class="player-search">
+            <input type="text" class="player-search-input" id="player-search-input-a" placeholder="Search a hitter..." autocomplete="off" />
+            <div class="player-search-dropdown" id="player-search-dropdown-a"></div>
+          </div>
+        </div>
+        <div id="panel-a"></div>
+      </div>
+      <div>
+        <div class="compare-select-row">
+          <span class="control-label">Player B</span>
+          <div class="player-search">
+            <input type="text" class="player-search-input" id="player-search-input-b" placeholder="Search a hitter..." autocomplete="off" />
+            <div class="player-search-dropdown" id="player-search-dropdown-b"></div>
+          </div>
+        </div>
+        <div id="panel-b"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=9"></script>
+  <script src="js/gradient.js?v=9"></script>
+  <script src="js/nav.js?v=101"></script>
+  <script src="js/player-search.js?v=9"></script>
+  <script src="js/season-select.js?v=9"></script>
+  <script src="js/compare.js?v=9"></script>
+</body>
+</html>
