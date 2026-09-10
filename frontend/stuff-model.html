@@ -1,10 +1,10 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Stuff+ Model - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=17" />
+  <link rel="stylesheet" href="css/theme.css?v=39" />
   <style>
     .sm-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
     @media (max-width: 1000px) { .sm-layout { grid-template-columns: 1fr; } }
@@ -45,19 +45,55 @@
     .sm-pv-table th, .sm-pv-table td { text-align: right; }
     .sm-pv-table td:first-child, .sm-pv-table th:first-child { text-align: left; }
     .sm-pv-table td.best { font-weight: 800; color: var(--forest-dark); }
+
+    .sm-lb-row { display: grid; grid-template-columns: 22px 1fr auto 48px; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+    .sm-lb-row:last-child { border-bottom: none; }
+    .sm-lb-rank { font-size: 12px; color: var(--text-muted); font-weight: 700; }
+    .sm-lb-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
+    .sm-lb-n { font-size: 11.5px; white-space: nowrap; }
+    .sm-lb-val { font-size: 14px; font-weight: 800; text-align: right; }
   </style>
 </head>
 <body>
   <div id="nav"></div>
+  <div id="subnav"></div>
   <div class="page">
     <h1>Stuff+ Model</h1>
     <p class="sm-blurb">
-      v2: one gradient-boosted (LightGBM) model across every pitch type, trained on
+      One gradient-boosted (LightGBM) model across every pitch type, trained on
       <code>delta_run_exp</code> (linear-weights run value per pitch, not just batted balls) using only the pitch's
-      own physical characteristics - velo, movement, spin, release point, and an approach-angle residual with plate
-      height's effect subtracted out. No location, count, or pitcher identity is fed in - see the model report below
-      for exactly what is. Replaces v1 (separate plain-OLS regression per pitch type, no cross-validation).
+      own physical characteristics - velo, movement, spin, an approach-angle residual with plate height's effect
+      subtracted out, how a pitch's velo/movement separates from the pitcher's own primary fastball, and an
+      empirically-calibrated seam-shifted-wake proxy (axis differential). No location, count, or pitcher identity is
+      fed in - see the model report below for exactly what is. Full methodology and architecture history:
+      <code>Methodology/STUFF_V3_REPORT.md</code>.
     </p>
+
+    <div class="plus-explainer">
+      <div class="plus-explainer-icon">&#8505;&#65039;</div>
+      <div>
+        <div class="plus-explainer-title">How to read this number</div>
+        <div class="plus-explainer-body">
+          <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b> from that
+          season's league-wide average - a score of 120 means a pitch graded roughly 2 standard deviations better
+          than average that season, <b>not "20% better."</b> That percentage-style reading is a common mistake
+          (closer to how a stat like wRC+ happens to work, but Stuff+ isn't scaled that way). Scores are also
+          z-scored fresh within each season, so the same score in two different years means the same relative
+          standing, not necessarily the same underlying raw value.
+        </div>
+      </div>
+    </div>
+
+    <div class="sm-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Top 10 Stuff+</h3>
+        <div id="sm-lb-top-mount"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Bottom 10 Stuff+</h3>
+        <div id="sm-lb-bottom-mount"></div>
+      </div>
+    </div>
 
     <div class="sm-layout section">
       <div class="card">
@@ -110,9 +146,10 @@
   </div>
 
   <script src="js/api.js?v=17"></script>
-  <script src="js/nav.js?v=101"></script>
-  <script src="js/player-search.js?v=17"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/player-search.js?v=20"></script>
   <script src="js/season-select.js?v=17"></script>
-  <script src="js/stuff-model.js?v=18"></script>
+  <script src="js/stuff-model.js?v=21"></script>
 </body>
 </html>

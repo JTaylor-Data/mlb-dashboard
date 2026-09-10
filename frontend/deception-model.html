@@ -1,10 +1,10 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Deception+ Model - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=17" />
+  <link rel="stylesheet" href="css/theme.css?v=39" />
   <style>
     .dc-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
     @media (max-width: 1000px) { .dc-layout { grid-template-columns: 1fr; } }
@@ -34,6 +34,7 @@
 </head>
 <body>
   <div id="nav"></div>
+  <div id="subnav"></div>
   <div class="page">
     <h1>Deception+ Model</h1>
     <p class="dc-blurb">
@@ -44,6 +45,21 @@
       held in the set position - see the excluded-features note below and the full methodology PDF for why those
       aren't included yet, and what was actually tried to get them.
     </p>
+
+    <div class="plus-explainer">
+      <div class="plus-explainer-icon">&#8505;&#65039;</div>
+      <div>
+        <div class="plus-explainer-title">How to read this number</div>
+        <div class="plus-explainer-body">
+          <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b> from that
+          season's league-wide average - a score of 120 means a pitcher graded roughly 2 standard deviations more
+          deceptive than average that season, <b>not "20% more deceptive."</b> That percentage-style reading is a
+          common mistake (closer to how a stat like wRC+ happens to work, but Deception+ - same scale as Stuff+ -
+          isn't scaled that way). Scores are also z-scored fresh within each season, so the same score in two
+          different years means the same relative standing, not necessarily the same underlying raw value.
+        </div>
+      </div>
+    </div>
 
     <div class="card section" id="dc-verdict-card">
       <h3 style="margin-top:0;">Is This Actually Useful?</h3>
@@ -109,8 +125,9 @@
   </div>
 
   <script src="js/api.js?v=17"></script>
-  <script src="js/nav.js?v=101"></script>
-  <script src="js/player-search.js?v=17"></script>
-  <script src="js/deception-model.js?v=2"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/player-search.js?v=20"></script>
+  <script src="js/deception-model.js?v=3"></script>
 </body>
 </html>

@@ -1,10 +1,10 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Compare - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=9" />
+  <link rel="stylesheet" href="css/theme.css?v=39" />
   <style>
     .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
     @media (max-width: 900px) { .compare-grid { grid-template-columns: 1fr; } }
@@ -18,10 +18,16 @@
   <div id="nav"></div>
   <div class="page">
     <h1>Compare</h1>
-    <div class="muted" style="font-size:12px; margin-bottom:14px;">Batter vs. batter, swing decisions and batted-ball outcomes. Percentiles recompute with the split toggle.</div>
+    <div class="loading-bar" id="page-loading"><div class="loading-bar-fill"></div></div>
+    <div class="muted" style="font-size:12px; margin-bottom:14px;" id="compare-subtitle">Batter vs. batter, swing decisions and batted-ball outcomes. Percentiles recompute with the split toggle.</div>
 
     <div class="controls-row">
-      <span class="control-label">Split (opposing pitcher throws)</span>
+      <span class="control-label">Role</span>
+      <div class="toggle-group" id="role-toggle">
+        <button data-value="batter" class="active">Batters</button>
+        <button data-value="pitcher">Pitchers</button>
+      </div>
+      <span class="control-label" style="margin-left:16px;" id="split-label">Split (opposing pitcher throws)</span>
       <div class="toggle-group" id="split-toggle">
         <button data-value="ALL" class="active">ALL</button>
         <button data-value="L">L</button>
@@ -56,10 +62,11 @@
   </div>
 
   <script src="js/api.js?v=9"></script>
-  <script src="js/gradient.js?v=9"></script>
-  <script src="js/nav.js?v=101"></script>
-  <script src="js/player-search.js?v=9"></script>
+  <script src="js/gradient.js?v=22"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/player-search.js?v=20"></script>
   <script src="js/season-select.js?v=9"></script>
-  <script src="js/compare.js?v=9"></script>
+  <script src="js/compare.js?v=16"></script>
 </body>
 </html>

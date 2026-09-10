@@ -1,5 +1,9 @@
 # Data (large, regenerable via pull scripts)
 mlb_data.db
+mlb_data.db.backup-*
+
+# Research/model-dev artifacts (large, regenerable via their build script)
+training/stuff_v3_artifacts/
 
 # Python
 __pycache__/

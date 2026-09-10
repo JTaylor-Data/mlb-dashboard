@@ -1,0 +1,41 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bracket - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=39" />
+  <style>
+    /* Wider than the site's other "wide" pages on purpose - the bracket
+       should spread out toward the screen edges on a big monitor, not sit
+       capped at a width sized for a table. The columns themselves flex-grow
+       to fill whatever room this gives them (see .bracket-col etc. in
+       theme.css) - on a narrower window they just stay at their own
+       min-width, so this cap being generous never risks an overflow. */
+    .page.wide { max-width: 2000px; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="subnav"></div>
+  <div class="page wide">
+    <div class="loading-bar" id="page-loading"><div class="loading-bar-fill"></div></div>
+
+    <div class="controls-row" style="margin-top:20px; justify-content:space-between; align-items:center;">
+      <div id="bracket-title-mount"></div>
+      <div>
+        <span class="control-label">Season</span>
+        <select id="season-select"></select>
+      </div>
+    </div>
+
+    <div id="bracket-mount"></div>
+  </div>
+
+  <script src="js/api.js?v=18"></script>
+  <script src="js/gradient.js?v=22"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/season-select.js?v=17"></script>
+  <script src="js/playoffs-bracket.js?v=11"></script>
+</body>
+</html>

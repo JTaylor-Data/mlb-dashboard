@@ -1,0 +1,45 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WC Race - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=39" />
+  <style>
+    /* league-toggle (bare buttons) and the season control (label + select
+       stacked) have different internal shapes, so .controls-row's default
+       align-items:center centers each block as a WHOLE rather than lining
+       up their actual controls - same fix top-performers.html already uses
+       for its own date/walk-off mismatch: flex-end lines up their bottom
+       edges, which for a label-less block IS its control. */
+    #playoffs-controls-row { align-items: flex-end; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="subnav"></div>
+  <div class="page">
+    <div class="loading-bar" id="page-loading"><div class="loading-bar-fill"></div></div>
+
+    <div class="controls-row" id="playoffs-controls-row" style="margin-top:20px;">
+      <div class="toggle-group" id="league-toggle">
+        <button data-value="AL" class="active">AL</button>
+        <button data-value="NL">NL</button>
+      </div>
+      <div>
+        <span class="control-label">Season</span>
+        <select id="season-select"></select>
+      </div>
+    </div>
+
+    <div id="division-leaders-mount"></div>
+    <div id="wildcard-mount" style="margin-top:18px;"></div>
+  </div>
+
+  <script src="js/api.js?v=18"></script>
+  <script src="js/gradient.js?v=22"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/season-select.js?v=17"></script>
+  <script src="js/playoffs.js?v=3"></script>
+</body>
+</html>

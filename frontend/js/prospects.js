@@ -1,8 +1,10 @@
-const state = { view: "league", teamId: null, prospects: [], selectedMlbId: null };
+const state = { view: "league", teamId: null, position: "", prospects: [], allProspects: [], selectedMlbId: null };
 
 const viewToggle = document.getElementById("view-toggle");
 const teamSelectWrap = document.getElementById("team-select-wrap");
 const teamSelect = document.getElementById("team-select");
+const positionFilterWrap = document.getElementById("position-filter-wrap");
+const positionFilter = document.getElementById("position-filter");
 const dateWrap = document.getElementById("date-wrap");
 const dateInput = document.getElementById("performers-date-input");
 const searchWrap = document.getElementById("search-wrap");
@@ -48,7 +50,7 @@ function statCells(p) {
 function subLineHtml(p) {
   if (state.view === "league") {
     const logo = `https://www.mlbstatic.com/team-logos/${p.team_id}.svg`;
-    return `<img class="team-logo" src="${logo}" onerror="this.style.visibility='hidden'" /> ${p.team_name || ""} &nbsp;&#183;&nbsp; ETA ${p.eta ?? "-"}`;
+    return `<img class="team-logo" src="${logo}" onerror="this.style.visibility='hidden'" /> <span class="team-card-link" data-teamcard-id="${p.team_id}">${p.team_name || ""}</span> &nbsp;&#183;&nbsp; ETA ${p.eta ?? "-"}`;
   }
   return `Age ${p.age ?? "-"} &nbsp;&#183;&nbsp; ETA ${p.eta ?? "-"}`;
 }
@@ -81,14 +83,27 @@ function prospectRowHtml(rank, p) {
   `;
 }
 
+// "SS" also matches a multi-position tag like "SS/2B" or "3B/SS" - a
+// prospect listed either way is still a shortstop for filtering purposes.
+// "INF" is its own distinct, unspecified-infield tag (Pipeline uses it for
+// prospects not pinned to one infield spot), not a stand-in for any of
+// C/1B/2B/3B/SS individually.
+function matchesPosition(p, token) {
+  if (!token) return true;
+  const pos = p.position || "";
+  return token === "INF" ? pos === "INF" : pos.split("/").includes(token);
+}
+
 function renderList(prospects, rankKey) {
-  state.prospects = prospects;
+  state.allProspects = prospects;
   state.rankKey = rankKey;
-  if (!prospects.length) {
-    prospectsMount.innerHTML = `<div class="empty-state">No prospects found.</div>`;
+  const filtered = prospects.filter((p) => matchesPosition(p, state.position));
+  state.prospects = filtered;
+  if (!filtered.length) {
+    prospectsMount.innerHTML = `<div class="empty-state">No prospects found${state.position ? ` at ${state.position}` : ""}.</div>`;
     return;
   }
-  prospectsMount.innerHTML = `<div class="prospects-list">${prospects.map((p) => prospectRowHtml(p[rankKey], p)).join("")}</div>`;
+  prospectsMount.innerHTML = `<div class="prospects-list">${filtered.map((p) => prospectRowHtml(p[rankKey], p)).join("")}</div>`;
 }
 
 async function loadTeamOptions() {
@@ -124,7 +139,7 @@ async function loadFarmRankings() {
         <tr class="farm-row ${t.farm_rank === 1 ? "farm-best" : ""}" data-team-id="${t.team_id}">
           <td class="center-col"><span class="farm-rank-badge">${t.farm_rank}</span></td>
           <td><img class="team-logo" src="${logo}" onerror="this.style.visibility='hidden'" /></td>
-          <td class="farm-team-cell">${t.team_name}</td>
+          <td class="farm-team-cell"><span class="team-card-link" data-teamcard-id="${t.team_id}">${t.team_name}</span></td>
           <td class="center-col farm-score-cell">${t.score}</td>
           <td class="center-col">${t.top100_count}</td>
           <td class="center-col">${t.best_rank ?? "-"}</td>
@@ -171,7 +186,7 @@ function prospectPerformerRowHtml(rank, entry) {
     ? (entry.season_era != null ? entry.season_era.toFixed(2) : "-")
     : formatOPS(entry.season_ops);
   return `
-    <div class="performer-row" style="background:${bg};">
+    <div class="performer-row prospect-row" data-mlb-id="${entry.mlb_id}" style="background:${bg}; cursor:pointer;">
       <div class="performer-rank">${rank}</div>
       <img class="prospect-headshot" style="width:42px; height:42px;" src="${entry.headshot_url}" onerror="this.style.visibility='hidden'" />
       <div>
@@ -192,8 +207,16 @@ function prospectPerformerRowHtml(rank, entry) {
 
 async function loadProspectTopPerformers() {
   const day = dateInput.value;
-  state.prospects = [];
   const data = await getJSON(`/api/prospects/top-performers?date=${day}`);
+  // Populated (was always []) so selectProspect()'s own state.prospects
+  // lookup succeeds when a performer row is clicked - the click delegation
+  // in prospectsMount's listener below is role-agnostic (.prospect-row +
+  // data-mlb-id, same as every other view), it just didn't have anything
+  // to find before. These entries are missing team_name/position (fields
+  // scoutingCardHtml also reads) since /api/prospects/top-performers
+  // doesn't carry them - the header renders with a blank team name/
+  // position for a performer-view selection rather than fabricating them.
+  state.prospects = data.entries;
   if (!data.entries.length) {
     prospectsMount.innerHTML = `<div class="empty-state">No qualifying prospect performances found for ${day}.</div>`;
     detailMount.innerHTML = "";
@@ -221,12 +244,19 @@ function gradeRowHtml(label, value) {
 
 function scoutingCardHtml(p, data) {
   const logo = `https://www.mlbstatic.com/team-logos/${p.team_id}.svg`;
+  // One close button, in the shared header every entry point (league/Top
+  // 100 list, team-specific list, farm rankings, search, performers) all
+  // render through - closeProspectDetail() just re-clears detailMount,
+  // same effect the existing view-switch/reload clears already had, now
+  // also reachable without switching views.
+  const closeBtn = `<button class="scouting-close-btn" type="button" onclick="closeProspectDetail()" aria-label="Close">&times;</button>`;
   const header = `
     <div class="scouting-card-header">
+      ${closeBtn}
       <img class="scouting-headshot" src="${p.headshot_url}" onerror="this.style.visibility='hidden'" />
       <div>
         <div class="prospect-name">${p.name}</div>
-        <div class="prospect-sub"><img class="team-logo" src="${logo}" onerror="this.style.visibility='hidden'" /> ${p.team_name || ""} &nbsp;&#183;&nbsp; ${p.position}</div>
+        <div class="prospect-sub"><img class="team-logo" src="${logo}" onerror="this.style.visibility='hidden'" /> <span class="team-card-link" data-teamcard-id="${p.team_id}">${p.team_name || ""}</span> &nbsp;&#183;&nbsp; ${p.position || ""}</div>
       </div>
     </div>
   `;
@@ -261,6 +291,12 @@ function scoutingCardHtml(p, data) {
       <div class="muted" style="font-size:11px; margin-top:10px;">Report: ${data.report_label} &middot; MLB Pipeline scouting write-up via Baseball Savant</div>
     </div>
   `;
+}
+
+function closeProspectDetail() {
+  detailMount.innerHTML = "";
+  state.selectedMlbId = null;
+  [...document.querySelectorAll(".prospect-row.selected")].forEach((r) => r.classList.remove("selected"));
 }
 
 async function selectProspect(mlbId) {
@@ -332,6 +368,12 @@ async function switchToTeamView(teamId) {
   [...viewToggle.querySelectorAll("button")].forEach((b) => b.classList.toggle("active", b.dataset.value === "team"));
   teamSelectWrap.style.display = "block";
   searchWrap.style.display = "block";
+  // Was missing - the viewToggle click handler shows this for "team" view
+  // (line ~380) but this alternate entry point (clicking a farm-rankings
+  // row) never did, so a click from Farm Rankings landed on Team Specific
+  // with the position filter dropdown stuck hidden until the user manually
+  // clicked a top-nav view button.
+  positionFilterWrap.style.display = "block";
   teamSelect.value = teamId;
   await loadProspects();
 }
@@ -362,6 +404,7 @@ viewToggle.addEventListener("click", async (e) => {
   detailMount.innerHTML = "";
   [...viewToggle.querySelectorAll("button")].forEach((b) => b.classList.toggle("active", b.dataset.value === state.view));
   teamSelectWrap.style.display = state.view === "team" ? "block" : "none";
+  positionFilterWrap.style.display = (state.view === "league" || state.view === "team") ? "block" : "none";
   dateWrap.style.display = state.view === "performers" ? "block" : "none";
   searchWrap.style.display = (state.view === "farm" || state.view === "performers") ? "none" : "block";
   await loadProspects();
@@ -372,6 +415,13 @@ teamSelect.addEventListener("change", async () => {
   state.selectedMlbId = null;
   detailMount.innerHTML = "";
   await loadProspects();
+});
+
+positionFilter.addEventListener("change", () => {
+  state.position = positionFilter.value;
+  state.selectedMlbId = null;
+  detailMount.innerHTML = "";
+  renderList(state.allProspects, state.rankKey);
 });
 
 dateInput.addEventListener("change", loadProspects);

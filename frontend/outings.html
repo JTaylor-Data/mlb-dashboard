@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Outing Breakdown - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=39" />
+  <style>
+    /* ── Controls ────────────────────────────────────────────────── */
+    /* Outing select hidden until a pitcher is chosen */
+    #outing-select-group { display: none; }
+    /* Viewing toggle hidden until an outing with two pitchers is loaded */
+    #outing-viewing-group { display: none; }
+
+    /* Outing select styled to match season-select width */
+    #outing-select { min-width: 260px; }
+
+    /* Viewing toggle uses the shared .toggle-group style but with named
+       pitcher labels that can be longer than "ALL / L / R" */
+    #outing-viewing-group .toggle-group button { font-size: 12px; padding: 4px 11px; max-width: 180px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* ── Stat line ───────────────────────────────────────────────── */
+    .stat-line-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 18px; margin-bottom: 18px;
+      box-shadow: var(--shadow);
+    }
+    .stat-line-title { font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 10px; }
+    .stat-line-row { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-end; }
+    .stat-box {
+      display: flex; flex-direction: column; align-items: center;
+      background: var(--surface-alt); border: 1px solid var(--border);
+      border-radius: 6px; padding: 6px 12px; min-width: 52px;
+    }
+    .stat-box-label { font-size: 9px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.4px; color: var(--text-muted); line-height: 1; }
+    .stat-box-value { font-size: 20px; font-weight: 900; font-family: var(--font-data);
+      color: var(--text); line-height: 1.2; }
+
+    /* ── Two-panel layout ────────────────────────────────────────── */
+    .outing-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    @media (max-width: 860px) { .outing-panels { grid-template-columns: 1fr; } }
+
+    .panel-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px; box-shadow: var(--shadow);
+    }
+    .panel-title { font-size: 10px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 14px; }
+
+    /* ── Data tables ─────────────────────────────────────────────── */
+    table.outing-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    table.outing-table th {
+      font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+      color: var(--text-muted); padding: 4px 8px; border-bottom: 1px solid var(--border);
+      text-align: right; white-space: nowrap; background: var(--surface-alt);
+    }
+    table.outing-table th:first-child { text-align: left; }
+    table.outing-table td {
+      padding: 6px 8px; border-bottom: 1px solid var(--border);
+      text-align: right; font-family: var(--font-data); vertical-align: middle;
+    }
+    table.outing-table td:first-child { text-align: left; font-family: inherit; }
+    table.outing-table tr:last-child td { border-bottom: none; }
+
+    /* Usage bar inside table */
+    .usage-bar-cell { display: flex; align-items: center; gap: 6px; }
+    .usage-bar-track { flex: 1; height: 8px; background: var(--border); border-radius: 3px; overflow: hidden; min-width: 40px; }
+    .usage-bar-fill { height: 100%; border-radius: 3px; }
+    .usage-bar-pct { font-size: 11.5px; font-family: var(--font-data); color: var(--text); min-width: 32px; text-align: right; }
+
+    /* Delta arrows */
+    .delta { font-size: 11px; font-weight: 700; white-space: nowrap; }
+    .delta-up   { color: #1a7f37; }
+    .delta-down { color: #c9302c; }
+    .delta-zero { color: var(--text-muted); }
+
+    .pt-chip { font-size: 11px; font-weight: 800; letter-spacing: 0.3px; }
+    .result-cell-hi { font-weight: 800; color: var(--forest-dark); }
+
+    /* ── Outing hero header ─────────────────────────────────────── */
+    .outing-hero {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 14px;
+    }
+    .outing-hero-left { display: flex; align-items: center; gap: 12px; }
+    .outing-headshot {
+      width: 62px; height: 62px; border-radius: 6px; object-fit: cover;
+      border: 1px solid var(--border);
+    }
+    .outing-team-logo { width: 40px; height: 40px; object-fit: contain; }
+    .outing-player-name { font-size: 20px; font-weight: 900; color: var(--text); line-height: 1.1; }
+    .outing-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+    .outing-hero-right { display: flex; gap: 8px; flex-shrink: 0; }
+
+    /* ALL summary rows */
+    table.outing-table tr.outing-all-row { border-top: 2px solid var(--border); font-weight: 700; }
+    table.outing-table tr.outing-all-row td { border-bottom: none; }
+
+    /* ── Player search dropdown ──────────────────────────────────── */
+    /* Reuse the shared .player-search wrapper from index.html */
+    .player-search { position: relative; }
+    .player-search-dropdown {
+      position: absolute; top: 100%; left: 0; right: 0; z-index: 200;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 5px; max-height: 220px; overflow-y: auto;
+      box-shadow: var(--shadow); display: none;
+    }
+    .player-search-item { padding: 7px 10px; cursor: pointer; font-size: 13px;
+      display: flex; justify-content: space-between; gap: 8px; }
+    .player-search-item:hover, .player-search-item.active-item { background: var(--surface-alt); }
+    .player-search-item .search-role { font-size: 10px; color: var(--text-muted); font-weight: 700; }
+    .player-search-item .search-team { font-size: 10px; color: var(--text-muted); }
+    .player-search-heading { padding: 4px 10px; font-size: 9px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-muted); border-bottom: 1px solid var(--border);
+      background: var(--surface-alt); }
+    .player-search-empty { padding: 8px 10px; font-size: 12px; color: var(--text-muted); }
+    .player-search-input { width: 100%; }
+
+    /* ── Pitch sequence chart ───────────────────────────────────── */
+    .seq-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+    .seq-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--text-muted); }
+    .seq-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .seq-grid { display: flex; flex-wrap: wrap; gap: 16px 28px; }
+    .seq-inning { min-width: 180px; }
+    .seq-inning-label { font-size: 9px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 8px; }
+    .seq-abs { display: flex; flex-direction: column; gap: 7px; }
+    .seq-row { display: flex; align-items: center; gap: 8px; }
+    .seq-hand { font-size: 9px; font-weight: 900; width: 12px; text-align: center;
+      color: var(--text-muted); flex-shrink: 0; }
+    .seq-hand-l { color: #6b7280; }
+    .seq-dots { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+    .seq-dot { display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: default; position: relative; }
+    .seq-dot-circle { width: 13px; height: 13px; border-radius: 50%; opacity: 0.85;
+      border: 1.5px solid rgba(0,0,0,0.12); flex-shrink: 0; }
+    .seq-dot-last .seq-dot-circle { width: 15px; height: 15px; opacity: 1;
+      border: 2px solid rgba(0,0,0,0.25); }
+    .seq-dot-lbl { font-size: 8px; font-weight: 700; color: var(--text-muted); line-height: 1; white-space: nowrap; }
+    .seq-result { font-size: 10px; font-weight: 900; padding: 2px 6px; border-radius: 4px;
+      letter-spacing: 0.2px; white-space: nowrap; flex-shrink: 0; }
+    .res-k   { background: rgba(232, 82, 82, 0.15); color: #c0392b; }
+    .res-bb  { background: rgba(52, 144, 224, 0.15); color: #2980b9; }
+    .res-hr  { background: rgba(230, 194, 0, 0.2); color: #b8860b; }
+    .res-hit { background: rgba(46, 160, 67, 0.15); color: #1a7f37; }
+    .res-out { background: rgba(100, 100, 100, 0.1); color: var(--text-muted); }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="subnav"></div>
+  <div class="page">
+    <h1>Outing Breakdown</h1>
+    <div class="loading-bar" id="page-loading"><div class="loading-bar-fill"></div></div>
+
+    <!-- Single controls row — matches the dashboard pattern exactly -->
+    <div class="controls-row" style="align-items:flex-end; flex-wrap:wrap;">
+
+      <!-- Pitcher search (always visible) -->
+      <div>
+        <span class="control-label">Pitcher</span>
+        <div class="player-search" style="min-width:240px;">
+          <input type="text" class="player-search-input" id="outing-player-search"
+                 placeholder="Search any pitcher…" autocomplete="off" />
+          <div class="player-search-dropdown" id="outing-player-dropdown"></div>
+        </div>
+      </div>
+
+      <!-- Outing select — appears once a pitcher is chosen -->
+      <div id="outing-select-group">
+        <span class="control-label">Outing</span>
+        <select id="outing-select"><option value="">Select…</option></select>
+      </div>
+
+      <!-- Viewing toggle — appears once an outing with both pitchers is loaded -->
+      <div id="outing-viewing-group">
+        <span class="control-label">Viewing</span>
+        <div class="toggle-group" id="outing-viewing-toggle">
+          <button id="toggle-main-pitcher" class="active" data-side="main"></button>
+          <button id="toggle-opp-pitcher" data-side="opp"></button>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="outing-body" style="margin-top:24px;"></div>
+  </div>
+
+  <script src="js/api.js?v=9"></script>
+  <script src="js/gradient.js?v=22"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/player-search.js?v=9"></script>
+  <script src="js/outings.js?v=6"></script>
+</body>
+</html>

@@ -1,10 +1,10 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Tunneling+ Model - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=17" />
+  <link rel="stylesheet" href="css/theme.css?v=39" />
   <style>
     .tn-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
     @media (max-width: 1000px) { .tn-layout { grid-template-columns: 1fr; } }
@@ -18,60 +18,87 @@
     .tn-table td:first-child, .tn-table th:first-child { text-align: left; }
     .tn-table td.best { font-weight: 800; color: var(--forest-dark); }
 
-    .tn-seq-bar-row { display: grid; grid-template-columns: 50px 1fr 60px; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .tn-bar-row { display: grid; grid-template-columns: 60px 1fr 70px; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .tn-bar-track { position: relative; background: #e9e7df; border-radius: 6px; height: 12px; }
+    .tn-bar-fill { position: absolute; top: 0; left: 0; height: 12px; border-radius: 6px; background: var(--forest); }
+    .tn-note { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+    .tn-seq-bar-row { display: grid; grid-template-columns: 90px 1fr 100px; align-items: center; gap: 10px; margin-bottom: 8px; }
     .tn-seq-track { position: relative; background: #e9e7df; border-radius: 6px; height: 14px; }
     .tn-seq-fill { position: absolute; top: 0; left: 0; height: 14px; border-radius: 6px; background: var(--forest); }
-    .tn-seq-note { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
 
     .tn-arsenal-head { margin-bottom: 10px; font-size: 14px; }
-    .tn-pair-table td.plus-best { font-weight: 800; color: var(--bark-dark); }
-    .tn-pair-table tr.tn-anchor-row { background: var(--bark-tint); }
-
+    #tn-pitcher-shap-table td.plus-pos { color: #1a7f37; font-weight: 700; }
+    #tn-pitcher-shap-table td.plus-neg { color: #c9302c; font-weight: 700; }
     #tn-status { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
   </style>
 </head>
 <body>
   <div id="nav"></div>
+  <div id="subnav"></div>
   <div class="page">
     <h1>Tunneling+ Model</h1>
     <p class="tn-blurb">
-      v1, first pass - a self-directed model, not built to any outside spec. Measures pitch-pair <b>tunneling</b>: how
-      close together two of a pitcher's pitch types are (in inches, full pairwise average across every real pitch of
-      each type - not a distance between averages) at the point a hitter has to commit to swinging (~23.5 ft from the
-      plate), versus how far apart they actually end up at the plate. <b>Tunneling+</b> is the geometric mean of
-      <b>Decision Sim+</b> (close at the decision point) and <b>Plate Sep+</b> (different late), each scaled
-      100=league average, same convention as Stuff+/wRC+. A pair needs to be reasonably good at both to score well;
-      one strong half can't fully carry a weak one. <b>Release Sim+</b> is also shown (close at release) but isn't
-      part of the score - tested as a third factor and dropped after it measurably weakened the model's validated
-      predictive power, see the PDF's Section 3.3. Pairs involving the four-seam or sinker (a hitter's primary read)
-      count double toward a pitcher's headline score - shaded pairs in the arsenal table below. Physics-derived from
-      Statcast's own trajectory fit (the same constant-acceleration model this site's VAA metric already uses), not a
-      proxy or a black box - see the validation results below and the full methodology PDF for the complete
-      reasoning.
+      v3, the current standard. A single trained model (LightGBM, no hand-built composite) that scores every real
+      pitch using up to 6 pitches of real, same-at-bat sequence history: for each pitch back (lag 1-6), how far apart
+      it and the current pitch were at this pitcher's own <b>commit point</b> (reused from v2 - the distance from the
+      plate reached 200ms before arrival, computed from that pitcher's own fastest fastball-family pitch, not a fixed
+      distance for every pitcher) and at the plate, plus a shape-break term and the prior pitch's type. Unlike v1/v2,
+      same-type prior pitches are NOT excluded - a pitcher's 2nd straight fastball is real information, not noise to
+      drop. The model has no separate "pair score" at all - it's trained directly against real run-value outcomes
+      (delta_run_exp) and scored 100 = league average, same convention as every other model on this site. A tighter
+      score spread than Stuff+ is expected here, not a flaw: tunneling is a real but inherently smaller lever a
+      pitcher can pull independently, compared to raw pitch quality.
     </p>
 
-    <div class="tn-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Methodology</h3>
-        <div class="tn-meta-grid" id="tn-meta-mount"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Split-Half Reliability</h3>
-        <table class="data-table tn-table" id="tn-reliability-table"></table>
-        <div class="tn-seq-note">Correlation between the score computed on two independent random halves of each pitcher's pitches - is this measuring something stable, or noise?</div>
+    <div class="plus-explainer">
+      <div class="plus-explainer-icon">&#8505;&#65039;</div>
+      <div>
+        <div class="plus-explainer-title">How to read this number</div>
+        <div class="plus-explainer-body">
+          <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b> from that
+          season's league-wide average - a score of 110 means a pitcher graded roughly 1 standard deviation better
+          than average that season, <b>not "10% better."</b> Scores are z-scored fresh within each season, so the
+          same score in two different years means the same relative standing, not necessarily the same raw value.
+        </div>
       </div>
     </div>
 
     <div class="tn-layout section">
       <div class="card">
-        <h3 style="margin-top:0;">Does It Predict Real Outcomes?</h3>
-        <table class="data-table tn-table" id="tn-validity-table"></table>
-        <div class="tn-seq-note" id="tn-validity-note"></div>
+        <h3 style="margin-top:0;">Model</h3>
+        <div class="tn-meta-grid" id="tn-meta-mount"></div>
       </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Lag-Slot Importance (SHAP)</h3>
+        <div id="tn-lagshap-mount"></div>
+        <div class="tn-note">Mean absolute SHAP contribution per pitch-back (commit + plate + shape-break distances, plus prior pitch type) - how much each lag slot actually moves a prediction, on average. Falls off with distance back, as expected: what happened 1 pitch ago matters more than 6 pitches ago.</div>
+      </div>
+    </div>
+
+    <div class="tn-layout section">
       <div class="card">
         <h3 style="margin-top:0;">Sequential Same-At-Bat Test</h3>
         <div id="tn-seq-mount"></div>
-        <div class="tn-seq-note" id="tn-seq-note"></div>
+        <div class="tn-note" id="tn-seq-note"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Out-of-Sample Predictive Validity</h3>
+        <table class="data-table tn-table" id="tn-predictive-table"></table>
+        <div class="tn-note">A model trained on every season except 2024, scored on 2024's pitches, correlated against each pitcher's REAL 2025 outcomes - a genuine out-of-sample check, not in-sample fit.</div>
+      </div>
+    </div>
+
+    <div class="tn-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Year-Over-Year Stability</h3>
+        <table class="data-table tn-table" id="tn-yoy-table"></table>
+        <div class="tn-note" id="tn-yoy-note"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Cross-Model Correlation, Cross-Validation (2021-2025)</h3>
+        <table class="data-table tn-table" id="tn-cross-table"></table>
+        <table class="data-table tn-table" id="tn-cv-table" style="margin-top:14px;"></table>
       </div>
     </div>
 
@@ -107,9 +134,10 @@
   </div>
 
   <script src="js/api.js?v=17"></script>
-  <script src="js/nav.js?v=101"></script>
-  <script src="js/player-search.js?v=17"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/player-search.js?v=20"></script>
   <script src="js/season-select.js?v=17"></script>
-  <script src="js/tunneling-model.js?v=6"></script>
+  <script src="js/tunneling-model.js?v=9"></script>
 </body>
 </html>

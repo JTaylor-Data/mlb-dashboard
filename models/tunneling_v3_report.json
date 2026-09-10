@@ -1,0 +1,141 @@
+{
+  "n_training_rows": 3044719,
+  "all_features": [
+    "lag1_commit_distance",
+    "lag1_plate_distance",
+    "lag1_shape_break",
+    "lag2_commit_distance",
+    "lag2_plate_distance",
+    "lag2_shape_break",
+    "lag3_commit_distance",
+    "lag3_plate_distance",
+    "lag3_shape_break",
+    "lag4_commit_distance",
+    "lag4_plate_distance",
+    "lag4_shape_break",
+    "lag5_commit_distance",
+    "lag5_plate_distance",
+    "lag5_shape_break",
+    "lag6_commit_distance",
+    "lag6_plate_distance",
+    "lag6_shape_break",
+    "lag1_pitch_type",
+    "lag2_pitch_type",
+    "lag3_pitch_type",
+    "lag4_pitch_type",
+    "lag5_pitch_type",
+    "lag6_pitch_type",
+    "pitch_type",
+    "p_throws",
+    "stand",
+    "season"
+  ],
+  "cv_folds": [
+    {
+      "holdout_season": 2021,
+      "r2": 0.008301759952931254,
+      "mae": 0.13542475392307846,
+      "n": 522422
+    },
+    {
+      "holdout_season": 2022,
+      "r2": 0.00685880255933069,
+      "mae": 0.12886766307908817,
+      "n": 520973
+    },
+    {
+      "holdout_season": 2023,
+      "r2": 0.0072598702436514895,
+      "mae": 0.13411455201877692,
+      "n": 528450
+    },
+    {
+      "holdout_season": 2024,
+      "r2": 0.00773721636210023,
+      "mae": 0.1306788912088169,
+      "n": 522153
+    },
+    {
+      "holdout_season": 2025,
+      "r2": 0.00681516818801331,
+      "mae": 0.1314639239443103,
+      "n": 522025
+    }
+  ],
+  "cv_r2_mean": 0.007394563461205395,
+  "cv_mae_mean": 0.13210995683481414,
+  "mean_abs_shap": {
+    "lag1_commit_distance": 0.002371173559603555,
+    "lag1_plate_distance": 0.00595151720054894,
+    "lag1_shape_break": 0.0005583205866610614,
+    "lag2_commit_distance": 0.0027286376222300603,
+    "lag2_plate_distance": 0.0032413439029174533,
+    "lag2_shape_break": 0.0004940776736623787,
+    "lag3_commit_distance": 0.0024118370503593955,
+    "lag3_plate_distance": 0.00215626488824928,
+    "lag3_shape_break": 0.0004100615237372547,
+    "lag4_commit_distance": 0.0015031179945635999,
+    "lag4_plate_distance": 0.0014287229373319875,
+    "lag4_shape_break": 0.00029956309000045954,
+    "lag5_commit_distance": 0.0009421251591324574,
+    "lag5_plate_distance": 0.0007896134857105799,
+    "lag5_shape_break": 0.00031120945047813245,
+    "lag6_commit_distance": 0.0004327872599905431,
+    "lag6_plate_distance": 0.000326193688481089,
+    "lag6_shape_break": 0.00012957029878189833,
+    "lag1_pitch_type": 0.0009605223982669064,
+    "lag2_pitch_type": 0.0004233297039159715,
+    "lag3_pitch_type": 0.00022733226474737128,
+    "lag4_pitch_type": 0.0001863882574678171,
+    "lag5_pitch_type": 0.00018059586010332445,
+    "lag6_pitch_type": 0.00017177900250400576,
+    "pitch_type": 0.0016706772001838963,
+    "p_throws": 2.3188451039524278e-05,
+    "stand": 9.403760287815763e-05,
+    "season": 0.0003704818514214149
+  },
+  "lag_slot_shap_summary": {
+    "lag1": {
+      "commit_distance": 0.002371173559603555,
+      "plate_distance": 0.00595151720054894,
+      "shape_break": 0.0005583205866610614,
+      "distance_group_total": 0.008881011346813556,
+      "pitch_type": 0.0009605223982669064
+    },
+    "lag2": {
+      "commit_distance": 0.0027286376222300603,
+      "plate_distance": 0.0032413439029174533,
+      "shape_break": 0.0004940776736623787,
+      "distance_group_total": 0.006464059198809892,
+      "pitch_type": 0.0004233297039159715
+    },
+    "lag3": {
+      "commit_distance": 0.0024118370503593955,
+      "plate_distance": 0.00215626488824928,
+      "shape_break": 0.0004100615237372547,
+      "distance_group_total": 0.00497816346234593,
+      "pitch_type": 0.00022733226474737128
+    },
+    "lag4": {
+      "commit_distance": 0.0015031179945635999,
+      "plate_distance": 0.0014287229373319875,
+      "shape_break": 0.00029956309000045954,
+      "distance_group_total": 0.003231404021896047,
+      "pitch_type": 0.0001863882574678171
+    },
+    "lag5": {
+      "commit_distance": 0.0009421251591324574,
+      "plate_distance": 0.0007896134857105799,
+      "shape_break": 0.00031120945047813245,
+      "distance_group_total": 0.0020429480953211695,
+      "pitch_type": 0.00018059586010332445
+    },
+    "lag6": {
+      "commit_distance": 0.0004327872599905431,
+      "plate_distance": 0.000326193688481089,
+      "shape_break": 0.00012957029878189833,
+      "distance_group_total": 0.0008885512472535304,
+      "pitch_type": 0.00017177900250400576
+    }
+  }
+}

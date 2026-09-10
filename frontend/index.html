@@ -4,46 +4,84 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Player Page - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=17" />
+  <link rel="stylesheet" href="css/theme.css?v=39" />
   <style>
-    .player-layout { display: grid; grid-template-columns: 1fr 1.6fr; gap: 24px; align-items: stretch; }
+    /* Back to the grid default (stretch), now that the left column has a
+       SECOND child (#last-5-mount) meant to absorb the leftover height -
+       #left-panel-mount itself still has no flex, so Pitch Locations/Hit
+       Zones keeps its own natural height either way; only the column
+       wrapper and Last 5 stretch, which is exactly what "don't run past
+       the Movement Plot's bottom edge" needs. (Previously align-items:start
+       avoided a real bug where Pitch Locations itself had flex:1 and
+       stretched - not a risk anymore since that flex moved to Last 5.) */
+    .player-layout { display: grid; grid-template-columns: 1fr 1.6fr; gap: 24px; }
     .player-layout.equal-cols { grid-template-columns: 1fr 1fr; }
     .player-layout > div { display: flex; flex-direction: column; }
-    #percentiles-mount, #right-panel-mount { flex: 1; display: flex; flex-direction: column; }
-    #percentiles-mount > .rt-panel, #percentiles-mount > .pct-card { flex: 1; }
-    .movement-plot-card { flex: 1; display: flex; flex-direction: column; min-height: 560px; }
+    #left-panel-mount, #right-panel-mount { display: flex; flex-direction: column; }
+    #right-panel-mount { flex: 1; min-height: 0; }
+    /* min-height:0 is load-bearing here - without it a flex child won't
+       shrink below its own content size, so "flex:1 to match the right
+       column's height" silently became "grow past it instead" whenever
+       5 rows of content was taller than the right column happened to be. */
+    #last-5-mount { height: 320px; flex: 0 0 320px; display: flex; flex-direction: column; }
+    #last-5-mount > .card { min-height: 0; overflow-y: auto; flex: 1; }
+    .movement-plot-card { flex: 1; display: flex; flex-direction: column; min-height: 400px; }
     .swing-field-card { flex: 1; display: flex; flex-direction: column; }
     .movement-plot-row { display: flex; gap: 14px; flex: 1; }
     .movement-plot-svg-wrap { flex: 1; min-width: 0; display: flex; }
     /* table.data-table {width:100%} in theme.css otherwise wins on
        specificity (element+class beats a lone class) and the summary table
        swallows the whole row, leaving zero width for the plot next to it. */
-    .movement-plot-side-col { width: 190px; flex: 0 0 190px; display: flex; flex-direction: column; gap: 18px; margin-top: 10px; }
-    .movement-plot-side-col table.movement-summary-table { width: 100%; }
+    .movement-plot-side-col { width: 150px; flex: 0 0 150px; display: flex; flex-direction: column; gap: 16px; margin-top: 10px; }
+    .movement-plot-side-col table.movement-summary-table { width: 100%; font-size: 12px; }
     @media (max-width: 900px) { .player-layout { grid-template-columns: 1fr; } .movement-plot-row { flex-direction: column; } .movement-plot-side-col { width: 100%; } }
     .movement-plot-caption { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
 
+    /* Real, checkpoint-tied loading bar (see GET /api/player/{id}/progress)
+       - collapsed to zero height + transparent at rest, rather than
+       display:none, so it never causes a layout jump when it appears; the
+       label's own width changes every checkpoint (step names differ in
+       length) but the bar itself doesn't reflow around that. */
+    .load-progress { display: flex; align-items: center; gap: 10px; height: 0; opacity: 0; overflow: hidden; margin: 0; transition: opacity 0.15s ease; }
+    .load-progress.active { height: auto; opacity: 1; margin: 4px 0 12px; }
+    .load-progress-track { flex: 1; height: 4px; background: var(--surface-alt); border-radius: 3px; overflow: hidden; }
+    .load-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--forest-light), var(--forest)); border-radius: 3px; transition: width 0.3s ease; }
+    .load-progress-label { font-size: 11px; font-weight: 700; color: var(--text-muted); white-space: nowrap; min-width: 150px; text-align: right; }
+
     .pitch-usage-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); margin-bottom: 8px; }
-    .pitch-usage-header { display: grid; grid-template-columns: 1fr 40px 1fr; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; color: var(--text-muted); margin-bottom: 8px; }
-    .pitch-usage-header span:first-child { text-align: right; }
-    .pitch-usage-header span:nth-child(2) { text-align: center; }
-    .pitch-usage-header span:last-child { text-align: left; }
-    .pitch-usage-row { display: grid; grid-template-columns: 1fr 40px 1fr; align-items: center; gap: 6px; margin-bottom: 7px; }
-    .pitch-usage-bar-l { display: flex; justify-content: flex-end; }
-    .pitch-usage-bar-r { display: flex; justify-content: flex-start; }
-    .pitch-usage-fill {
-      height: 20px; border-radius: 5px; color: #fff; font-weight: 800; font-size: 10.5px; line-height: 1;
-      display: flex; align-items: center; justify-content: flex-end; padding: 0 6px; min-width: 30px; white-space: nowrap;
-    }
-    .pitch-usage-bar-r .pitch-usage-fill { justify-content: flex-start; }
-    .pitch-usage-pill { text-align: center; font-weight: 800; font-size: 10.5px; line-height: 1; color: #fff; border-radius: 5px; padding: 5px 0; }
+    .rubber-widget { border-top: 1px solid var(--border); padding-top: 12px; }
+    .babip-widget { border-top: 1px solid var(--border); padding-top: 12px; text-align: center; }
     footer.caveats { margin-top: 40px; font-size: 11px; color: var(--text-muted); border-top: 1px solid var(--border); padding-top: 12px; }
 
-    .stuff-breakdown-card { margin-top: 16px; }
-    table.stuff-breakdown-table td, table.stuff-breakdown-table th { text-align: center; }
-    table.stuff-breakdown-table td.stuff-row-label { text-align: left; font-weight: 700; color: var(--forest-dark); }
-    table.stuff-breakdown-table th:first-child { text-align: left; }
+    .player-card-stuff { max-width: 460px; }
+    .stuff-plus-block { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    /* OPTIONAL/EXPLORATORY alt layout for the 4 model plaques - see
+       buildPlusPlaquesAlt/plusBadgeAlt in player.js, not wired in by
+       default. Kept here so it's ready to preview with a one-line swap. */
+    .plus-scorecard-row { display: flex; gap: 0; flex-wrap: wrap; border-radius: 8px; overflow: hidden; }
+    .plus-scorecard-item { border-left: 4px solid; padding: 4px 16px 4px 10px; background: var(--surface-alt); }
+    .plus-scorecard-value { font-size: 22px; font-weight: 800; line-height: 1.1; }
+    .plus-scorecard-label { font-size: 9.5px; font-weight: 700; letter-spacing: 0.4px; color: var(--text-muted); text-transform: uppercase; }
+    .badge-inline { padding: 3px 10px; flex: 0 0 auto; }
+    .badge-inline .badge-label { font-size: 9px; }
+    .badge-inline .badge-value { font-size: 15px; }
     .gauge-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+    /* Similar Players - compact strip at the bottom of the Swing & Field
+       card (first pass, batters only), sized to fit the space the spray
+       chart's crop freed up rather than growing the card - see
+       buildFieldSprayChart's dynamic viewBox crop in player.js. */
+    #similar-players-mount { margin-top: 12px; }
+    .sp-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); margin-bottom: 6px; }
+    .sp-subtitle { font-size: 10px; font-weight: 500; text-transform: none; letter-spacing: 0; color: var(--text-muted); opacity: 0.75; }
+    .sp-empty { font-size: 11.5px; color: var(--text-muted); }
+    .sp-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .sp-comp {
+      background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 8px 7px; text-align: center;
+    }
+    .sp-team-logo { width: 20px; height: 20px; display: block; margin: 0 auto 3px; }
+    .sp-comp-name { font-size: 11.5px; font-weight: 700; color: var(--forest-dark); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sp-comp-season { font-size: 10px; font-weight: 600; color: var(--text-muted); margin-top: 1px; }
     .gauge-card { position: relative; background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
     .gauge-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
     .gauge-body { text-align: center; margin-top: 2px; }
@@ -57,10 +95,48 @@
       padding: 2px 7px; border-radius: 20px; white-space: nowrap;
     }
     .spray-chart-caption { font-size: 12px; color: var(--text-muted); margin-top: 8px; margin-bottom: 4px; }
+
+    /* align-self: flex-start prevents the card from stretching to fill the
+       left column while Pitch Locations is still loading - it takes only
+       its own natural height regardless of what sits above it. */
+    .last5-card { display: flex; flex-direction: column; justify-content: space-between; gap: 6px; align-self: flex-start; width: 100%; overflow: hidden; }
+    .last5-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 10px; border-bottom: 1px solid var(--border); border-radius: 6px; }
+    .last5-row:last-child { border-bottom: none; }
+    .last5-row-top-performer { background: var(--gold-tint, rgba(230, 194, 0, 0.14)); box-shadow: inset 3px 0 0 #e6c200; }
+    .last5-meta { flex: 0 0 auto; min-width: 90px; }
+    .last5-date { font-size: 12px; font-weight: 700; color: var(--forest-dark); display: flex; align-items: center; }
+    .last5-outing-link { color: var(--forest-dark); text-decoration: none; }
+    .last5-outing-link:hover { text-decoration: underline; }
+    .last5-opp { font-size: 11px; color: var(--text-muted); }
+    /* Evenly spread across the row's own remaining width instead of
+       clustering with a small fixed gap near the meta column - the row
+       otherwise had plenty of unused space to the right of a tight 5-stat
+       cluster. */
+    .last5-cells { display: flex; flex: 1; justify-content: space-evenly; }
+    .last5-il-gap { display: flex; align-items: center; gap: 8px; padding: 6px 10px; background: rgba(220,38,38,0.07); border-left: 3px solid #dc2626; border-radius: 4px; flex-wrap: wrap; }
+    .last5-il-label { font-size: 11px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase; color: #dc2626; }
+    .last5-il-dates { font-size: 11px; color: var(--text-muted); }
+    .last5-il-injury { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+    /* --- Pitch Locations card (integrated heatmap, pitcher view) --- */
+    .pitch-locations-card { flex: 1; display: flex; flex-direction: column; min-height: 400px; }
+    .pitch-locations-header { display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+    .hitzone-header-centered { justify-content: center; }
+    .toggle-group-sm button { padding: 4px 10px; font-size: 11.5px; }
+    .heatmap-subtitle { text-align: center; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); margin-top: 2px; }
+    .heatmap-wrap { display: flex; justify-content: center; align-items: center; flex: 1; margin-top: 2px; }
+    .heatmap-caption { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+    /* --- Percentiles, wide box below (both roles): 3 groups side by side
+       instead of stacked - full page width to use down here, same layout
+       for pitchers and batters now. --- */
+    .rt-panel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+    @media (max-width: 900px) { .rt-panel-grid { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
   <div id="nav"></div>
+  <div id="subnav"></div>
   <div class="page">
     <h1>Player Page</h1>
 
@@ -86,18 +162,29 @@
       </div>
     </div>
 
+    <div class="load-progress" id="load-progress" aria-hidden="true">
+      <div class="load-progress-track"><div class="load-progress-fill" id="load-progress-fill"></div></div>
+      <div class="load-progress-label" id="load-progress-label"></div>
+    </div>
+
     <div id="player-card-mount"></div>
-    <div id="stuff-breakdown-mount"></div>
 
     <div class="player-layout section" id="player-layout">
       <div>
-        <h2>Percentiles</h2>
-        <div id="percentiles-mount"></div>
+        <h2 id="left-panel-title">Percentiles</h2>
+        <div id="left-panel-mount"></div>
+        <h2 id="last-5-title" style="margin-top:20px;">Last 5 Outings</h2>
+        <div id="last-5-mount"></div>
       </div>
       <div>
         <h2 id="right-panel-title">Movement Plot</h2>
         <div id="right-panel-mount"></div>
       </div>
+    </div>
+
+    <div class="section" id="pitcher-percentiles-section">
+      <h2>Percentiles</h2>
+      <div id="pitcher-percentiles-mount"></div>
     </div>
 
     <div class="section">
@@ -107,17 +194,19 @@
     </div>
 
     <footer class="caveats">
-      wRC+, xFIP, and Barrel% are approximations (no park factors; hardcoded historical constants where FanGraphs
-      data isn't available). Stuff+ is a first-pass per-pitch-type regression model, not a production-grade one.
-      Treat all three as directionally useful, not authoritative.
+      wRC+, xFIP, and Barrel% on the ALL split are real, officially-sourced season totals (MLB Stats API
+      sabermetrics / Baseball Savant); on the L/R split they fall back to this project's own approximation
+      (labeled "(approx)") since neither source publishes a split by opposing-pitcher-hand. Stuff+ is a
+      first-pass per-pitch-type regression model, not a production-grade one.
     </footer>
   </div>
 
-  <script src="js/api.js?v=17"></script>
-  <script src="js/gradient.js?v=17"></script>
-  <script src="js/nav.js?v=101"></script>
-  <script src="js/player-search.js?v=17"></script>
+  <script src="js/api.js?v=18"></script>
+  <script src="js/gradient.js?v=22"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/player-search.js?v=20"></script>
   <script src="js/season-select.js?v=17"></script>
-  <script src="js/player.js?v=19"></script>
+  <script src="js/player.js?v=39"></script>
 </body>
 </html>

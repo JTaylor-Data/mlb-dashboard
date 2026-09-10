@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>News - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=39" />
+  <style>
+    .news-feed { max-width: 880px; margin-top: 16px; }
+
+    /* Hero card — first story */
+    .news-hero {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 28px 32px; margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+    .news-hero .news-eyebrow {
+      font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 1.2px;
+      color: var(--forest); margin-bottom: 10px;
+    }
+    .news-hero .news-headline-link {
+      font-size: 22px; font-weight: 800; line-height: 1.25;
+    }
+    .news-hero .news-body {
+      font-size: 14.5px; line-height: 1.65; margin-top: 14px; margin-bottom: 0;
+    }
+    .news-hero .news-meta { margin-top: 16px; }
+
+    /* Regular cards — grid below hero */
+    .news-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    }
+    @media (max-width: 660px) { .news-grid { grid-template-columns: 1fr; } }
+
+    .news-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px;
+      box-shadow: var(--shadow); display: flex; flex-direction: column;
+    }
+    .news-item.priority-high { border-top: 2px solid #c9a227; }
+    .news-item.priority-low { opacity: 0.8; }
+
+    .news-headline-row { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+    .news-priority-badge {
+      font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.6px;
+      padding: 2px 6px; border-radius: 4px; flex-shrink: 0; margin-top: 2px;
+    }
+    .priority-high.news-priority-badge { background: #fef3c7; color: #92400e; border: 1px solid #f59e0b; }
+    .news-headline-link {
+      font-size: 15px; font-weight: 700; color: var(--forest-dark);
+      line-height: 1.35; text-decoration: none;
+    }
+    .news-headline-link:hover { color: var(--forest-light); text-decoration: underline; }
+    .news-body {
+      font-size: 13px; color: var(--text); line-height: 1.55; margin-bottom: 10px; flex: 1;
+    }
+    .news-meta {
+      font-size: 11px; color: var(--text-muted); display: flex; gap: 12px; align-items: center;
+      margin-top: auto;
+    }
+    .news-source-badge {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+      background: var(--surface-alt); border: 1px solid var(--border);
+      border-radius: 3px; padding: 1px 5px; color: var(--text-muted);
+    }
+
+    .news-actions { margin-bottom: 12px; }
+    .refresh-btn {
+      background: var(--forest); color: #fff; border: none;
+      border-radius: 6px; padding: 7px 16px; font-size: 13px; font-weight: 700;
+      cursor: pointer;
+    }
+    .refresh-btn:disabled { opacity: 0.6; cursor: default; }
+    .freshness-note { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
+    .no-news { font-size: 14px; color: var(--text-muted); margin-top: 24px; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div class="page">
+    <h1>MLB News</h1>
+    <div class="loading-bar" id="page-loading"><div class="loading-bar-fill"></div></div>
+
+    <div class="news-actions">
+      <button class="refresh-btn" id="refresh-btn" type="button">Refresh News</button>
+    </div>
+    <div class="freshness-note" id="freshness-note"></div>
+    <div class="news-feed" id="news-mount"></div>
+  </div>
+
+  <script src="js/api.js?v=9"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/news.js?v=2"></script>
+</body>
+</html>

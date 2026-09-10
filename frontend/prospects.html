@@ -1,10 +1,10 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Prospects - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=10" />
+  <link rel="stylesheet" href="css/theme.css?v=39" />
 </head>
 <body>
   <div id="nav"></div>
@@ -13,13 +13,27 @@
 
     <div class="controls-row">
       <div class="toggle-group" id="view-toggle">
-        <button data-value="league" class="active">League Wide</button>
+        <button data-value="league" class="active">Top 100</button>
         <button data-value="team">Team Specific</button>
         <button data-value="farm">Farm Rankings</button>
         <button data-value="performers">Top Performers</button>
       </div>
       <div id="team-select-wrap" style="display:none;">
         <select id="team-select"></select>
+      </div>
+      <div id="position-filter-wrap">
+        <select id="position-filter">
+          <option value="">All positions</option>
+          <option value="RHP">RHP</option>
+          <option value="LHP">LHP</option>
+          <option value="C">C</option>
+          <option value="1B">1B</option>
+          <option value="2B">2B</option>
+          <option value="3B">3B</option>
+          <option value="SS">SS</option>
+          <option value="INF">INF (unspecified)</option>
+          <option value="OF">OF</option>
+        </select>
       </div>
       <div id="date-wrap" style="display:none;">
         <input type="date" id="performers-date-input" />
@@ -46,7 +60,7 @@
   </div>
 
   <script src="js/api.js?v=10"></script>
-  <script src="js/nav.js?v=101"></script>
-  <script src="js/prospects.js?v=10"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/prospects.js?v=13"></script>
 </body>
 </html>

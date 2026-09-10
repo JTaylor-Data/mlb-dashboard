@@ -28,8 +28,9 @@ function performerRowHtml(rank, entry) {
       <div class="performer-rank">${rank}</div>
       <img class="team-logo" src="${logo}" onerror="this.style.visibility='hidden'" />
       <div>
-        <div class="performer-name">${entry.name}</div>
-        <div class="performer-sub">${roleTag} &nbsp;&#183;&nbsp; ${entry.opponent}${walkoff}</div>
+        <a class="performer-name performer-name-link" href="index.html"
+           data-player-id="${entry.player_id}" data-name="${entry.name}" data-role="${entry.role}">${entry.name}</a>
+        <div class="performer-sub">${roleTag} &nbsp;&#183;&nbsp; ${entry.opponent}${walkoff}${entry.role === "pitcher" && entry.game_id ? `&nbsp;<a class="outing-btn" href="outings.html?player_id=${entry.player_id}&game_id=${entry.game_id}&season=2026">outing ↗</a>` : ""}</div>
       </div>
       ${statCells(entry)}
       <div class="wpa-cell">
@@ -40,19 +41,84 @@ function performerRowHtml(rank, entry) {
   `;
 }
 
-async function loadTopPerformers() {
-  const day = dateInput.value;
+// Small callout listing every walk-off from that night, independent of the
+// leaderboard below it - a walk-off's day score may or may not also crack
+// the top 10 (both are fine, not mutually exclusive).
+function walkoffPanelHtml(walkoffs) {
+  if (!walkoffs.length) return "";
+  const items = walkoffs
+    .map((w) => {
+      const logo = w.team_id ? `https://www.mlbstatic.com/team-logos/${w.team_id}.svg` : "";
+      const s = w.stats || {};
+      return `
+        <div class="walkoff-panel-item">
+          ${logo ? `<img src="${logo}" onerror="this.style.display='none'" />` : ""}
+          <span class="name">${w.name}</span>
+          <span class="line">${s.h ?? 0}-${s.ab ?? 0}, ${s.hr ?? 0} HR, ${s.rbi ?? 0} RBI</span>
+        </div>
+      `;
+    })
+    .join("");
+  return `<div class="walkoff-panel"><span class="walkoff-panel-title">Walk-Offs</span>${items}</div>`;
+}
+
+let activePerformerRole = "pitcher";
+let lastPerformerData = null;
+
+function renderPerformers(entries) {
   const mount = document.getElementById("performers-mount");
-  const data = await getJSON(`/api/top-performers?date=${day}`);
-  if (!data.entries.length) {
-    mount.innerHTML = `<div class="empty-state">No games found for ${day}.</div>`;
+  if (!entries || !entries.length) {
+    mount.innerHTML = `<div class="empty-state">No games found.</div>`;
     return;
   }
-  mount.innerHTML = `<div class="performers-list">${data.entries.map((e, i) => performerRowHtml(i + 1, e)).join("")}</div>`;
+  const filtered = entries.filter(e => e.role === activePerformerRole).slice(0, 10);
+  const toggle = `
+    <div class="performer-role-toggle">
+      <button class="${activePerformerRole === "pitcher" ? "active" : ""}" data-role="pitcher">Pitchers</button>
+      <button class="${activePerformerRole === "batter" ? "active" : ""}" data-role="batter">Batters</button>
+    </div>`;
+  const rows = filtered.length
+    ? `<div class="performers-list">${filtered.map((e, i) => performerRowHtml(i + 1, e)).join("")}</div>`
+    : `<div class="empty-state">No ${activePerformerRole}s for this date.</div>`;
+  mount.innerHTML = toggle + rows;
+  mount.querySelectorAll(".performer-role-toggle button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      activePerformerRole = btn.dataset.role;
+      renderPerformers(lastPerformerData);
+    });
+  });
+}
+
+async function loadTopPerformers() {
+  const day = dateInput.value;
+  const walkoffMount = document.getElementById("walkoff-mount");
+  setPageLoading(true);
+  try {
+    const data = await getJSON(`/api/top-performers?date=${day}`);
+    walkoffMount.innerHTML = walkoffPanelHtml(data.walkoffs || []);
+    lastPerformerData = data.entries || [];
+    renderPerformers(lastPerformerData);
+  } finally {
+    setPageLoading(false);
+  }
 }
 
 dateInput.addEventListener("change", loadTopPerformers);
 window.onDataRefresh = loadTopPerformers;
+
+// Clicking a name takes you to the Player tab already loaded on that
+// person - PlayerContext is the same cross-page mechanism the player/
+// radar/splits/model pages already read on their own init.
+document.addEventListener("click", (e) => {
+  const link = e.target.closest(".performer-name-link");
+  if (!link) return;
+  PlayerContext.setCurrent({
+    player_id: Number(link.dataset.playerId), name: link.dataset.name, role: link.dataset.role,
+  });
+  PlayerContext.recordRecent({
+    player_id: Number(link.dataset.playerId), name: link.dataset.name, role: link.dataset.role,
+  });
+});
 
 (async function init() {
   const meta = await getJSON("/api/meta");

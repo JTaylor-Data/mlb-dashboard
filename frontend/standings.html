@@ -1,20 +1,24 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Standings - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=8" />
+  <link rel="stylesheet" href="css/theme.css?v=39" />
 </head>
 <body>
   <div id="nav"></div>
   <div class="page">
     <h1>Standings</h1>
+    <div class="loading-bar" id="page-loading"><div class="loading-bar-fill"></div></div>
 
-    <div class="controls-row">
-      <div class="toggle-group" id="league-toggle">
-        <button data-value="AL" class="active">AL</button>
-        <button data-value="NL">NL</button>
+    <div class="controls-row" style="align-items:flex-end;">
+      <div>
+        <span class="control-label">League</span>
+        <div class="toggle-group" id="league-toggle">
+          <button data-value="AL" class="active">AL</button>
+          <button data-value="NL">NL</button>
+        </div>
       </div>
       <div>
         <span class="control-label">Season</span>
@@ -32,9 +36,9 @@
   </div>
 
   <script src="js/api.js?v=9"></script>
-  <script src="js/gradient.js?v=9"></script>
-  <script src="js/nav.js?v=101"></script>
+  <script src="js/gradient.js?v=22"></script>
+  <script src="js/nav.js?v=111"></script>
   <script src="js/season-select.js?v=9"></script>
-  <script src="js/standings.js?v=9"></script>
+  <script src="js/standings.js?v=11"></script>
 </body>
 </html>

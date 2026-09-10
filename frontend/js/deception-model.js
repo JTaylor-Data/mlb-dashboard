@@ -147,6 +147,20 @@ async function init() {
     { roleFilter: "pitcher" }
   );
   await search.load(report.report_season);
+
+  // Deep link from the player page's Deception+ badge (data.player_id,
+  // no season param needed - this model has no season selector, see the
+  // module docstring) - same pattern as stuff-model.js's pitcher_id
+  // read-back, so a click on that badge lands here pre-loaded.
+  const params = new URLSearchParams(location.search);
+  const urlPitcherId = params.get("pitcher_id");
+  const remembered = PlayerContext.getCurrent();
+  if (urlPitcherId) {
+    loadPitcherDetail(Number(urlPitcherId), "");
+  } else if (remembered && remembered.role === "pitcher") {
+    search.setValue(remembered);
+    loadPitcherDetail(remembered.player_id, remembered.name);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);

@@ -19,27 +19,50 @@ function createPlayerSearch(inputEl, dropdownEl, onSelect, { roleFilter } = {}) 
     return s.normalize("NFD").replace(DIACRITICS_RE, "").toLowerCase();
   }
 
-  function roleTag(role) {
-    return role === "pitcher" ? "P" : "Hitter";
+  // Pitchers: handedness + SP/RP (e.g. "R-SP", "L-RP" - unclassified
+  // pitchers, usually too few appearances to call either way, default to
+  // RP same as the Last 5 Outings card's own fallback). Batters: LHH/RHH,
+  // matching the same "handedness box" label used elsewhere on this site;
+  // switch hitters show "SHH" (bats='S').
+  function roleTag(p) {
+    if (p.role === "pitcher") return `${p.throws || "?"}-${p.pitcher_role || "RP"}`;
+    return `${p.bats || "?"}HH`;
   }
 
   function render(query) {
     const q = fold(query.trim());
-    matches = q
-      ? allPlayers.filter((p) => fold(p.name).includes(q)).slice(0, 40)
-      : allPlayers.slice(0, 40);
+    let heading = "";
 
-    if (!matches.length) {
-      dropdownEl.innerHTML = `<div class="player-search-empty">No matches</div>`;
-      dropdownEl.style.display = "block";
-      return;
+    if (!q) {
+      // Empty box: show recent searches instead of dumping the first 40
+      // players in the list, which was never a meaningful default order.
+      const recent = (typeof PlayerContext !== "undefined" ? PlayerContext.getRecent() : [])
+        .filter((p) => !roleFilter || p.role === roleFilter);
+      matches = recent;
+      heading = "Recent Searches";
+      if (!matches.length) {
+        dropdownEl.innerHTML = `<div class="player-search-empty">No recent searches</div>`;
+        dropdownEl.style.display = "block";
+        return;
+      }
+    } else {
+      // p._folded is precomputed once in load() below, not re-folded
+      // (normalize + regex replace) on every single keystroke against the
+      // full ~1-2K player list.
+      matches = allPlayers.filter((p) => p._folded.includes(q)).slice(0, 40);
+      if (!matches.length) {
+        dropdownEl.innerHTML = `<div class="player-search-empty">No matches</div>`;
+        dropdownEl.style.display = "block";
+        return;
+      }
     }
 
-    dropdownEl.innerHTML = matches
+    const heading_html = heading ? `<div class="player-search-heading">${heading}</div>` : "";
+    dropdownEl.innerHTML = heading_html + matches
       .map((p, i) => `
         <div class="player-search-item" data-index="${i}">
           <span>${p.name}</span>
-          <span class="player-search-role">${roleTag(p.role)}</span>
+          <span class="player-search-role">${roleTag(p)}</span>
         </div>
       `)
       .join("");
@@ -61,15 +84,21 @@ function createPlayerSearch(inputEl, dropdownEl, onSelect, { roleFilter } = {}) 
   }
 
   function select(p) {
-    inputEl.value = `${p.name} (${roleTag(p.role)})`;
+    inputEl.value = `${p.name} (${roleTag(p)})`;
     dropdownEl.style.display = "none";
+    if (typeof PlayerContext !== "undefined") {
+      PlayerContext.recordRecent(p);
+      PlayerContext.setCurrent(p);
+    }
     onSelect(p);
   }
 
-  inputEl.addEventListener("input", () => render(inputEl.value));
-  inputEl.addEventListener("focus", () => render(inputEl.value));
-  inputEl.addEventListener("blur", () => setTimeout(() => { dropdownEl.style.display = "none"; }, 150));
-  inputEl.addEventListener("keydown", (e) => {
+  // Named (not inline-arrow) so destroy() below can actually remove them -
+  // an anonymous listener can never be un-registered.
+  const onInput = () => render(inputEl.value);
+  const onFocus = () => render(inputEl.value);
+  const onBlur = () => setTimeout(() => { dropdownEl.style.display = "none"; }, 150);
+  const onKeydown = (e) => {
     if (dropdownEl.style.display !== "block" || !matches.length) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
@@ -85,13 +114,18 @@ function createPlayerSearch(inputEl, dropdownEl, onSelect, { roleFilter } = {}) 
     } else if (e.key === "Escape") {
       dropdownEl.style.display = "none";
     }
-  });
+  };
+  inputEl.addEventListener("input", onInput);
+  inputEl.addEventListener("focus", onFocus);
+  inputEl.addEventListener("blur", onBlur);
+  inputEl.addEventListener("keydown", onKeydown);
 
   return {
     async load(season) {
       const url = season ? `/api/players/all?season=${season}` : "/api/players/all";
       const players = await getJSON(url);
-      allPlayers = roleFilter ? players.filter((p) => p.role === roleFilter) : players;
+      const filtered = roleFilter ? players.filter((p) => p.role === roleFilter) : players;
+      allPlayers = filtered.map((p) => ({ ...p, _folded: fold(p.name) }));
     },
     selectDefault(predicate) {
       const found = predicate ? allPlayers.find(predicate) : allPlayers[0];
@@ -99,7 +133,19 @@ function createPlayerSearch(inputEl, dropdownEl, onSelect, { roleFilter } = {}) 
       return found;
     },
     setValue(p) {
-      inputEl.value = `${p.name} (${roleTag(p.role)})`;
+      inputEl.value = `${p.name} (${roleTag(p)})`;
+    },
+    // Call before re-creating a search instance on the SAME input/dropdown
+    // elements (e.g. compare.js rebuilding on a role toggle) - without this,
+    // every rebuild stacked another full set of listeners + closure state on
+    // the same DOM nodes (a real, confirmed bug: every keystroke fired
+    // render() once per stacked instance, and Enter fired select()/onSelect
+    // once per instance too, each with its own stale `matches`).
+    destroy() {
+      inputEl.removeEventListener("input", onInput);
+      inputEl.removeEventListener("focus", onFocus);
+      inputEl.removeEventListener("blur", onBlur);
+      inputEl.removeEventListener("keydown", onKeydown);
     },
   };
 }

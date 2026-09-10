@@ -113,16 +113,40 @@ CREATE INDEX IF NOT EXISTS idx_pitches_season    ON pitches(season);
 CREATE INDEX IF NOT EXISTS idx_pitches_pitch_type ON pitches(pitch_type);
 CREATE INDEX IF NOT EXISTS idx_pitches_stand      ON pitches(stand);
 CREATE INDEX IF NOT EXISTS idx_pitches_p_throws   ON pitches(p_throws);
+-- Composite, season-first: every league-wide pool query (player search,
+-- percentile pools, similarity pools, ...) filters `WHERE season = ?` then
+-- needs distinct pitcher_id/batter_id - the single-column indexes above
+-- force SQLite to look up each matching row by rowid to read pitcher_id/
+-- batter_id. These let it answer straight from the index (COVERING INDEX,
+-- confirmed via EXPLAIN QUERY PLAN) - measured ~11x faster (1.7s -> 0.15s)
+-- on the /api/players/all query for a single season.
+CREATE INDEX IF NOT EXISTS idx_pitches_season_pitcher ON pitches(season, pitcher_id);
+CREATE INDEX IF NOT EXISTS idx_pitches_season_batter  ON pitches(season, batter_id);
 
--- Season-level Savant leaderboard stats (Sprint Speed, Outs Above Average) -
--- not derivable from the pitch-by-pitch pull, genuinely external aggregates
--- pulled separately, same category as the deferred FanGraphs table. One row
--- per player per season.
+-- Season-level Savant/MLB Stats API leaderboard stats - not derivable from
+-- the pitch-by-pitch pull, genuinely external aggregates pulled separately.
+-- One row per player per season. wrc_plus/xfip/barrel_pct_* are real,
+-- officially-sourced SEASON-TOTAL numbers (MLB Stats API's own sabermetrics
+-- stat group for wrc_plus/xfip, Baseball Savant's exit-velo/barrels
+-- leaderboard for barrel_pct_*) - FanGraphs itself is Cloudflare-blocked
+-- (see the earlier investigation note in api/presentation.py), but these
+-- are the same real numbers by a different, unblocked route. They have no
+-- opposing-pitcher-hand split (MLB doesn't publish one), so the L/R-split
+-- display still falls back to this project's own pitch-level approximation
+-- - only the ALL/unsplit view uses these.
 CREATE TABLE IF NOT EXISTS player_advanced_stats (
-    player_id     INTEGER,
-    season        INTEGER,
-    sprint_speed  REAL,       -- ft/sec, Baseball Savant sprint speed leaderboard
-    oaa           REAL,       -- Outs Above Average, Baseball Savant fielding leaderboard (all positions)
+    player_id           INTEGER,
+    season               INTEGER,
+    sprint_speed         REAL,   -- ft/sec, Baseball Savant sprint speed leaderboard
+    oaa                  REAL,   -- Outs Above Average, Baseball Savant fielding leaderboard (all positions)
+    wrc_plus             REAL,   -- real wRC+, MLB Stats API sabermetrics (hitting), season total
+    xfip                 REAL,   -- real xFIP, MLB Stats API sabermetrics (pitching), season total
+    barrel_pct_batting   REAL,   -- real Barrel% (own batted balls), Baseball Savant, season total
+    barrel_pct_pitching  REAL,   -- real Barrel% (allowed), Baseball Savant, season total
+    arm_strength         REAL,   -- real blended arm strength (mph), Baseball Savant arm-strength leaderboard
+    war_batting          REAL,   -- real batting WAR, MLB Stats API sabermetrics (hitting), season total
+    war_pitching         REAL,   -- real pitching WAR, MLB Stats API sabermetrics (pitching), season total
+    running_game_runs_prevented REAL,  -- real runs prevented via the running game (steals/pickoffs), Baseball Savant pitcher-running-game leaderboard's runs_prevented_on_running_attr - see pulls/pull_pitcher_running_game.py for why this column was chosen over the other candidate metrics
     PRIMARY KEY (player_id, season),
     FOREIGN KEY (player_id) REFERENCES players(player_id)
 );
@@ -186,4 +210,71 @@ CREATE TABLE IF NOT EXISTS ingested_dates (
     game_date     TEXT PRIMARY KEY,
     rows_inserted INTEGER,
     ingested_at   TEXT
+);
+
+-- Team-level season + trailing-30-day snapshot for the team card popup
+-- (click any team logo). OPS/ERA/bullpen ERA are official MLB Stats API
+-- numbers; FIP is self-computed with the standard formula from official
+-- HR/BB/HBP/K/IP (same FIP_CONSTANT_APPROX=3.10 already used for xFIP
+-- elsewhere in this project - FanGraphs itself is unreachable, blocked by
+-- a Cloudflare bot challenge even a real headless browser can't get past,
+-- confirmed directly). No bullpen_era_30d: the Stats API's date-range stat
+-- type silently ignores the relief-pitcher sitCode filter (confirmed
+-- directly - it returns identical numbers with and without it), and our
+-- own pitch data has no earned/unearned distinction to self-compute ERA
+-- from, so a real 30-day bullpen split isn't available from any source
+-- this project can reach. One row per team, overwritten on every pull.
+CREATE TABLE IF NOT EXISTS team_stats_snapshot (
+    team_id       INTEGER PRIMARY KEY,
+    season        INTEGER,
+    pulled_at     TEXT,
+    ops           REAL,       -- team's own season batting OPS
+    era           REAL,       -- team's own season pitching ERA
+    bullpen_era   REAL,       -- season relief-pitching-only ERA (sitCodes=rp)
+    fip           REAL,       -- self-computed, season
+    ops_30d       REAL,
+    era_30d       REAL,
+    fip_30d       REAL,       -- self-computed, trailing 30 days
+    baserunning_value REAL,   -- 0.2*SB - 0.4*CS, standard rough linear-weight
+                              -- approximation of the SB/CS component of
+                              -- baserunning value (runs) - NOT a full BsR
+                              -- (no taking-extra-bases component; that needs
+                              -- play-by-play data this project doesn't pull)
+    FOREIGN KEY (team_id) REFERENCES teams(team_id)
+);
+
+-- Current injured-list snapshot - who is on the IL RIGHT NOW, per the MLB
+-- Stats API's own 40-man-roster status codes (D10/D15/D60 - there is no
+-- dedicated "injured list" roster endpoint; 40Man is the only roster view
+-- that carries IL status on it, see pull_injuries.py). start_date and
+-- injury are real, parsed from that player's own /transactions history (the
+-- "placed <player> on the N-day injured list. <injury>." transaction text) -
+-- not fabricated. There is no official "expected return date" published by
+-- MLB Stats API anywhere; min_return_date is a REAL, computed lower bound
+-- (start_date + the IL type's minimum stint length, a hard roster rule),
+-- not a guess at when they'll actually be activated. Fully replaced on
+-- every pull (a snapshot of "on the IL today", not a running history log).
+CREATE TABLE IF NOT EXISTS il_status (
+    player_id       INTEGER PRIMARY KEY,
+    team_id         INTEGER,
+    il_type         TEXT,       -- 'D10' / 'D15' / 'D60' / 'D7'
+    il_label        TEXT,       -- 'Injured 10-Day' / 'Injured 15-Day' / etc, from the API's own status.description
+    start_date      TEXT,       -- real, parsed from the transactions feed
+    injury          TEXT,       -- real, parsed from the same transaction's description sentence, NULL if unavailable
+    min_return_date TEXT,       -- start_date + this IL type's minimum stint length (a real roster rule, not a guess)
+    pulled_at       TEXT,
+    FOREIGN KEY (player_id) REFERENCES players(player_id),
+    FOREIGN KEY (team_id) REFERENCES teams(team_id)
+);
+
+-- Remaining (not-yet-played) regular-season schedule, for Remaining
+-- Strength of Schedule on the team card - see pull_remaining_schedule.py.
+-- Fully replaced each pull, not upserted incrementally (yesterday's
+-- "remaining" set is stale, not additive).
+CREATE TABLE IF NOT EXISTS remaining_schedule (
+    game_id      INTEGER PRIMARY KEY,
+    season       INTEGER,
+    game_date    TEXT,
+    home_team_id INTEGER,
+    away_team_id INTEGER
 );

@@ -1,0 +1,120 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tunneling+ 3D - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=39" />
+  <style>
+    .t3-blurb { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; margin-bottom: 14px; }
+    #t3-status { font-size: 13px; color: var(--text-muted); margin: 8px 0; }
+
+    #t3-container {
+      position: relative; width: 100%; height: 720px; border-radius: 10px; overflow: hidden;
+      background: #8fc8ee; margin-top: 10px;
+    }
+    #t3-container canvas { display: block; }
+    #t3-legend {
+      position: absolute; top: 12px; left: 12px; background: rgba(15,20,30,0.85); color: #eee;
+      padding: 10px 14px; border-radius: 8px; font-size: 13px; line-height: 1.6; z-index: 10;
+      border: 1px solid #2a3550; max-width: 320px; font-family: system-ui, sans-serif;
+    }
+    #t3-legend h1 { font-size: 14px; margin: 0 0 6px; color: #fff; }
+    .t3-leg-row { display: flex; align-items: center; gap: 8px; }
+    .t3-leg-row input[type=checkbox] { accent-color: #5578c2; width: 14px; height: 14px; cursor: pointer; }
+    .t3-swatch { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+    .t3-tunnel-info { margin-top: 8px; padding-top: 8px; border-top: 1px solid #2a3550; color: #aab8d6; font-size: 11.5px; line-height: 1.5; }
+    .t3-tunnel-info b { color: #fff; }
+    #t3-hint { position: absolute; bottom: 10px; left: 12px; color: #789; font-size: 11px; z-index: 10; font-family: system-ui, sans-serif; }
+    #t3-views, #t3-splits {
+      position: absolute; right: 12px; z-index: 10; display: flex; gap: 6px;
+    }
+    #t3-views { top: 12px; }
+    #t3-splits { top: 56px; }
+    #t3-views button, #t3-splits button, #t3-controls button {
+      background: rgba(15,20,30,0.85); color: #cdd8ee; border: 1px solid #2a3550;
+      border-radius: 6px; padding: 7px 12px; font-size: 12px; font-family: system-ui, sans-serif;
+      cursor: pointer;
+    }
+    #t3-views button:hover, #t3-splits button:hover, #t3-controls button:hover { border-color: #4a5a7a; }
+    #t3-views button.active, #t3-splits button.active, #t3-speeds button.active {
+      background: #2a3f6a; color: #fff; border-color: #5578c2;
+    }
+    #t3-controls {
+      position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); z-index: 10;
+      display: flex; align-items: center; gap: 10px; background: rgba(15,20,30,0.85);
+      border: 1px solid #2a3550; border-radius: 8px; padding: 8px 12px;
+    }
+    #t3-btn-play { background: #2a3f6a; border-color: #5578c2; color: #fff; min-width: 64px; }
+    #t3-speeds { display: flex; gap: 4px; }
+    #t3-speeds button { padding: 7px 10px; }
+    .t3-ctrl-sep { width: 1px; height: 22px; background: #2a3550; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="subnav"></div>
+  <div class="page">
+    <h1>Tunneling+ 3D</h1>
+    <p class="t3-blurb">
+      Visualizes the exact physics behind the <a href="tunneling-model.html">Tunneling+</a> score - real release point,
+      real velocity, real movement, per pitch type, split by opponent handedness. The decision point (23.5ft from the
+      plate) and every score shown come straight from the same validated model, not a separate calculation.
+    </p>
+
+    <div class="controls-row">
+      <div style="min-width:320px; flex:1; max-width:420px;">
+        <span class="control-label">Pitcher</span>
+        <div class="player-search">
+          <input type="text" class="player-search-input" id="player-search-input" placeholder="Search any pitcher..." autocomplete="off" />
+          <div class="player-search-dropdown" id="player-search-dropdown"></div>
+        </div>
+      </div>
+      <div>
+        <span class="control-label">Season</span>
+        <select id="season-select"></select>
+      </div>
+    </div>
+    <div id="t3-status"></div>
+
+    <div id="t3-container">
+      <div id="t3-legend"><h1>Search a pitcher above</h1></div>
+      <div id="t3-views">
+        <button data-view="pitcher" onclick="window.__t3.setView('pitcher')">Pitcher View</button>
+        <button data-view="side" onclick="window.__t3.setView('side')">Side View</button>
+        <button data-view="ump" onclick="window.__t3.setView('ump')">Ump View</button>
+      </div>
+      <div id="t3-splits">
+        <button data-stand="R" class="active" onclick="window.__t3.setSplit('R')">vs RHH</button>
+        <button data-stand="L" onclick="window.__t3.setSplit('L')">vs LHH</button>
+      </div>
+      <div id="t3-controls">
+        <button id="t3-btn-play" onclick="window.__t3.togglePlay()">Play</button>
+        <button onclick="window.__t3.restart()">Restart</button>
+        <div class="t3-ctrl-sep"></div>
+        <div id="t3-speeds">
+          <button data-speed="0.1" onclick="window.__t3.setSpeed(0.1)">0.1x</button>
+          <button data-speed="0.25" onclick="window.__t3.setSpeed(0.25)">1/4x</button>
+          <button data-speed="0.5" class="active" onclick="window.__t3.setSpeed(0.5)">1/2x</button>
+          <button data-speed="1" onclick="window.__t3.setSpeed(1)">1x</button>
+        </div>
+      </div>
+      <div id="t3-hint">Drag to orbit &middot; scroll to zoom</div>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=17"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/player-search.js?v=20"></script>
+  <script src="js/season-select.js?v=17"></script>
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "./vendor/three.module.js"
+    }
+  }
+  </script>
+  <script type="module" src="js/tunnel3d.js?v=9"></script>
+</body>
+</html>

@@ -1,8 +1,9 @@
 /*
- * Stuff+ v2 model internals page: renders the offline training report
- * (CV performance, global feature importance) and, on picking a pitcher,
- * fetches a live per-pitch-type SHAP breakdown so every rating on the
- * site can be traced back to specific inputs rather than trusted blind.
+ * Stuff+ model internals page (v3 architecture): renders the offline
+ * training report (CV performance, global feature importance), a
+ * top/bottom Stuff+ leaderboard, and, on picking a pitcher, fetches a
+ * live per-pitch-type SHAP breakdown so every rating on the site can be
+ * traced back to specific inputs rather than trusted blind.
  */
 const FEATURE_LABELS = {
   release_speed: "Velo",
@@ -11,11 +12,11 @@ const FEATURE_LABELS = {
   spin_axis: "Spin Axis",
   hb: "Horizontal Break",
   ivb: "Induced Vert. Break",
-  release_extension: "Extension",
-  release_pos_x_as: "Release Side (arm-adj.)",
-  release_pos_z: "Release Height",
-  arm_angle: "Arm Angle",
   vaa_residual: "VAA vs. Expected",
+  axis_differential: "Axis Differential (SSW proxy)",
+  velo_sep_vs_primary_fb: "Velo Sep. vs. Primary FB",
+  hb_sep_vs_primary_fb: "H-Break Sep. vs. Primary FB",
+  ivb_sep_vs_primary_fb: "V-Break Sep. vs. Primary FB",
   pitch_type: "Pitch Type",
   p_throws: "Pitcher Hand",
   stand: "Batter Stand",
@@ -62,13 +63,20 @@ function renderPitcherBreakdown(breakdown) {
   mount.innerHTML = pitchTypes
     .map(([pitchType, data]) => {
       const maxAbs = Math.max(...data.contributions.map(([, v]) => Math.abs(v)), 0.01);
-      const stuffColor = data.stuff_plus >= 100 ? "#1a7f37" : "#c9302c";
+      // Named to avoid shadowing the shared stuffColor() gradient function
+      // from gradient.js - this is just a flat >=100 threshold color, not
+      // that function.
+      const plusColor = data.stuff_plus >= 100 ? "#1a7f37" : "#c9302c";
       const rows = data.contributions
         .map(([feature, points, typicalValue]) => {
           const halfWidth = (Math.abs(points) / maxAbs) * 50;
           const left = points >= 0 ? 50 : 50 - halfWidth;
           const color = points >= 0 ? "#1a7f37" : "#c9302c";
-          const displayVal = typeof typicalValue === "number" ? typicalValue.toFixed(2) : typicalValue;
+          // null means the feature is absent for every pitch in this slice
+          // (e.g. a fastball-separation feature on the pitcher's own
+          // primary-fastball pitch type - see _typical_value in
+          // analytics/stuff_model.py) - "n/a", not the literal word "null".
+          const displayVal = typeof typicalValue === "number" ? typicalValue.toFixed(2) : (typicalValue === null ? "n/a" : typicalValue);
           return `
             <div class="shap-row">
               <div class="shap-label">${featureLabel(feature)} <span class="muted">(${displayVal})</span></div>
@@ -86,7 +94,7 @@ function renderPitcherBreakdown(breakdown) {
           <div class="sm-pitch-head">
             <div class="sm-pitch-name">${pitchType}</div>
             <div class="sm-pitch-meta">${data.n_pitches} pitches</div>
-            <div class="sm-pitch-stuff" style="color:${stuffColor}">${data.stuff_plus.toFixed(0)}</div>
+            <div class="sm-pitch-stuff" style="color:${plusColor}">${data.stuff_plus.toFixed(0)}</div>
           </div>
           ${rows}
         </div>
@@ -114,36 +122,60 @@ function renderShrinkage(shrinkage) {
 
 function renderPredictiveValidity(pv) {
   document.getElementById("sm-pv-blurb").textContent =
-    `Each pitcher's ${pv.score_season} Stuff+ vs. their REAL ${pv.outcome_season} results (v2 scored ` +
-    `by a model that never saw ${pv.score_season} - honest out-of-sample; v1 in-sample, as it always worked).`;
+    `Each pitcher's ${pv.score_season} Stuff+ (the live v3 model, scored by a version that never saw ` +
+    `${pv.score_season} - honest out-of-sample) vs. their REAL ${pv.outcome_season} results.`;
 
   const minPitchesOptions = Object.keys(pv.results_by_min_pitches).map(Number).sort((a, b) => a - b);
   const midOption = String(minPitchesOptions[Math.floor(minPitchesOptions.length / 2)]);
   const result = pv.results_by_min_pitches[midOption];
 
   const rows = Object.entries(result.correlations)
-    .map(([outcome, c]) => {
-      const cells = [
-        ["v1", c.v1],
-        ["v2_unshrunk", c.v2_unshrunk],
-        ["v2_shrunk", c.v2_shrunk],
-      ];
-      const bestKey = cells.reduce((a, b) => (Math.abs(b[1]) > Math.abs(a[1]) ? b : a))[0];
-      const tds = cells.map(([key, val]) => `<td class="${key === bestKey ? "best" : ""}">${val.toFixed(3)}</td>`).join("");
-      return `<tr><td>${outcome}</td>${tds}</tr>`;
-    })
+    .map(([outcome, r]) => `<tr><td>${outcome}</td><td>${r.toFixed(3)}</td></tr>`)
     .join("");
 
   const mount = document.getElementById("sm-pv-mount");
   mount.innerHTML = `
     <table class="data-table sm-pv-table">
-      <thead><tr><th>${pv.outcome_season} outcome</th><th>v1 (legacy)</th><th>v2 (unshrunk)</th><th>v2 (shrunk)</th></tr></thead>
+      <thead><tr><th>${pv.outcome_season} outcome</th><th>r vs. ${pv.score_season} score</th></tr></thead>
       <tbody>${rows}</tbody>
     </table>
     <div style="margin-top:8px; font-size:12px; color:var(--text-muted);">
-      min ${midOption} ${pv.score_season} pitches, n=${result.n_qualified} qualified pitchers. Bolded = strongest correlation per row.
+      min ${midOption} ${pv.score_season} pitches, n=${result.n_qualified} qualified pitchers.
     </div>
   `;
+}
+
+function renderLeaderboardList(mountId, entries) {
+  const mount = document.getElementById(mountId);
+  if (!entries.length) {
+    mount.innerHTML = `<div class="muted" style="font-size:13px;">No qualified pitchers for this season.</div>`;
+    return;
+  }
+  mount.innerHTML = entries
+    .map((e, i) => {
+      const color = e.stuff_plus >= 100 ? "#1a7f37" : "#c9302c";
+      const team = e.team_abbrev ? ` <span class="muted">(${e.team_abbrev})</span>` : "";
+      return `
+        <div class="sm-lb-row">
+          <div class="sm-lb-rank">${i + 1}</div>
+          <div class="sm-lb-name">${e.name}${team}</div>
+          <div class="sm-lb-n muted">${e.n_pitches.toLocaleString()} pitches</div>
+          <div class="sm-lb-val" style="color:${color}">${e.stuff_plus.toFixed(0)}</div>
+        </div>
+      `;
+    })
+    .join("");
+}
+
+async function loadLeaderboard(season) {
+  try {
+    const lb = await getJSON(`/api/stuff-model/leaderboard?season=${season}`);
+    renderLeaderboardList("sm-lb-top-mount", lb.top);
+    renderLeaderboardList("sm-lb-bottom-mount", lb.bottom);
+  } catch (err) {
+    document.getElementById("sm-lb-top-mount").innerHTML = `<div class="muted" style="font-size:13px;">Failed to load.</div>`;
+    document.getElementById("sm-lb-bottom-mount").innerHTML = "";
+  }
 }
 
 async function loadPitcherBreakdown(playerId, season) {
@@ -177,9 +209,11 @@ async function init() {
   let selectedPlayer = null;
 
   const seasonSelect = createSeasonSelect(document.getElementById("season-select"), () => {
+    loadLeaderboard(seasonSelect.value);
     if (selectedPlayer) loadPitcherBreakdown(selectedPlayer.player_id, seasonSelect.value);
   });
   const defaultSeason = await seasonSelect.load();
+  loadLeaderboard(defaultSeason);
 
   const search = createPlayerSearch(
     document.getElementById("player-search-input"),
@@ -191,6 +225,18 @@ async function init() {
     { roleFilter: "pitcher" }
   );
   await search.load(defaultSeason);
+
+  const params = new URLSearchParams(location.search);
+  const urlPitcherId = params.get("pitcher_id");
+  const remembered = PlayerContext.getCurrent();
+  if (urlPitcherId) {
+    selectedPlayer = { player_id: Number(urlPitcherId), name: "", role: "pitcher" };
+    loadPitcherBreakdown(selectedPlayer.player_id, Number(params.get("season")) || seasonSelect.value);
+  } else if (remembered && remembered.role === "pitcher") {
+    selectedPlayer = remembered;
+    search.setValue(remembered);
+    loadPitcherBreakdown(remembered.player_id, seasonSelect.value);
+  }
 }
 
 document.addEventListener("DOMContentLoaded", init);

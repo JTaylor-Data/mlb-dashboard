@@ -1,0 +1,88 @@
+{
+  "all_features": [
+    "plate_x",
+    "plate_z",
+    "balls",
+    "strikes",
+    "pitch_type",
+    "stand",
+    "season"
+  ],
+  "numeric_features": [
+    "plate_x",
+    "plate_z",
+    "balls",
+    "strikes"
+  ],
+  "categorical_features": [
+    "pitch_type",
+    "stand",
+    "season"
+  ],
+  "category_levels": {
+    "pitch_type": [
+      "CH",
+      "CS",
+      "CU",
+      "FA",
+      "FC",
+      "FF",
+      "FO",
+      "FS",
+      "KN",
+      "SC",
+      "SI",
+      "SL",
+      "ST",
+      "SV"
+    ],
+    "stand": [
+      "L",
+      "R"
+    ],
+    "season": [
+      "2021",
+      "2022",
+      "2023",
+      "2024",
+      "2025",
+      "2026"
+    ]
+  },
+  "trained_at": "2026-08-27 00:13:02",
+  "lgbm_params": {
+    "objective": "huber",
+    "n_estimators": 2000,
+    "learning_rate": 0.03,
+    "num_leaves": 31,
+    "min_child_samples": 200,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 1.0,
+    "random_state": 42
+  },
+  "seasons_trained_on": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "shrinkage_k_by_pitch_type": {
+    "CH": 78.93781824243403,
+    "CS": 10.862059008187522,
+    "CU": 78.66468869608165,
+    "FA": 44.81505121881313,
+    "FC": 141.9640359253581,
+    "FF": 164.5811158120054,
+    "FS": 64.47596236171556,
+    "KN": 12.529357944475322,
+    "SI": 140.08387034573687,
+    "SL": 112.66191158891988,
+    "ST": 90.01407324493366,
+    "SV": 86.01318514175195
+  },
+  "shrinkage_fallback_k": 82.47550169209299
+}

@@ -1,0 +1,60 @@
+{
+  "variant": "b3_interaction",
+  "cv_folds": [
+    {
+      "holdout_season": 2021,
+      "r2": 0.0009860296524719647,
+      "mae": 0.12266770472708664,
+      "n_pitches": 383641,
+      "best_iteration": 332
+    },
+    {
+      "holdout_season": 2022,
+      "r2": 0.0007492049990179828,
+      "mae": 0.11623981615594843,
+      "n_pitches": 403363,
+      "best_iteration": 362
+    },
+    {
+      "holdout_season": 2023,
+      "r2": 0.0007741879484804981,
+      "mae": 0.12096567095518744,
+      "n_pitches": 415960,
+      "best_iteration": 188
+    },
+    {
+      "holdout_season": 2024,
+      "r2": 0.0001171001075691569,
+      "mae": 0.11845466883784302,
+      "n_pitches": 417425,
+      "best_iteration": 218
+    },
+    {
+      "holdout_season": 2025,
+      "r2": -0.00011722600403896166,
+      "mae": 0.11892306083774447,
+      "n_pitches": 423066,
+      "best_iteration": 397
+    }
+  ],
+  "cv_r2_mean": 0.0005018593407001282,
+  "cv_mae_mean": 0.119450184302762,
+  "gain_importance": {
+    "release_speed": 321.9353890120983,
+    "effective_speed": 514.1606574207544,
+    "release_spin_rate": 446.5245167016983,
+    "spin_axis": 401.59319035708904,
+    "hb": 441.54537948966026,
+    "ivb": 545.0165181159973,
+    "vaa_residual": 423.27199426293373,
+    "velo_sep_vs_primary_fb": 439.51568933576345,
+    "hb_sep_vs_primary_fb": 330.7422598451376,
+    "ivb_sep_vs_primary_fb": 392.6004110276699,
+    "axis_differential": 382.45650857686996,
+    "vaa_res_x_below": 634.0975882560015,
+    "pitch_type": 300.6909241825342,
+    "p_throws": 29.92133294045925,
+    "stand": 80.07730592787266,
+    "season": 224.82878783345222
+  }
+}

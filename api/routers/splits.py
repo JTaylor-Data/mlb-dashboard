@@ -10,24 +10,23 @@ from fastapi import APIRouter, Depends, Query
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from splits import compute_batter_splits, compute_pitcher_splits
+from analytics.metrics import classify_pitcher_archetype
+from analytics.splits import compute_batter_splits, compute_pitcher_splits
 
+from api.cache import ttl_cache
 from api.db import get_conn
 
 router = APIRouter(prefix="/api")
 
 
-@router.get("/splits/players")
-def splits_players(role: str = Query("pitcher", pattern="^(pitcher|batter)$"),
-                    season: int = Query(2026), conn=Depends(get_conn)):
-    id_col = "pitcher_id" if role == "pitcher" else "batter_id"
-    df = pd.read_sql(f"""
-        SELECT DISTINCT pl.player_id, pl.name
-        FROM players pl JOIN pitches p ON pl.player_id = p.{id_col}
-        WHERE p.season = ?
-        ORDER BY pl.name
-    """, conn, params=(season,))
-    return df.to_dict(orient="records")
+@ttl_cache()
+def _cached_pitcher_archetype(conn, season):
+    """classify_pitcher_archetype is a real, uncached league-wide pitch
+    scan (see its own module) - was being recomputed from scratch on every
+    single 'archetype' split request for any batter. Cached here, at the
+    router layer, same convention as api/routers/players.py's own wrappers
+    around analytics functions."""
+    return classify_pitcher_archetype(conn, season)
 
 
 @router.get("/splits/pitch-types")
@@ -58,7 +57,8 @@ def get_splits(
     if role == "pitcher":
         df = compute_pitcher_splits(conn, season, split_by, pitcher_id=player_id, pitch_type=pitch_type_arg)
     else:
-        df = compute_batter_splits(conn, season, split_by, batter_id=player_id, pitch_type=pitch_type_arg)
+        archetype_df = _cached_pitcher_archetype(conn, season) if split_by == "archetype" else None
+        df = compute_batter_splits(conn, season, split_by, batter_id=player_id, pitch_type=pitch_type_arg, archetype_df=archetype_df)
 
     if df.empty:
         return {"columns": [], "rows": []}

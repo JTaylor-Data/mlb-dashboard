@@ -2,10 +2,10 @@
 FastAPI app: mounts the API routers plus the static frontend. Run from the
 mlb_dashboard/ directory with:
 
-    python -m uvicorn api.main:app --port 8000
+    python -m uvicorn api.main:app --port 8010
 
-(cwd on sys.path is what lets api/routers/*.py do `from metrics import ...`
-etc. against the existing analytics modules, same as the Streamlit pages did.)
+(cwd on sys.path is what lets api/routers/*.py do `from analytics.metrics import ...`
+etc. against the analytics/ package, same as the Streamlit pages did.)
 """
 import sys
 from pathlib import Path
@@ -18,8 +18,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from api import cache, pull, scheduler
 from api.db import get_conn
 from api.routers import (
-    analysis, deception_report, players, prospects, splits, standings, stuff_model_report, top_performers,
-    tunneling_report,
+    analysis, deception_report, heatmaps, hitzones, location_report, players, playoffs, prospects, similar_players,
+    splits, standings, stuff_model_report, team_card, top_performers, tunneling_report, tunneling_3d,
+    teams, probable_pitchers, news,
 )
 from api.warmup import warm_cache_background
 
@@ -77,7 +78,17 @@ app.include_router(splits.router)
 app.include_router(analysis.router)
 app.include_router(stuff_model_report.router)
 app.include_router(tunneling_report.router)
+app.include_router(tunneling_3d.router)
 app.include_router(deception_report.router)
+app.include_router(location_report.router)
+app.include_router(team_card.router)
+app.include_router(heatmaps.router)
+app.include_router(hitzones.router)
+app.include_router(similar_players.router)
+app.include_router(playoffs.router)
+app.include_router(teams.router)
+app.include_router(probable_pitchers.router)
+app.include_router(news.router)
 
 
 @app.middleware("http")

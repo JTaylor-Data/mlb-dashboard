@@ -24,7 +24,7 @@ function divisionTableHtml(division) {
       return `
         <tr class="${t.is_best_in_league ? "best-record" : ""}">
           <td><img class="team-logo" src="${logo}" onerror="this.style.display='none'" /></td>
-          <td class="team-cell">${t.name}${crown}</td>
+          <td class="team-cell"><span class="team-card-link" data-teamcard-id="${t.team_id}">${t.name}</span>${crown}</td>
           <td>${t.wins}</td>
           <td>${t.losses}</td>
           <td>${t.win_pct.toFixed(3)}</td>
@@ -51,8 +51,13 @@ function divisionTableHtml(division) {
 }
 
 async function loadStandings() {
-  const data = await getJSON(`/api/standings?league=${currentLeague}&season=${state.season}`);
-  document.getElementById("divisions-mount").innerHTML = data.divisions.map(divisionTableHtml).join("");
+  setPageLoading(true);
+  try {
+    const data = await getJSON(`/api/standings?league=${currentLeague}&season=${state.season}`);
+    document.getElementById("divisions-mount").innerHTML = data.divisions.map(divisionTableHtml).join("");
+  } finally {
+    setPageLoading(false);
+  }
 }
 
 window.onDataRefresh = loadStandings;

@@ -4,7 +4,7 @@
     {
       "name": "mlb-dashboard-streamlit-legacy",
       "runtimeExecutable": "python",
-      "runtimeArgs": ["-m", "streamlit", "run", "dashboard.py", "--server.headless", "true"],
+      "runtimeArgs": ["-m", "streamlit", "run", "legacy_streamlit/dashboard.py", "--server.headless", "true"],
       "port": 8501
     },
     {

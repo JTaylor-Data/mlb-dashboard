@@ -64,7 +64,13 @@ async function loadSplits() {
   const pitchType = pitchTypeSelect.value;
   document.getElementById("results-title").textContent = `${state.playerName} — ${SPLIT_BY_LABELS[splitBy] || splitBy}`;
 
-  const data = await getJSON(`/api/splits?role=${state.mode}&player_id=${state.playerId}&split_by=${splitBy}&pitch_type=${encodeURIComponent(pitchType)}&season=${state.season}`);
+  setPageLoading(true);
+  let data;
+  try {
+    data = await getJSON(`/api/splits?role=${state.mode}&player_id=${state.playerId}&split_by=${splitBy}&pitch_type=${encodeURIComponent(pitchType)}&season=${state.season}`);
+  } finally {
+    setPageLoading(false);
+  }
   const mount = document.getElementById("table-mount");
   if (!data.rows.length) {
     mount.innerHTML = `<div class="empty-state">No data for this selection.</div>`;
@@ -92,11 +98,15 @@ window.onDataRefresh = async () => {
   populateSplitBy();
   state.season = await seasonSelect.load();
   await playerSearch.load(state.season);
-  const defaultPlayer = playerSearch.selectDefault((p) => p.role === "pitcher");
-  if (defaultPlayer) {
-    state.playerId = defaultPlayer.player_id;
-    state.mode = defaultPlayer.role;
-    state.playerName = defaultPlayer.name;
+  const remembered = PlayerContext.getCurrent();
+  const chosen = remembered
+    ? playerSearch.selectDefault((p) => p.player_id === remembered.player_id) || remembered
+    : playerSearch.selectDefault((p) => p.role === "pitcher");
+  if (chosen) {
+    if (remembered) playerSearch.setValue(chosen);
+    state.playerId = chosen.player_id;
+    state.mode = chosen.role;
+    state.playerName = chosen.name;
     populateSplitBy();
     await loadPitchTypes();
     await loadSplits();

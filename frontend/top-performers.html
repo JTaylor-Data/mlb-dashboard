@@ -1,35 +1,57 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Top Performers - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=8" />
+  <link rel="stylesheet" href="css/theme.css?v=39" />
+  <style>
+    /* .controls-row's shared align-items:center vertically centers each
+       sibling's WHOLE block - fine on every other page, where every
+       sibling has the same "label above, control below" shape. Here
+       #walkoff-mount has no label of its own, so centering its (shorter)
+       block against the Date field's (taller, label+input) block left the
+       walk-off content visually floating above the date input instead of
+       level with it. flex-end lines up their bottom edges instead, which
+       for a label-less block IS its content - i.e. level with the input. */
+    #top-performers-controls { align-items: flex-end; }
+    .outing-btn { font-size: 10px; font-weight: 700; color: var(--forest-dark); text-decoration: none;
+      letter-spacing: 0.2px; margin-left: 4px; opacity: 0.75; }
+    .outing-btn:hover { opacity: 1; text-decoration: underline; }
+    .performer-role-toggle { display: flex; gap: 0; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; width: fit-content; }
+    .performer-role-toggle button { background: var(--surface); border: none; padding: 7px 22px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-muted); transition: background 0.1s, color 0.1s; }
+    .performer-role-toggle button.active { background: var(--forest); color: #fff; }
+    .performer-role-toggle button:hover:not(.active) { background: var(--surface-alt); }
+  </style>
 </head>
 <body>
   <div id="nav"></div>
   <div class="page">
     <h1>Top Performers</h1>
+    <div class="loading-bar" id="page-loading"><div class="loading-bar-fill"></div></div>
 
-    <div class="controls-row">
+    <div class="controls-row" id="top-performers-controls">
       <div>
         <span class="control-label">Date</span>
         <input type="date" id="date-input" />
       </div>
+      <div id="walkoff-mount"></div>
     </div>
 
     <div class="muted" style="font-size:12px; margin-bottom:14px;">
-      Ranked by WPA (Win Probability Added), straight from Statcast's own per-pitch win expectancy - not modeled
-      by us. Box score stats and season OPS/ERA are live, official numbers from the MLB Stats API, not
-      reconstructed from Statcast.
+      Ranked by a per-day weighted score (batters: HR, then H, then RBI, then SB; pitchers: ER (lower is better),
+      then IP, then K, then H allowed). WPA (Win Probability Added, straight from Statcast's own per-pitch win
+      expectancy) is still shown but no longer drives the order. Box score stats and season OPS/ERA are live,
+      official numbers from the MLB Stats API, not reconstructed from Statcast.
     </div>
 
     <div id="performers-mount"></div>
   </div>
 
   <script src="js/api.js?v=8"></script>
-  <script src="js/gradient.js?v=8"></script>
-  <script src="js/nav.js?v=101"></script>
-  <script src="js/top-performers.js?v=8"></script>
+  <script src="js/gradient.js?v=22"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/top-performers.js?v=11"></script>
 </body>
 </html>

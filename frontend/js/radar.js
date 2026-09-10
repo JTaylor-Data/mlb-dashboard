@@ -106,7 +106,13 @@ async function loadRadar() {
   if (state.playerId === null || state.playerId === "") return;
   const requestId = ++loadRadarRequestId;
   const requestMode = state.mode;
-  const data = await getJSON(`/api/radar/${state.playerId}?role=${state.mode}&split=${state.split}&season=${state.season}`);
+  setPageLoading(true);
+  let data;
+  try {
+    data = await getJSON(`/api/radar/${state.playerId}?role=${state.mode}&split=${state.split}&season=${state.season}`);
+  } finally {
+    if (requestId === loadRadarRequestId) setPageLoading(false); // only the latest in-flight request controls the bar
+  }
   if (requestId !== loadRadarRequestId || requestMode !== state.mode) return;
   document.getElementById("radar-chart-mount").innerHTML = `
     <h3 style="margin-top:0;">${data.name}</h3>
@@ -123,10 +129,14 @@ window.onDataRefresh = async () => {
 (async function init() {
   state.season = await seasonSelect.load();
   await playerSearch.load(state.season);
-  const defaultPlayer = playerSearch.selectDefault((p) => p.role === "pitcher");
-  if (defaultPlayer) {
-    state.playerId = defaultPlayer.player_id;
-    state.mode = defaultPlayer.role;
+  const remembered = PlayerContext.getCurrent();
+  const chosen = remembered
+    ? playerSearch.selectDefault((p) => p.player_id === remembered.player_id) || remembered
+    : playerSearch.selectDefault((p) => p.role === "pitcher");
+  if (chosen) {
+    if (remembered) playerSearch.setValue(chosen);
+    state.playerId = chosen.player_id;
+    state.mode = chosen.role;
     splitLabel.textContent = state.mode === "pitcher" ? "Opponent bats" : "Opponent pitcher throws";
     await loadRadar();
   }

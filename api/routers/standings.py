@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from standings import best_record_team_id, compute_standings
+from analytics.standings import best_record_team_id, compute_standings
 
 from api.cache import ttl_cache
 from api.db import get_conn

@@ -22,6 +22,14 @@
   --border: #ddceac;
   --radius: 10px;
   --shadow: 0 1px 3px rgba(27, 67, 50, 0.08);
+  /* Distinct font, used ONLY inside data-dense grids (pitch table,
+     percentile panel) - deliberately not the global font, which stays on
+     the default sans-serif everywhere else (headings, gauges/SVG graphics,
+     Last 5 card) per direction. Was monospace (rejected per direction) -
+     now a condensed/bold sporty scoreboard face (Bahnschrift ships with
+     Windows, no webfont load needed) instead, still visually distinct from
+     the body font without going full-monospace. */
+  --font-data: "Bahnschrift", "Arial Narrow", "Helvetica Neue Condensed", "Segoe UI", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -120,6 +128,95 @@ h3 { font-size: 15px; }
 .nav-refresh:hover { background: #386f52; }
 .nav-refresh:disabled { opacity: 0.6; cursor: default; }
 
+/* Second-level tab strip for pages grouped under Player/Models - see
+   nav.js's PLAYER_GROUP/MODELS_GROUP. Only rendered on pages that belong
+   to a group (empty #subnav elsewhere collapses to nothing). */
+#subnav {
+  background: var(--bark-tint);
+  border-bottom: 1px solid var(--border);
+}
+#subnav:empty { display: none; }
+.subnav-inner {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  gap: 4px;
+  height: 40px;
+  align-items: center;
+}
+#subnav a {
+  color: var(--bark-dark);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
+}
+#subnav a:hover { background: rgba(107, 68, 35, 0.1); }
+#subnav a.active { background: var(--bark); color: #fff; }
+
+/* --- Team card popup (nav.js - click any team logo, anywhere) --- */
+#team-card-backdrop {
+  position: fixed; inset: 0; background: rgba(18, 48, 35, 0.35);
+  opacity: 0; pointer-events: none; transition: opacity 0.2s ease; z-index: 900;
+}
+#team-card-backdrop.open { opacity: 1; pointer-events: auto; }
+#team-card-panel {
+  position: fixed; top: 0; right: 0; height: 100vh; width: 460px; max-width: 92vw;
+  background: var(--surface); box-shadow: -4px 0 24px rgba(18, 48, 35, 0.25);
+  transform: translateX(100%); transition: transform 0.25s ease;
+  z-index: 901; overflow-y: auto; padding: 20px;
+}
+#team-card-panel.open { transform: translateX(0); }
+#team-card-close {
+  position: absolute; top: 14px; right: 14px; border: none; background: var(--surface-alt);
+  color: var(--text); width: 28px; height: 28px; border-radius: 50%; font-size: 18px;
+  line-height: 1; cursor: pointer;
+}
+#team-card-close:hover { background: var(--border); }
+.tc-header { display: flex; align-items: center; gap: 14px; margin: 6px 34px 14px 0; }
+.tc-logo { width: 56px; height: 56px; }
+.tc-name { font-size: 19px; font-weight: 800; color: var(--forest-dark); line-height: 1.2; }
+.tc-synopsis { font-size: 13px; line-height: 1.5; color: var(--text); background: var(--bark-tint);
+  border-radius: 8px; padding: 12px 14px; margin-bottom: 18px; }
+.tc-metrics-header, .tc-metric-row {
+  display: grid; grid-template-columns: 118px 1fr 76px 84px; align-items: center; gap: 8px;
+}
+.tc-metrics-header {
+  font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
+  color: var(--text-muted); padding: 0 4px 7px 4px; border-bottom: 1px solid var(--border);
+}
+.tc-metric-row { padding: 13px 4px; border-bottom: 1px solid var(--border); }
+.tc-metric-label { font-size: 14.5px; font-weight: 700; color: var(--forest-dark); }
+.tc-metric-value { font-size: 19px; font-weight: 800; color: var(--text); }
+.tc-metric-rank { font-size: 14px; font-weight: 700; }
+.tc-of { font-weight: 500; color: var(--text-muted); }
+.tc-rolling { font-size: 13px; font-weight: 700; color: var(--bark-dark); white-space: nowrap; }
+.tc-rolling-label { font-size: 9.5px; font-weight: 600; color: var(--text-muted); }
+.tc-rolling-na { font-size: 14px; font-weight: 700; color: var(--text-muted); }
+
+.tc-expand-btn {
+  background: none; border: none; cursor: pointer; padding: 0; margin-right: 5px;
+  color: var(--text-muted); font-size: 11px; vertical-align: 1px;
+  display: inline-block; transition: transform 0.15s ease;
+}
+.tc-expand-btn:hover { color: var(--forest-dark); }
+.tc-expand-btn.open { transform: rotate(-180deg); }
+.tc-expand-body {
+  background: var(--surface-alt); border-radius: 8px;
+  padding: 6px 10px; margin: -6px 4px 8px; max-height: 260px; overflow-y: auto;
+}
+.tc-expand-loading { font-size: 12px; color: var(--text-muted); padding: 6px 2px; }
+.tc-expand-row {
+  display: grid; grid-template-columns: 30px 20px 1fr 60px; align-items: center; gap: 8px;
+  padding: 4px 2px; font-size: 12.5px;
+}
+.tc-expand-rank { color: var(--text-muted); font-weight: 700; }
+.tc-expand-logo { width: 16px; height: 16px; }
+.tc-expand-team { font-weight: 700; color: var(--forest-dark); }
+.tc-expand-value { text-align: right; font-weight: 700; }
+
 /* --- Controls --- */
 .toggle-group {
   display: inline-flex;
@@ -173,11 +270,47 @@ select, input[type="date"] {
 /* --- Card --- */
 .card {
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 2px solid var(--bark-light);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   padding: 14px 20px;
 }
+
+/* Shared "how to read this number" explainer for any +-scale model page
+   (Stuff+, Deception+ - anything using the 100=average, 10pts=1 std-dev
+   z-score display). Deliberately its own visual language, not `.card` -
+   this needs to read as "important context," not just another content
+   box, and not a warning/success color either (this page already uses
+   bark-tint for "not useful" and green for "useful" - reusing either here
+   would misleadingly imply a verdict). */
+.plus-explainer {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: var(--surface-alt);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--forest);
+  border-radius: var(--radius);
+  padding: 12px 18px;
+  margin-bottom: 18px;
+}
+.plus-explainer-icon {
+  font-size: 20px;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.plus-explainer-title {
+  font-weight: 800;
+  color: var(--forest-dark);
+  margin-bottom: 3px;
+}
+.plus-explainer-body {
+  font-size: 13.5px;
+  color: var(--text);
+  line-height: 1.55;
+}
+.plus-explainer-body b { color: var(--forest-dark); }
 
 .player-card {
   display: flex;
@@ -194,6 +327,11 @@ select, input[type="date"] {
 }
 .player-card-id img { width: 46px; height: 46px; }
 .player-card-name { font-size: 21px; font-weight: 800; color: var(--forest-dark); }
+.player-card-position {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
+  color: var(--forest-dark); background: var(--bark-tint); border: 1px solid var(--bark);
+  border-radius: 20px; padding: 3px 9px; line-height: 1; align-self: center;
+}
 .player-card-stats { display: flex; flex-wrap: wrap; gap: 4px; }
 .stat-block { text-align: center; padding: 0 14px; }
 .stat-block-label { font-size: 11px; color: var(--text-muted); }
@@ -208,41 +346,15 @@ select, input[type="date"] {
 .badge-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.5px; }
 .badge-value { font-size: 20px; font-weight: 800; color: var(--forest-dark); }
 
-/* --- Percentile bars --- */
-.pct-group-header {
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-muted);
-  margin: 16px 0 8px;
-}
-.pct-row { margin-bottom: 16px; }
-.pct-row-top {
-  display: flex;
-  justify-content: space-between;
-  font-size: 15.5px;
-  margin-bottom: 5px;
-  color: var(--text);
-  font-weight: 600;
-}
-.pct-track {
-  background: #e5e7eb;
-  border-radius: 8px;
-  height: 23px;
-  width: 100%;
-}
-.pct-fill {
-  border-radius: 8px;
-  height: 23px;
-}
-
 /* --- Tables --- */
 table.data-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
 }
+/* Pitch Table / Performance vs Pitch Type specifically - not every
+   .data-table site-wide (Standings, Prospects keep the default font). */
+#table-mount table.data-table { font-family: var(--font-data); }
 table.data-table th {
   text-align: center;
   padding: 6px 8px;
@@ -260,15 +372,24 @@ table.data-table td {
   color: var(--text);
 }
 table.data-table td.pitch-type-cell {
-  text-align: left;
+  text-align: center;
   font-weight: 700;
   color: #fff;
+  padding: 6px 7px;
 }
 table.data-table tr.league-avg-row {
   font-weight: 700;
   border-top: 2px solid var(--border);
 }
 table.data-table tr.league-avg-row td { color: var(--text); }
+/* Faint group divider between the sample-size, outcome/physical, and
+   percent-stat column clusters (see TABLE_GROUP_START_KEYS in player.js) -
+   a left border on the group's first column, not a separate element, so
+   column widths/alignment are untouched. */
+table.data-table th.col-group-start,
+table.data-table td.col-group-start {
+  border-left: 1px solid var(--border);
+}
 
 /* --- Movement summary table (Player page, pitcher movement plot) --- */
 table.movement-summary-table {
@@ -283,7 +404,7 @@ table.movement-summary-table tbody td {
 table.movement-summary-table tbody tr:last-child td { border-bottom: none; }
 table.movement-summary-table tbody tr:nth-child(even) td { background: var(--bg); }
 table.movement-summary-table tbody tr:nth-child(odd) td { background: var(--surface); }
-table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spacing: 0.3px; font-size: 12.5px; }
+table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spacing: 0.3px; font-size: 12.5px; text-align: center; }
 
 /* --- Standings --- */
 .division-table td.team-cell { text-align: left; font-weight: 600; }
@@ -311,7 +432,11 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
 .performer-row:last-child { border-bottom: none; }
 .performer-rank { font-size: 20px; font-weight: 800; color: var(--text-muted); }
 .performer-row img.team-logo { width: 42px; height: 42px; }
-.performer-name { font-size: 19px; font-weight: 800; color: var(--forest-dark); line-height: 1.25; }
+.performer-name {
+  font-size: 19px; font-weight: 800; color: var(--forest-dark); line-height: 1.25;
+  text-decoration: none; display: inline-block; cursor: pointer;
+}
+.performer-name:hover { text-decoration: underline; }
 .performer-sub { font-size: 10px; color: var(--text-muted); font-weight: 600; margin-top: 2px; }
 .stat-cell { text-align: center; }
 .stat-cell-value { font-size: 18px; font-weight: 700; color: var(--text); }
@@ -329,6 +454,52 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
 
 .empty-state { color: var(--text-muted); padding: 20px 0; }
 
+/* Shared indeterminate loading bar - same visual language as the player
+   page's own checkpoint-driven progress bar (thin bar, forest gradient
+   fill), for pages that just need "something is loading" around one plain
+   fetch rather than real multi-step checkpoints. Collapsed to zero height
+   at rest (not display:none) so it never causes a layout jump when it
+   appears - same convention the player page's own bar already uses. */
+.loading-bar { height: 0; overflow: hidden; opacity: 0; border-radius: 3px; background: var(--surface-alt); transition: opacity 0.15s ease; margin: 0; }
+.loading-bar.active { height: 4px; opacity: 1; margin: 4px 0 12px; }
+.loading-bar-fill { height: 100%; width: 40%; background: linear-gradient(90deg, var(--forest-light), var(--forest)); border-radius: 3px; animation: loading-bar-slide 1.1s ease-in-out infinite; }
+@keyframes loading-bar-slide {
+  0% { margin-left: -40%; }
+  100% { margin-left: 100%; }
+}
+
+.walkoff-panel {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.walkoff-panel-title {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--bark-dark, var(--bark));
+  white-space: nowrap;
+  flex: 0 0 auto;
+  margin-right: 2px;
+}
+.walkoff-panel-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  background: var(--bark-tint);
+  border: 1px solid var(--bark);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+.walkoff-panel-item img { width: 18px; height: 18px; }
+.walkoff-panel-item .name { font-size: 12px; font-weight: 700; color: var(--text); }
+.walkoff-panel-item .line { font-size: 11px; color: var(--text-muted); }
+
 .player-card-handedness {
   font-size: 12px;
   font-weight: 700;
@@ -339,11 +510,31 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
   padding: 3px 8px;
   align-self: center;
 }
+.player-card-handedness-stacked { text-align: center; line-height: 1.3; padding: 3px 10px; }
+.handedness-label { font-size: 9px; letter-spacing: 0.3px; }
+.handedness-value { font-size: 14px; font-weight: 800; color: var(--forest-dark); }
 
-/* --- Pitcher Results/Traits panel: boxed, green(good)/red(bad) bars with a
-   percentile badge riding the end of the fill. Distinct on purpose from the
-   batter panel's blue-grey-red gradient bars (kept as-is elsewhere). --- */
-.rt-panel { display: flex; flex-direction: column; gap: 18px; justify-content: space-between; }
+.il-badge-wrap { position: relative; align-self: center; }
+.il-badge {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
+  color: #fff; background: #dc2626; border: none; border-radius: 6px;
+  padding: 5px 10px; cursor: pointer; line-height: 1;
+}
+.il-badge:hover { background: #b91c1c; }
+.il-detail {
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 20;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 10px 12px; min-width: 230px; box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  font-size: 12.5px; color: var(--text); line-height: 1.7;
+}
+.il-detail-label { color: var(--text-muted); font-weight: 700; margin-right: 4px; }
+
+/* --- Percentile bars: shared structure (boxed, badge riding the end of the
+   fill, centered) for BOTH pitcher and batter panels - only the fill/badge
+   COLOR differs (pitchers: green>=50th/red<50th threshold; batters: the
+   original blue-grey-red continuous gradient), passed in per role from
+   player.js's renderPercentiles(). --- */
+.rt-panel { display: flex; flex-direction: column; gap: 18px; justify-content: space-between; font-family: var(--font-data); }
 .rt-section-title {
   font-size: 12px;
   font-weight: 700;
@@ -354,12 +545,31 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
 }
 .rt-row {
   display: grid;
-  grid-template-columns: 102px 1fr 76px;
+  grid-template-columns: 128px 1fr 76px;
   align-items: center;
   gap: 12px;
   margin-bottom: 17px;
 }
-.rt-label { font-size: 14.5px; font-weight: 600; color: var(--text); }
+/* Unqualified player (Baseball Savant convention: shaded/muted, not hidden
+   and not shown identically to a qualified player's bar) - see
+   renderPercentileGroups() in player.js. */
+.rt-row-unqualified { opacity: 0.42; filter: grayscale(0.5); }
+.rt-unqualified-banner {
+  font-size: 11.5px; color: var(--text-muted); background: var(--surface-alt);
+  border: 1px dashed var(--border); border-radius: 6px; padding: 6px 10px; margin-bottom: 4px;
+}
+.rt-label {
+  font-size: 11.5px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Explains a metric whose usual polarity flips for this specific player
+   (e.g. FB VAA: steeper = bad for most pitchers, but good for a
+   sinkerballer) - a plain title-attribute tooltip, same pattern already
+   used elsewhere on this page, not a custom popup component. */
+.rt-note-icon {
+  color: var(--text-muted); font-size: 12px; margin-left: 4px; cursor: help;
+  font-style: normal;
+}
 .rt-track {
   position: relative;
   background: #e9e7df;
@@ -376,12 +586,16 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
   color: #fff;
   font-size: 12px;
   font-weight: 800;
-  line-height: 1;
+  line-height: 29px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
   transform: translate(-50%, -50%);
   box-shadow: 0 0 0 3px var(--surface);
+  box-sizing: border-box;
+  padding: 0;
 }
 .rt-value { font-size: 14.5px; color: var(--text-muted); text-align: right; }
 
@@ -411,6 +625,14 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
   border: 1px solid var(--border);
   border-radius: 8px;
   box-shadow: 0 6px 20px rgba(20, 30, 25, 0.15);
+}
+.player-search-heading {
+  padding: 6px 12px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-muted);
 }
 .player-search-item {
   display: flex;
@@ -492,11 +714,26 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
 
 .prospects-layout { display: flex; gap: 24px; align-items: flex-start; }
 .prospects-main { flex: 1; min-width: 0; }
-.prospects-detail { width: 440px; flex-shrink: 0; position: sticky; top: 76px; }
+/* Independently scrollable, not just sticky - sticky alone pins the panel's
+   position but doesn't scroll ITS OWN content, so a long description just
+   ran off the bottom of the screen and you had to scroll the whole page
+   (list included) past the description to read the rest of it. Capped to
+   the viewport height below its sticky offset and made scrollable on its
+   own, so scrolling over the description moves only the description. */
+.prospects-detail {
+  width: 440px; flex-shrink: 0; position: sticky; top: 76px;
+  max-height: calc(100vh - 96px); overflow-y: auto;
+}
 .prospects-detail:empty { display: none; }
 
-.scouting-card { display: flex; flex-direction: column; gap: 4px; padding: 24px 26px; }
+.scouting-card { display: flex; flex-direction: column; gap: 4px; padding: 24px 26px; position: relative; }
 .scouting-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 4px; }
+.scouting-close-btn {
+  position: absolute; top: 14px; right: 16px;
+  background: none; border: none; cursor: pointer; line-height: 1;
+  font-size: 24px; font-weight: 700; color: var(--text-muted); padding: 4px;
+}
+.scouting-close-btn:hover { color: var(--forest-dark); }
 .scouting-card-header img.scouting-headshot {
   width: 68px; height: 68px; border-radius: 50%; object-fit: cover; background: var(--surface-alt);
 }
@@ -556,3 +793,157 @@ table.farm-table img.team-logo { width: 28px; height: 28px; vertical-align: midd
   font-size: 10.5px; font-weight: 700; color: var(--bark-dark); background: var(--bark-tint);
   border: 1px solid var(--bark-light); border-radius: 20px; padding: 3px 9px; white-space: nowrap;
 }
+
+/* --- Playoffs: WC Race page --- */
+:root { --gold: #e6c200; --gold-dark: #a68f00; }
+.dl-card { padding: 20px 26px; }
+.dl-title { font-size: 17px; font-weight: 800; color: var(--forest-dark); margin-bottom: 16px; letter-spacing: 0.2px; }
+.dl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+@media (max-width: 700px) { .dl-grid { grid-template-columns: 1fr; gap: 20px; } }
+.dl-col-title { font-size: 12.5px; font-weight: 800; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 10px; }
+.dl-row {
+  display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border);
+}
+.dl-row:last-child { border-bottom: none; }
+.dl-row img.team-logo { width: 30px; height: 30px; flex-shrink: 0; }
+.dl-info { flex: 1; min-width: 0; }
+.dl-division { font-size: 10.5px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; }
+.dl-name { font-size: 14.5px; font-weight: 800; color: var(--forest-dark); }
+.dl-record { font-size: 14px; font-weight: 800; white-space: nowrap; }
+.dl-lead { font-size: 12px; color: var(--text-muted); font-weight: 700; min-width: 46px; text-align: right; }
+
+.wc-card { padding: 20px 26px; }
+table.wc-table td, table.wc-table th { padding: 12px 16px; font-size: 13.5px; }
+table.wc-table td.wc-rank { font-weight: 800; color: var(--text-muted); }
+table.wc-table td.team-cell { font-weight: 800; font-size: 14px; color: var(--forest-dark); }
+tr.wc-cutline td { border-bottom: 3px dashed var(--gold); }
+.wc-in {
+  color: var(--forest-dark); background: var(--gold); border-radius: 5px; padding: 3px 9px;
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.3px;
+}
+
+/* --- Playoffs: Bracket page --- */
+/* Drawn directly on the page's own off-white background (--bg) - no card
+   wrapper - per direction. */
+.bracket-title-row { display: flex; align-items: center; gap: 12px; }
+.bracket-title { font-size: 24px; font-weight: 800; color: var(--forest-dark); }
+.bracket-real-badge {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
+  background: var(--forest); color: #fff; border-radius: 5px; padding: 3px 9px;
+}
+/* justify-content:space-between + flex-grow on every direct child (see
+   .bracket-half/.bracket-col-standalone below) - the whole row stretches
+   to fill whatever width the page gives it instead of sitting as a
+   fixed-width block in the middle, spreading out toward the screen edges
+   on a wide window. Each child's own min-width still caps how far it can
+   shrink, so a narrower window just falls back to the compact layout with
+   no overflow risk.
+   align-items:stretch (the default - not center, not flex-start, both
+   tried and rejected): every direct child gets the SAME height, matching
+   the tallest one (.bracket-half, with its two stacked WC/DS pairs). That
+   shared height is what makes "meet in the middle" actually work: CS,
+   the champion slots, and the trophy are each built as [[fixed-height
+   header spacer], [flex:1 body that centers its own content within
+   whatever's left]] (see .bracket-col-standalone-body) - so once every
+   column is the same total height, centering each one's content within
+   it lands them all at the SAME true vertical middle, spanning BOTH WC/DS
+   rows, not just even with the top one. (Two earlier attempts got this
+   wrong: align-items:center broke the header-row alignment because a
+   taller box's center doesn't land its top edge where a shorter box's
+   margin-nudged one does; align-items:flex-start fixed the headers but
+   left CS/Champion/trophy sitting up near the top row only, with the
+   bottom WC/DS row's connectors having nothing to visibly reach.) */
+.bracket-wrap { position: relative; display: flex; align-items: stretch; justify-content: space-between; gap: 0; padding: 8px 8px 28px; }
+.bracket-svg { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; z-index: 0; }
+/* Each league's own title sits directly above just ITS wild-card+division
+   columns (not the full-width banner this used to be) - a plain wrapper
+   div around those two columns, so the label naturally sits above only
+   them with no manual width-matching needed. Frees the vertical space a
+   separate full-width title row used to cost, spent on bigger logos
+   instead. */
+/* Wild Card + Division Series get MORE of the row's extra width than the
+   CS/champion-slot/trophy columns toward the middle - per direction
+   ("condense the middle... spread out the WC and DS rounds, it's a bit
+   cramped there"). */
+.bracket-half { display: flex; flex-direction: column; flex: 1.7 1 0; }
+.bracket-half-cols { display: flex; flex-direction: row; flex: 1 1 auto; }
+.bracket-league-title { font-size: 13px; font-weight: 800; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 8px; padding-left: 2px; height: 16px; line-height: 16px; }
+.bracket-col { display: flex; flex-direction: column; justify-content: space-around; gap: 20px; min-width: 116px; padding: 0 8px; position: relative; z-index: 1; flex: 1 1 0; }
+/* CS / NL Champion / AL Champion / the center trophy column - each is
+   [header label, then a flex:1 body that centers its real content within
+   whatever height is left]. Stretched (see .bracket-wrap) to match
+   .bracket-half's full two-row height, so the header sits at the same Y
+   as WILD CARD/DIVISION SERIES AND the body's centered content lands at
+   the true middle of both WC/DS rows - not just the top one. */
+/* margin-top matches .bracket-league-title's full height (16px line-height
+   + 8px margin-bottom = 24px) - .bracket-half's label sits ABOVE its
+   half-cols pushing them down that much; these standalone columns have no
+   such title of their own, so without this margin their label sits 24px
+   higher than WC/DS's. With align-items:stretch a margin-top shrinks the
+   stretched height by the same amount rather than re-centering it, so the
+   column's bottom edge (and thus the body's centered range) is unaffected. */
+.bracket-col-standalone { display: flex; flex-direction: column; min-width: 116px; padding: 0 8px; margin-top: 44px; position: relative; z-index: 1; flex: 0.75 1 0; }
+.bracket-col-standalone-body { display: flex; flex-direction: column; justify-content: center; flex: 1 1 auto; }
+.bracket-col-label-spacer { height: 33px; } /* matches .bracket-col-label's own rendered height (font + margin + border) for the center column, which has no label text of its own to create that same offset */
+.bracket-col-label {
+  font-size: 12px; font-weight: 800; letter-spacing: 0.9px; color: var(--bark);
+  text-align: center; text-transform: uppercase; margin-bottom: 8px;
+  border-bottom: 2px solid var(--bark-light); padding-bottom: 5px;
+}
+.bracket-slot {
+  background: var(--surface-alt); border: 2px solid var(--bark-light); border-radius: 11px;
+  padding: 13px; display: flex; flex-direction: column; align-items: center; gap: 5px;
+  min-height: 94px; min-width: 94px; justify-content: center;
+}
+.bracket-slot.empty { border-style: dashed; }
+.bracket-slot.winner { border-color: var(--bark); background: var(--bark-tint); box-shadow: 0 0 0 2px var(--bark) inset; }
+.bracket-slot-tbd { color: var(--text-muted); font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; }
+.bracket-slot img.team-logo { width: 64px; height: 64px; }
+/* Generous gap (not just enough for the record badge to squeeze in, but
+   enough to sit clearly between the two boxes without crowding either) -
+   per direction: shrinking the boxes was fine, shrinking THIS wasn't. */
+.bracket-pair { display: flex; flex-direction: column; align-items: center; gap: 18px; position: relative; }
+.bracket-record {
+  font-size: 9.5px; font-weight: 800; color: var(--bark); background: var(--bg);
+  border: 1px solid var(--bark-light); border-radius: 8px; padding: 1px 6px;
+}
+/* The center column gets a bit more width than CS/Champion (it has more
+   to fit: winner slot, trophy, label, record). */
+.bracket-ws-center-outer { min-width: 140px; padding: 0 12px; flex: 0.85 1 0; }
+.bracket-ws-center-col { align-items: center; gap: 5px; }
+/* Trophy + label + record only (NOT the winner slot) - this tight block is
+   what .bracket-ws-center-col actually centers. .bracket-ws-winner-slot
+   below is absolutely positioned against THIS block specifically (not the
+   much taller stretched outer column - that was the earlier bug: bottom:100%
+   resolved against the whole stretched column's top edge, leaving the
+   winner slot floating far above everything else on the row). Removed from
+   flow, so it doesn't affect this block's own (and therefore the centered
+   cluster's) height. */
+.bracket-ws-trophy-block { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+/* Absolutely positioned (not just first-in-flow) so it sits a fixed,
+   guaranteed gap above the trophy regardless of how the column's own
+   height happens to center against the side slots next to it - centering
+   the column as a whole put the winner box nearly level with the NL/AL
+   slots instead of clearly above them, confirmed via real measured
+   coordinates before this fix (bottom edge landing within 2px of the side
+   slots' top edge). */
+.bracket-ws-winner-slot { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 18px; }
+.bracket-ws-winner-slot .bracket-slot { min-width: 126px; }
+.bracket-ws-winner-placeholder { color: var(--text-muted); font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; }
+.bracket-trophy { filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25)); }
+.bracket-ws-label { font-size: 13px; font-weight: 800; letter-spacing: 1px; color: var(--forest-dark); text-align: center; }
+
+/* --- Playoffs: Rosters page --- */
+.roster-team-picker { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }
+.roster-team-btn {
+  background: var(--surface); border: 2px solid var(--border); border-radius: 10px; padding: 8px;
+  cursor: pointer; transition: border-color 0.15s, transform 0.1s;
+}
+.roster-team-btn:hover { transform: translateY(-2px); }
+.roster-team-btn.active { border-color: var(--forest); background: var(--surface-alt); }
+.roster-team-btn img.team-logo { width: 34px; height: 34px; display: block; }
+.roster-title { font-size: 16px; font-weight: 800; color: var(--forest-dark); }
+.roster-section-title { font-size: 12.5px; font-weight: 800; color: var(--forest); letter-spacing: 0.3px; margin-bottom: 6px; }
+td.pos-cell { font-weight: 700; color: var(--text-muted); width: 40px; }
+tr.roster-highlight td.team-cell { color: var(--forest-dark); font-weight: 800; }
+tr.roster-highlight { background: var(--bark-tint); }

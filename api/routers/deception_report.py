@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from api.cache import ttl_cache
 from api.db import get_conn
-from deception_model import _raw_predictions, pitcher_deception_breakdown
+from analytics.deception_model import _raw_predictions, pitcher_deception_breakdown
 
 router = APIRouter(prefix="/api/deception")
 

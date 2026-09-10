@@ -1,0 +1,164 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Location+ Model - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=39" />
+  <style>
+    .lc-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
+    @media (max-width: 1000px) { .lc-layout { grid-template-columns: 1fr; } }
+    .lc-blurb { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; margin-bottom: 14px; }
+    .lc-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .lc-meta-item { background: var(--surface-alt); border-radius: 8px; padding: 8px 10px; }
+    .lc-meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
+    .lc-meta-value { font-size: 17px; font-weight: 800; color: var(--forest-dark); }
+
+    .lc-table th, .lc-table td { text-align: right; }
+    .lc-table td:first-child, .lc-table th:first-child { text-align: left; }
+
+    .lc-bar-row { display: grid; grid-template-columns: 90px 1fr 70px; align-items: center; gap: 10px; margin-bottom: 6px; }
+    .lc-bar-track { position: relative; background: #e9e7df; border-radius: 6px; height: 12px; }
+    .lc-bar-fill { position: absolute; top: 0; left: 0; height: 12px; border-radius: 6px; background: var(--forest); }
+    .lc-note { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+
+    .lc-arsenal-head { margin-bottom: 10px; font-size: 14px; }
+    #lc-pitcher-shap-table td.plus-pos { color: #1a7f37; font-weight: 700; }
+    #lc-pitcher-shap-table td.plus-neg { color: #c9302c; font-weight: 700; }
+    #lc-status { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+
+    .lc-grid-img { max-width: 100%; border-radius: 8px; border: 1px solid var(--surface-alt); }
+    .lc-ablation-row { display: grid; grid-template-columns: 140px 1fr 1fr; gap: 8px; font-size: 13px; padding: 4px 0; }
+    .lc-ablation-row.head { font-weight: 700; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="subnav"></div>
+  <div class="page">
+    <h1>Location+ Model</h1>
+    <p class="lc-blurb">
+      v1. Measures where a pitch ended up and how valuable that location was, <b>given the count</b> - nothing about
+      the pitch's physical shape (that's Stuff+), delivery (Deception+), or relationship to other pitches in the
+      arsenal (Tunneling+). Follows FanGraphs' own public Location+ methodology: location, pitch type, and count
+      only. One deliberate deviation - <b>batter handedness (stand) is kept in</b>, not excluded as FanGraphs does,
+      since a pitch's location value is genuinely relative to which side of the plate the batter stands on (see the
+      ablation check below for whether that choice actually earns its keep). <b>Known limitation, accepted rather
+      than worked around</b>: Statcast only captures where a pitch actually crossed, not catcher target or pitcher
+      intent, so this measures location-value-achieved, which conflates real command with outcome luck - FanGraphs'
+      own public writeup states they tested intent-based data for this exact purpose and found it added no
+      predictive value over real-location data alone.
+    </p>
+
+    <div class="plus-explainer">
+      <div class="plus-explainer-icon">&#8505;&#65039;</div>
+      <div>
+        <div class="plus-explainer-title">How to read this number</div>
+        <div class="plus-explainer-body">
+          <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b>. Location+
+          stabilizes MUCH more slowly than Stuff+ - see the reliability comparison below - so read a leaderboard
+          position with real caution below a few hundred pitches.
+        </div>
+      </div>
+    </div>
+
+    <div class="lc-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Model</h3>
+        <div class="lc-meta-grid" id="lc-meta-mount"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Feature Importance (SHAP)</h3>
+        <div id="lc-shap-mount"></div>
+        <div class="lc-note">Mean absolute SHAP value per feature - location dominates, as it should for a location model.</div>
+      </div>
+    </div>
+
+    <div class="lc-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Stabilization: Location+ vs. Stuff+</h3>
+        <table class="data-table lc-table" id="lc-reliability-table"></table>
+        <div class="lc-note" id="lc-reliability-note"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Year-Over-Year Stability</h3>
+        <table class="data-table lc-table" id="lc-yoy-table"></table>
+        <div class="lc-note" id="lc-yoy-note"></div>
+      </div>
+    </div>
+
+    <div class="lc-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Out-of-Sample Predictive Validity</h3>
+        <table class="data-table lc-table" id="lc-predictive-table"></table>
+        <div class="lc-note">A model trained on every season except 2024, scored on 2024's pitches, correlated against each pitcher's REAL 2025 outcomes.</div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Cross-Model Correlation</h3>
+        <table class="data-table lc-table" id="lc-cross-table"></table>
+        <div class="lc-note">Location+ shares zero raw features with any of the other three - a high correlation here would be a real, surprising finding, not an expected one.</div>
+      </div>
+    </div>
+
+    <div class="card section">
+      <h3 style="margin-top:0;">Does The Model Actually Learn the Count Interaction?</h3>
+      <p class="lc-note" style="margin-top:0; margin-bottom:12px;">
+        The central claim of this model: the same physical location is worth a different amount depending on the
+        count. Sinker vs. right-handed batters, 3-1 vs. 3-2 - the strike zone's overall shape should look similar
+        (it doesn't move between counts), but the model should show a real, location-specific interaction on top
+        of that, not just a flat rescale.
+      </p>
+      <img class="lc-grid-img" src="img/location_count_interaction_sinker_R.png" alt="Location+ value heatmap, sinker vs RHH, 3-1 vs 3-2 count, and their difference" />
+      <div class="lc-note" id="lc-interaction-note"></div>
+    </div>
+
+    <div class="lc-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Highest Location+</h3>
+        <table class="data-table lc-table" id="lc-top-table"></table>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Lowest Location+</h3>
+        <table class="data-table lc-table" id="lc-bottom-table"></table>
+      </div>
+    </div>
+
+    <div class="card section">
+      <h3 style="margin-top:0;">Does Keeping "stand" Earn Its Keep?</h3>
+      <p class="lc-note" style="margin-top:0;">FanGraphs' public Location+ excludes batter handedness entirely. This build keeps it - direct ablation, same CV scheme, only `stand` changes:</p>
+      <div id="lc-ablation-mount"></div>
+    </div>
+
+    <div class="card section">
+      <h3 style="margin-top:0;">Cross-Validation (leave-one-season-out, 2021-2025)</h3>
+      <table class="data-table lc-table" id="lc-cv-table"></table>
+    </div>
+
+    <div class="card section">
+      <h3 style="margin-top:0;">Inspect a Pitcher</h3>
+      <div class="controls-row">
+        <div style="min-width:320px; flex:1; max-width:420px;">
+          <span class="control-label">Pitcher</span>
+          <div class="player-search">
+            <input type="text" class="player-search-input" id="player-search-input" placeholder="Search any pitcher..." autocomplete="off" />
+            <div class="player-search-dropdown" id="player-search-dropdown"></div>
+          </div>
+        </div>
+        <div>
+          <span class="control-label">Season</span>
+          <select id="season-select"></select>
+        </div>
+      </div>
+      <div id="lc-status"></div>
+      <div id="lc-pitcher-mount" style="margin-top:16px;"></div>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=17"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/player-search.js?v=20"></script>
+  <script src="js/season-select.js?v=17"></script>
+  <script src="js/location-model.js?v=1"></script>
+</body>
+</html>

@@ -3,30 +3,36 @@
 exactly what pages/1_Player_Page.py rendered, by calling the same analytics
 modules it did, just packaged as JSON instead of Streamlit widgets/HTML.
 """
+import json
 import math
 import sys
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
-from archetypes import ARCHETYPE_DESCRIPTIONS, classify_batter_archetype
-from boxscore import season_era
-from metrics import classify_pitcher_roles
-from percentiles import (
+from analytics.archetypes import ARCHETYPE_DESCRIPTIONS, classify_batter_archetype
+from analytics.boxscore import season_era
+from analytics.metrics import classify_pitcher_roles
+from analytics.percentiles import (
     BATTER_POLARITY, PITCHER_POLARITY, batter_percentile_metrics,
-    pitcher_percentile_metrics, player_percentiles,
+    pitcher_percentile_metrics, player_percentiles, player_percentiles_allow_unqualified,
 )
-from player_page import (
-    batter_counting_stats, batter_pitch_type_table, batter_wrc_plus,
+from analytics.player_page import (
+    all_pitcher_arm_angles, batter_counting_stats, batter_pitch_type_table, batter_wrc_plus,
     field_zone_pcts, league_average_batter_row, league_average_swing_profile,
     league_hr_per_fb, movement_plot_data, pitch_usage_by_stand, pitcher_arm_angle,
-    pitcher_counting_stats, pitcher_pitch_table, pitcher_total_row, swing_profile,
+    pitcher_counting_stats, pitcher_league_avg_row, pitcher_pitch_table, pitcher_rubber_position,
+    player_last_n_games, similar_arm_angle_movement, swing_profile,
 )
-from stuff_model import compute_stuff_plus, compute_stuff_plus_by_stand, overall_stuff_plus
+from analytics.deception_model import pitcher_deception_breakdown
+from analytics.stuff_model import compute_stuff_plus, compute_stuff_plus_by_stand, overall_stuff_plus
+from analytics.wpa import find_walkoff_batter
 
 from api.cache import ttl_cache, ttl_cache_all_args
 from api.db import get_conn
@@ -35,8 +41,26 @@ from api.presentation import (
     PITCHER_FMT, PITCHER_GROUPS, PITCHER_LABELS, PITCHER_TABLE_COLUMNS,
     PITCHER_TABLE_FMT, format_row, format_value,
 )
+from api.routers.deception_report import REPORT_SEASON as DECEPTION_REPORT_SEASON, _raw_predictions_table
+from api.routers.tunneling_report import _v3_raw_predictions_table
+from analytics.tunneling_v3_model import pitcher_score as tunneling_v3_pitcher_score
+from api.routers.location_report import _raw_predictions_table as _location_raw_predictions_table
+from analytics.location_model import pitcher_score as location_v1_pitcher_score
+from api.routers.top_performers import _leaderboard
 
 router = APIRouter(prefix="/api")
+
+
+def _real_sabermetric(conn, season, player_id, col):
+    """Real season-total value from player_advanced_stats (see
+    pulls/pull_sabermetrics.py), or None if this player isn't covered.
+    Season-total only - no opposing-hand split exists for wRC+/xFIP, so
+    callers only use this on the unsplit ALL view."""
+    row = conn.execute(
+        f"SELECT {col} FROM player_advanced_stats WHERE player_id = ? AND season = ?",
+        (player_id, season),
+    ).fetchone()
+    return row[0] if row is not None else None
 
 
 def _clean(v):
@@ -59,6 +83,23 @@ def _pitcher_pool(conn, season, stand_filter):
 @ttl_cache()
 def _batter_pool(conn, season, throws_filter):
     return batter_percentile_metrics(conn, season, throws_filter=throws_filter)
+
+
+# Threshold-free (min_bf=0/min_pa=0) versions of the pools above - ONLY
+# ever built when the currently-viewed player isn't in the real qualified
+# pool (see player_percentiles_allow_unqualified's own docstring for why a
+# second, unfiltered pool is needed at all: to look up an unqualified
+# player's own raw value without ever letting their row into the
+# population the percentile is RANKED against). Cached the same way, so a
+# second unqualified player viewed in the same session doesn't re-pay this.
+@ttl_cache()
+def _pitcher_pool_unqualified(conn, season, stand_filter):
+    return pitcher_percentile_metrics(conn, season, min_bf=0, stand_filter=stand_filter)
+
+
+@ttl_cache()
+def _batter_pool_unqualified(conn, season, throws_filter):
+    return batter_percentile_metrics(conn, season, min_pa=0, throws_filter=throws_filter)
 
 
 @ttl_cache()
@@ -127,9 +168,86 @@ def _league_avg_batter_row(conn, season, throws_filter):
     return league_average_batter_row(conn, season, throws_filter)
 
 
+# Mirrors _league_avg_batter_row above - pitcher_league_avg_row does a full
+# SELECT * FROM pitches WHERE season=? (every column, the whole season) to
+# build the pitch-table summary row, but was missing the same @ttl_cache()
+# wrapper its batter equivalent already had - a real asymmetry bug, not a
+# deliberate choice (nothing about this one is more per-player than the
+# batter version). Every pitcher page load was re-scanning the full season
+# table live; now it's a cache hit after the first pitcher/split combo.
+@ttl_cache()
+def _pitcher_league_avg_row(conn, season, stand_filter):
+    return pitcher_league_avg_row(conn, season, stand_filter)
+
+
 @ttl_cache()
 def _league_swing_profile(conn, season):
     return league_average_swing_profile(conn, season)
+
+
+# Split-INDEPENDENT per-player data (movement, arm angle, pitch usage,
+# rubber position, unsplit swing profile) - each individually ~0.2-0.25s
+# (measured directly), and every one of these gets called on EVERY request
+# regardless of which split is selected (movement/arm-angle/usage/rubber
+# deliberately ignore split_filter entirely; swing_profile is always called
+# with split=None). Without caching, toggling ALL/L/R on the same player
+# re-runs all ~5 of these unchanged queries every time - a real, measured
+# ~1s of pure waste per toggle. Keyed by (player_id, season), same TTL-cache
+# pattern already used for the league-wide pools above; safe to cache since
+# none of these DataFrames/dicts are mutated by their callers (all read-only
+# downstream in get_player()).
+@ttl_cache()
+def _movement_plot_data(conn, season, player_id):
+    return movement_plot_data(conn, season, player_id, None)
+
+
+# Real cost here: scans EVERY pitcher's season arm-angle average, then every
+# pitch from whichever peer group falls out of that - genuinely comparable
+# to a league-wide pool build, not a cheap per-player lookup, so this one
+# gets cached same as the pools above (the other per-player functions in
+# this section are cheap single-pitcher-filtered queries and intentionally
+# NOT cached, per api/cache.py's own docstring).
+@ttl_cache()
+def _all_pitcher_arm_angles(conn, season):
+    # Season-wide, not per-pitcher - see all_pitcher_arm_angles' docstring
+    # for why this was split out and cached separately from the per-pitcher
+    # function below (was a real, confirmed ~20s cost paid again for every
+    # NEW pitcher a user looked at).
+    return all_pitcher_arm_angles(conn, season)
+
+
+@ttl_cache()
+def _similar_arm_angle_movement(conn, season, player_id):
+    return similar_arm_angle_movement(conn, season, player_id, arm_angles=_all_pitcher_arm_angles(conn, season))
+
+
+@ttl_cache()
+def _pitcher_arm_angle(conn, season, player_id):
+    return pitcher_arm_angle(conn, season, player_id)
+
+
+@ttl_cache()
+def _pitch_usage_by_stand(conn, season, player_id):
+    return pitch_usage_by_stand(conn, season, player_id)
+
+
+@ttl_cache()
+def _pitcher_rubber_position(conn, season, player_id):
+    return pitcher_rubber_position(conn, season, player_id)
+
+
+@ttl_cache()
+def _swing_profile_unsplit(conn, season, player_id):
+    return swing_profile(conn, season, player_id, None)
+
+
+# field_zone_pcts IS split-aware (varies with split_filter, unlike the
+# five above) but still worth caching per (player_id, season, split) - a
+# user re-toggling back to a split they already viewed this session
+# (ALL -> L -> ALL) shouldn't re-pay the query.
+@ttl_cache()
+def _field_zone_pcts(conn, season, player_id, split_filter):
+    return field_zone_pcts(conn, season, player_id, split_filter)
 
 
 @ttl_cache_all_args()
@@ -142,11 +260,137 @@ def _season_era(player_id, season):
         return None
 
 
+def _leaderboard_for_date(day_str):
+    """Runs on a worker thread (see _last_5_games below) - opens its OWN
+    sqlite3 connection rather than sharing the caller's, since sqlite3
+    connections aren't safe to use across threads. _leaderboard itself
+    already parallelizes its own internal boxscore fetches; this just
+    stops _last_5_games from ALSO paying for up to 5 of those (one per
+    game, one real date each) strictly one after another."""
+    import sqlite3
+    from api.db import DB_PATH
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    try:
+        return _leaderboard(conn, day_str)
+    finally:
+        conn.close()
+
+
+@ttl_cache()
+def _last_5_games(conn, season, player_id, role):
+    try:
+        games = player_last_n_games(conn, season, player_id, role, 5)
+    except Exception:
+        return []
+
+    # Each game's "was this player a top performer that day" check needs
+    # that DAY's full leaderboard - up to 5 of these, one per game, each
+    # independently ~1-1.5s (confirmed directly). Was a plain sequential
+    # loop (~5-7s for a player whose last 5 games span 5 different, never-
+    # before-viewed dates); running them concurrently cuts that to roughly
+    # the slowest single date instead of the sum of all five.
+    dates = [g["date"] for g in games]
+    boards = {}
+    if dates:
+        with ThreadPoolExecutor(max_workers=min(len(dates), 5)) as pool:
+            futures = {pool.submit(_leaderboard_for_date, d): d for d in dates}
+            for future in futures:
+                d = futures[future]
+                try:
+                    boards[d] = future.result()
+                except Exception:
+                    boards[d] = None
+
+    for g in games:
+        game_id = g.get("game_id")
+        g["walkoff"] = role == "batter" and game_id is not None and find_walkoff_batter(conn, game_id) == player_id
+        board = boards.get(g["date"])
+        g["top_performer"] = bool(board) and any(e["player_id"] == player_id for e in board["entries"])
+    return games
+
+
+@ttl_cache()
+def _deception_plus_badge(conn, player_id):
+    """Deception+ has no season selector yet (see deception_report.py's
+    module docstring) - always REPORT_SEASON (2025) regardless of the
+    player page's own season, so a pitcher with no 2025 innings (e.g. a
+    2026 rookie) genuinely has no score here. Fails soft to None (the
+    frontend renders that as N/A, same as the existing Stuff+ badge does
+    for a NaN) rather than erroring the whole player page. Cached (was not
+    before) - this runs a real SHAP explainer call per pitcher, not free,
+    and the underlying league table it reads from is already cached, so
+    there's no reason the per-pitcher breakdown wasn't too."""
+    try:
+        league = _raw_predictions_table(conn, DECEPTION_REPORT_SEASON)
+        if league.empty:
+            return None
+        breakdown = pitcher_deception_breakdown(conn, DECEPTION_REPORT_SEASON, player_id, league)
+        return breakdown.get("deception_plus") if breakdown else None
+    except Exception:
+        return None
+
+
+def _tunneling_plus_badge(conn, season, player_id):
+    """Tunneling+ v3 (the standard, promoted version) - live-scored, same
+    try/except-wrapped pattern as _deception_plus_badge above, since this
+    runs a real SHAP-adjacent per-pitcher scoring pass rather than reading
+    a static file. v1's own static per-season report/pitcher-detail JSON
+    (api/routers/tunneling_report.py's v1 endpoints) stays untouched for
+    the separate 3D trajectory viewer, which still depends on its exact
+    pair-shaped contract."""
+    try:
+        league = _v3_raw_predictions_table(conn, season)
+        if league.empty:
+            return None
+        return tunneling_v3_pitcher_score(conn, season, player_id, league)
+    except Exception:
+        return None
+
+
+def _location_plus_badge(conn, season, player_id):
+    """Location+ v1, same live-scoring/season-selector/try-except pattern
+    as Tunneling+ v3's own badge above - real data from
+    analytics.location_model, min-100-pitches qualifying threshold applied
+    the same way that model's own leaderboard does (pitcher_score returns
+    None below it, same as the other three badges' own "not enough of a
+    sample" behavior)."""
+    try:
+        league = _location_raw_predictions_table(conn, season)
+        if league.empty:
+            return None
+        return location_v1_pitcher_score(conn, season, player_id, league)
+    except Exception:
+        return None
+
+
+def _il_status(conn, player_id):
+    """Current IL entry for this player, if any - see pulls/pull_injuries.py
+    for how start_date/injury are real (parsed from the transactions feed)
+    and min_return_date is a real computed lower bound, not a guess."""
+    row = conn.execute(
+        "SELECT il_type, il_label, start_date, injury, min_return_date FROM il_status WHERE player_id = ?",
+        (player_id,),
+    ).fetchone()
+    if row is None:
+        return None
+    il_type, il_label, start_date, injury, min_return_date = row
+    return {
+        "il_type": il_type, "il_label": il_label, "start_date": start_date,
+        "injury": injury, "min_return_date": min_return_date,
+    }
+
+
 def _norm_split(split):
     return None if split in (None, "ALL", "") else split
 
 
-def _percentile_groups(pct_dict, labels, fmt_map, groups):
+def _percentile_groups(pct_dict, labels, fmt_map, groups, qualified=True):
+    """`qualified`: whether the player these percentiles were computed for
+    cleared the real qualifying threshold (see
+    player_percentiles_allow_unqualified) - carried through onto every
+    row so the frontend can shade/mute an unqualified player's bars,
+    matching Baseball Savant's own convention, rather than either hiding
+    them entirely or showing them identically to a qualified player's."""
     out = []
     for title, metrics in groups:
         present = [m for m in metrics if m in pct_dict]
@@ -161,6 +405,7 @@ def _percentile_groups(pct_dict, labels, fmt_map, groups):
                 "raw": _clean(raw),
                 "pct": round(float(p), 1) if p is not None and not (isinstance(p, float) and math.isnan(p)) else None,
                 "value_str": format_value(raw, fmt_map.get(m, "{:.1f}")),
+                "qualified": qualified,
             })
         out.append({"title": title, "metrics": rows})
     return out
@@ -182,74 +427,118 @@ def _table_to_rows(df, columns, fmt_map, league_avg_dict=None):
     return rows, league_row
 
 
-@router.get("/players")
-def list_players(role: str = Query("pitcher", pattern="^(pitcher|batter)$"),
-                  season: int = Query(2026), conn=Depends(get_conn)):
-    id_col = "pitcher_id" if role == "pitcher" else "batter_id"
-    df = pd.read_sql(f"""
-        SELECT DISTINCT pl.player_id, pl.name, pl.team_id
-        FROM players pl JOIN pitches p ON pl.player_id = p.{id_col}
-        WHERE p.season = ?
-        ORDER BY pl.name
-    """, conn, params=(season,))
-    return df.to_dict(orient="records")
-
-
 @ttl_cache()
 def _all_players(conn, season):
     # One row per (player, role) - a true two-way player (has both thrown
     # and batted) shows up twice, once per role, which is the right call for
     # a search box: picking "Ohtani (Pitcher)" vs "Ohtani (Hitter)" should
-    # load two different views, not one ambiguous merged one.
-    return pd.read_sql("""
-        SELECT DISTINCT pl.player_id, pl.name, pl.team_id, 'pitcher' AS role
-        FROM players pl JOIN pitches p ON pl.player_id = p.pitcher_id
-        WHERE p.season = ?
+    # load two different views, not one ambiguous merged one. bats/throws
+    # and (for pitchers) the SP/RP classification feed the search dropdown's
+    # own handedness/role tag (e.g. "R-SP", "LHH") instead of a flat
+    # "P"/"Hitter" label.
+    # Distinct pitcher_id/batter_id pulled first (narrow, answered straight
+    # from idx_pitches_season_pitcher/_batter as a covering index - no row
+    # lookups needed), THEN joined to players - not DISTINCT'd on the full
+    # joined row width like the original query. Confirmed ~11x faster
+    # (1.7s -> 0.15s) via EXPLAIN QUERY PLAN + direct timing on a real
+    # season - the original forced SQLite to look up every matching pitch
+    # row by rowid just to dedupe on player_id, when the season+id
+    # composite index can answer "which player_ids" on its own.
+    df = pd.read_sql("""
+        SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws, 'pitcher' AS role
+        FROM players pl
+        JOIN (SELECT DISTINCT pitcher_id FROM pitches WHERE season = ?) p ON pl.player_id = p.pitcher_id
         UNION
-        SELECT DISTINCT pl.player_id, pl.name, pl.team_id, 'batter' AS role
-        FROM players pl JOIN pitches p ON pl.player_id = p.batter_id
-        WHERE p.season = ?
+        SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws, 'batter' AS role
+        FROM players pl
+        JOIN (SELECT DISTINCT batter_id FROM pitches WHERE season = ?) p ON pl.player_id = p.batter_id
         ORDER BY name
     """, conn, params=(season, season))
+    pitcher_roles = _pitcher_roles(conn, season)
+    df["pitcher_role"] = [
+        pitcher_roles.loc[pid, "role"] if role == "pitcher" and pid in pitcher_roles.index else None
+        for pid, role in zip(df["player_id"], df["role"])
+    ]
+    return df
 
 
 @router.get("/players/all")
 def list_all_players(season: int = Query(2026), conn=Depends(get_conn)):
-    return _all_players(conn, season).to_dict(orient="records")
+    # A plain-Python None assigned into a DataFrame column here gets
+    # silently upcast to NaN by pandas' string-dtype inference (confirmed
+    # directly, not assumed) - which json.dumps then rejects outright (NaN
+    # isn't valid JSON). _clean() is this project's own established fix for
+    # exactly this NaN-vs-None gap, applied here per-record since
+    # to_dict(orient="records") is what actually re-materializes the NaNs.
+    records = _all_players(conn, season).to_dict(orient="records")
+    for r in records:
+        if "pitcher_role" in r:
+            r["pitcher_role"] = _clean(r["pitcher_role"])
+    return records
 
 
-@router.get("/player/{player_id}")
-def get_player(
-    player_id: int,
-    role: str = Query("pitcher", pattern="^(pitcher|batter)$"),
-    split: str = Query("ALL", pattern="^(ALL|L|R)$"),
-    season: int = Query(2026),
-    conn=Depends(get_conn),
-):
+# Player-page checkpoint labels, in the exact order _build_player_steps
+# below yields them - the frontend's loading bar reads step INDEX against
+# this same count (both roles yield exactly PLAYER_LOAD_STEPS steps, see
+# the "step" yields below), not the label text, so this list only needs to
+# stay in sync for humans reading the two side by side.
+PLAYER_LOAD_STEPS = 6
+
+
+def _build_player_steps(conn, player_id, role, split, season):
+    """Same computation get_player() used to do inline, restructured as a
+    generator that yields ("step", label) after each major phase completes,
+    then a final ("done", payload) - lets the plain JSON endpoint and the
+    checkpoint-streaming endpoint below share one code path (so they can't
+    drift out of sync) while giving the streaming one real progress points
+    tied to actual work finishing, not a fake timer. Every phase boundary
+    here is a genuine one already implicit in the original function's own
+    blank-line groupings - no new work was reordered or split up to make
+    this happen."""
     player_row = conn.execute(
-        "SELECT name, team_id, bats, throws FROM players WHERE player_id = ?", (player_id,)
+        "SELECT name, team_id, bats, throws, position FROM players WHERE player_id = ?", (player_id,)
     ).fetchone()
     if player_row is None:
         raise HTTPException(status_code=404, detail="Player not found")
-    name, team_id, bats, throws = player_row
+    name, team_id, bats, throws, position = player_row
     split_filter = _norm_split(split)
 
-    base = {"player_id": player_id, "name": name, "team_id": team_id, "role": role, "split": split, "season": season}
+    base = {"player_id": player_id, "name": name, "team_id": team_id, "position": position, "role": role, "split": split, "season": season}
+    base["last_5_games"] = _last_5_games(conn, season, player_id, role)
+    base["il_status"] = _il_status(conn, player_id)
     if role == "pitcher":
-        base["handedness"] = f"{throws}HP" if throws else None
+        # SP/RP, not L/RHP - handedness is dropped here per direction (it's
+        # already unambiguous from the movement plot's own throws-based HB
+        # sign convention), reusing the same classify_pitcher_roles() pool
+        # the games-started lookup below already needs.
+        pitcher_roles = _pitcher_roles(conn, season)
+        base["handedness"] = pitcher_roles.loc[player_id, "role"] if player_id in pitcher_roles.index else None
     else:
         base["handedness"] = f"Bats {bats}" if bats else None
+        base["bats"], base["throws"] = bats, throws
+    yield ("step", "Loading player info")
 
     if role == "pitcher":
         pool = _pitcher_pool(conn, season, split_filter)
         stuff = _stuff_plus_table(conn, season)
-        roles = _pitcher_roles(conn, season)
+        roles = pitcher_roles
         gs = int(roles.loc[player_id, "games_started"]) if player_id in roles.index else None
         lg_hrfb = _league_hr_fb(conn, season)
+        yield ("step", "Loading league pools")
 
         stats = pitcher_counting_stats(conn, season, player_id, split_filter, games_started=gs, league_hr_fb_rate=lg_hrfb)
         overall_stuff = overall_stuff_plus(stuff, player_id)
         era = _season_era(player_id, season)
+
+        # Real xFIP (MLB Stats API sabermetrics, see pulls/pull_sabermetrics.py)
+        # has no opposing-batter-hand split, same reasoning as ERA above - use
+        # it on the unsplit ALL view, fall back to this project's own
+        # pitch-level xFIP approximation (and label it as such) on L/R.
+        is_all_split = not split_filter or split_filter == "ALL"
+        real_xfip = _real_sabermetric(conn, season, player_id, "xfip") if is_all_split else None
+        xfip_label = "xFIP" if real_xfip is not None else "xFIP (approx)"
+        xfip_value = real_xfip if real_xfip is not None else stats["xfip"]
+        real_war = _real_sabermetric(conn, season, player_id, "war_pitching")
 
         base["card"] = [
             {"label": "IP", "value": stats["ip"]},
@@ -264,20 +553,74 @@ def get_player(
             # Label it explicitly as season-total rather than silently not
             # moving with the split toggle.
             {"label": "ERA (season)", "value": era if era is not None else "-"},
-            {"label": "xFIP", "value": format_value(stats["xfip"], "{:.2f}")},
+            {"label": xfip_label, "value": format_value(xfip_value, "{:.2f}")},
+            # WAR (MLB Stats API sabermetrics, see pulls/pull_sabermetrics.py)
+            # is season-total only, same as ERA above - no split exists.
+            {"label": "WAR", "value": format_value(real_war, "{:.1f}")},
         ]
         base["badge"] = {
             "kind": "stuff_plus",
             "value": _clean(overall_stuff),
             "value_str": format_value(overall_stuff, "{:.0f}") if not (isinstance(overall_stuff, float) and math.isnan(overall_stuff)) else "N/A",
         }
+        yield ("step", "Computing stats")
 
-        pct = player_percentiles(pool, player_id, PITCHER_POLARITY)
-        base["percentiles"] = _percentile_groups(pct, PITCHER_LABELS, PITCHER_FMT, PITCHER_GROUPS)
+        deception_plus = _deception_plus_badge(conn, player_id)
+        tunneling_plus = _tunneling_plus_badge(conn, season, player_id)
+        location_plus = _location_plus_badge(conn, season, player_id)
+        base["deception_badge"] = {
+            "value": _clean(deception_plus),
+            "value_str": format_value(deception_plus, "{:.0f}") if deception_plus is not None else "N/A",
+            "season": DECEPTION_REPORT_SEASON,
+        }
+        base["tunneling_badge"] = {
+            "value": _clean(tunneling_plus),
+            "value_str": format_value(tunneling_plus, "{:.0f}") if tunneling_plus is not None else "N/A",
+            "season": season,
+        }
+        base["location_badge"] = {
+            "value": _clean(location_plus),
+            "value_str": format_value(location_plus, "{:.0f}") if location_plus is not None else "N/A",
+            "season": season,
+        }
 
-        mv = movement_plot_data(conn, season, player_id, split_filter)
-        arm_angle = pitcher_arm_angle(conn, season, player_id)
-        base["pitch_usage_by_stand"] = pitch_usage_by_stand(conn, season, player_id)
+        # Unqualified players still get real percentile bars (Baseball
+        # Savant's own convention), ranked against the QUALIFIED population
+        # only, shaded on the frontend via the qualified flag - see
+        # player_percentiles_allow_unqualified's docstring for exactly how
+        # the ranking population is kept clean of the unqualified player's
+        # own row. The threshold-free pool is only ever built (a real,
+        # second league-wide query) when actually needed.
+        unqualified_pool = None if player_id in pool.index else _pitcher_pool_unqualified(conn, season, split_filter)
+        pct, pct_qualified = player_percentiles_allow_unqualified(pool, player_id, PITCHER_POLARITY, unqualified_pool)
+        base["percentiles"] = _percentile_groups(pct, PITCHER_LABELS, PITCHER_FMT, PITCHER_GROUPS, qualified=pct_qualified)
+        # FB VAA's percentile itself is never flipped for a sinkerballer -
+        # it stays a plain, consistent "how flat is this fastball vs. the
+        # league" rank for every pitcher - but a low percentile means
+        # something different (good, not bad) for a pitcher whose PRIMARY
+        # fastball is a sinker, so attach an explanatory note rather than
+        # silently inverting the number.
+        if player_id in pool.index and pool.loc[player_id].get("fb_vaa_primary_type") == "SI":
+            for group in base["percentiles"]:
+                for m in group["metrics"]:
+                    if m["key"] == "fb_vaa":
+                        m["note"] = "Steeper is better for sinkerballers - this pitcher's primary fastball is a sinker, so a LOW percentile here (steep) is a good sign, not a bad one."
+        yield ("step", "Computing percentiles")
+
+        # Movement is a property of the pitch itself, not who's in the box -
+        # deliberately NOT filtered by split_filter (unlike everything else
+        # on this page) so the plot stays static across the L/R toggle;
+        # season is still a real axis (a real arsenal can differ year to
+        # year) and is not held fixed here.
+        mv = _movement_plot_data(conn, season, player_id)
+        arm_angle = _pitcher_arm_angle(conn, season, player_id)
+        base["pitch_usage_by_stand"] = _pitch_usage_by_stand(conn, season, player_id)
+        base["rubber_position"] = {"release_pos_x": _clean(_pitcher_rubber_position(conn, season, player_id)),
+                                    "throws": throws}
+        base["babip_against"] = {
+            "value": _clean(stats["babip"]),
+            "value_str": format_value(stats["babip"], "{:.3f}"),
+        }
 
         summary_rows = []
         filtered = mv
@@ -297,6 +640,7 @@ def get_player(
             filtered = pd.concat(closest_frames)
             summary_rows.sort(key=lambda r: -r["n_pitches"])
 
+        peer_movement = _similar_arm_angle_movement(conn, season, player_id)
         base["movement_plot"] = {
             "arm_angle": _clean(arm_angle),
             "points": [
@@ -304,7 +648,18 @@ def get_player(
                 for _, r in filtered.iterrows()
             ] if not mv.empty else [],
             "summary": summary_rows,
+            # Real league-wide average movement per pitch type, among OTHER
+            # pitchers whose own season-average arm angle is within +/-3deg
+            # of this pitcher's - powers the movement plot's "average
+            # movement" reference circles (a delivery-comparable peer
+            # group's average, not this pitcher's own self-referential mean).
+            "peer_avg_movement": {
+                pt: {"hb": _clean(v["hb"]), "ivb": _clean(v["ivb"]),
+                     "n_pitchers": int(v["n_pitchers"]), "n_pitches": int(v["n_pitches"])}
+                for pt, v in peer_movement.items()
+            },
         }
+        yield ("step", "Computing movement profile")
 
         table = pitcher_pitch_table(conn, season, player_id, split_filter, stuff)
 
@@ -314,25 +669,35 @@ def get_player(
 
         if not table.empty:
             table = table.sort_values("usage_pct", ascending=False)
-            total_row = pitcher_total_row(conn, season, player_id, split_filter)
-            total_row["usage_pct"] = None
-            total_row["stuff_plus"] = overall_stuff
+            total_row = _pitcher_league_avg_row(conn, season, split_filter)
             rows, total_row_cells = _table_to_rows(table, PITCHER_TABLE_COLUMNS, PITCHER_TABLE_FMT, total_row)
         else:
             rows, total_row_cells = [], None
         base["pitch_table"] = {"columns": [{"key": k, "label": v} for k, v in PITCHER_TABLE_COLUMNS],
-                                "rows": rows, "summary_row": total_row_cells, "summary_label": "Player Total"}
+                                "rows": rows, "summary_row": total_row_cells, "summary_label": "League Avg"}
+        yield ("step", "Building pitch table")
 
     else:
         pool = _batter_pool(conn, season, split_filter)
+        yield ("step", "Loading league pools")
+
         stats = batter_counting_stats(conn, season, player_id, split_filter)
-        wrc = batter_wrc_plus(conn, season, player_id, split_filter)
+
+        # Real wRC+ (MLB Stats API sabermetrics, see pulls/pull_sabermetrics.py)
+        # has no opposing-pitcher-hand split - use it on the unsplit ALL view,
+        # fall back to this project's own wOBA-based approximation on L/R.
+        is_all_split = not split_filter or split_filter == "ALL"
+        real_wrc = _real_sabermetric(conn, season, player_id, "wrc_plus") if is_all_split else None
+        wrc_label = "wRC+" if real_wrc is not None else "wRC+ (approx)"
+        wrc_value = real_wrc if real_wrc is not None else batter_wrc_plus(conn, season, player_id, split_filter)
+        real_war = _real_sabermetric(conn, season, player_id, "war_batting")
 
         base["card"] = [
-            {"label": "GP", "value": stats["gp"]},
+            {"label": "PA", "value": stats["n_pa"]},
             {"label": "HR", "value": stats["hr"]},
             {"label": "OPS", "value": format_value(stats["OPS"], "{:.3f}")},
-            {"label": "wRC+ (approx)", "value": format_value(wrc, "{:.0f}")},
+            {"label": wrc_label, "value": format_value(wrc_value, "{:.0f}")},
+            {"label": "WAR", "value": format_value(real_war, "{:.1f}")},
         ]
 
         all_pool = _batter_pool(conn, season, None)
@@ -343,44 +708,474 @@ def get_player(
             "value": archetype,
             "description": ARCHETYPE_DESCRIPTIONS.get(archetype, "") if archetype else "",
         } if archetype else None
+        yield ("step", "Computing stats")
 
-        pct = player_percentiles(pool, player_id, BATTER_POLARITY)
-        base["percentiles"] = _percentile_groups(pct, BATTER_LABELS, BATTER_FMT, BATTER_GROUPS)
+        # Same unqualified-but-shaded treatment as the pitcher side above.
+        unqualified_pool = None if player_id in pool.index else _batter_pool_unqualified(conn, season, split_filter)
+        pct, pct_qualified = player_percentiles_allow_unqualified(pool, player_id, BATTER_POLARITY, unqualified_pool)
+        base["percentiles"] = _percentile_groups(pct, BATTER_LABELS, BATTER_FMT, BATTER_GROUPS, qualified=pct_qualified)
+        yield ("step", "Computing percentiles")
 
-        zones = field_zone_pcts(conn, season, player_id)
+        zones = _field_zone_pcts(conn, season, player_id, split_filter)
         base["swing_field"] = {
             "lf": _clean(zones["lf"]), "cf": _clean(zones["cf"]), "rf": _clean(zones["rf"]),
             "locations": zones["locations"],
+            "highlight_side": zones["highlight_side"],
+            "highlight_opacity": _clean(zones["highlight_opacity"]),
         }
 
-        profile = swing_profile(conn, season, player_id, split_filter)
+        # Swing description cards (Attack Angle/Direction/Length/Tilt) are
+        # deliberately NOT split-aware, per direction - a swing doesn't
+        # change based on who's selected as the opposing hand toggle, same
+        # reasoning the pitcher side's movement plot already uses. profile
+        # is loaded unsplit (None), and percentiles/archetypes come from
+        # `archetype_pct` (the ALL-split pool computed above for the
+        # archetype badge) instead of the split-aware `pct`, so nothing
+        # here moves when the page's L/R toggle changes.
+        profile = _swing_profile_unsplit(conn, season, player_id)
         league_swing = _league_swing_profile(conn, season)
+        bat_speed_pct = archetype_pct.get("bat_speed", (None, None))[1]
+        swing_length_pct = archetype_pct.get("swing_length", (None, None))[1]
+        attack_angle_pct = archetype_pct.get("attack_angle", (None, None))[1]
+        # Attack Direction's raw value+percentile both come from the same
+        # pool now (real hit-outcome landing angle, hits-only, hand-adjusted
+        # - identical formula to field_zone_pcts' own pull_angle, just
+        # computed unsplit here) instead of a separate zones-based lookup.
+        attack_direction_value, attack_direction_pct = archetype_pct.get("attack_direction", (None, None))
+        swing_tilt_value, swing_tilt_pct = archetype_pct.get("swing_path_tilt", (None, None))
+        # League averages for these two also come from the same unsplit
+        # all_pool (a plain column mean across every qualifying batter),
+        # not a separate helper - all_pool already has both columns now.
+        league_attack_direction = all_pool["attack_direction"].mean() if "attack_direction" in all_pool else None
+        league_swing_tilt = all_pool["swing_path_tilt"].mean() if "swing_path_tilt" in all_pool else None
         base["swing_3d"] = {
             "bats": bats,
             "bat_speed": _clean(profile.get("bat_speed")),
+            "bat_speed_pct": _clean(bat_speed_pct),
             "attack_angle": _clean(profile.get("attack_angle")),
-            "attack_direction": _clean(profile.get("attack_direction")),
-            "swing_path_tilt": _clean(profile.get("swing_path_tilt")),
+            "attack_angle_pct": _clean(attack_angle_pct),
+            "attack_direction": _clean(attack_direction_value),
+            "attack_direction_pct": _clean(attack_direction_pct),
             "swing_length": _clean(profile.get("swing_length")),
+            "swing_length_pct": _clean(swing_length_pct),
+            "swing_path_tilt": _clean(swing_tilt_value),
+            "swing_path_tilt_pct": _clean(swing_tilt_pct),
             "league_avg": {
                 "bat_speed": _clean(league_swing.get("bat_speed")),
                 "attack_angle": _clean(league_swing.get("attack_angle")),
-                "attack_direction": _clean(league_swing.get("attack_direction")),
-                "swing_path_tilt": _clean(league_swing.get("swing_path_tilt")),
+                "attack_direction": _clean(league_attack_direction),
                 "swing_length": _clean(league_swing.get("swing_length")),
+                "swing_path_tilt": _clean(league_swing_tilt),
             },
         }
+        yield ("step", "Computing swing profile")
 
         table = batter_pitch_type_table(conn, season, player_id, split_filter)
         if not table.empty:
             lg_row = _league_avg_batter_row(conn, season, split_filter)
             rows, league_row = _table_to_rows(table, BATTER_TABLE_COLUMNS, PITCHER_TABLE_FMT | {
                 "OPS": "{:.3f}", "wOBA": "{:.3f}", "xwOBA": "{:.3f}", "K_pct": "{:.1%}",
-                "whiff_pct": "{:.1%}", "barrel_pct": "{:.1%}",
+                "whiff_pct": "{:.1%}", "barrel_pct": "{:.1%}", "pct_faced": "{:.1%}",
             }, lg_row)
         else:
             rows, league_row = [], None
         base["pitch_type_table"] = {"columns": [{"key": k, "label": v} for k, v in BATTER_TABLE_COLUMNS],
                                      "rows": rows, "summary_row": league_row, "summary_label": "League Avg"}
+        yield ("step", "Building pitch table")
 
-    return base
+    yield ("done", base)
+
+
+@router.get("/player/{player_id}")
+def get_player(
+    player_id: int,
+    role: str = Query("pitcher", pattern="^(pitcher|batter)$"),
+    split: str = Query("ALL", pattern="^(ALL|L|R)$"),
+    season: int = Query(2026),
+    conn=Depends(get_conn),
+):
+    for kind, payload in _build_player_steps(conn, player_id, role, split, season):
+        if kind == "done":
+            return payload
+    raise HTTPException(status_code=500, detail="Player payload generator produced no result")
+
+
+@router.get("/player/{player_id}/progress")
+def get_player_progress(
+    player_id: int,
+    role: str = Query("pitcher", pattern="^(pitcher|batter)$"),
+    split: str = Query("ALL", pattern="^(ALL|L|R)$"),
+    season: int = Query(2026),
+):
+    """Newline-delimited-JSON version of GET /player/{id} for the Player
+    page's own loading bar: one line per real checkpoint as
+    _build_player_steps finishes it (`{"type":"progress","step":...,
+    "index":N,"total":PLAYER_LOAD_STEPS}`), then one final line with the
+    complete payload (`{"type":"done","data":{...}}`) - same computation,
+    same result, just observable mid-flight instead of arriving as a single
+    opaque wait. Opens its OWN sqlite connection (rather than the usual
+    Depends(get_conn)) since that dependency's cleanup timing relative to a
+    StreamingResponse's body being fully sent isn't guaranteed the way a
+    plain return value's is - this sidesteps the question entirely."""
+    import sqlite3
+    from api.db import DB_PATH
+
+    # Checked BEFORE the StreamingResponse is constructed - a StreamingResponse
+    # commits to its 200 status as soon as it starts sending, before it pulls
+    # even the first item from the body generator, so a 404 raised from
+    # inside gen() below would arrive as a broken 200 response instead of a
+    # clean 404. This mirrors _build_player_steps' own not-found check so a
+    # bad player_id fails the same way on both endpoints.
+    precheck_conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    try:
+        exists = precheck_conn.execute(
+            "SELECT 1 FROM players WHERE player_id = ?", (player_id,)
+        ).fetchone()
+    finally:
+        precheck_conn.close()
+    if exists is None:
+        raise HTTPException(status_code=404, detail="Player not found")
+
+    def gen():
+        conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA busy_timeout=5000")
+        try:
+            index = 0
+            for kind, payload in _build_player_steps(conn, player_id, role, split, season):
+                if kind == "step":
+                    index += 1
+                    yield json.dumps({"type": "progress", "step": payload, "index": index, "total": PLAYER_LOAD_STEPS}) + "\n"
+                else:
+                    yield json.dumps({"type": "done", "data": payload}) + "\n"
+        finally:
+            conn.close()
+
+    return StreamingResponse(gen(), media_type="application/x-ndjson")
+
+
+# ---------------------------------------------------------------------------
+# Part D: Outing breakdown endpoints (pitchers only)
+# ---------------------------------------------------------------------------
+
+@router.get("/players/{player_id}/outings")
+def get_pitcher_outings(
+    player_id: int,
+    season: int = Query(2026),
+    conn=Depends(get_conn),
+):
+    """
+    List of games (outings) a pitcher appeared in during the given season,
+    ordered most recent first. Pitchers only — batters should use the
+    per-game stats on their own profile.
+    """
+    rows = conn.execute(
+        """
+        SELECT g.game_id, g.game_date, g.home_team, g.away_team,
+               COUNT(*) AS n_pitches
+        FROM pitches p
+        JOIN games g ON p.game_id = g.game_id
+        WHERE p.pitcher_id = ? AND p.season = ?
+        GROUP BY g.game_id
+        ORDER BY g.game_date DESC
+        """,
+        (player_id, season),
+    ).fetchall()
+
+    if not rows:
+        return []
+
+    return [
+        {
+            "game_id": r[0],
+            "game_date": r[1],
+            "home_team": r[2],
+            "away_team": r[3],
+            "n_pitches": r[4],
+            "label": f"{r[1]} — {r[3]} @ {r[2]} ({r[4]}p)",
+        }
+        for r in rows
+    ]
+
+
+@router.get("/players/{player_id}/outing")
+def get_pitcher_outing(
+    player_id: int,
+    game_id: int = Query(...),
+    season: int = Query(2026),
+    conn=Depends(get_conn),
+):
+    """
+    Full pitch-by-pitch breakdown for one outing plus per-pitch-type
+    aggregate stats. Includes Stuff+/Deception+ mean per pitch type where
+    available from the live model scoring.
+    """
+    # ---- raw pitches for this outing ----
+    pitches_df = pd.read_sql(
+        """
+        SELECT pitch_type, release_speed, release_spin_rate,
+               pfx_x, pfx_z, release_extension,
+               description, events, plate_x, plate_z,
+               balls, strikes, stand, launch_speed,
+               COALESCE(sz_top, 3.5) as sz_top,
+               COALESCE(sz_bot, 1.5) as sz_bot,
+               at_bat_number, pitch_number,
+               COALESCE(inning, 1) as inning
+        FROM pitches
+        WHERE pitcher_id = ? AND game_id = ? AND season = ?
+        ORDER BY at_bat_number, pitch_number
+        """,
+        conn,
+        params=(player_id, game_id, season),
+    )
+
+    if pitches_df.empty:
+        return {"game_id": game_id, "pitch_types": [], "pitches": []}
+
+    # ---- per-pitch-type stats ----
+    def is_swing(desc):
+        return desc in (
+            "swinging_strike", "swinging_strike_blocked", "foul", "foul_tip",
+            "hit_into_play", "hit_into_play_no_out", "hit_into_play_score",
+        )
+    def is_whiff(desc):
+        return desc in ("swinging_strike", "swinging_strike_blocked")
+
+    pitches_df["_swing"] = pitches_df["description"].apply(is_swing)
+    pitches_df["_whiff"] = pitches_df["description"].apply(is_whiff)
+    pitches_df["_called_strike"] = pitches_df["description"] == "called_strike"
+
+    def is_strike_call(desc):
+        return desc in ("called_strike", "swinging_strike", "swinging_strike_blocked",
+                        "foul_tip", "foul", "foul_bunt")
+
+    pitches_df["_in_zone"] = (
+        (pitches_df["plate_x"].between(-0.8333, 0.8333)) &
+        (pitches_df["plate_z"] >= pitches_df["sz_bot"]) &
+        (pitches_df["plate_z"] <= pitches_df["sz_top"])
+    )
+    pitches_df["_first_pitch"] = (pitches_df["balls"] == 0) & (pitches_df["strikes"] == 0)
+    pitches_df["_fp_strike"] = pitches_df["_first_pitch"] & pitches_df["description"].apply(is_strike_call)
+
+    # Season averages for this pitcher per pitch type (for delta arrows)
+    season_avg_df = pd.read_sql(
+        """SELECT pitch_type,
+                  AVG(release_speed) as avg_velo,
+                  AVG(pfx_x) as avg_hb,
+                  AVG(pfx_z) as avg_ivb,
+                  AVG(release_spin_rate) as avg_spin
+           FROM pitches
+           WHERE pitcher_id = ? AND season = ?
+           GROUP BY pitch_type""",
+        conn, params=(player_id, season),
+    )
+    season_avg = {row.pitch_type: row for _, row in season_avg_df.iterrows()}
+
+    # Season total pitch counts per type (for yr_usage_pct)
+    season_totals = conn.execute(
+        "SELECT pitch_type, COUNT(*) FROM pitches WHERE pitcher_id = ? AND season = ? GROUP BY pitch_type",
+        (player_id, season),
+    ).fetchall()
+    season_total_all = sum(r[1] for r in season_totals)
+    season_type_counts = {r[0]: r[1] for r in season_totals}
+
+    # Outing-level aggregates
+    _ev_col = pitches_df["launch_speed"].dropna()
+    max_ev = round(float(_ev_col.max()), 1) if not _ev_col.empty else None
+    avg_ev = round(float(_ev_col.mean()), 1) if not _ev_col.empty else None
+    _velo_col = pitches_df["release_speed"].dropna()
+    max_velo = round(float(_velo_col.max()), 1) if not _velo_col.empty else None
+    avg_velo = round(float(_velo_col.mean()), 1) if not _velo_col.empty else None
+
+    # Player team_id for header logo
+    _tid_row = conn.execute("SELECT team_id FROM players WHERE player_id = ?", (player_id,)).fetchone()
+    player_team_id = _tid_row[0] if _tid_row else None
+
+    # Stat line for the outing
+    outs = int(pitches_df["events"].isin([
+        "field_out","force_out","grounded_into_double_play","double_play",
+        "strikeout","strikeout_double_play","sac_fly","sac_bunt",
+        "fielders_choice_out","other_out","triple_play",
+    ]).sum())
+    stat_line = {
+        "ip": round(outs / 3, 1),
+        "k": int(pitches_df["events"].isin(["strikeout","strikeout_double_play"]).sum()),
+        "bb": int(pitches_df["events"].isin(["walk","intent_walk"]).sum()),
+        "h": int(pitches_df["events"].isin(["single","double","triple","home_run"]).sum()),
+        "hr": int(pitches_df["events"].isin(["home_run"]).sum()),
+        "total_pitches": len(pitches_df),
+        "total_whiffs": int(pitches_df["_whiff"].sum()),
+        "zone_pct": round(pitches_df["_in_zone"].mean() * 100, 1),
+        "first_pitch_strike_pct": round(
+            pitches_df.loc[pitches_df["_first_pitch"], "_fp_strike"].mean() * 100, 1
+        ) if pitches_df["_first_pitch"].any() else None,
+    }
+
+    stuff_season = None
+    try:
+        stuff_season = _stuff_plus_table(conn, season)
+    except Exception:
+        pass
+
+    summaries = []
+    total_pitches = len(pitches_df)
+    for pt, grp in pitches_df.groupby("pitch_type"):
+        n = len(grp)
+        swings = int(grp["_swing"].sum())
+        whiffs = int(grp["_whiff"].sum())
+        whiff_rate = whiffs / swings if swings > 0 else None
+
+        def avg_col(col):
+            s = grp[col].dropna()
+            return round(float(s.mean()), 2) if not s.empty else None
+
+        velo = avg_col("release_speed")
+        hb = avg_col("pfx_x")
+        ivb = avg_col("pfx_z")
+        spin = round(float(grp["release_spin_rate"].dropna().mean()), 0) if not grp["release_spin_rate"].dropna().empty else None
+
+        sa = season_avg.get(pt)
+        def delta(val, avg_val):
+            if val is None or avg_val is None or (hasattr(avg_val, 'item') and pd.isna(avg_val)):
+                return None
+            return round(float(val) - float(avg_val), 1)
+
+        fp_pitches = grp[grp["_first_pitch"]]
+        fp_strike_pct = round(fp_pitches["_fp_strike"].mean() * 100, 1) if not fp_pitches.empty else None
+        zone_pct = round(grp["_in_zone"].mean() * 100, 1)
+
+        pt_stuff = None
+        if stuff_season is not None:
+            try:
+                idx = (player_id, pt)
+                if idx in stuff_season.index:
+                    pt_stuff = round(float(stuff_season.loc[idx, "stuff_plus"]), 0)
+            except Exception:
+                pass
+
+        # New fields for the detailed outing breakdown table
+        called_strikes_n = int(grp["_called_strike"].sum())
+        k_count = int(grp["events"].isin(["strikeout", "strikeout_double_play"]).sum())
+        rhh_n = int((grp["stand"] == "R").sum())
+        lhh_n = int((grp["stand"] == "L").sum())
+        yr_count = season_type_counts.get(pt, 0)
+        yr_usage_pct = round(yr_count / season_total_all * 100, 1) if season_total_all > 0 else None
+        _sa_spin = float(sa.avg_spin) if sa is not None and not pd.isna(sa.avg_spin) else None
+        spin_delta_val = delta(spin, _sa_spin)
+
+        summaries.append({
+            "pitch_type": pt,
+            "count": n,
+            "usage_pct": round(n / total_pitches * 100, 1),
+            "yr_usage_pct": yr_usage_pct,
+            "rhh_count": rhh_n,
+            "rhh_pct": round(rhh_n / total_pitches * 100, 1),
+            "lhh_count": lhh_n,
+            "lhh_pct": round(lhh_n / total_pitches * 100, 1),
+            "avg_velo": velo,
+            "velo_delta": delta(velo, sa.avg_velo if sa is not None else None),
+            "avg_spin": spin,
+            "spin_delta": spin_delta_val,
+            "avg_hb": hb,
+            "hb_delta": delta(hb, sa.avg_hb if sa is not None else None),
+            "avg_ivb": ivb,
+            "ivb_delta": delta(ivb, sa.avg_ivb if sa is not None else None),
+            "swings": swings,
+            "called_strikes": called_strikes_n,
+            "k_count": k_count,
+            "whiffs": whiffs,
+            "whiff_rate": round(whiff_rate * 100, 1) if whiff_rate is not None else None,
+            "zone_pct": zone_pct,
+            "first_pitch_strike_pct": fp_strike_pct,
+            "stuff_plus": pt_stuff,
+        })
+
+    summaries.sort(key=lambda x: -x["count"])
+
+    game_row = conn.execute(
+        "SELECT game_date, home_team, away_team FROM games WHERE game_id = ?", (game_id,)
+    ).fetchone()
+
+    # Look up real team abbreviations from the teams table
+    def _team_abbr(team_id_str):
+        if team_id_str is None:
+            return None
+        try:
+            r = conn.execute("SELECT abbreviation FROM teams WHERE team_id = ?", (int(team_id_str),)).fetchone()
+            return r[0] if r else str(team_id_str)
+        except (ValueError, TypeError):
+            return str(team_id_str)
+
+    home_abbr = _team_abbr(game_row[1]) if game_row else None
+    away_abbr = _team_abbr(game_row[2]) if game_row else None
+
+    # Find the opposing pitcher (the other pitcher who started that game)
+    opp_row = conn.execute(
+        """SELECT p.pitcher_id, pl.name
+           FROM pitches p
+           LEFT JOIN players pl ON pl.player_id = p.pitcher_id
+           WHERE p.game_id = ? AND p.season = ? AND p.pitcher_id != ?
+             AND p.at_bat_number = 1
+           GROUP BY p.pitcher_id
+           LIMIT 1""",
+        (game_id, season, player_id),
+    ).fetchone()
+    opp_pitcher = {"player_id": int(opp_row[0]), "name": opp_row[1] or "Opponent"} if opp_row else None
+
+    player_name_row = conn.execute(
+        "SELECT name FROM players WHERE player_id = ?", (player_id,)
+    ).fetchone()
+
+    # ---- at-bat sequences for pitch sequence chart ----
+    RESULT_LABELS = {
+        "strikeout": "K", "strikeout_double_play": "KDP",
+        "walk": "BB", "intent_walk": "IBB",
+        "single": "1B", "double": "2B", "triple": "3B", "home_run": "HR",
+        "field_out": "OUT", "force_out": "FC", "grounded_into_double_play": "DP",
+        "double_play": "DP", "sac_fly": "SF", "sac_bunt": "SH",
+        "fielders_choice_out": "FC", "fielders_choice": "FC",
+        "hit_by_pitch": "HBP", "catcher_interf": "CI",
+        "other_out": "OUT", "triple_play": "TP",
+    }
+    sequences = []
+    if "at_bat_number" in pitches_df.columns:
+        for ab_num, ab_grp in pitches_df.sort_values("pitch_number").groupby("at_bat_number"):
+            ab_pitches = []
+            for _, row in ab_grp.iterrows():
+                ab_pitches.append({
+                    "pt": row["pitch_type"] if pd.notna(row["pitch_type"]) else "??",
+                    "v": round(float(row["release_speed"]), 1) if pd.notna(row["release_speed"]) else None,
+                    "d": row["description"] if pd.notna(row["description"]) else "",
+                    "b": int(row["balls"]) if pd.notna(row["balls"]) else 0,
+                    "s": int(row["strikes"]) if pd.notna(row["strikes"]) else 0,
+                })
+            ev_series = ab_grp["events"].dropna()
+            raw_result = ev_series.iloc[-1] if not ev_series.empty else None
+            result_label = RESULT_LABELS.get(raw_result, raw_result.upper()[:3] if raw_result else "?")
+            sequences.append({
+                "ab": int(ab_num),
+                "inn": int(ab_grp["inning"].iloc[0]),
+                "stand": ab_grp["stand"].iloc[0] if pd.notna(ab_grp["stand"].iloc[0]) else "R",
+                "pitches": ab_pitches,
+                "result": result_label,
+                "raw_result": raw_result,
+            })
+
+    return {
+        "game_id": game_id,
+        "game_date": game_row[0] if game_row else None,
+        "home_team": home_abbr,
+        "away_team": away_abbr,
+        "player_id": player_id,
+        "player_name": player_name_row[0] if player_name_row else None,
+        "player_team_id": player_team_id,
+        "opp_pitcher": opp_pitcher,
+        "max_ev": max_ev,
+        "avg_ev": avg_ev,
+        "max_velo": max_velo,
+        "avg_velo": avg_velo,
+        "stat_line": stat_line,
+        "pitch_types": summaries,
+        "sequences": sequences,
+    }
+
