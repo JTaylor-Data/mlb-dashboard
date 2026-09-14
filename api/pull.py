@@ -99,14 +99,17 @@ def _run(full_warmup):
         _status["detail"] = "Updating remaining schedule..."
         pull_remaining_schedule.run(season)
 
-        print("[refresh] updating prospect rankings + scouting...", flush=True)
-        _status["detail"] = "Updating prospect rankings..."
-        try:
-            from pulls import pull_prospects, pull_prospect_scouting
-            pull_prospects.run(season)
-            pull_prospect_scouting.run()
-        except Exception as _pe:
-            print(f"[refresh] prospect pull failed (non-fatal): {_pe}", flush=True)
+        # Prospects don't change daily — skip on manual Refresh clicks (full_warmup=False)
+        # to avoid a slow network call the user didn't ask for. Daily scheduler still runs it.
+        if full_warmup:
+            print("[refresh] updating prospect rankings + scouting...", flush=True)
+            _status["detail"] = "Updating prospect rankings..."
+            try:
+                from pulls import pull_prospects, pull_prospect_scouting
+                pull_prospects.run(season)
+                pull_prospect_scouting.run()
+            except Exception as _pe:
+                print(f"[refresh] prospect pull failed (non-fatal): {_pe}", flush=True)
 
         print("[refresh] refreshing computed stats...", flush=True)
         _status["detail"] = "Refreshing computed stats..."

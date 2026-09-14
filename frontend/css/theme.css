@@ -270,9 +270,9 @@ select, input[type="date"] {
 /* --- Card --- */
 .card {
   background: var(--surface);
-  border: 2px solid var(--bark-light);
+  border: 2px solid var(--bark);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  box-shadow: 0 2px 6px rgba(27, 67, 50, 0.12), 0 0 0 1px rgba(107,68,35,0.08);
   padding: 14px 20px;
 }
 
@@ -550,13 +550,25 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
   gap: 12px;
   margin-bottom: 17px;
 }
-/* Unqualified player (Baseball Savant convention: shaded/muted, not hidden
-   and not shown identically to a qualified player's bar) - see
-   renderPercentileGroups() in player.js. */
-.rt-row-unqualified { opacity: 0.42; filter: grayscale(0.5); }
+/* Unqualified player: bar itself gets a diagonal stripe pattern; text stays
+   readable (no opacity on the row). The fill color is desaturated inline. */
+.rt-row-unqualified .rt-fill {
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent,
+    transparent 4px,
+    rgba(255,255,255,0.45) 4px,
+    rgba(255,255,255,0.45) 8px
+  ) !important;
+}
+.rt-row-unqualified .rt-badge { opacity: 0.55; }
 .rt-unqualified-banner {
   font-size: 11.5px; color: var(--text-muted); background: var(--surface-alt);
   border: 1px dashed var(--border); border-radius: 6px; padding: 6px 10px; margin-bottom: 4px;
+}
+.pct-no-data-note {
+  font-size: 12px; font-weight: 400; color: var(--text-muted);
+  font-style: italic; margin-left: 4px;
 }
 .rt-label {
   font-size: 11.5px; font-weight: 600; color: var(--text);
@@ -572,7 +584,7 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
 }
 .rt-track {
   position: relative;
-  background: #e9e7df;
+  background: var(--surface-alt);
   border-radius: 9px;
   height: 12px;
 }

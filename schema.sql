@@ -122,6 +122,14 @@ CREATE INDEX IF NOT EXISTS idx_pitches_p_throws   ON pitches(p_throws);
 -- on the /api/players/all query for a single season.
 CREATE INDEX IF NOT EXISTS idx_pitches_season_pitcher ON pitches(season, pitcher_id);
 CREATE INDEX IF NOT EXISTS idx_pitches_season_batter  ON pitches(season, batter_id);
+-- games(season) index: standings, top-performers date lookups, and schedule
+-- queries all filter WHERE season = ? on the games table. Without this SQLite
+-- scans all rows (~5000 across 6 seasons) on every standings/schedule request.
+CREATE INDEX IF NOT EXISTS idx_games_season ON games(season);
+-- Composite pitches index for per-game pitcher queries (probable-pitchers recent
+-- starts, outing breakdown): season + pitcher_id + game_id lets SQLite resolve
+-- the GROUP BY entirely from the index without touching row data.
+CREATE INDEX IF NOT EXISTS idx_pitches_season_pitcher_game ON pitches(season, pitcher_id, game_id);
 
 -- Season-level Savant/MLB Stats API leaderboard stats - not derivable from
 -- the pitch-by-pitch pull, genuinely external aggregates pulled separately.

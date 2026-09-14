@@ -17,7 +17,7 @@ from fastapi.responses import StreamingResponse
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.archetypes import ARCHETYPE_DESCRIPTIONS, classify_batter_archetype
-from analytics.boxscore import season_era
+from analytics.boxscore import fetch_boxscore, pitcher_daily_stats, season_era
 from analytics.metrics import classify_pitcher_roles
 from analytics.percentiles import (
     BATTER_POLARITY, PITCHER_POLARITY, batter_percentile_metrics,
@@ -330,6 +330,7 @@ def _deception_plus_badge(conn, player_id):
         return None
 
 
+@ttl_cache()
 def _tunneling_plus_badge(conn, season, player_id):
     """Tunneling+ v3 (the standard, promoted version) - live-scored, same
     try/except-wrapped pattern as _deception_plus_badge above, since this
@@ -347,6 +348,7 @@ def _tunneling_plus_badge(conn, season, player_id):
         return None
 
 
+@ttl_cache()
 def _location_plus_badge(conn, season, player_id):
     """Location+ v1, same live-scoring/season-selector/try-except pattern
     as Tunneling+ v3's own badge above - real data from
@@ -871,10 +873,14 @@ def get_pitcher_outings(
     """
     rows = conn.execute(
         """
-        SELECT g.game_id, g.game_date, g.home_team, g.away_team,
+        SELECT g.game_id, g.game_date,
+               COALESCE(ht.abbreviation, CAST(g.home_team AS TEXT)) AS home_abbr,
+               COALESCE(at.abbreviation, CAST(g.away_team AS TEXT)) AS away_abbr,
                COUNT(*) AS n_pitches
         FROM pitches p
         JOIN games g ON p.game_id = g.game_id
+        LEFT JOIN teams ht ON CAST(g.home_team AS INTEGER) = ht.team_id
+        LEFT JOIN teams at ON CAST(g.away_team AS INTEGER) = at.team_id
         WHERE p.pitcher_id = ? AND p.season = ?
         GROUP BY g.game_id
         ORDER BY g.game_date DESC
@@ -933,51 +939,35 @@ def get_pitcher_outing(
         return {"game_id": game_id, "pitch_types": [], "pitches": []}
 
     # ---- per-pitch-type stats ----
-    def is_swing(desc):
-        return desc in (
-            "swinging_strike", "swinging_strike_blocked", "foul", "foul_tip",
-            "hit_into_play", "hit_into_play_no_out", "hit_into_play_score",
-        )
-    def is_whiff(desc):
-        return desc in ("swinging_strike", "swinging_strike_blocked")
+    _OUTING_SWINGS = {"swinging_strike", "swinging_strike_blocked", "foul", "foul_tip",
+                      "hit_into_play", "hit_into_play_no_out", "hit_into_play_score"}
+    _OUTING_WHIFFS = {"swinging_strike", "swinging_strike_blocked"}
+    _OUTING_STRIKE_CALLS = {"called_strike", "swinging_strike", "swinging_strike_blocked",
+                            "foul_tip", "foul", "foul_bunt"}
 
-    pitches_df["_swing"] = pitches_df["description"].apply(is_swing)
-    pitches_df["_whiff"] = pitches_df["description"].apply(is_whiff)
-    pitches_df["_called_strike"] = pitches_df["description"] == "called_strike"
-
-    def is_strike_call(desc):
-        return desc in ("called_strike", "swinging_strike", "swinging_strike_blocked",
-                        "foul_tip", "foul", "foul_bunt")
-
+    d = pitches_df["description"]
+    pitches_df["_swing"] = d.isin(_OUTING_SWINGS)
+    pitches_df["_whiff"] = d.isin(_OUTING_WHIFFS)
+    pitches_df["_called_strike"] = d == "called_strike"
     pitches_df["_in_zone"] = (
-        (pitches_df["plate_x"].between(-0.8333, 0.8333)) &
+        pitches_df["plate_x"].between(-0.8333, 0.8333) &
         (pitches_df["plate_z"] >= pitches_df["sz_bot"]) &
         (pitches_df["plate_z"] <= pitches_df["sz_top"])
     )
     pitches_df["_first_pitch"] = (pitches_df["balls"] == 0) & (pitches_df["strikes"] == 0)
-    pitches_df["_fp_strike"] = pitches_df["_first_pitch"] & pitches_df["description"].apply(is_strike_call)
+    pitches_df["_fp_strike"] = pitches_df["_first_pitch"] & d.isin(_OUTING_STRIKE_CALLS)
 
-    # Season averages for this pitcher per pitch type (for delta arrows)
-    season_avg_df = pd.read_sql(
-        """SELECT pitch_type,
-                  AVG(release_speed) as avg_velo,
-                  AVG(pfx_x) as avg_hb,
-                  AVG(pfx_z) as avg_ivb,
-                  AVG(release_spin_rate) as avg_spin
-           FROM pitches
-           WHERE pitcher_id = ? AND season = ?
-           GROUP BY pitch_type""",
+    # Season averages + counts in one query (for delta arrows and yr_usage_pct)
+    season_agg_df = pd.read_sql(
+        """SELECT pitch_type, COUNT(*) as n_pitches,
+                  AVG(release_speed) as avg_velo, AVG(pfx_x) as avg_hb,
+                  AVG(pfx_z) as avg_ivb, AVG(release_spin_rate) as avg_spin
+           FROM pitches WHERE pitcher_id = ? AND season = ? GROUP BY pitch_type""",
         conn, params=(player_id, season),
     )
-    season_avg = {row.pitch_type: row for _, row in season_avg_df.iterrows()}
-
-    # Season total pitch counts per type (for yr_usage_pct)
-    season_totals = conn.execute(
-        "SELECT pitch_type, COUNT(*) FROM pitches WHERE pitcher_id = ? AND season = ? GROUP BY pitch_type",
-        (player_id, season),
-    ).fetchall()
-    season_total_all = sum(r[1] for r in season_totals)
-    season_type_counts = {r[0]: r[1] for r in season_totals}
+    season_total_all = int(season_agg_df["n_pitches"].sum())
+    season_type_counts = dict(zip(season_agg_df["pitch_type"], season_agg_df["n_pitches"].astype(int)))
+    season_avg = {row.pitch_type: row for _, row in season_agg_df.iterrows()}
 
     # Outing-level aggregates
     _ev_col = pitches_df["launch_speed"].dropna()
@@ -987,9 +977,10 @@ def get_pitcher_outing(
     max_velo = round(float(_velo_col.max()), 1) if not _velo_col.empty else None
     avg_velo = round(float(_velo_col.mean()), 1) if not _velo_col.empty else None
 
-    # Player team_id for header logo
-    _tid_row = conn.execute("SELECT team_id FROM players WHERE player_id = ?", (player_id,)).fetchone()
-    player_team_id = _tid_row[0] if _tid_row else None
+    # Player team_id + name in one lookup
+    _p_row = conn.execute("SELECT team_id, name FROM players WHERE player_id = ?", (player_id,)).fetchone()
+    player_team_id = _p_row[0] if _p_row else None
+    _player_name_cached = _p_row[1] if _p_row else None
 
     # Stat line for the outing
     outs = int(pitches_df["events"].isin([
@@ -997,12 +988,32 @@ def get_pitcher_outing(
         "strikeout","strikeout_double_play","sac_fly","sac_bunt",
         "fielders_choice_out","other_out","triple_play",
     ]).sum())
+    # Try to get official R/ER/ERA from the MLB Stats API boxscore
+    _bx_r, _bx_er, _bx_era = None, None, None
+    try:
+        _bx = fetch_boxscore(game_id)
+        _bx_stats = pitcher_daily_stats(_bx, player_id)
+        if _bx_stats:
+            _bx_r = _bx_stats.get("r")
+            _bx_er = _bx_stats.get("er")
+            _raw_era = _bx_stats.get("season_era")
+            if _raw_era not in (None, "-", "-.--"):
+                try:
+                    _bx_era = round(float(_raw_era), 2)
+                except (ValueError, TypeError):
+                    pass
+    except Exception:
+        pass
+
     stat_line = {
         "ip": round(outs / 3, 1),
         "k": int(pitches_df["events"].isin(["strikeout","strikeout_double_play"]).sum()),
         "bb": int(pitches_df["events"].isin(["walk","intent_walk"]).sum()),
         "h": int(pitches_df["events"].isin(["single","double","triple","home_run"]).sum()),
         "hr": int(pitches_df["events"].isin(["home_run"]).sum()),
+        "r": _bx_r,
+        "er": _bx_er,
+        "era": _bx_era,
         "total_pitches": len(pitches_df),
         "total_whiffs": int(pitches_df["_whiff"].sum()),
         "zone_pct": round(pitches_df["_in_zone"].mean() * 100, 1),
@@ -1093,21 +1104,18 @@ def get_pitcher_outing(
     summaries.sort(key=lambda x: -x["count"])
 
     game_row = conn.execute(
-        "SELECT game_date, home_team, away_team FROM games WHERE game_id = ?", (game_id,)
+        """SELECT g.game_date,
+                  COALESCE(ht.abbreviation, CAST(g.home_team AS TEXT)) AS home_abbr,
+                  COALESCE(at.abbreviation, CAST(g.away_team AS TEXT)) AS away_abbr
+           FROM games g
+           LEFT JOIN teams ht ON CAST(g.home_team AS INTEGER) = ht.team_id
+           LEFT JOIN teams at ON CAST(g.away_team AS INTEGER) = at.team_id
+           WHERE g.game_id = ?""",
+        (game_id,),
     ).fetchone()
 
-    # Look up real team abbreviations from the teams table
-    def _team_abbr(team_id_str):
-        if team_id_str is None:
-            return None
-        try:
-            r = conn.execute("SELECT abbreviation FROM teams WHERE team_id = ?", (int(team_id_str),)).fetchone()
-            return r[0] if r else str(team_id_str)
-        except (ValueError, TypeError):
-            return str(team_id_str)
-
-    home_abbr = _team_abbr(game_row[1]) if game_row else None
-    away_abbr = _team_abbr(game_row[2]) if game_row else None
+    home_abbr = game_row[1] if game_row else None
+    away_abbr = game_row[2] if game_row else None
 
     # Find the opposing pitcher (the other pitcher who started that game)
     opp_row = conn.execute(
@@ -1122,9 +1130,7 @@ def get_pitcher_outing(
     ).fetchone()
     opp_pitcher = {"player_id": int(opp_row[0]), "name": opp_row[1] or "Opponent"} if opp_row else None
 
-    player_name_row = conn.execute(
-        "SELECT name FROM players WHERE player_id = ?", (player_id,)
-    ).fetchone()
+    player_name_row = (_player_name_cached,)
 
     # ---- at-bat sequences for pitch sequence chart ----
     RESULT_LABELS = {

@@ -15,12 +15,13 @@ from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from analytics import boxscore as _boxscore
 from api import cache, pull, scheduler
 from api.db import get_conn
 from api.routers import (
-    analysis, deception_report, heatmaps, hitzones, location_report, players, playoffs, prospects, similar_players,
-    splits, standings, stuff_model_report, team_card, top_performers, tunneling_report, tunneling_3d,
-    teams, probable_pitchers, news,
+    analysis, career, deception_report, heatmaps, hitzones, location_report, players, playoffs,
+    prospects, similar_players, splits, standings, stuff_model_report, team_card, top_performers,
+    trends, tunneling_report, tunneling_3d, teams, probable_pitchers, news,
 )
 from api.warmup import warm_cache_background
 
@@ -51,6 +52,7 @@ def refresh_cache():
     """Cache-only refresh - use when you've re-run the pull scripts yourself
     and just want the app to pick up what's already on disk."""
     cache.clear_all()
+    _boxscore.clear_cache()
     warm_cache_background()
     return {"status": "ok"}
 
@@ -89,23 +91,31 @@ app.include_router(playoffs.router)
 app.include_router(teams.router)
 app.include_router(probable_pitchers.router)
 app.include_router(news.router)
+app.include_router(trends.router)
+app.include_router(career.router)
 
 
 @app.middleware("http")
 async def no_cache_static(request, call_next):
-    # This app is under active local iteration. Setting Cache-Control on the
-    # way out isn't enough by itself: StaticFiles honors the browser's
-    # If-None-Match/If-Modified-Since conditional headers and answers with a
-    # bodyless 304, so a stale cached body keeps getting reused regardless
-    # of what header rides along with the 304. Strip the conditional
-    # headers off the incoming request so every response is a full 200 with
-    # current content, then also mark it non-cacheable for next time.
-    request.scope["headers"] = [
-        (k, v) for k, v in request.scope["headers"]
-        if k not in (b"if-none-match", b"if-modified-since")
-    ]
+    # HTML pages must never be served stale — strip conditional headers so the
+    # browser can't 304 itself back to an old page structure. Versioned static
+    # assets (JS/CSS with ?v=N query params) are safe to cache in the browser;
+    # stripping their conditional headers just wastes bandwidth on a forced
+    # re-download every time.
+    path = request.url.path
+    is_html = (
+        path == "/"
+        or path.endswith(".html")
+        or (not path.startswith("/api/") and "." not in path.split("/")[-1])
+    )
+    if is_html:
+        request.scope["headers"] = [
+            (k, v) for k, v in request.scope["headers"]
+            if k not in (b"if-none-match", b"if-modified-since")
+        ]
     response = await call_next(request)
-    response.headers["Cache-Control"] = "no-store"
+    if is_html:
+        response.headers["Cache-Control"] = "no-store"
     return response
 
 

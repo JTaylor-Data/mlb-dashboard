@@ -40,7 +40,12 @@ def compute_daily_wpa(conn, date):
     pitchers["role"] = "pitcher"
 
     combined = pd.concat([batters, pitchers], ignore_index=True)
-    players = pd.read_sql("SELECT player_id, name, team_id FROM players", conn).set_index("player_id")
+    player_ids = [int(x) for x in pd.concat([batters["player_id"], pitchers["player_id"]]).unique()]
+    ph = ",".join("?" * len(player_ids))
+    players = pd.read_sql(
+        f"SELECT player_id, name, team_id FROM players WHERE player_id IN ({ph})",
+        conn, params=player_ids,
+    ).set_index("player_id")
     combined["name"] = combined["player_id"].map(players["name"])
     combined["team_id"] = combined["player_id"].map(players["team_id"])
     return combined

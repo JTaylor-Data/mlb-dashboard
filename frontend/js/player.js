@@ -258,14 +258,23 @@ function renderPercentileGroups(groups, colorFn, layout) {
 }
 
 function renderPercentiles(groups) {
-  // Percentiles always live in their own full-width row below the
-  // Movement/Hit-Zones + Swing card row now, in the same 3-group
-  // side-by-side grid for both roles - previously batters had a separate,
-  // narrower stacked layout in the left-column slot, which is now used for
-  // Hit Zones instead.
   const mount = document.getElementById("pitcher-percentiles-mount");
+  const section = document.getElementById("pitcher-percentiles-section");
+  // When no data: clear the mount and put a small note beside the heading
+  // (the heading lives in index.html as an <h2> sibling of the mount).
+  const heading = section ? section.querySelector("h2") : null;
+  if (heading) {
+    const existing = heading.querySelector(".pct-no-data-note");
+    if (existing) existing.remove();
+  }
   if (!groups || !groups.length) {
-    mount.innerHTML = `<div class="card rt-panel"><div class="empty-state">Not enough pitches/plate appearances to qualify in this split.</div></div>`;
+    mount.innerHTML = "";
+    if (heading) {
+      const note = document.createElement("span");
+      note.className = "pct-no-data-note";
+      note.textContent = " — insufficient data for this split";
+      heading.appendChild(note);
+    }
     return;
   }
   mount.innerHTML = renderPercentileGroups(groups, pctColor, "grid");
@@ -1623,6 +1632,17 @@ async function loadPlayer() {
   }
 }
 
+// Fire-and-forget prefetches for the two most-visited adjacent pages so
+// they render instantly when the user navigates there.
+function prefetchAdjacentPages(meta) {
+  if (typeof prefetchInBackground !== "function") return;
+  const date = meta && meta.latest_game_date;
+  if (date) {
+    prefetchInBackground(`/api/top-performers?date=${date}`);
+    prefetchInBackground(`/api/probable-pitchers?date=${date}`);
+  }
+}
+
 window.onDataRefresh = async () => {
   playerDataCache.clear();
   similarPlayersCache.clear();
@@ -1684,4 +1704,7 @@ async function defaultToTopPerformer() {
     applyRoleChrome();
     await loadPlayer();
   }
+  // After the main player renders, prefetch probable-pitchers and top-performers
+  // in the background so those pages load instantly when navigated to.
+  getJSON("/api/meta").then(prefetchAdjacentPages).catch(() => {});
 })();

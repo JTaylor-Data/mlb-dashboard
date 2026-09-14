@@ -4,6 +4,18 @@ mlb_data.db.backup-*
 
 # Research/model-dev artifacts (large, regenerable via their build script)
 training/stuff_v3_artifacts/
+training/tunneling_v3_artifacts/
+
+# CV venv (hundreds of MB of DLLs and wheels, never belongs in git)
+pitcher_cv/bcv_venv311/
+
+# Large model weights (regenerable / downloadable upstream)
+pitcher_cv/models/
+pitcher_cv/*.pt
+pitcher_cv/*.task
+
+# Empty/stray secondary db
+data/mlb.db
 
 # Python
 __pycache__/

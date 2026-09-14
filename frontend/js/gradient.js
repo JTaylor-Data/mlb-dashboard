@@ -47,7 +47,7 @@ function hexToRgba(hex, alpha) {
 }
 
 const PITCH_COLORS = {
-  FF: "#d62728", CU: "#1f77b4", FC: "#8c564b", SI: "#ff7f0e",
+  FF: "#d62728", CU: "#1f77b4", KC: "#1f77b4", FC: "#8c564b", SI: "#ff7f0e",
   CH: "#2ca02c", FS: "#40E0D0", ST: "#b35900", SL: "#e6c200",
 };
 const DEFAULT_PITCH_COLOR = "#999999";

@@ -6,7 +6,9 @@ several distinct mechanical ideas (tunneling, release-point consistency,
 spin mirroring, effective-velocity masking), and what this model actually
 measures is specifically ONE of those: tunneling. Keeping the old name would
 have kept implying it was the general-purpose "deception" model when it
-isn't; renamed to say exactly what it measures instead.
+isn't; renamed to say exactly what it measures instead. (The current
+deception_model.py / Deception+ is a separate, independently built model
+measuring release-point consistency — not a continuation of this file.)
 
 No external spec was given for this one (unlike Stuff+ v2, which was built
 to explicit direction) - the mechanism, the math, and the validation plan

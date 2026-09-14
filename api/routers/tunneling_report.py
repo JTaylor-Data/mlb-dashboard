@@ -1,9 +1,9 @@
 """
 /api/tunneling/* - v1 endpoints serve the Tunneling+ v1 report (from
 build_tunneling_report.py, read straight off disk). These stay exactly as
-they are - api/routers/tunneling_3d.py's 3D trajectory viewer
-(frontend/tunnel3d.html) depends on GET /pitcher/{id}'s exact pair-shaped
-contract directly and unmodified.
+they are; api/routers/tunneling_3d.py's 3D trajectory viewer
+(frontend/tunnel3d.html) uses its own /api/tunneling/3d/* endpoints, not
+these v1 endpoints.
 
 /api/tunneling/v3/* are NEW, additive endpoints for Tunneling+ v3 (the
 model promoted to "the standard" on the main Tunneling+ Model page,

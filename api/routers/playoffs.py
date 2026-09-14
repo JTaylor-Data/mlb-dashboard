@@ -9,17 +9,12 @@ from fastapi import APIRouter, Depends, Query
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.playoffs import division_leaders, playoff_teams, projected_roster, unified_bracket, wildcard_race
-from analytics.standings import compute_standings
 
 from api.cache import ttl_cache
 from api.db import get_conn
+from api.routers.standings import _standings  # shared cached wrapper — one cache for both routers
 
 router = APIRouter(prefix="/api/playoffs")
-
-
-@ttl_cache()
-def _standings(conn, season):
-    return compute_standings(conn, season)
 
 
 @router.get("/division-leaders")

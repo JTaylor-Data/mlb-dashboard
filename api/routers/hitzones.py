@@ -56,9 +56,6 @@ def _hit_zone_summary(conn, season, batter_id, throws_filter=None):
     sz_top = float(df["sz_top"].mean()) if df["sz_top"].notna().any() else 3.5
     sz_bot = float(df["sz_bot"].mean()) if df["sz_bot"].notna().any() else 1.5
 
-    if df.empty:
-        return {"pitch_types": [], "cells": {}, "sz_top": sz_top, "sz_bot": sz_bot, "plate_width_ft": PLATE_WIDTH_FT}
-
     # Zone assignment computed for EVERY real pitch (not just PA-ending ones)
     # so the displayed count is total pitches seen in that zone, not plate
     # appearances - xwOBA itself still only ever averages the PA-ending

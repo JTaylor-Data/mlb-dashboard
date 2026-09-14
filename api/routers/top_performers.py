@@ -101,7 +101,8 @@ def _leaderboard(conn, day_str):
     scored = []
     for _, row in participants.iterrows():
         game_id = int(row["game_id"])
-        team_id = int(row["team_id"]) if row["team_id"] is not None else None
+        _tid = row["team_id"]
+        team_id = int(_tid) if _tid is not None and _tid == _tid else None  # NaN != NaN
         bx = boxscore_for(game_id)
 
         if row["role"] == "batter":
@@ -117,8 +118,9 @@ def _leaderboard(conn, day_str):
             game_id=game_id,
         ))
 
-    scored.sort(key=lambda e: e["score"], reverse=True)
-    top = scored[:10]
+    batters = sorted([e for e in scored if e["role"] == "batter"], key=lambda e: e["score"], reverse=True)[:10]
+    pitchers = sorted([e for e in scored if e["role"] == "pitcher"], key=lambda e: e["score"], reverse=True)[:10]
+    top = batters + pitchers
     for e in top:
         e["walkoff"] = e["role"] == "batter" and find_walkoff_batter(conn, e["game_id"]) == e["player_id"]
         e["opponent"] = _opponent(conn, e["game_id"], e["team_id"]) if e["team_id"] is not None else ""
@@ -138,7 +140,8 @@ def _leaderboard(conn, day_str):
             (participants["player_id"] == walkoff_batter_id) & (participants["game_id"].astype(int) == int(game_id))
         ]
         name = player_row.iloc[0]["name"] if not player_row.empty else None
-        team_id = int(player_row.iloc[0]["team_id"]) if not player_row.empty and player_row.iloc[0]["team_id"] is not None else None
+        _wtid = player_row.iloc[0]["team_id"] if not player_row.empty else None
+        team_id = int(_wtid) if _wtid is not None and _wtid == _wtid else None
         if name is None:
             row = conn.execute("SELECT name, team_id FROM players WHERE player_id = ?", (walkoff_batter_id,)).fetchone()
             if row is not None:

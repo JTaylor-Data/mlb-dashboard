@@ -6,11 +6,24 @@
   function pitchColor(pt) {
     if (typeof window.pitchColor === "function") return window.pitchColor(pt);
     const MAP = {
-      FF:"#e85252", SI:"#e07020", FC:"#b060d0", SL:"#e6a020",
-      ST:"#f0c040", CU:"#3090e0", CH:"#40b060", FS:"#50b0b0",
-      KC:"#4070d0", SV:"#c050a0", FA:"#e85252",
+      FF:"#d62728", SI:"#ff7f0e", FC:"#8c564b", SL:"#e6c200",
+      ST:"#b35900", CU:"#1f77b4", KC:"#1f77b4", CH:"#2ca02c", FS:"#40E0D0",
+      SV:"#c050a0", FA:"#d62728",
     };
     return MAP[pt] || "#888";
+  }
+
+  // ── Full pitch names ───────────────────────────────────────────────────────
+  function pitchFullNameLocal(pt) {
+    if (typeof window.PITCH_FULL_NAMES === "object" && window.PITCH_FULL_NAMES[pt]) {
+      return window.PITCH_FULL_NAMES[pt];
+    }
+    const MAP = {
+      FF:"Four-Seam Fastball", SI:"Sinker", FC:"Cutter", FA:"Fastball",
+      CH:"Changeup", FS:"Splitter", SL:"Slider", ST:"Sweeper",
+      CU:"Curveball", KC:"Knuckle Curve", SV:"Slurve", KN:"Knuckleball",
+    };
+    return MAP[pt] || pt;
   }
 
   // ── Format helpers ────────────────────────────────────────────────────────
@@ -85,7 +98,7 @@
     if (!playerId) return;
     const s = sel();
     s.innerHTML = `<option value="">Loading…</option>`;
-    selGroup().style.display = "";
+    selGroup().style.display = "block";
     viewGroup().style.display = "none";
     body().innerHTML = "";
     s.onchange = () => { if (s.value) renderOuting(Number(s.value)); };
@@ -149,7 +162,7 @@
     if (data.opp_pitcher) {
       opp.textContent = data.opp_pitcher.name;
       opp.style.display = "";
-      grp.style.display = "";
+      grp.style.display = "block";
 
       main.onclick = () => {
         if (activeSide === "main") return;
@@ -208,28 +221,58 @@
     const away = data.away_team || "", home = data.home_team || "";
     const meta = data.game_date ? `${data.game_date} · ${away} @ ${home}` : "";
 
-    const avgVeloBox = data.avg_velo != null ? heroBox("Avg Velo", `${data.avg_velo.toFixed(1)} mph`) : "";
-    const maxVeloBox = data.max_velo != null ? heroBox("Max Velo", `${data.max_velo.toFixed(1)} mph`) : "";
-    const avgEvBox   = data.avg_ev   != null ? heroBox("Avg EV",   `${data.avg_ev.toFixed(1)} mph`)   : "";
-    const maxEvBox   = data.max_ev   != null ? heroBox("Max EV",   `${data.max_ev.toFixed(1)} mph`)   : "";
+    // Pitcher line card
+    const sl = data.stat_line || {};
+    const fmtV = (v, d=1) => v != null ? (+v).toFixed(d) : "—";
+    const lineCard = `<div class="pitcher-line-card">
+      <div class="pitcher-line-title">Tonight's Line</div>
+      <div class="pitcher-line-stats">
+        ${lineStatBox("IP", fmtV(sl.ip))}
+        ${lineStatBox("H",  sl.h ?? "—")}
+        ${lineStatBox("R",  sl.r  != null ? sl.r  : "—")}
+        ${lineStatBox("ER", sl.er != null ? sl.er : "—")}
+        ${lineStatBox("BB", sl.bb ?? "—")}
+        ${lineStatBox("SO", sl.k  ?? "—")}
+        ${lineStatBox("HR", sl.hr ?? "—")}
+        ${lineStatBox("P",  sl.total_pitches ?? "—")}
+        ${lineStatBox("ERA", sl.era != null ? fmtV(sl.era, 2) : "—")}
+      </div>
+    </div>`;
+
+    const avgVeloBox = data.avg_velo != null ? heroBox("Avg Velo", `${data.avg_velo.toFixed(1)}`) : "";
+    const maxVeloBox = data.max_velo != null ? heroBox("Max Velo", `${data.max_velo.toFixed(1)}`) : "";
+    const avgEvBox   = data.avg_ev   != null ? heroBox("Avg EV",   `${data.avg_ev.toFixed(1)}`)   : "";
+    const maxEvBox   = data.max_ev   != null ? heroBox("Max EV",   `${data.max_ev.toFixed(1)}`)   : "";
 
     return `<div class="outing-hero">
       <div class="outing-hero-left">
         ${headshot}
         ${teamLogo}
-        <div>
+        <div class="outing-hero-name-block">
           <div class="outing-player-name">${data.player_name || ""}</div>
           <div class="outing-meta">${meta}</div>
+          ${lineCard}
         </div>
       </div>
-      <div class="outing-hero-right">${avgVeloBox}${maxVeloBox}${avgEvBox}${maxEvBox}</div>
+      <div class="outing-hero-right">
+        <div class="hero-velo-grid">
+          ${avgVeloBox}${maxVeloBox}${avgEvBox}${maxEvBox}
+        </div>
+      </div>
     </div>`;
   }
 
   function heroBox(label, val) {
     return `<div class="stat-box">
       <div class="stat-box-label">${label}</div>
-      <div class="stat-box-value" style="font-size:16px;">${val}</div>
+      <div class="stat-box-value">${val}</div>
+    </div>`;
+  }
+
+  function lineStatBox(label, val) {
+    return `<div class="line-stat">
+      <div class="line-stat-label">${label}</div>
+      <div class="line-stat-value">${val}</div>
     </div>`;
   }
 
@@ -245,20 +288,21 @@
 
     const rows = pts.map(pt => {
       const color = pitchColor(pt.pitch_type);
+      const fullName = pitchFullNameLocal(pt.pitch_type);
       const whiff     = pt.swings  ? `${pt.whiffs ?? 0}/${pt.swings} (${((pt.whiffs ?? 0) / pt.swings * 100).toFixed(1)}%)` : "—";
       const csw       = (pt.called_strikes || 0) + (pt.whiffs || 0);
       const cswCombined = `${csw}/${pt.count} (${(csw / pt.count * 100).toFixed(1)}%)`;
       const rhh = pt.rhh_count != null ? `${pt.rhh_count} (${(pt.rhh_count / pt.count * 100).toFixed(0)}%)` : "—";
       const lhh = pt.lhh_count != null ? `${pt.lhh_count} (${(pt.lhh_count / pt.count * 100).toFixed(0)}%)` : "—";
       return `<tr>
-        <td><span class="pt-chip" style="color:${color};">${pt.pitch_type}</span></td>
+        <td><span class="pt-chip" style="color:${color};">${fullName}</span></td>
         <td>${pt.count}</td>
         <td>${pt.usage_pct != null ? pt.usage_pct.toFixed(0)+"%" : "—"}</td>
-        <td>${pt.yr_usage_pct != null ? pt.yr_usage_pct.toFixed(0)+"%" : "—"}</td>
+        <td class="col-divider-right">${pt.yr_usage_pct != null ? pt.yr_usage_pct.toFixed(0)+"%" : "—"}</td>
         <td>${rhh}</td>
-        <td>${lhh}</td>
+        <td class="col-divider-right">${lhh}</td>
         <td>${fmt(pt.avg_velo)}</td>
-        <td>${deltaHtml(pt.velo_delta)}</td>
+        <td class="col-divider-right">${deltaHtml(pt.velo_delta)}</td>
         <td>${pt.k_count ?? 0}</td>
         <td>${pt.swings ?? 0}</td>
         <td>${pt.called_strikes ?? 0}</td>
@@ -280,9 +324,9 @@
 
     const allRow = `<tr class="outing-all-row">
       <td><strong>ALL</strong></td>
-      <td>${totalN}</td><td>100%</td><td>—</td>
-      <td>${allRHH}</td><td>${allLHH}</td>
-      <td>${allVelo != null ? allVelo.toFixed(1) : "—"}</td><td>—</td>
+      <td>${totalN}</td><td>100%</td><td class="col-divider-right">—</td>
+      <td>${allRHH}</td><td class="col-divider-right">${allLHH}</td>
+      <td>${allVelo != null ? allVelo.toFixed(1) : "—"}</td><td class="col-divider-right">—</td>
       <td>${totalK}</td><td>${totalSwings}</td><td>${totalCS}</td>
       <td>${allWhiff}</td>
       <td>${allCSWCombined}</td>
@@ -294,9 +338,9 @@
         <table class="outing-table">
           <thead><tr>
             <th style="text-align:left;">Pitch</th>
-            <th>n</th><th>%</th><th>Yr%</th>
-            <th>vs RHH</th><th>vs LHH</th>
-            <th>Velo</th><th title="vs. this pitcher's season avg">±Velo</th>
+            <th>n</th><th>%</th><th class="col-divider-right">Yr%</th>
+            <th>vs RHH</th><th class="col-divider-right">vs LHH</th>
+            <th>Velo</th><th class="col-divider-right" title="vs. this pitcher's season avg">±Velo</th>
             <th>K</th><th>SW</th><th>CS</th>
             <th>Whiff (W%)</th>
             <th>CS+W (CSW%)</th>
@@ -318,6 +362,7 @@
 
     const rows = pts.map(pt => {
       const color      = pitchColor(pt.pitch_type);
+      const fullName   = pitchFullNameLocal(pt.pitch_type);
       const avgDrop    = toDrop(pt.avg_ivb);
       // Drop increases when IVB decreases (and vice versa): Δdrop = -Δivb_in
       const dropDelta  = pt.ivb_delta != null ? +(-pt.ivb_delta * 12).toFixed(1) : null;
@@ -327,7 +372,7 @@
       const hbDeltaIn  = toIn(pt.hb_delta);
       const spin       = pt.avg_spin != null ? Math.round(pt.avg_spin) : null;
       return `<tr>
-        <td><span class="pt-chip" style="color:${color};">${pt.pitch_type}</span></td>
+        <td><span class="pt-chip" style="color:${color};">${fullName}</span></td>
         <td>${avgDrop ?? "—"}</td>
         <td>${deltaHtml(dropDelta)}</td>
         <td>${avgIvbIn ?? "—"}</td>
@@ -425,7 +470,7 @@
     // Build pitch type legend from types used in this outing
     const usedTypes = [...new Set(seqs.flatMap(ab => ab.pitches.map(p => p.pt)))];
     const legend = usedTypes.map(pt =>
-      `<span class="seq-legend-item"><span class="seq-legend-dot" style="background:${pitchColor(pt)}"></span>${pt}</span>`
+      `<span class="seq-legend-item"><span class="seq-legend-dot" style="background:${pitchColor(pt)}"></span><span style="color:${pitchColor(pt)};font-weight:800;">${pitchFullNameLocal(pt)}</span></span>`
     ).join("");
 
     return `<div class="panel-card" style="margin-top:18px;">

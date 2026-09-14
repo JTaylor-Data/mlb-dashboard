@@ -101,7 +101,13 @@ def _pitcher_scores(conn, season, pitcher_id):
     return {"stuff_plus": stuff, "tunneling_plus": tun, "location_plus": loc, "deception_plus": dec}
 
 
-def _recent_starts(conn, season, pitcher_id, n=5):
+@ttl_cache()
+def _recent_starts_cached(conn, season, pitcher_id, n=5):
+    """Cached wrapper — GROUP BY on pitches per pitcher, not free."""
+    return _recent_starts_inner(conn, season, pitcher_id, n)
+
+
+def _recent_starts_inner(conn, season, pitcher_id, n=5):
     """Aggregated stats across last n starts for this pitcher."""
     rows = conn.execute(
         """
@@ -217,7 +223,7 @@ def get_probable_pitchers(
                 return None
             name = _player_name(conn, pid)
             scores = _pitcher_scores(conn, season, pid)
-            recent = _recent_starts(conn, season, pid, 5)
+            recent = _recent_starts_cached(conn, season, pid, 5)
             return {
                 "player_id": pid,
                 "name": name,

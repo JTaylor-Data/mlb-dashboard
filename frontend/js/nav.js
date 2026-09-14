@@ -10,9 +10,12 @@ const PLAYER_GROUP = [
   { href: "index.html", label: "Overview" },
   { href: "splits.html", label: "Splits" },
   { href: "outings.html", label: "Outing" },
+  { href: "trends.html", label: "Trends" },
+  { href: "career.html", label: "Career" },
   { href: "compare.html", label: "Compare" },
 ];
 const MODELS_GROUP = [
+  { href: "about.html", label: "About" },
   { href: "stuff-model.html", label: "Stuff+" },
   { href: "tunneling-model.html", label: "Tunneling+" },
   { href: "tunnel3d.html", label: "Tunneling+ 3D" },
@@ -37,7 +40,7 @@ const NAV_LINKS = [
   { href: "top-performers.html", label: "Top Performers" },
   { href: "playoffs-bracket.html", label: "Playoffs", group: PLAYOFFS_GROUP },
   { href: "prospects.html", label: "Prospects" },
-  { href: "stuff-model.html", label: "Models", group: MODELS_GROUP },
+  { href: "about.html", label: "About", group: MODELS_GROUP },
 ];
 
 function initNav() {
@@ -139,7 +142,7 @@ function initSubNav() {
   const mount = document.getElementById("subnav");
   if (!mount) return;
   const current = location.pathname.split("/").pop() || "index.html";
-  const group = [PLAYER_GROUP, MODELS_GROUP, PLAYOFFS_GROUP].find((g) => g.some((l) => l.href === current));
+  const group = [PLAYER_GROUP, MODELS_GROUP, PLAYOFFS_GROUP, GAMES_GROUP].find((g) => g.some((l) => l.href === current));
   if (!group) return;
   const links = group
     .map((l) => `<a href="${l.href}" class="${l.href === current ? "active" : ""}">${l.label}</a>`)

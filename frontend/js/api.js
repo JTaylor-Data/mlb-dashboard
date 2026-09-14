@@ -18,6 +18,20 @@ async function getJSON(url) {
   return resp.json();
 }
 
+// Prefetch cache: background fetches fired on player-page load so probable-
+// pitchers and top-performers render instantly when navigated to. Each
+// page checks window._prefetchCache[url] on init and uses it if present.
+window._prefetchCache = window._prefetchCache || {};
+
+function prefetchInBackground(url) {
+  if (window._prefetchCache[url]) return; // already fetched
+  window._prefetchCache[url] = "pending";
+  fetch(url).then(r => r.ok ? r.json() : null).then(data => {
+    if (data) window._prefetchCache[url] = data;
+    else delete window._prefetchCache[url];
+  }).catch(() => { delete window._prefetchCache[url]; });
+}
+
 async function postJSON(url) {
   const resp = await fetch(url, { method: "POST" });
   if (!resp.ok) {

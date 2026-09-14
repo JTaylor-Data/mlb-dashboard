@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -23,8 +23,8 @@
        shrink below its own content size, so "flex:1 to match the right
        column's height" silently became "grow past it instead" whenever
        5 rows of content was taller than the right column happened to be. */
-    #last-5-mount { height: 320px; flex: 0 0 320px; display: flex; flex-direction: column; }
-    #last-5-mount > .card { min-height: 0; overflow-y: auto; flex: 1; }
+    #last-5-mount { flex: 0 0 auto; display: flex; flex-direction: column; }
+    #last-5-mount > .card { min-height: 0; overflow-y: hidden; flex: 1; }
     .movement-plot-card { flex: 1; display: flex; flex-direction: column; min-height: 400px; }
     .swing-field-card { flex: 1; display: flex; flex-direction: column; }
     .movement-plot-row { display: flex; gap: 14px; flex: 1; }
@@ -169,9 +169,14 @@
 
     <div id="player-card-mount"></div>
 
+    <div class="section" id="pitcher-percentiles-section">
+      <h2>Percentiles</h2>
+      <div id="pitcher-percentiles-mount"></div>
+    </div>
+
     <div class="player-layout section" id="player-layout">
       <div>
-        <h2 id="left-panel-title">Percentiles</h2>
+        <h2 id="left-panel-title">Pitch Locations</h2>
         <div id="left-panel-mount"></div>
         <h2 id="last-5-title" style="margin-top:20px;">Last 5 Outings</h2>
         <div id="last-5-mount"></div>
@@ -180,11 +185,6 @@
         <h2 id="right-panel-title">Movement Plot</h2>
         <div id="right-panel-mount"></div>
       </div>
-    </div>
-
-    <div class="section" id="pitcher-percentiles-section">
-      <h2>Percentiles</h2>
-      <div id="pitcher-percentiles-mount"></div>
     </div>
 
     <div class="section">
@@ -202,7 +202,7 @@
   </div>
 
   <script src="js/api.js?v=18"></script>
-  <script src="js/gradient.js?v=22"></script>
+  <script src="js/gradient.js?v=23"></script>
   <script src="js/nav.js?v=111"></script>
   <script src="js/player-context.js?v=1"></script>
   <script src="js/player-search.js?v=20"></script>

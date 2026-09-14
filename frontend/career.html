@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Career - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=39" />
+  <style>
+    .career-controls {
+      display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .career-role-toggle { display: flex; gap: 4px; }
+    .career-role-btn {
+      padding: 7px 16px; font-size: 12px; font-weight: 600;
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); color: var(--text); cursor: pointer;
+    }
+    .career-role-btn.active {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+    }
+    #career-player-input {
+      width: 100%; box-sizing: border-box;
+    }
+
+    /* ── Career table ─────────────────────────────────────── */
+    #career-title {
+      font-size: 16px; font-weight: 700; color: var(--text);
+      margin-bottom: 14px; min-height: 24px;
+    }
+    .ct-scroll { overflow-x: auto; }
+    .career-table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+      font-variant-numeric: tabular-nums;
+    }
+    .career-table thead th {
+      padding: 8px 10px; text-align: right; font-size: 10px;
+      font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+      color: var(--text-muted); border-bottom: 2px solid var(--border);
+      white-space: nowrap;
+    }
+    .career-table thead th:first-child,
+    .career-table thead th:nth-child(2) { text-align: left; }
+    .career-table tbody tr { border-bottom: 1px solid var(--border); }
+    .career-table tbody tr:hover { background: var(--surface-alt); }
+    .career-table tbody td {
+      padding: 7px 10px; text-align: right; color: var(--text);
+    }
+    .career-table tbody td:first-child,
+    .career-table tbody td:nth-child(2) { text-align: left; font-weight: 600; }
+    .ct-dash { color: var(--text-muted); }
+    .ct-score { font-weight: 700; }
+    .ct-good { color: #1a7f37; }
+    .ct-bad  { color: #c9302c; }
+    .ct-even { background: var(--surface-alt); }
+    .ct-even:hover { background: var(--border); }
+
+    .career-note {
+      font-size: 11px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="subnav"></div>
+
+  <div class="page-container">
+    <h1 class="page-title">Career Stats</h1>
+    <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">
+      Season-by-season history across all data in the pipeline (2021–present).
+      Players who changed teams mid-season appear as one row per team.
+    </p>
+
+    <div class="career-controls" style="margin: 0 8px 0 8px;">
+      <div class="career-role-toggle">
+        <button class="career-role-btn active" data-role="pitcher">Pitcher</button>
+        <button class="career-role-btn" data-role="batter">Batter</button>
+      </div>
+      <div class="player-search" style="min-width:240px;position:relative;">
+        <input type="text" class="player-search-input" id="career-player-input"
+               placeholder="Search any player…" autocomplete="off" />
+        <div class="player-search-dropdown" id="career-player-dropdown"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin: 0 8px;">
+      <div id="career-title"></div>
+      <div id="career-mount">
+        <div class="empty-state">Select a player to view their career stats.</div>
+      </div>
+      <div class="career-note">
+        Pitcher model scores (Stuff+, Tunneling+, Location+) are season-level averages from the same
+        models used throughout the dashboard. Deception+ shown for 2025 only (current report season).
+        IP and xFIP are computed from Statcast pitch data; ERA is not available (Statcast carries no
+        official scorer rulings). AVG/OBP/SLG/wRC+ for batters sourced from
+        <code>player_advanced_stats</code> where available.
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=18"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/player-search.js?v=9"></script>
+  <script src="js/career.js?v=3"></script>
+</body>
+</html>

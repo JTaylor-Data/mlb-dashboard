@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>About - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=39" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" />
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+
+    /* ── Hero ─────────────────────────────────────────────── */
+    .about-hero {
+      background: linear-gradient(135deg, var(--surface-alt) 0%, var(--surface) 100%);
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 40px 44px; margin-bottom: 28px;
+    }
+    .about-hero h2 {
+      font-size: 26px; font-weight: 900; letter-spacing: -0.5px;
+      color: var(--text); margin: 0 0 12px;
+    }
+    .about-hero p {
+      font-size: 15px; line-height: 1.7; color: var(--text); max-width: 700px;
+      margin: 0 0 18px;
+    }
+    .about-hero .hero-tags {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;
+    }
+    .hero-tag {
+      padding: 4px 12px; font-size: 11px; font-weight: 600;
+      border-radius: 20px; letter-spacing: 0.3px;
+      background: var(--accent); color: #fff;
+    }
+    .hero-tag.secondary {
+      background: var(--surface); color: var(--text-muted);
+      border: 1px solid var(--border);
+    }
+
+    /* ── Two-col layout ───────────────────────────────────── */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 760px) { .about-grid { grid-template-columns: 1fr; } }
+
+    /* ── Section cards ────────────────────────────────────── */
+    .about-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 30px;
+    }
+    .about-card h3 {
+      font-size: 13px; font-weight: 800; letter-spacing: 1px;
+      text-transform: uppercase; color: var(--text-muted);
+      margin: 0 0 16px; padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .about-card p { font-size: 13px; line-height: 1.7; color: var(--text); margin: 0 0 12px; }
+    .about-card p:last-child { margin-bottom: 0; }
+
+    /* ── Model cards ──────────────────────────────────────── */
+    .model-cards { display: flex; flex-direction: column; gap: 14px; margin-bottom: 28px; }
+    .model-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow);
+      display: grid; grid-template-columns: auto 1fr auto;
+      gap: 20px; align-items: center; padding: 20px 24px;
+      text-decoration: none; transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .model-card:hover {
+      border-color: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 20%, transparent);
+    }
+    .model-badge {
+      width: 52px; height: 52px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 900; letter-spacing: -0.5px;
+      color: #fff; flex-shrink: 0;
+    }
+    .badge-stuff    { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+    .badge-tunnel   { background: linear-gradient(135deg, #059669, #047857); }
+    .badge-loc      { background: linear-gradient(135deg, #d97706, #b45309); }
+    .badge-dec      { background: linear-gradient(135deg, #7c3aed, #6d28d9); }
+    .model-card-body { min-width: 0; }
+    .model-card-name {
+      font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 4px;
+    }
+    .model-card-desc { font-size: 12px; line-height: 1.55; color: var(--text-muted); }
+    .model-card-status {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.6px;
+      text-transform: uppercase; padding: 3px 9px; border-radius: 12px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .status-stable  { background: #dcfce7; color: #166534; }
+    .status-solid   { background: #dbeafe; color: #1e40af; }
+    .status-newer   { background: #fef9c3; color: #854d0e; }
+    .status-rebuild { background: #fce7f3; color: #9d174d; }
+
+    /* ── Limitations ──────────────────────────────────────── */
+    .limitations-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px; margin-bottom: 28px;
+    }
+    @media (max-width: 760px) { .limitations-grid { grid-template-columns: 1fr; } }
+    .lim-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px 20px;
+    }
+    .lim-card-title {
+      font-size: 12px; font-weight: 700; color: var(--text);
+      margin-bottom: 8px;
+    }
+    .lim-card-body { font-size: 12px; line-height: 1.6; color: var(--text-muted); }
+
+    /* ── Roadmap ──────────────────────────────────────────── */
+    .roadmap-list { list-style: none; padding: 0; margin: 0; }
+    .roadmap-list li {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+      font-size: 13px; color: var(--text); line-height: 1.5;
+    }
+    .roadmap-list li:last-child { border-bottom: none; }
+    .roadmap-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      margin-top: 5px;
+    }
+    .dot-active  { background: var(--accent); }
+    .dot-planned { background: var(--text-muted); }
+    .roadmap-label { font-weight: 600; }
+    .roadmap-note  { color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+
+    /* ── Tech stack ───────────────────────────────────────── */
+    .stack-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .stack-pill {
+      padding: 5px 12px; font-size: 11px; font-weight: 600;
+      border: 1px solid var(--border); border-radius: 14px;
+      color: var(--text-muted); background: var(--surface);
+    }
+
+    h2.section-heading {
+      font-size: 18px; font-weight: 800; color: var(--text);
+      margin: 0 0 14px; letter-spacing: -0.3px;
+    }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="subnav"></div>
+
+  <div class="page-container">
+
+    <!-- Hero -->
+    <div class="about-hero">
+      <h2>MLB Analytics Dashboard</h2>
+      <p>
+        A personal project applying machine learning and baseball-specific domain knowledge to
+        Statcast pitch-level data. The goal: build a small suite of original pitcher-evaluation
+        metrics — graded the way Baseball Savant's own models are graded, at 100 = league average —
+        and surface them in a browsable dashboard alongside official stats and real scouting context.
+      </p>
+      <p>
+        Every model here went through real validation: train/test splits across seasons, predictive
+        validity checks against future performance, and honest auditing of unexpected outputs
+        (sometimes a surprising result is a real signal; sometimes it's a collinearity artifact — the
+        process to tell them apart is as important as the final number).
+      </p>
+      <div class="hero-tags">
+        <span class="hero-tag">2021–2026 Statcast</span>
+        <span class="hero-tag">4 original models</span>
+        <span class="hero-tag">~3M pitches</span>
+        <span class="hero-tag secondary">Built as a portfolio project</span>
+        <span class="hero-tag secondary">Active development</span>
+      </div>
+    </div>
+
+    <!-- Models -->
+    <h2 class="section-heading">The models</h2>
+    <div class="model-cards">
+      <a class="model-card" href="stuff-model.html">
+        <div class="model-badge badge-stuff">STF+</div>
+        <div class="model-card-body">
+          <div class="model-card-name">Stuff+ &nbsp;<span style="font-weight:400;font-size:13px;color:var(--text-muted)">v3 LightGBM</span></div>
+          <div class="model-card-desc">
+            Grades the physical shape of a pitch — velocity, movement, spin, extension — entirely
+            independent of where it was thrown or the count. The cleanest of the four to define and
+            validate: physical pitch characteristics are genuinely repeatable traits, and the model's
+            year-over-year stability (r² 0.58–0.67) confirms it.
+          </div>
+        </div>
+        <div class="model-card-status status-stable">Well validated</div>
+      </a>
+
+      <a class="model-card" href="tunneling-model.html">
+        <div class="model-badge badge-tunnel">TUN+</div>
+        <div class="model-card-body">
+          <div class="model-card-name">Tunneling+ &nbsp;<span style="font-weight:400;font-size:13px;color:var(--text-muted)">v3 geometric composite</span></div>
+          <div class="model-card-desc">
+            Measures how indistinguishable a pitcher's pitches look out of the hand and how much they
+            separate near the plate. Not a regression — a physics-based pairwise distance ratio
+            scored relative to the league average. Validated against real at-bat whiff rates
+            (sequential same-at-bat test z ≈ 9), independent of Stuff+.
+          </div>
+        </div>
+        <div class="model-card-status status-stable">Well validated</div>
+      </a>
+
+      <a class="model-card" href="location-model.html">
+        <div class="model-badge badge-loc">LOC+</div>
+        <div class="model-card-body">
+          <div class="model-card-name">Location+ &nbsp;<span style="font-weight:400;font-size:13px;color:var(--text-muted)">v1 LightGBM</span></div>
+          <div class="model-card-desc">
+            Grades where a pitch was thrown relative to the strike zone and the count. Fills the
+            deliberate gap left by Stuff+ and Tunneling+, which both exclude plate location by design.
+            Newer than the other two — predictive validity is solid, full validation battery ongoing.
+          </div>
+        </div>
+        <div class="model-card-status status-newer">Newer — v1</div>
+      </a>
+
+      <a class="model-card" href="deception-model.html">
+        <div class="model-badge badge-dec">DEC+</div>
+        <div class="model-card-body">
+          <div class="model-card-name">Deception+ &nbsp;<span style="font-weight:400;font-size:13px;color:var(--text-muted)">v1 LightGBM · v4 CV in R&amp;D</span></div>
+          <div class="model-card-desc">
+            Grades delivery mechanics — arm slot, extension, release consistency, body dimensions —
+            independent of pitch shape. The most methodologically challenging of the four: the
+            features Statcast publishes don't fully capture what actually makes a delivery deceptive
+            (timing, leg-lift, ball concealment), so a computer-vision pipeline is being developed to
+            recover those features from broadcast video.
+          </div>
+        </div>
+        <div class="model-card-status status-rebuild">Active rebuild</div>
+      </a>
+    </div>
+
+    <!-- Build process + current state -->
+    <div class="about-grid">
+      <div class="about-card">
+        <h3>How these were built</h3>
+        <p>
+          Each model started from a clear question about what it should and shouldn't measure —
+          deliberately separated so they can eventually be stacked as inputs to a combined
+          Pitching+ metric rather than blending overlapping signals into one number.
+        </p>
+        <p>
+          Validation was iterative and honest. Several real issues were caught and fixed during
+          development: a pairwise distance calculation in Tunneling+ that was using centroid-to-centroid
+          averaging (silently halving the measured separation for high-variance pitchers), a collinearity
+          artifact in Deception+ where arm_angle and release_pos_z (r = 0.79) split the same signal
+          across two features in ways that made the individual SHAP contributions misleading, and a
+          Spring Training contamination bug in the data pipeline that inflated pitch counts across all
+          six seasons until it was caught and purged.
+        </p>
+        <p>
+          The methodology documents under each model page go into the full detail — train/test setup,
+          feature importance, predictive validity across consecutive seasons, and the specific
+          diagnostic checks run to confirm each model captures something real.
+        </p>
+      </div>
+
+      <div class="about-card">
+        <h3>Tech stack</h3>
+        <p>Real Statcast pitch-by-pitch data pulled via <code>pybaseball</code> and the MLB Stats API
+        for every regular-season game from 2021 through the current 2026 season (~3 million pitches).
+        All stored in a single SQLite database.</p>
+        <p>Models are trained offline in Python (LightGBM, scikit-learn) and served live via FastAPI.
+        The frontend is plain HTML/CSS/JS with hand-built SVG charts — no charting library.</p>
+        <div class="stack-pills" style="margin-top:14px;">
+          <span class="stack-pill">Python</span>
+          <span class="stack-pill">FastAPI</span>
+          <span class="stack-pill">LightGBM</span>
+          <span class="stack-pill">SQLite</span>
+          <span class="stack-pill">Statcast / pybaseball</span>
+          <span class="stack-pill">MLB Stats API</span>
+          <span class="stack-pill">Plain JS / SVG</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current limitations -->
+    <h2 class="section-heading">Current state &amp; known limitations</h2>
+    <div class="limitations-grid">
+      <div class="lim-card">
+        <div class="lim-card-title">Stuff+ — well validated</div>
+        <div class="lim-card-body">
+          Strong year-over-year stability (r² 0.58–0.67). One genuine limitation: knuckleballers
+          score far below average by design — slow, unconventional movement — while the model
+          correctly misses the reason the pitch works (unpredictability). This is documented, not
+          a bug.
+        </div>
+      </div>
+      <div class="lim-card">
+        <div class="lim-card-title">Tunneling+ — well validated</div>
+        <div class="lim-card-body">
+          Strong sequential at-bat validation (z ≈ 9). Less year-over-year stable than Stuff+
+          (r² 0.31–0.53), which is expected — pitch tunnel is partly a sequencing choice, not
+          purely a fixed physical trait. Precomputed offline due to computation cost.
+        </div>
+      </div>
+      <div class="lim-card">
+        <div class="lim-card-title">Location+ — newer</div>
+        <div class="lim-card-body">
+          v1, in production. Predictive validity confirmed; full year-over-year stability battery
+          is still being assembled as more seasons accumulate. Sinker-vs-RHH interaction term
+          was tested and confirmed to matter — included by design, not by data leakage.
+        </div>
+      </div>
+      <div class="lim-card">
+        <div class="lim-card-title">Deception+ — active rebuild</div>
+        <div class="lim-card-body">
+          v1 is live but the year-over-year stability is lower than expected (r² 0.17–0.34).
+          The likely cause: the features Statcast publishes don't capture timing or ball concealment,
+          which are probably the main drivers of delivery deception. A computer-vision pipeline
+          using broadcast video is in R&D to fill that gap.
+        </div>
+      </div>
+      <div class="lim-card">
+        <div class="lim-card-title">No ERA in the pitch data</div>
+        <div class="lim-card-body">
+          Statcast pitch data carries no official scorer rulings, so earned runs can't be computed.
+          xFIP is the best pitcher-quality rate stat available from this source alone.
+          Official ERA is pulled from player_advanced_stats where available.
+        </div>
+      </div>
+      <div class="lim-card">
+        <div class="lim-card-title">Data window: 2021–present</div>
+        <div class="lim-card-body">
+          Career pages and trend views start at 2021, the earliest season in the Statcast pipeline.
+          Pre-2021 stats are not available, so career totals for veterans only reflect their
+          time in this window, not full MLB careers.
+        </div>
+      </div>
+    </div>
+
+    <!-- Roadmap -->
+    <div class="about-card">
+      <h3>Future work</h3>
+      <ul class="roadmap-list">
+        <li>
+          <span class="roadmap-dot dot-active"></span>
+          <div>
+            <div class="roadmap-label">Deception+ v4 — biomechanical pipeline</div>
+            <div class="roadmap-note">
+              MediaPipe pose tracking + YOLO player detection to recover leg-lift timing,
+              delivery length, and ball-release timing from broadcast video. The pipeline runs;
+              foot-plant detection (the key phase boundary) is the remaining open problem.
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="roadmap-dot dot-active"></span>
+          <div>
+            <div class="roadmap-label">Stuff+ feature surgery</div>
+            <div class="roadmap-note">
+              Remove the four delivery-mechanics features (arm_angle, release_extension,
+              release_pos_x, release_pos_z) from Stuff+ and make them Deception+-exclusive.
+              The models currently share these features, which accounts for their r ≈ 0.54
+              correlation — separating them is a prerequisite for stacking.
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="roadmap-dot dot-planned"></span>
+          <div>
+            <div class="roadmap-label">Pitching+ — combined model</div>
+            <div class="roadmap-note">
+              Once the four component models are cleanly separated, a stacked Pitching+ metric
+              that uses Stuff+, Tunneling+, Location+, and Deception+ as inputs — the original
+              end goal of the four-model architecture.
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="roadmap-dot dot-planned"></span>
+          <div>
+            <div class="roadmap-label">HAA (horizontal approach angle) in Stuff+</div>
+            <div class="roadmap-note">
+              A natural companion to the existing VAA residual feature — the horizontal equivalent
+              of "how does this pitch's trajectory at the plate compare to what physics alone
+              would predict." Not yet implemented.
+            </div>
+          </div>
+        </li>
+        <li>
+          <span class="roadmap-dot dot-planned"></span>
+          <div>
+            <div class="roadmap-label">Batter + pitcher visual overhaul</div>
+            <div class="roadmap-note">
+              Several improvements to the player overview page are planned but not yet shipped:
+              hits-only spray chart with HR markers, unified percentile bar design across roles,
+              movement plot axis labels, and a compact Stuff+ banner widget.
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+
+  <script src="js/api.js?v=18"></script>
+  <script src="js/nav.js?v=111"></script>
+</body>
+</html>

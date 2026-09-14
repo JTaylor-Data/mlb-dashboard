@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -6,7 +6,7 @@
   <title>Probable Pitchers - MLB Dashboard</title>
   <link rel="stylesheet" href="css/theme.css?v=39" />
   <style>
-    /* ── Matchup of the Day ─────────────────────────────────────── */
+    /* â”€â”€ Matchup of the Day â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     #motd-mount { margin-bottom: 24px; }
     .motd-card {
       background: var(--surface); border: 2px solid #c9a227;
@@ -24,7 +24,7 @@
       text-transform: uppercase; color: #f0c040;
     }
 
-    /* ── Game cards ─────────────────────────────────────────────── */
+    /* â”€â”€ Game cards â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     #games-mount { display: flex; flex-direction: column; gap: 12px; }
     .game-card {
       background: var(--surface); border: 1px solid var(--border);
@@ -36,7 +36,7 @@
     }
     @media (max-width: 860px) { .game-card-inner { grid-template-columns: 1fr; } }
 
-    /* ── Matchup column — three aligned rows ────────────────────── */
+    /* â”€â”€ Matchup column â€” three aligned rows â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .matchup-col {
       display: flex; flex-direction: column; align-items: stretch;
       background: var(--surface-alt);
@@ -56,7 +56,7 @@
     .at-sign       { text-align: center; font-size: 15px; color: var(--text-muted); line-height: 1; }
     .team-abbr     { text-align: center; font-size: 15px; font-weight: 900; letter-spacing: 0.5px; color: var(--text); }
     .team-city     { text-align: center; font-size: 9px; color: var(--text-muted); line-height: 1.3; }
-    .team-abbr-spacer, .team-city-spacer { /* spacers under @ column — invisible */ }
+    .team-abbr-spacer, .team-city-spacer { /* spacers under @ column â€” invisible */ }
     .team-logo-lg  { width: 56px; height: 56px; object-fit: contain; display: block; }
 
     .matchup-time-row {
@@ -68,7 +68,7 @@
       letter-spacing: 0.3px;
     }
 
-    /* ── Venue column ───────────────────────────────────────────── */
+    /* â”€â”€ Venue column â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .venue-col {
       display: flex; flex-direction: column;
       border-right: 1px solid var(--border); overflow: hidden;
@@ -84,7 +84,7 @@
       background: var(--surface); border-top: 1px solid var(--border);
     }
 
-    /* ── Pitchers column ────────────────────────────────────────── */
+    /* â”€â”€ Pitchers column â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .pitchers-col { display: grid; grid-template-columns: 1fr 1px 1fr; }
     .pitchers-divider { background: var(--border); }
 
@@ -119,7 +119,7 @@
     .pitcher-name-link:hover { text-decoration: underline; color: var(--forest-light); }
     .pitcher-name-link.no-link { color: var(--text); cursor: default; }
 
-    /* ── Score blocks (+ metrics) ───────────────────────────────── */
+    /* â”€â”€ Score blocks (+ metrics) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .pitcher-scores-row { display: flex; gap: 4px; flex-wrap: wrap; }
     .score-block {
       display: flex; flex-direction: column; align-items: center;
@@ -141,7 +141,7 @@
     .score-block.good .score-block-value { color: #1a7f37; }
     .score-block.bad  .score-block-value { color: #c9302c; }
 
-    /* ── Stat blocks (IP / ERA / K / BB / HR) ──────────────────── */
+    /* â”€â”€ Stat blocks (IP / ERA / K / BB / HR) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .recent-row { display: flex; flex-direction: column; gap: 5px; }
     .recent-label {
       font-size: 8px; font-weight: 800; text-transform: uppercase;
@@ -163,7 +163,7 @@
     }
     .recent-empty { font-size: 11px; color: var(--text-muted); font-style: italic; }
 
-    /* ── Misc ───────────────────────────────────────────────────── */
+    /* â”€â”€ Misc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .freshness-note { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; margin-top: -2px; }
     .no-games { font-size: 14px; color: var(--text-muted); margin-top: 24px; }
   </style>
@@ -188,7 +188,7 @@
   </div>
 
   <script src="js/api.js?v=9"></script>
-  <script src="js/gradient.js?v=22"></script>
+  <script src="js/gradient.js?v=23"></script>
   <script src="js/nav.js?v=111"></script>
   <script src="js/probable-pitchers.js?v=5"></script>
 </body>

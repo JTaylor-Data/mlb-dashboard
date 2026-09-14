@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Trends - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=39" />
+  <style>
+    :root {
+      --accent: var(--forest-light);
+    }
+
+    .trends-page {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 120px);
+      min-height: 500px;
+    }
+
+    .trends-layout {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 20px;
+      flex: 1;
+      min-height: 0;
+    }
+    @media (max-width: 860px) {
+      .trends-layout { grid-template-columns: 1fr; }
+      .trends-page { height: auto; }
+    }
+
+    /* ── Controls panel ─────────────────────────────────── */
+    .trends-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 18px 16px;
+      overflow-y: auto;
+      overflow-x: visible;
+    }
+    .control-block { display: flex; flex-direction: column; gap: 8px; }
+    .control-label {
+      font-size: 10px; font-weight: 700; letter-spacing: 0.9px;
+      text-transform: uppercase; color: var(--text-muted);
+    }
+
+    /* Player + Year row */
+    .player-year-row {
+      display: flex; gap: 8px; align-items: flex-end;
+    }
+    .player-year-row .player-search { flex: 1; }
+    .year-select {
+      padding: 7px 10px; font-size: 13px; font-weight: 600;
+      border: 1.5px solid var(--border); border-radius: 6px;
+      background: var(--surface); color: var(--text);
+      cursor: pointer; min-width: 70px;
+    }
+    .year-select:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+    /* Role / horizon pill toggles */
+    .pill-row { display: flex; gap: 5px; flex-wrap: wrap; }
+    .pill-btn {
+      padding: 6px 14px; font-size: 12px; font-weight: 700;
+      border: 2px solid var(--border); border-radius: 20px;
+      background: var(--surface); color: var(--text-muted); cursor: pointer;
+      transition: border-color 0.12s, color 0.12s, background 0.12s;
+      white-space: nowrap; letter-spacing: 0.2px;
+    }
+    .pill-btn:hover:not(.active) {
+      border-color: var(--accent); color: var(--accent);
+    }
+    .pill-btn.active {
+      background: var(--accent); color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* player search */
+    .player-search { position: relative; }
+
+    /* ── Category tabs ───────────────────────────────────── */
+    .cat-tabs {
+      display: flex; gap: 0; border-bottom: 2px solid var(--border);
+      margin-bottom: 8px; flex-wrap: wrap;
+    }
+    .cat-tab {
+      padding: 6px 10px; font-size: 10px; font-weight: 800;
+      letter-spacing: 0.6px; text-transform: uppercase;
+      color: var(--text-muted); cursor: pointer; border: none;
+      background: none; border-bottom: 2.5px solid transparent;
+      margin-bottom: -2px; transition: color 0.12s, border-color 0.12s;
+      white-space: nowrap;
+    }
+    .cat-tab.active {
+      color: var(--accent); border-bottom-color: var(--accent);
+    }
+    .cat-tab:hover:not(.active) { color: var(--text); }
+
+    /* Pitch type selector */
+    .pitch-type-row {
+      display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 6px;
+    }
+    .pt-filter-btn {
+      padding: 4px 10px; font-size: 11px; font-weight: 700;
+      border: 1.5px solid var(--border); border-radius: 4px;
+      background: var(--surface); color: var(--text-muted); cursor: pointer;
+      transition: border-color 0.1s, color 0.1s, background 0.1s;
+    }
+    .pt-filter-btn.active {
+      border-color: var(--accent); background: var(--accent); color: #fff;
+    }
+
+    /* ── Metric buttons ──────────────────────────────────── */
+    #metric-grid {
+      display: flex; flex-wrap: wrap; gap: 5px;
+    }
+    .metric-btn {
+      padding: 7px 11px; font-size: 11px; font-weight: 700;
+      border: 2px solid var(--border); border-radius: 6px;
+      background: var(--surface); color: var(--text);
+      cursor: pointer; white-space: nowrap;
+      transition: border-color 0.12s, background 0.12s, color 0.12s, opacity 0.12s;
+      letter-spacing: 0.1px;
+    }
+    .metric-btn:hover:not(.active):not(.incompatible) {
+      border-color: var(--accent); color: var(--accent);
+    }
+    .metric-btn.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+    .metric-btn.incompatible {
+      opacity: 0.3; cursor: not-allowed;
+    }
+
+    /* ── Right panel ─────────────────────────────────────── */
+    .trends-right {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .trends-chart-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--surface);
+      border: 2px solid var(--bark);
+      border-radius: var(--radius);
+      box-shadow: 0 2px 6px rgba(27,67,50,0.12), 0 0 0 1px rgba(107,68,35,0.08);
+      padding: 20px 22px;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .chart-top-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; gap: 12px; flex-wrap: wrap; flex-shrink: 0;
+    }
+    #chart-title {
+      font-size: 14px; font-weight: 800; color: var(--text); min-height: 20px;
+    }
+    .lg-avg-toggle {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
+      cursor: pointer; user-select: none; flex-shrink: 0;
+    }
+    .lg-avg-toggle input { cursor: pointer; accent-color: #f09a00; }
+    .lg-avg-toggle.has-value { color: #f09a00; }
+
+    /* Active metric chips */
+    .active-chips {
+      display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0;
+    }
+    .active-chip {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700;
+      color: #fff; cursor: default;
+    }
+    .active-chip-x {
+      cursor: pointer; font-size: 14px; line-height: 1; opacity: 0.8;
+      font-weight: 900; padding: 0 2px;
+    }
+    .active-chip-x:hover { opacity: 1; }
+
+    #chart-mount {
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: stretch;
+    }
+    .trend-svg { width: 100%; height: 100%; display: block; }
+    .trend-empty {
+      display: flex; align-items: center; justify-content: center;
+      width: 100%; color: var(--text-muted); font-size: 13px;
+      font-weight: 500;
+    }
+
+    .trend-legend {
+      display: flex; gap: 14px; margin-top: 8px; font-size: 11px;
+      flex-wrap: wrap; flex-shrink: 0;
+    }
+    .legend-item {
+      display: flex; align-items: center; gap: 5px;
+    }
+    .legend-swatch {
+      width: 20px; height: 2.5px; border-radius: 2px; flex-shrink: 0;
+    }
+    .legend-label { font-weight: 600; color: var(--text-muted); }
+    .legend-label-lgavg { color: #f09a00; font-weight: 700; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="subnav"></div>
+
+  <div class="page-container" style="padding: 0 24px;">
+    <h1 class="page-title" style="padding-top:20px;">Trend Viewer</h1>
+
+    <div class="trends-page">
+      <div class="trends-layout">
+        <!-- Controls -->
+        <div class="trends-controls card">
+
+          <div class="control-block">
+            <div class="control-label">Player Type</div>
+            <div class="pill-row" id="role-toggle">
+              <button class="pill-btn active" data-role="pitcher">Pitcher</button>
+              <button class="pill-btn" data-role="batter">Hitter</button>
+            </div>
+          </div>
+
+          <div class="control-block">
+            <div class="control-label">Player</div>
+            <div class="player-year-row">
+              <div class="player-search">
+                <input type="text" class="player-search-input" id="player-input"
+                       placeholder="Search any player…" autocomplete="off" />
+                <div class="player-search-dropdown" id="player-datalist-dropdown"></div>
+              </div>
+              <select class="year-select" id="year-select">
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="all">All</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="control-block">
+            <div class="control-label">Time Horizon</div>
+            <div class="pill-row" id="horizon-toggle">
+              <button class="pill-btn" data-days="10">10d</button>
+              <button class="pill-btn" data-days="30">30d</button>
+              <button class="pill-btn active" data-days="180">6mo</button>
+              <button class="pill-btn" data-days="365">Year</button>
+            </div>
+          </div>
+
+          <div class="control-block" style="flex:1; min-height:0; display:flex; flex-direction:column;">
+            <div class="control-label">Category</div>
+            <div class="cat-tabs" id="cat-tabs">
+              <button class="cat-tab active" data-cat="Physical">Physical</button>
+              <button class="cat-tab" data-cat="Results">Results</button>
+              <button class="cat-tab" data-cat="Process">Process</button>
+              <button class="cat-tab" data-cat="Pitch Type">Pitch Type</button>
+              <button class="cat-tab" data-cat="Misc">Misc</button>
+            </div>
+            <div id="pitch-type-selector" style="display:none; margin-bottom:8px;"></div>
+            <div id="metric-grid"></div>
+          </div>
+
+        </div>
+
+        <!-- Right panel -->
+        <div class="trends-right">
+          <div class="trends-chart-panel">
+            <div class="chart-top-bar">
+              <div id="chart-title"></div>
+              <label class="lg-avg-toggle" id="lg-avg-label">
+                <input type="checkbox" id="lg-avg-toggle" checked />
+                League avg
+              </label>
+            </div>
+            <div class="active-chips" id="active-chips"></div>
+            <div id="chart-mount"><div class="trend-empty">Select a player and metric to view trends.</div></div>
+            <div class="trend-legend" id="legend-mount"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js?v=18"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/nav.js?v=111"></script>
+  <script src="js/player-search.js?v=9"></script>
+  <script src="js/trends.js?v=5"></script>
+</body>
+</html>

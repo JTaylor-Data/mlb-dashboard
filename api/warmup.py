@@ -38,6 +38,7 @@ def _warm(conn, full):
     from api.routers.tunneling_report import _v3_raw_predictions_table
     from api.routers.location_report import _raw_predictions_table as _location_raw_predictions_table
     from api.routers.similar_players import _similarity_pool_hitters, _similarity_pool_pitchers
+    from api.routers.probable_pitchers import _stuff_dict, _tunneling_dict, _location_dict, _deception_dict
     from api.routers.standings import _standings
     from api.routers.stuff_model_report import _stuff_leaderboard
     from api.routers.team_card import _cached_rows_and_ranks, _cached_sos
@@ -102,6 +103,39 @@ def _warm(conn, full):
     if full:
         _similarity_pool_hitters(conn)
         _similarity_pool_pitchers(conn)
+        # Career page calls _stuff_table/_tun_table/_loc_table per season for
+        # veteran players (2021-2025). These aren't warmed above (only current
+        # season). Warm them now so the first career load for a veteran doesn't
+        # pay ~2+ min of per-season model scoring live.
+        from api.routers.stuff_model_report import _raw_predictions_table as _career_stuff_table
+        from api.routers.tunneling_report import _v3_raw_predictions_table as _career_tun_table
+        from api.routers.location_report import _raw_predictions_table as _career_loc_table
+        past_seasons = [s for s in range(2021, CURRENT_SEASON)]
+        for ps in past_seasons:
+            try:
+                _career_stuff_table(conn, ps)
+            except Exception as e:
+                print(f"[warmup] career stuff_table({ps}) failed: {e}")
+            try:
+                _career_tun_table(conn, ps)
+            except Exception as e:
+                print(f"[warmup] career tun_table({ps}) failed: {e}")
+            try:
+                _career_loc_table(conn, ps)
+            except Exception as e:
+                print(f"[warmup] career loc_table({ps}) failed: {e}")
+    # Probable-pitchers page model score dicts — all four are @ttl_cache() in
+    # probable_pitchers.py but were never warmed, so the first Probables page
+    # visit after a restart paid full model cost for all four dicts cold.
+    # _stuff_dict calls compute_stuff_plus (same LightGBM pass as
+    # _stuff_plus_table above, deduped by stuff_model.py's own 10-min internal
+    # cache); _tunneling/_location/_deception each run their own raw-prediction
+    # passes, also already warmed above, so this is just the light groupby/
+    # scoring aggregation on top of the cached raw tables.
+    _stuff_dict(conn, season)
+    _tunneling_dict(conn, season)
+    _location_dict(conn, season)
+    _deception_dict(conn)
     _standings(conn, season)
     # The player-search dropdown's own full-season UNION scan
     # (GET /api/players/all) is unconditionally hit on every Player-page
@@ -135,8 +169,8 @@ def _warm(conn, full):
     for d in recent_dates:
         try:
             _leaderboard(conn, d)
-        except Exception:
-            pass  # a bad/incomplete date shouldn't abort the rest of warmup
+        except Exception as e:
+            print(f"[warmup] _leaderboard({d}) failed: {e}")  # a bad/incomplete date shouldn't abort the rest
 
 
 def warm_cache_sync(full=True):

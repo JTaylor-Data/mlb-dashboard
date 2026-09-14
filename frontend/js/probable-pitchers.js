@@ -193,7 +193,9 @@ async function loadGames(dateStr) {
   const motdMount = document.getElementById("motd-mount");
   const note = document.getElementById("freshness-note");
   try {
-    const data = await getJSON(`/api/probable-pitchers?date=${dateStr}&season=2026`);
+    const url = `/api/probable-pitchers?date=${dateStr}&season=2026`;
+    const cached = window._prefetchCache && window._prefetchCache[url];
+    const data = (cached && cached !== "pending") ? cached : await getJSON(url);
     note.textContent = data.pulled_at
       ? `Data pulled: ${data.pulled_at.slice(0, 16).replace("T", " ")} UTC`
       : "";

@@ -30,7 +30,7 @@ function performerRowHtml(rank, entry) {
       <div>
         <a class="performer-name performer-name-link" href="index.html"
            data-player-id="${entry.player_id}" data-name="${entry.name}" data-role="${entry.role}">${entry.name}</a>
-        <div class="performer-sub">${roleTag} &nbsp;&#183;&nbsp; ${entry.opponent}${walkoff}${entry.role === "pitcher" && entry.game_id ? `&nbsp;<a class="outing-btn" href="outings.html?player_id=${entry.player_id}&game_id=${entry.game_id}&season=2026">outing ↗</a>` : ""}</div>
+        <div class="performer-sub">${roleTag} &nbsp;&#183;&nbsp; ${entry.opponent}${walkoff}${entry.role === "pitcher" && entry.game_id ? `&nbsp;<a class="outing-btn" href="outings.html?player_id=${entry.player_id}&game_id=${entry.game_id}&season=${(dateInput.value || "").slice(0, 4) || 2026}">outing ↗</a>` : ""}</div>
       </div>
       ${statCells(entry)}
       <div class="wpa-cell">
@@ -94,7 +94,9 @@ async function loadTopPerformers() {
   const walkoffMount = document.getElementById("walkoff-mount");
   setPageLoading(true);
   try {
-    const data = await getJSON(`/api/top-performers?date=${day}`);
+    const url = `/api/top-performers?date=${day}`;
+    const cached = window._prefetchCache && window._prefetchCache[url];
+    const data = (cached && cached !== "pending") ? cached : await getJSON(url);
     walkoffMount.innerHTML = walkoffPanelHtml(data.walkoffs || []);
     lastPerformerData = data.entries || [];
     renderPerformers(lastPerformerData);
