@@ -38,6 +38,12 @@ CHUNK_DAYS = 7
 # actually exist despite this file's own docstring claiming it did.
 RECENT_WINDOW_DAYS = 3
 
+# Statcast game_type codes: R=regular season, S=spring training, E=exhibition,
+# A=all-star, F=wild card, D=division series, L=LCS, W=World Series.
+# Everything in this project (models, leaderboards, league averages) is
+# regular-season-only, so that's all we ingest.
+KEEP_GAME_TYPES = frozenset({"R"})
+
 # 2026 Opening Night was 3/25, Opening Day 3/26. Default test range covers
 # the first week of the season.
 DEFAULT_START = "2026-03-25"
@@ -48,6 +54,7 @@ COLUMN_MAP = {
     "game_pk": "game_id",
     "game_date": "game_date",
     "game_year": "season",
+    "game_type": "game_type",
     "at_bat_number": "at_bat_number",
     "pitch_number": "pitch_number",
     "pitcher": "pitcher_id",
@@ -159,8 +166,31 @@ def validate_columns(df, label):
               f"schema (e.g. {sample}) - ignored")
 
 
+def filter_game_types(df, label, keep=KEEP_GAME_TYPES):
+    """statcast() returns every game in the date range regardless of type -
+    spring training, exhibitions, the All-Star game and the postseason all
+    come back mixed in with regular-season play. Nothing downstream wants
+    that: Spring Training is non-competitive with minor-league rosters, and
+    postseason is a different (much stronger) population than the regular
+    season it would be averaged into. Filtering here rather than at query
+    time means the wrong rows never enter the table at all."""
+    if "game_type" not in df.columns:
+        print(f"  WARNING [{label}]: no game_type column in Statcast response - "
+              f"cannot filter, keeping all rows")
+        return df
+    before = len(df)
+    df = df[df["game_type"].isin(keep)]
+    dropped = before - len(df)
+    if dropped:
+        print(f"  filtered out {dropped:,} non-{'/'.join(sorted(keep))} row(s)", end=" ")
+    return df
+
+
 def insert_chunk(conn, df, label):
     validate_columns(df, label)
+    df = filter_game_types(df, label)
+    if df.empty:
+        return 0, {}
 
     for raw_col in COLUMN_MAP:
         if raw_col not in df.columns:

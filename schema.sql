@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS pitches (
     game_id                           INTEGER,
     game_date                         TEXT,
     season                            INTEGER,
+    game_type                         TEXT,      -- R=regular, S=spring, F/D/L/W=postseason, A=all-star, E=exhibition
     at_bat_number                     INTEGER,   -- needed with pitch_number to uniquely id a pitch
     pitch_number                      INTEGER,
     pitcher_id                        INTEGER,

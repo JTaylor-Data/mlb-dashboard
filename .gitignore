@@ -28,3 +28,7 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# SQLite WAL sidecar files
+mlb_data.db-shm
+mlb_data.db-wal
