@@ -8,14 +8,12 @@ training report or a live computation against the actual production
 model. v3 architecture - see `Methodology/STUFF_V3_REPORT.md`.
 """
 import json
-import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.stuff_model import _raw_predictions, compute_stuff_plus, pitcher_shap_breakdown
 

@@ -20,14 +20,11 @@ here are informal (centroid-based, this pitcher/split only) - shown as
 reference only, never as a substitute for the real tunneling_plus number,
 which is always pulled from the validated endpoint.
 """
-import sys
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from api.cache import ttl_cache
 from api.db import get_conn

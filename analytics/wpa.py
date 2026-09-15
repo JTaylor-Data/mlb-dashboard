@@ -96,7 +96,7 @@ def find_walkoff_batter(conn, game_id):
         return None
 
     final_score = conn.execute("SELECT final_score FROM games WHERE game_id = ?", (game_id,)).fetchone()
-    if final_score is None:
+    if final_score is None or final_score[0] is None:
         return None
     home_score, away_score = (int(x) for x in final_score[0].split("-"))
     if home_score <= away_score:

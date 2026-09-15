@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, Query
 
+from analytics.metrics import compute_barrel
 from analytics.player_page import _add_flags, _add_arm_side_hb
 from analytics.splits import (
     IN_ZONE_CODES, OUT_ZONE_CODES, STRIKEOUT_EVENTS, WALK_EVENTS,
@@ -213,10 +214,8 @@ def _batter_rows(conn, player_id, seasons):
         n_pa = len(pa)
         n_ev = len(ev)
         hard = int((ev >= 95).sum())
-        # Barrel: EV >= 98 + LA 26-30° (simplified Statcast approximation)
         ev_aligned = grp.loc[grp["launch_speed"].notna() & grp["launch_angle"].notna()]
-        barrel_mask = (ev_aligned["launch_speed"] >= 98) & (ev_aligned["launch_angle"].between(26, 30))
-        barrel = int(barrel_mask.sum())
+        barrel = int(compute_barrel(ev_aligned["launch_speed"], ev_aligned["launch_angle"]).sum())
         xwoba_vals = grp["estimated_woba_using_speedangle"].dropna()
         sweet_spot = int(la.between(8, 32).sum()) if len(la) else 0
         out_z_count = int(out_zone.sum())

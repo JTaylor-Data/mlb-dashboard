@@ -9,12 +9,9 @@ day to day, so this is refreshed by running pull_prospects.py /
 pull_prospect_scouting.py by hand.
 """
 import json
-import sys
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.prospect_performance import top_prospect_performers
 

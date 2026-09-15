@@ -11,14 +11,12 @@ This deliberately reuses the same _raw_predictions functions and plus-scale
 transforms the player page already uses, so the numbers here match what
 individual pitcher pages show.
 """
-import sys
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.stuff_model import compute_stuff_plus, overall_stuff_plus
 from analytics.tunneling_v3_model import _raw_predictions as _tun_raw
@@ -158,6 +156,7 @@ def list_teams(season: int = Query(2026), conn=Depends(get_conn)):
     except Exception:
         agg = {}
 
+    from api.routers.deception_report import REPORT_SEASON as _dec_season
     result = []
     for team_id, name, abbreviation, league, division in teams:
         scores = agg.get(int(team_id), {})
@@ -172,7 +171,7 @@ def list_teams(season: int = Query(2026), conn=Depends(get_conn)):
             "location_plus": scores.get("location_plus"),
             "deception_plus": scores.get("deception_plus"),
         })
-    return result
+    return {"teams": result, "deception_season": _dec_season}
 
 
 # ---------------------------------------------------------------------------

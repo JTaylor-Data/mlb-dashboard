@@ -23,12 +23,13 @@ import pandas as pd
 import shap
 
 from analytics.tunneling_features import lag_feature_columns, load_pitches, sequential_lag_features, MAX_LAG
+from analytics.location_features import to_plus_scale as _to_plus_scale
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 BOOSTER_PATH = MODELS_DIR / "tunneling_v3.txt"
 META_PATH = MODELS_DIR / "tunneling_v3_meta.json"
 COMMIT_TABLE_PATH = (
-    Path(__file__).resolve().parent.parent / "training" / "tunneling_v2_artifacts" / "200ms" / "pitcher_season_commit_point.csv"
+    Path(__file__).resolve().parent.parent / "project_artifacts" / "training_artifacts" / "tunneling_v2_artifacts" / "200ms" / "pitcher_season_commit_point.csv"
 )
 
 MIN_SEASON_PITCHES = 100  # same single qualifying threshold used at training time (build_tunneling_v3_dataset.py Part C)
@@ -138,10 +139,6 @@ def _raw_predictions(conn, season):
 def clear_cache():
     _raw_predictions_cache.clear()
     _model_cache.pop("commit_table", None)
-
-
-def _to_plus_scale(values, mean, std):
-    return 100 - 10 * (values - mean) / std
 
 
 def leaderboard(conn, season, top_n=15):

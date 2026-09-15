@@ -2,6 +2,7 @@
 // click through to roster / depth chart / team stats.
 
 let allTeams = [];
+let deceptionSeason = null;
 let currentLeague = "ALL";
 let currentSeason = 2026;
 let sortKey = "name";
@@ -112,7 +113,7 @@ function renderTeamList() {
 
   html += `</tbody></table>
   <div style="font-size:11px;color:var(--text-muted);margin-top:8px;">
-    Model scores are team averages across qualified pitchers. Deception+ uses 2025 data (single-season model).
+    Model scores are team averages across qualified pitchers. Deception+ uses ${deceptionSeason ?? "2025"} data (single-season model).
     Click any team row to view roster and stats.
   </div>`;
 
@@ -311,7 +312,9 @@ function statBox(label, value) {
 async function loadTeams(season) {
   setPageLoading(true);
   try {
-    allTeams = await getJSON(`/api/teams?season=${season}`);
+    const resp = await getJSON(`/api/teams?season=${season}`);
+    allTeams = resp.teams;
+    deceptionSeason = resp.deception_season;
   } catch (err) {
     document.getElementById("teams-list-mount").innerHTML =
       `<div class="empty-state">Failed to load teams: ${err.message}</div>`;

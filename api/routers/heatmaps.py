@@ -5,14 +5,11 @@ natural follow-up, not built yet). plate_x/plate_z/sz_top/sz_bot already
 exist in `pitches` (schema.sql) and were previously unused by any analytics
 function - no new pull needed.
 """
-import sys
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from api.cache import ttl_cache_all_args
 from api.db import get_conn

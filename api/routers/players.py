@@ -4,17 +4,12 @@ exactly what pages/1_Player_Page.py rendered, by calling the same analytics
 modules it did, just packaged as JSON instead of Streamlit widgets/HTML.
 """
 import json
-import math
-import sys
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.archetypes import ARCHETYPE_DESCRIPTIONS, classify_batter_archetype
 from analytics.boxscore import fetch_boxscore, pitcher_daily_stats, season_era
@@ -147,7 +142,7 @@ def _stuff_breakdown(stuff_all, stuff_by_stand, overall_stuff, pitcher_id, pitch
         values = {}
         for col in columns:
             v = cell(col, row_stand)
-            values[col] = round(v, 0) if v is not None and not (isinstance(v, float) and math.isnan(v)) else None
+            values[col] = round(v, 0) if _clean(v) is not None else None
         rows.append({"label": row_label, "values": values})
 
     return {"columns": columns, "rows": rows}
@@ -405,7 +400,7 @@ def _percentile_groups(pct_dict, labels, fmt_map, groups, qualified=True):
                 "key": m,
                 "label": labels.get(m, m),
                 "raw": _clean(raw),
-                "pct": round(float(p), 1) if p is not None and not (isinstance(p, float) and math.isnan(p)) else None,
+                "pct": round(float(p), 1) if _clean(p) is not None else None,
                 "value_str": format_value(raw, fmt_map.get(m, "{:.1f}")),
                 "qualified": qualified,
             })
@@ -457,10 +452,11 @@ def _all_players(conn, season):
         ORDER BY name
     """, conn, params=(season, season))
     pitcher_roles = _pitcher_roles(conn, season)
-    df["pitcher_role"] = [
-        pitcher_roles.loc[pid, "role"] if role == "pitcher" and pid in pitcher_roles.index else None
-        for pid, role in zip(df["player_id"], df["role"])
-    ]
+    df = df.merge(
+        pitcher_roles[["role"]].rename(columns={"role": "pitcher_role"}),
+        left_on="player_id", right_index=True, how="left",
+    )
+    df.loc[df["role"] != "pitcher", "pitcher_role"] = None
     return df
 
 
@@ -563,7 +559,7 @@ def _build_player_steps(conn, player_id, role, split, season):
         base["badge"] = {
             "kind": "stuff_plus",
             "value": _clean(overall_stuff),
-            "value_str": format_value(overall_stuff, "{:.0f}") if not (isinstance(overall_stuff, float) and math.isnan(overall_stuff)) else "N/A",
+            "value_str": format_value(overall_stuff, "{:.0f}") if _clean(overall_stuff) is not None else "N/A",
         }
         yield ("step", "Computing stats")
 
@@ -842,6 +838,9 @@ def get_player_progress(
         conn = sqlite3.connect(DB_PATH, check_same_thread=False)
         conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA busy_timeout=5000")
+        conn.execute("PRAGMA cache_size = -32000")
+        conn.execute("PRAGMA temp_store = MEMORY")
+        conn.execute("PRAGMA mmap_size = 268435456")
         try:
             index = 0
             for kind, payload in _build_player_steps(conn, player_id, role, split, season):
@@ -977,8 +976,9 @@ def get_pitcher_outing(
     max_velo = round(float(_velo_col.max()), 1) if not _velo_col.empty else None
     avg_velo = round(float(_velo_col.mean()), 1) if not _velo_col.empty else None
 
-    # Player team_id + name in one lookup
-    _p_row = conn.execute("SELECT team_id, name FROM players WHERE player_id = ?", (player_id,)).fetchone()
+    _p_row = conn.execute(
+        "SELECT team_id, name FROM players WHERE player_id = ?", (player_id,)
+    ).fetchone()
     player_team_id = _p_row[0] if _p_row else None
     _player_name_cached = _p_row[1] if _p_row else None
 

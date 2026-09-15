@@ -22,14 +22,11 @@ xwOBA (not SLG - switched per direction) uses the same `woba_denom`/
 xwOBA numbers (percentiles.py's pool, the player card) - mean expected wOBA
 across qualifying plate appearances in that zone, not a sum/count ratio.
 """
-import sys
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from api.cache import ttl_cache_all_args
 from api.db import get_conn

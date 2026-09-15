@@ -2,13 +2,10 @@
 /api/splits - thin wrap of splits.py, parity with dashboard.py's
 rudimentary splits explorer (mode/player/split-by/pitch-type -> a table).
 """
-import sys
-from pathlib import Path
 
 import pandas as pd
 from fastapi import APIRouter, Depends, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.metrics import classify_pitcher_archetype
 from analytics.splits import compute_batter_splits, compute_pitcher_splits

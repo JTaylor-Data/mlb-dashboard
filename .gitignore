@@ -2,9 +2,17 @@
 mlb_data.db
 mlb_data.db.backup-*
 
-# Research/model-dev artifacts (large, regenerable via their build script)
-training/stuff_v3_artifacts/
-training/tunneling_v3_artifacts/
+# Research/model-dev artifacts (large parquet/npy files, regenerable via build scripts)
+training/tunneling_v3_artifacts/*.parquet
+training/tunneling_v3_artifacts/*.npy
+training/location_v1_artifacts/*.parquet
+training/location_v1_artifacts/*.png
+training/tunneling_plus_ext_artifacts/*.parquet
+training/tunneling_plus_ext_artifacts/*.csv
+training/location_plus_ext_artifacts/*.parquet
+
+# All legacy/archived artifacts and model backups
+project_artifacts/
 
 # CV venv (hundreds of MB of DLLs and wheels, never belongs in git)
 pitcher_cv/bcv_venv311/
@@ -32,3 +40,9 @@ Thumbs.db
 # SQLite WAL sidecar files
 mlb_data.db-shm
 mlb_data.db-wal
+
+# Pitcher CV R&D outputs (not part of the live dashboard)
+pitcher_cv/out_*/
+pitcher_cv/deception_v4/landmarks/
+pitcher_cv/deception_v4/frames/
+pitcher_cv/deception_v4/videos/

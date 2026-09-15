@@ -1,0 +1,316 @@
+{
+  "sequential_same_at_bat_test": {
+    "n_total": 5924132,
+    "whiff_rate_by_predicted_tercile": {
+      "low_pred": {
+        "whiff_rate": 0.1426426449237382,
+        "n": 1974711
+      },
+      "mid_pred": {
+        "whiff_rate": 0.12327835479640048,
+        "n": 1974710
+      },
+      "high_pred": {
+        "whiff_rate": 0.09834806207085492,
+        "n": 1974711
+      }
+    },
+    "good_minus_bad_z_score": 135.51599356447073,
+    "methodology_note": "NOT directly comparable to v1 (z=9.06) or v2 (z=9.3-10.0) at face value - see sequential_same_at_bat_test()'s own docstring for exactly what changed and why."
+  },
+  "year_over_year": {
+    "per_pair": [
+      {
+        "season_t": "2015",
+        "season_t1": "2016",
+        "n": 452,
+        "r2": 0.353
+      },
+      {
+        "season_t": "2016",
+        "season_t1": "2017",
+        "n": 469,
+        "r2": 0.294
+      },
+      {
+        "season_t": "2017",
+        "season_t1": "2018",
+        "n": 462,
+        "r2": 0.32
+      },
+      {
+        "season_t": "2018",
+        "season_t1": "2019",
+        "n": 499,
+        "r2": 0.336
+      },
+      {
+        "season_t": "2019",
+        "season_t1": "2020",
+        "n": 403,
+        "r2": 0.2
+      },
+      {
+        "season_t": "2020",
+        "season_t1": "2021",
+        "n": 437,
+        "r2": 0.296
+      },
+      {
+        "season_t": "2021",
+        "season_t1": "2022",
+        "n": 492,
+        "r2": 0.288
+      },
+      {
+        "season_t": "2022",
+        "season_t1": "2023",
+        "n": 494,
+        "r2": 0.354
+      },
+      {
+        "season_t": "2023",
+        "season_t1": "2024",
+        "n": 490,
+        "r2": 0.31
+      },
+      {
+        "season_t": "2024",
+        "season_t1": "2025",
+        "n": 481,
+        "r2": 0.276
+      },
+      {
+        "season_t": "2025",
+        "season_t1": "2026",
+        "n": 486,
+        "r2": 0.314
+      }
+    ],
+    "pooled_r2": 0.301,
+    "n_pooled": 5165
+  },
+  "cross_model_correlation": {
+    "n": 688,
+    "r_stuff": 0.056,
+    "r_deception": 0.144
+  },
+  "fastest_fb_velo_correlation": 0.065,
+  "leaderboard": {
+    "n_qualified": 688,
+    "top": [
+      {
+        "pitcher_id": 640462,
+        "name": "A.J. Puk",
+        "team_abbrev": "AZ",
+        "total_pitches": 121,
+        "score": 103.9
+      },
+      {
+        "pitcher_id": 681151,
+        "name": "Jayden Murray",
+        "team_abbrev": "CHC",
+        "total_pitches": 129,
+        "score": 102.7
+      },
+      {
+        "pitcher_id": 622786,
+        "name": "Jesus Tinoco",
+        "team_abbrev": "MIA",
+        "total_pitches": 223,
+        "score": 102.6
+      },
+      {
+        "pitcher_id": 552640,
+        "name": "Andrew Kittredge",
+        "team_abbrev": "BAL",
+        "total_pitches": 561,
+        "score": 102.6
+      },
+      {
+        "pitcher_id": 669721,
+        "name": "Davis Daniel",
+        "team_abbrev": "CIN",
+        "total_pitches": 137,
+        "score": 102.5
+      },
+      {
+        "pitcher_id": 592866,
+        "name": "Trevor Williams",
+        "team_abbrev": "TEX",
+        "total_pitches": 1075,
+        "score": 102.3
+      },
+      {
+        "pitcher_id": 573124,
+        "name": "Taylor Rogers",
+        "team_abbrev": "MIN",
+        "total_pitches": 674,
+        "score": 102.3
+      },
+      {
+        "pitcher_id": 660825,
+        "name": "Eduard Bazardo",
+        "team_abbrev": "SEA",
+        "total_pitches": 913,
+        "score": 102.3
+      },
+      {
+        "pitcher_id": 696270,
+        "name": "Ryan Johnson",
+        "team_abbrev": "LAA",
+        "total_pitches": 202,
+        "score": 102.2
+      },
+      {
+        "pitcher_id": 664208,
+        "name": "Phil Maton",
+        "team_abbrev": "CHC",
+        "total_pitches": 762,
+        "score": 102.1
+      },
+      {
+        "pitcher_id": 668820,
+        "name": "Max Kranick",
+        "team_abbrev": "WSH",
+        "total_pitches": 381,
+        "score": 102.0
+      },
+      {
+        "pitcher_id": 594798,
+        "name": "Jacob deGrom",
+        "team_abbrev": "TEX",
+        "total_pitches": 1943,
+        "score": 102.0
+      },
+      {
+        "pitcher_id": 608372,
+        "name": "Tomoyuki Sugano",
+        "team_abbrev": "COL",
+        "total_pitches": 1889,
+        "score": 101.9
+      },
+      {
+        "pitcher_id": 656945,
+        "name": "Tanner Scott",
+        "team_abbrev": "LAD",
+        "total_pitches": 674,
+        "score": 101.9
+      },
+      {
+        "pitcher_id": 596001,
+        "name": "Jakob Junis",
+        "team_abbrev": "TEX",
+        "total_pitches": 758,
+        "score": 101.9
+      }
+    ],
+    "bottom": [
+      {
+        "pitcher_id": 656629,
+        "name": "Michael Kopech",
+        "team_abbrev": "LAD",
+        "total_pitches": 178,
+        "score": 94.8
+      },
+      {
+        "pitcher_id": 664351,
+        "name": "Luis Contreras",
+        "team_abbrev": "HOU",
+        "total_pitches": 170,
+        "score": 95.6
+      },
+      {
+        "pitcher_id": 666120,
+        "name": "Ian Anderson",
+        "team_abbrev": "ATL",
+        "total_pitches": 153,
+        "score": 96.0
+      },
+      {
+        "pitcher_id": 694646,
+        "name": "Chayce McDermott",
+        "team_abbrev": "NYM",
+        "total_pitches": 144,
+        "score": 96.4
+      },
+      {
+        "pitcher_id": 687931,
+        "name": "Carson Whisenhunt",
+        "team_abbrev": "SF",
+        "total_pitches": 306,
+        "score": 96.4
+      },
+      {
+        "pitcher_id": 642585,
+        "name": "F\u00e9lix Bautista",
+        "team_abbrev": "BAL",
+        "total_pitches": 484,
+        "score": 96.4
+      },
+      {
+        "pitcher_id": 656222,
+        "name": "Jalen Beeks",
+        "team_abbrev": "TEX",
+        "total_pitches": 686,
+        "score": 96.5
+      },
+      {
+        "pitcher_id": 815083,
+        "name": "Mitch Farris",
+        "team_abbrev": "LAA",
+        "total_pitches": 298,
+        "score": 96.6
+      },
+      {
+        "pitcher_id": 544150,
+        "name": "Albert Su\u00e1rez",
+        "team_abbrev": "BAL",
+        "total_pitches": 130,
+        "score": 96.7
+      },
+      {
+        "pitcher_id": 669062,
+        "name": "Erik Miller",
+        "team_abbrev": "BOS",
+        "total_pitches": 357,
+        "score": 96.8
+      },
+      {
+        "pitcher_id": 676206,
+        "name": "Freddy Tarnok",
+        "team_abbrev": "MIA",
+        "total_pitches": 102,
+        "score": 96.8
+      },
+      {
+        "pitcher_id": 594580,
+        "name": "Sam Moll",
+        "team_abbrev": "CIN",
+        "total_pitches": 250,
+        "score": 96.9
+      },
+      {
+        "pitcher_id": 628317,
+        "name": "Kenta Maeda",
+        "team_abbrev": "NYY",
+        "total_pitches": 127,
+        "score": 97.1
+      },
+      {
+        "pitcher_id": 656686,
+        "name": "Corbin Martin",
+        "team_abbrev": "CHC",
+        "total_pitches": 243,
+        "score": 97.2
+      },
+      {
+        "pitcher_id": 674944,
+        "name": "Sean Guenther",
+        "team_abbrev": "DET",
+        "total_pitches": 111,
+        "score": 97.3
+      }
+    ]
+  }
+}

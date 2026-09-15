@@ -7,12 +7,9 @@ player page already builds - so a season that's already warm for the
 player page is warm here too, no duplicate work) and exposes it as an
 endpoint with names/teams resolved for display.
 """
-import sys
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.similarity import (
     HITTER_SIMILARITY_METRICS, PITCHER_SIMILARITY_METRICS, SIMILARITY_METRIC_LABELS,

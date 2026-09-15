@@ -2,12 +2,10 @@
 /api/news — serves MLB news items from the news_items table (populated by
 data/news_fetcher.py, triggered by pulls/refresh_mlb_stats.py daily).
 """
-import sys
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from api.db import get_conn
 

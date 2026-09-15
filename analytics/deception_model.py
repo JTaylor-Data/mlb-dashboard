@@ -14,6 +14,7 @@ import pandas as pd
 import shap
 
 from analytics.deception_features import ALL_FEATURES, CATEGORICAL_FEATURES, RAW_QUERY_COLUMNS, engineer_features, load_bio
+from analytics.location_features import to_plus_scale as _to_plus_scale
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 BOOSTER_PATH = MODELS_DIR / "deception_plus_v1.txt"
@@ -75,10 +76,6 @@ def _raw_predictions(conn, season):
 
 def clear_cache():
     _raw_predictions_cache.clear()
-
-
-def _to_plus_scale(values, mean, std):
-    return 100 - 10 * (values - mean) / std
 
 
 def pitcher_deception_breakdown(conn, season, pitcher_id, league_raw):

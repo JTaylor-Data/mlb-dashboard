@@ -1,0 +1,36 @@
+{
+  "score_season": 2024,
+  "outcome_season": 2025,
+  "results_by_min_pitches": {
+    "100": {
+      "n_qualified": 302,
+      "correlations": {
+        "xwoba": -0.043,
+        "whiff_pct": -0.101,
+        "swstr_pct": -0.047,
+        "k_minus_bb_pct": 0.131,
+        "chase_pct": 0.124
+      }
+    },
+    "200": {
+      "n_qualified": 282,
+      "correlations": {
+        "xwoba": -0.048,
+        "whiff_pct": -0.104,
+        "swstr_pct": -0.05,
+        "k_minus_bb_pct": 0.145,
+        "chase_pct": 0.115
+      }
+    },
+    "300": {
+      "n_qualified": 276,
+      "correlations": {
+        "xwoba": -0.054,
+        "whiff_pct": -0.092,
+        "swstr_pct": -0.039,
+        "k_minus_bb_pct": 0.155,
+        "chase_pct": 0.134
+      }
+    }
+  }
+}

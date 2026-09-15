@@ -1,12 +1,9 @@
 """/api/playoffs/* - wild card race, division leaders, projected bracket,
 and projected playoff roster. See analytics/playoffs.py for the real
 computations and the honest caveats on the bracket/roster projections."""
-import sys
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.playoffs import division_leaders, playoff_teams, projected_roster, unified_bracket, wildcard_race
 

@@ -9,14 +9,12 @@ Data freshness is bounded by when pulls/refresh_mlb_stats.py was last run
 (daily cadence). The pulled_at timestamp is included in the response so the
 frontend can display it visibly.
 """
-import sys
 from datetime import date
 from pathlib import Path
 
 import numpy as np
 from fastapi import APIRouter, Depends, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.stuff_model import compute_stuff_plus, overall_stuff_plus
 from analytics.tunneling_v3_model import _raw_predictions as _tun_raw

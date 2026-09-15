@@ -52,6 +52,9 @@ def _load_pitches(conn, season, entity_col, entity_id=None, pitch_type=None):
 def _add_common_columns(df, season):
     df = df.copy()
     df["month"] = pd.to_datetime(df["game_date"]).dt.strftime("%Y-%m")
+    if season not in ALL_STAR_DATES:
+        import warnings
+        warnings.warn(f"ALL_STAR_DATES has no entry for season {season}; using {season}-07-14 as fallback", stacklevel=2)
     all_star_date = ALL_STAR_DATES.get(season, f"{season}-07-14")
     df["half"] = np.where(df["game_date"] < all_star_date, "1H", "2H")
     df["is_swing"] = df["description"].isin(SWING_DESCRIPTIONS)

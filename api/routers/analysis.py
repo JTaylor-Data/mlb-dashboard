@@ -5,12 +5,9 @@ chart (pitcher or batter, same metric set, direction per-metric already
 encoded in PITCHER_POLARITY/BATTER_POLARITY) and a batter-vs-batter
 swing-decisions/batted-ball-outcomes comparison.
 """
-import sys
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.percentiles import BATTER_POLARITY, PITCHER_POLARITY, player_percentiles
 

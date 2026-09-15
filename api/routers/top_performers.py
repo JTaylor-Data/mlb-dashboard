@@ -13,13 +13,10 @@ magnitudes (highest to lowest weight: HR > H > RBI > SB for batters, ER
 [lower better] > IP > K > H for pitchers) - a judgment call, not a derived
 number.
 """
-import sys
 from concurrent.futures import ThreadPoolExecutor
-from pathlib import Path
 
 from fastapi import APIRouter, Depends, Query
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from analytics.boxscore import batter_daily_stats, fetch_boxscore, pitcher_daily_stats
 from analytics.wpa import all_daily_participants, find_walkoff_batter
@@ -62,17 +59,41 @@ def _pitcher_score(stats):
     )
 
 
-def _opponent(conn, game_id, team_id):
-    row = conn.execute("SELECT home_team, away_team FROM games WHERE game_id = ?", (game_id,)).fetchone()
-    if row is None:
-        return ""
-    home, away = int(row[0]), int(row[1])
-    is_home = team_id == home
-    opp_id = away if is_home else home
-    abbrev = conn.execute("SELECT abbreviation FROM teams WHERE team_id = ?", (opp_id,)).fetchone()
-    if abbrev is None:
-        return ""
-    return f"{'vs' if is_home else '@'} {abbrev[0]}"
+def _build_opponent_map(conn, entries):
+    """Batch-fetch home/away and team abbreviations for all entries at once."""
+    game_ids = list({e["game_id"] for e in entries if e.get("team_id") is not None})
+    if not game_ids:
+        return {}
+    placeholders = ",".join("?" * len(game_ids))
+    games = {
+        row[0]: (int(row[1]), int(row[2]))
+        for row in conn.execute(
+            f"SELECT game_id, home_team, away_team FROM games WHERE game_id IN ({placeholders})", game_ids
+        )
+    }
+    all_team_ids = {tid for home, away in games.values() for tid in (home, away)}
+    if not all_team_ids:
+        return {}
+    tp = ",".join("?" * len(all_team_ids))
+    abbrevs = {
+        row[0]: row[1]
+        for row in conn.execute(f"SELECT team_id, abbreviation FROM teams WHERE team_id IN ({tp})", list(all_team_ids))
+    }
+    result = {}
+    for e in entries:
+        if e.get("team_id") is None:
+            result[(e["game_id"], e["team_id"])] = ""
+            continue
+        gm = games.get(e["game_id"])
+        if gm is None:
+            result[(e["game_id"], e["team_id"])] = ""
+            continue
+        home, away = gm
+        is_home = e["team_id"] == home
+        opp_id = away if is_home else home
+        abbrev = abbrevs.get(opp_id, "")
+        result[(e["game_id"], e["team_id"])] = f"{'vs' if is_home else '@'} {abbrev}" if abbrev else ""
+    return result
 
 
 @ttl_cache()
@@ -121,9 +142,10 @@ def _leaderboard(conn, day_str):
     batters = sorted([e for e in scored if e["role"] == "batter"], key=lambda e: e["score"], reverse=True)[:10]
     pitchers = sorted([e for e in scored if e["role"] == "pitcher"], key=lambda e: e["score"], reverse=True)[:10]
     top = batters + pitchers
+    opponent_map = _build_opponent_map(conn, top)
     for e in top:
         e["walkoff"] = e["role"] == "batter" and find_walkoff_batter(conn, e["game_id"]) == e["player_id"]
-        e["opponent"] = _opponent(conn, e["game_id"], e["team_id"]) if e["team_id"] is not None else ""
+        e["opponent"] = opponent_map.get((e["game_id"], e["team_id"]), "")
 
     # Walk-offs are reported independent of leaderboard rank: one per game
     # (at most), for every game that day, regardless of whether that
