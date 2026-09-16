@@ -151,7 +151,7 @@ def _leaderboard(conn, day_str):
     # (at most), for every game that day, regardless of whether that
     # player's score also happens to land in the top 10 above (it's fine if
     # it does - not mutually exclusive).
-    walkoffs = []
+    walkoff_entries = []
     for game_id in participants["game_id"].astype(int).unique():
         walkoff_batter_id = find_walkoff_batter(conn, int(game_id))
         if walkoff_batter_id is None:
@@ -168,10 +168,16 @@ def _leaderboard(conn, day_str):
             row = conn.execute("SELECT name, team_id FROM players WHERE player_id = ?", (walkoff_batter_id,)).fetchone()
             if row is not None:
                 name, team_id = row[0], row[1]
-        walkoffs.append(dict(
+        walkoff_entries.append(dict(
             player_id=int(walkoff_batter_id), name=name, team_id=team_id, stats=stats,
-            opponent=_opponent(conn, int(game_id), team_id) if team_id is not None else "",
+            game_id=game_id,
         ))
+
+    walkoff_opp_map = _build_opponent_map(conn, walkoff_entries)
+    walkoffs = []
+    for e in walkoff_entries:
+        e["opponent"] = walkoff_opp_map.get((e["game_id"], e["team_id"]), "")
+        walkoffs.append({k: v for k, v in e.items() if k != "game_id"})
 
     return {"entries": top, "walkoffs": walkoffs}
 

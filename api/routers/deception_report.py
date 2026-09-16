@@ -22,7 +22,7 @@ from analytics.deception_model import _raw_predictions, pitcher_deception_breakd
 router = APIRouter(prefix="/api/deception")
 
 MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
-REPORT_SEASON = 2025
+REPORT_SEASON = 2026
 REPORT_PATH = MODELS_DIR / f"deception_plus_v1_report_{REPORT_SEASON}.json"
 
 

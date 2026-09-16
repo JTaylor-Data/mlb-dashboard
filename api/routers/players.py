@@ -543,18 +543,9 @@ def _build_player_steps(conn, player_id, role, split, season):
             {"label": "K", "value": stats["k"]},
             {"label": "GS", "value": stats["gs"] if stats["gs"] is not None else "-"},
             {"label": "OPS against", "value": format_value(stats["OPS"], "{:.3f}")},
-            # ERA has no official vs-LHB/vs-RHB split - the MLB Stats API's
-            # own split-stats endpoint omits era/earnedRuns entirely for
-            # sitCodes=vr/vl (unlike avg/obp/slg/whip, which are
-            # attributable per plate appearance, earned-run status is an
-            # inning-level judgment, not attributable to one batter side).
-            # Label it explicitly as season-total rather than silently not
-            # moving with the split toggle.
             {"label": "ERA (season)", "value": era if era is not None else "-"},
             {"label": xfip_label, "value": format_value(xfip_value, "{:.2f}")},
-            # WAR (MLB Stats API sabermetrics, see pulls/pull_sabermetrics.py)
-            # is season-total only, same as ERA above - no split exists.
-            {"label": "WAR", "value": format_value(real_war, "{:.1f}")},
+            {"label": "bWAR", "value": format_value(real_war, "{:.1f}")},
         ]
         base["badge"] = {
             "kind": "stuff_plus",
@@ -695,7 +686,7 @@ def _build_player_steps(conn, player_id, role, split, season):
             {"label": "HR", "value": stats["hr"]},
             {"label": "OPS", "value": format_value(stats["OPS"], "{:.3f}")},
             {"label": wrc_label, "value": format_value(wrc_value, "{:.0f}")},
-            {"label": "WAR", "value": format_value(real_war, "{:.1f}")},
+            {"label": "bWAR", "value": format_value(real_war, "{:.1f}")},
         ]
 
         all_pool = _batter_pool(conn, season, None)

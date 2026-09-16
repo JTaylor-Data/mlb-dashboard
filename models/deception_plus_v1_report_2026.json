@@ -1,0 +1,262 @@
+{
+  "trained_at": "2026-09-15 22:34:59",
+  "report_season": 2026,
+  "seasons_trained_on": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "cv_seasons": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "target": "delta_run_exp (linear-weights run value per pitch)",
+  "excluded_features_note": "Not yet included (awaiting CV pose pipeline): leg lift timing, time held in set, timing variance/quick pitches.",
+  "cv_folds": [
+    {
+      "holdout_season": 2021,
+      "r2": -0.00041892682332411724,
+      "mae": 0.12366062145032981,
+      "n_pitches": 687193,
+      "best_iteration": 466
+    },
+    {
+      "holdout_season": 2022,
+      "r2": -0.0004891722613102889,
+      "mae": 0.11760742768846529,
+      "n_pitches": 703938,
+      "best_iteration": 415
+    },
+    {
+      "holdout_season": 2023,
+      "r2": -0.00046161292917545893,
+      "mae": 0.12240279599094639,
+      "n_pitches": 711126,
+      "best_iteration": 263
+    },
+    {
+      "holdout_season": 2024,
+      "r2": -0.0005169190472831264,
+      "mae": 0.11950999046634,
+      "n_pitches": 706207,
+      "best_iteration": 431
+    },
+    {
+      "holdout_season": 2025,
+      "r2": -0.00043431865785015233,
+      "mae": 0.12015804601884601,
+      "n_pitches": 708795,
+      "best_iteration": 280
+    }
+  ],
+  "cv_r2_mean": -0.0004641899437886288,
+  "cv_mae_mean": 0.1206677763229855,
+  "mean_abs_shap": {
+    "arm_angle": 0.00046450249468561386,
+    "release_extension": 0.0007416490229190096,
+    "release_pos_x_as": 0.0003728019810157254,
+    "release_pos_z": 0.0004999998449363523,
+    "arm_angle_std": 0.00043619043792087,
+    "release_extension_std": 0.0005026389671958387,
+    "release_consistency": 0.0009345343956789758,
+    "height_in": 0.00033323520306126835,
+    "weight_lb": 0.0003887042739899591,
+    "season": 0.0004046376003108592
+  },
+  "gain_importance_final_model": {
+    "arm_angle": 701.0816078521311,
+    "release_extension": 503.7855633199215,
+    "release_pos_x_as": 762.8936396539211,
+    "release_pos_z": 765.1325460895896,
+    "arm_angle_std": 486.3963308259845,
+    "release_extension_std": 483.6948480606079,
+    "release_consistency": 536.6624250933528,
+    "height_in": 213.39405397325754,
+    "weight_lb": 341.40915102884173,
+    "season": 375.5391765758395
+  },
+  "split_half_reliability": {
+    "50": {
+      "n": 645,
+      "correlation": 0.8346897859609815
+    },
+    "100": {
+      "n": 546,
+      "correlation": 0.8460363065850911
+    },
+    "150": {
+      "n": 486,
+      "correlation": 0.8515660836668116
+    }
+  },
+  "outcome_validity": {
+    "n_qualified": 343,
+    "min_pitches_qualify": 300,
+    "correlation_with_overall_stuff": 0.4703683249107282,
+    "outcomes": {
+      "whiff_pct": {
+        "raw_correlation": 0.3029065607353741,
+        "partial_correlation_stuff_removed": 0.06680878820861982
+      },
+      "chase_pct": {
+        "raw_correlation": 0.3298086280313951,
+        "partial_correlation_stuff_removed": 0.2043733686162663
+      },
+      "swstr_pct": {
+        "raw_correlation": 0.3630028289097513,
+        "partial_correlation_stuff_removed": 0.14049745651933354
+      },
+      "k_minus_bb_pct": {
+        "raw_correlation": 0.44925238141062335,
+        "partial_correlation_stuff_removed": 0.24499215856846832
+      },
+      "xwoba": {
+        "raw_correlation": -0.5359765460334376,
+        "partial_correlation_stuff_removed": -0.3573340691083076
+      }
+    }
+  },
+  "worked_examples": {
+    "highest_deception": [
+      {
+        "pitcher_id": 656730,
+        "name": "Trevor Megill",
+        "deception_plus": 134.92279196948405,
+        "total_pitches": 656
+      },
+      {
+        "pitcher_id": 656641,
+        "name": "Jacob Latz",
+        "deception_plus": 125.64916357566045,
+        "total_pitches": 852
+      },
+      {
+        "pitcher_id": 694819,
+        "name": "Jacob Misiorowski",
+        "deception_plus": 124.774424654287,
+        "total_pitches": 1985
+      },
+      {
+        "pitcher_id": 643511,
+        "name": "Tyler Rogers",
+        "deception_plus": 123.16204916912395,
+        "total_pitches": 783
+      },
+      {
+        "pitcher_id": 669330,
+        "name": "Tyler Wells",
+        "deception_plus": 122.31302006419644,
+        "total_pitches": 903
+      },
+      {
+        "pitcher_id": 607192,
+        "name": "Tyler Glasnow",
+        "deception_plus": 121.72409279727884,
+        "total_pitches": 599
+      },
+      {
+        "pitcher_id": 687330,
+        "name": "Kevin Kelly",
+        "deception_plus": 121.6047799198705,
+        "total_pitches": 722
+      },
+      {
+        "pitcher_id": 808967,
+        "name": "Yoshinobu Yamamoto",
+        "deception_plus": 121.4099801442236,
+        "total_pitches": 2061
+      },
+      {
+        "pitcher_id": 543056,
+        "name": "Danny Coulombe",
+        "deception_plus": 118.99580669933422,
+        "total_pitches": 386
+      },
+      {
+        "pitcher_id": 681911,
+        "name": "Alex Vesia",
+        "deception_plus": 118.38613745021766,
+        "total_pitches": 782
+      }
+    ],
+    "lowest_deception": [
+      {
+        "pitcher_id": 607481,
+        "name": "Aaron Bummer",
+        "deception_plus": 69.09718845739452,
+        "total_pitches": 328
+      },
+      {
+        "pitcher_id": 688297,
+        "name": "Chris Roycroft",
+        "deception_plus": 73.18131777846565,
+        "total_pitches": 412
+      },
+      {
+        "pitcher_id": 547179,
+        "name": "Michael Lorenzen",
+        "deception_plus": 73.48860778136948,
+        "total_pitches": 2126
+      },
+      {
+        "pitcher_id": 608566,
+        "name": "Germ\u00e1n M\u00e1rquez",
+        "deception_plus": 79.77227732570779,
+        "total_pitches": 843
+      },
+      {
+        "pitcher_id": 664875,
+        "name": "Justin Lawrence",
+        "deception_plus": 81.71934433696957,
+        "total_pitches": 684
+      },
+      {
+        "pitcher_id": 623437,
+        "name": "Justin Topa",
+        "deception_plus": 84.06897258309627,
+        "total_pitches": 359
+      },
+      {
+        "pitcher_id": 642207,
+        "name": "Devin Williams",
+        "deception_plus": 84.97825537829848,
+        "total_pitches": 728
+      },
+      {
+        "pitcher_id": 686560,
+        "name": "Gavin Collyer",
+        "deception_plus": 85.26299324861604,
+        "total_pitches": 446
+      },
+      {
+        "pitcher_id": 679775,
+        "name": "Kyle Backhus",
+        "deception_plus": 85.2745236294302,
+        "total_pitches": 354
+      },
+      {
+        "pitcher_id": 680604,
+        "name": "Blas Casta\u00f1o",
+        "deception_plus": 85.33856694026795,
+        "total_pitches": 343
+      }
+    ]
+  },
+  "verdict": {
+    "split_half_correlation_100plus": 0.8460363065850911,
+    "n_outcomes_with_meaningful_partial_correlation": 4,
+    "headline": "Useful, with real caveats. The feature set is thin, but it's measuring something stable and predictive beyond Stuff+."
+  }
+}

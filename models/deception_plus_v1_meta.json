@@ -25,8 +25,14 @@
     "weight_lb",
     "season"
   ],
-  "trained_at": "2026-08-18 02:22:06",
+  "trained_at": "2026-09-15 22:34:59",
   "seasons_trained_on": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
     2021,
     2022,
     2023,
@@ -34,6 +40,14 @@
     2025,
     2026
   ],
+  "cv_seasons": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "report_season": 2026,
   "lgbm_params": {
     "objective": "huber",
     "n_estimators": 2000,

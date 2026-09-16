@@ -237,7 +237,7 @@ function renderTeamCard(data) {
       ${metricRowHtml("Bullpen ERA", data.metrics.bullpen_era, fmtEra, "bullpen_era", data.season)}
       ${metricRowHtml("FIP", data.metrics.fip, fmtEra, "fip", data.season)}
       ${metricRowHtml("Baserunning", data.metrics.baserunning_value, fmtRuns, "baserunning_value", data.season)}
-      ${metricRowHtml("Team WAR", data.metrics.war, fmtWar, "war", data.season)}
+      ${metricRowHtml("Team bWAR", data.metrics.war, fmtWar, "war", data.season)}
       ${metricRowHtml("Players on IL", data.metrics.il_count, fmtCount, "il_count", data.season)}
       ${metricRowHtml("Park Factor", data.metrics.park_factor, fmtParkFactor, "park_factor", data.season)}
       ${metricRowHtml("Remaining SOS", sos, fmtPct1)}

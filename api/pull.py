@@ -113,19 +113,26 @@ def _run(full_warmup):
 
         print("[refresh] refreshing computed stats...", flush=True)
         _status["detail"] = "Refreshing computed stats..."
-        cache.clear_all()
-        stuff_model.clear_cache()
-        # Was missing - stuff_model's own internal cache got cleared on every
-        # refresh but deception_model's equivalent didn't, so a "Refresh
-        # data" click updated Stuff+ immediately but could leave Deception+
-        # showing stale scores for up to its own 10-minute internal TTL.
-        deception_model.clear_cache()
-        # Box scores for games that were still in progress at last fetch
-        # (most relevantly, today's games) need a fresh pull after new data
-        # comes in - a finished game's box score never changes, but the
-        # cache can't tell "finished" from "was in progress last time we
-        # looked" on its own.
-        boxscore.clear_cache()
+        if full_warmup:
+            # Scheduled/startup refresh: clear everything including model caches,
+            # then do a full warmup (includes L/R splits, similar players, etc.)
+            cache.clear_all()
+            stuff_model.clear_cache()
+            deception_model.clear_cache()
+            boxscore.clear_cache()
+        else:
+            # Manual refresh button: only clear the daily-data caches. Model
+            # scoring caches (Stuff+, Tunneling+, Deception+, Location+) don't
+            # meaningfully change because of one day's new pitches — clearing and
+            # recomputing them cold costs ~25-35s of LightGBM scoring that the
+            # user's already paid for today. Keep them warm. Only clear what
+            # actually needs to reflect new data: box scores (completed games),
+            # leaderboards (daily top performers), and standings (W/L records).
+            from api.routers.top_performers import _leaderboard
+            from api.routers.standings import _standings
+            boxscore.clear_cache()
+            _leaderboard.clear()
+            _standings.clear()
         warm_cache_sync(full=full_warmup)
 
         _status["state"] = "done"
