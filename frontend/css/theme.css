@@ -812,6 +812,115 @@ table.farm-table img.team-logo { width: 28px; height: 28px; vertical-align: midd
 .dl-title { font-size: 17px; font-weight: 800; color: var(--forest-dark); margin-bottom: 16px; letter-spacing: 0.2px; }
 .dl-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
 @media (max-width: 700px) { .dl-grid { grid-template-columns: 1fr; gap: 20px; } }
+
+/* ============================================================
+   RESPONSIVE / MOBILE  (≤768px tablet, ≤480px phone)
+   ============================================================ */
+
+/* --- Nav: scrollable links strip, hide data-meta on small screens --- */
+@media (max-width: 768px) {
+  /* Let the nav compress: brand stays, links scroll, meta hides */
+  .nav-inner {
+    padding: 0 12px;
+    gap: 12px;
+    overflow: hidden;
+  }
+  .nav-links {
+    overflow-x: auto;
+    /* Hide scrollbar visually but keep it functional */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    flex-shrink: 1;
+  }
+  .nav-links::-webkit-scrollbar { display: none; }
+  .nav-links a {
+    white-space: nowrap;
+    font-size: 13px;
+    padding: 7px 10px;
+  }
+  /* "Data as of" text hides; keep the Refresh button but shrink it */
+  #nav-data-as-of { display: none; }
+  .nav-refresh { font-size: 11px; padding: 5px 8px; white-space: nowrap; }
+
+  /* Sub-nav scrollable too */
+  .subnav-inner {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0 12px;
+  }
+  .subnav-inner::-webkit-scrollbar { display: none; }
+  #subnav a { white-space: nowrap; }
+
+  /* Page: tighter side padding */
+  .page { padding: 0 12px 32px; }
+
+  /* Tables: horizontal scroll on the container that holds each table.
+     We target the mount divs (standings, pitch table) and generic
+     data-table wrappers rather than the <table> elements themselves,
+     because setting display:block on a <table> breaks its layout. */
+  #divisions-mount,
+  #prospects-list,
+  #table-mount,
+  .wc-card,
+  .movement-summary-wrap {
+    overflow-x: auto;
+  }
+  /* Ensure all data tables inside scrolling containers don't wrap cells */
+  #divisions-mount table,
+  #prospects-list table,
+  #table-mount table,
+  .wc-card table {
+    white-space: nowrap;
+    min-width: max-content;
+  }
+
+  /* Player card: stack rather than side-by-side */
+  .player-card {
+    gap: 10px;
+  }
+  .player-card-name { font-size: 18px; }
+  .stat-block { padding: 0 10px; }
+  .stat-block-value { font-size: 16px; }
+
+  /* Prospects sidebar: full-width below content on narrow screens */
+  .prospects-layout {
+    flex-direction: column;
+  }
+  .prospects-sidebar {
+    width: 100% !important;
+    position: static !important;
+    max-height: none !important;
+  }
+
+  /* Team card panel: already has max-width: 92vw, just ensure padding is OK */
+  #team-card-panel { padding: 16px; }
+
+  /* Bracket: horizontally scrollable — it's inherently a wide layout */
+  .bracket-wrap {
+    overflow-x: auto;
+    min-width: 640px;
+  }
+  /* Wrap bracket in a scroll container from the page's own HTML;
+     as a CSS-only fix, make the .page itself not clip it */
+  .page:has(.bracket-wrap) { overflow-x: auto; }
+
+  /* Controls row: tighter gap on small screens */
+  .controls-row { gap: 10px; }
+
+  /* Walk-off badge pill: allow it to wrap its text */
+  .walkoff-badge { white-space: normal; }
+}
+
+/* Phone only (≤480px) — extra tightening */
+@media (max-width: 480px) {
+  .nav-brand { font-size: 14px; }
+  h1 { font-size: 22px; }
+  /* Hide the nav-meta entirely at phone size */
+  .nav-meta { display: none; }
+  /* Let the nav-links take the freed space */
+  .nav-links { flex: 1; }
+}
 .dl-col-title { font-size: 12.5px; font-weight: 800; color: var(--text-muted); letter-spacing: 1px; margin-bottom: 10px; }
 .dl-row {
   display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border);
