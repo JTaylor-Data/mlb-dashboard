@@ -5,9 +5,12 @@ threadpool, and keeps every request's data as current as whatever's on disk
 right now (subject to the TTL cache in cache.py for the expensive
 league-wide queries).
 """
+import os
 import sqlite3
 
-DB_PATH = "mlb_data.db"
+# Default to the repo-relative path for local dev; override with DB_PATH env
+# var in hosted environments where the database lives on a persistent volume.
+DB_PATH = os.environ.get("DB_PATH", "mlb_data.db")
 
 
 def get_conn():

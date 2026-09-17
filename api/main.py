@@ -10,8 +10,20 @@ etc. against the analytics/ package, same as the Streamlit pages did.)
 import sys
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, FastAPI
+import os
+
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
+
+# Set ADMIN_TOKEN env var in production to secure the admin endpoints.
+# Unset (or empty) means no auth required — fine for local dev, not for hosting.
+_ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
+
+
+def _require_admin(x_admin_token: str = Header(default="")):
+    if _ADMIN_TOKEN and x_admin_token != _ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -26,6 +38,9 @@ from api.routers import (
 from api.warmup import warm_cache_background
 
 app = FastAPI(title="MLB Dashboard API")
+# Compress API JSON responses ≥1KB — leaderboard/player payloads can be
+# 100KB+; gzip typically cuts that 5-10x on the wire.
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 @app.on_event("startup")
@@ -48,7 +63,7 @@ def get_meta(conn=Depends(get_conn)):
 
 
 @admin_router.post("/admin/refresh-cache")
-def refresh_cache():
+def refresh_cache(_=Depends(_require_admin)):
     """Cache-only refresh - use when you've re-run the pull scripts yourself
     and just want the app to pick up what's already on disk."""
     cache.clear_all()
@@ -58,7 +73,7 @@ def refresh_cache():
 
 
 @admin_router.post("/admin/pull-data")
-def pull_data():
+def pull_data(_=Depends(_require_admin)):
     """The nav's "Refresh data" button - actually fetches new Statcast/
     schedule data (not just cache invalidation), then re-warms the cache.
     Runs in the background; poll /api/admin/pull-status for progress."""
@@ -108,14 +123,26 @@ async def no_cache_static(request, call_next):
         or path.endswith(".html")
         or (not path.startswith("/api/") and "." not in path.split("/")[-1])
     )
-    if is_html:
+    # Stadium photos are replaced in place (same URL, new content) so the
+    # browser must always revalidate them, not serve from cache.
+    is_stadium_photo = path.startswith("/img/stadiums/")
+    # JS/CSS served with a ?v=N version query param are fingerprinted — safe to
+    # cache aggressively. Without the version param, fall back to no-store so
+    # unversioned assets never go stale.
+    is_versioned_asset = (
+        (path.endswith(".js") or path.endswith(".css"))
+        and bool(request.query_params.get("v"))
+    )
+    if is_html or is_stadium_photo:
         request.scope["headers"] = [
             (k, v) for k, v in request.scope["headers"]
             if k not in (b"if-none-match", b"if-modified-since")
         ]
     response = await call_next(request)
-    if is_html:
+    if is_html or is_stadium_photo:
         response.headers["Cache-Control"] = "no-store"
+    elif is_versioned_asset:
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
     return response
 
 

@@ -1,0 +1,45 @@
+# Core web framework
+fastapi==0.141.1
+starlette==1.3.1
+uvicorn==0.52.3
+python-multipart==0.0.32
+
+# Async/HTTP
+anyio==4.13.0
+httpx==0.28.1
+h11==0.16.0
+
+# Data
+pandas==3.0.2
+numpy==2.4.4
+pyarrow==23.0.1
+scipy==1.16.3
+scikit-learn==1.9.0
+
+# ML models
+lightgbm==4.7.0
+shap==0.52.0
+
+# Baseball data
+pybaseball==2.2.7
+
+# HTTP / networking
+requests==2.33.1
+requests-oauthlib==2.0.0
+urllib3==2.6.3
+certifi==2026.2.25
+charset-normalizer==3.4.1
+idna==3.11
+
+# Pydantic (FastAPI validation)
+pydantic==2.13.4
+pydantic_core==2.46.4
+annotated-types==0.8.0
+
+# Image processing (stadium photo conversion)
+Pillow==12.2.0
+
+# Utilities
+click==8.4.2
+packaging==26.0
+typing_extensions==4.15.0
