@@ -57,3 +57,6 @@ derived_cache.db-shm
 derived_cache.db-wal
 mlb_data.db.bak_pre_perf
 perf/golden/
+
+# Stuff v4 large diagnostic artifacts
+diagnostics/stuff_v4/*.parquet

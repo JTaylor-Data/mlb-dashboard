@@ -1,0 +1,74 @@
+{
+  "version": "stuff_v4_spec_lock_v1",
+  "locked_at": "2026-10-02T00:00:00Z",
+  "baseline_feature_list": [
+    "release_speed",
+    "effective_speed",
+    "release_spin_rate",
+    "spin_axis",
+    "hb",
+    "ivb",
+    "vaa_residual",
+    "velo_sep_vs_primary_fb",
+    "hb_sep_vs_primary_fb",
+    "ivb_sep_vs_primary_fb",
+    "axis_differential",
+    "pitch_type",
+    "p_throws",
+    "stand",
+    "season"
+  ],
+  "candidate_changes": {
+    "drop_season": "Remove 'season' from CATEGORICAL_FEATURES (V1)",
+    "drop_effective_speed": "Remove 'effective_speed' from CORE_NUMERIC_FEATURES (V2)",
+    "add_haa_residual": "Add residualized horizontal approach angle (V_HAA). haa_residual = actual_haa - OLS_expected_haa(mirrored_plate_x, mirrored_plate_x^2, mirrored_release_pos_x, release_speed) per pitch type, fit on training seasons only.",
+    "haa_policy": "adopt_if_passes"
+  },
+  "decision_rules": {
+    "stage1_drop_rule": "A drop is accepted if ALL hold: (i) score correlation with V0a >= 0.99; (ii) the 95% CI of the difference in every outcome correlation in (b) and (c) includes 0, or the variant is significantly better. Apply to V1 and V2 individually and to V3 jointly: if V3 passes, drop both; else if V1 and V2 each pass but V3 fails, drop only the one with the smaller absolute change on the primary metric; else drop whichever passes alone, or neither. If the V0a-vs-V0b difference is as large as the CI width, log the test as underpowered and keep the feature (conservative default).",
+    "stage2_haa_rule": "Add HAA only if ALL hold: (i) lower bound of 95% CI of primary-metric improvement > 0 and same-season xFIP correlation not significantly worse; (ii) |corr(haa_residual, plate_x)| < 0.1 and |corr(haa_residual, release_pos_x)| < 0.1; (iii) variant's pitcher-season correlation with live Location+ and Deception+ scores rises by no more than 0.05 vs Vchosen. If haa_policy is force_include, include it and report the test result anyway.",
+    "haa_policy": "adopt_if_passes",
+    "primary_metric": "next-season xFIP correlation (consecutive pairs, excluding 2020)"
+  },
+  "metric_definitions": {
+    "a_score_correlation_with_v0a": "Pearson r of variant pitcher-season Stuff+ scores vs V0a pitcher-season Stuff+ scores, pooled across all CV folds, qualified pitcher-seasons only",
+    "b_same_season_xfip_corr": "Pearson r of pitcher-season Stuff+ score vs same-season xFIP (negative is correct direction - lower xFIP = better pitcher)",
+    "b_same_season_era_corr": "Pearson r vs same-season ERA",
+    "c_next_season_xfip_corr": "Pearson r of score(S) vs xFIP(S+1), PRIMARY METRIC, consecutive pairs excluding 2020 pairs",
+    "c_next_season_era_corr": "Pearson r of score(S) vs ERA(S+1)",
+    "d_huber_loss": "Per-pitch held-out Huber loss (delta=1.0), pooled over all OOF folds",
+    "d_r2": "Per-pitch R^2 of OOF predictions vs actual delta_run_exp",
+    "yoy_stability": "Pearson r of score(S) vs score(S+1) for consecutive pairs excluding 2020",
+    "split_half_reliability": "Spearman-Brown corrected split-half r at various pitch count cutoffs"
+  },
+  "lgbm_hyperparameters": {
+    "objective": "huber",
+    "learning_rate": 0.03,
+    "num_leaves": 63,
+    "min_child_samples": 200,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 1.0,
+    "random_state": 42,
+    "note": "Reused from live v3 training parameters (models/stuff_plus_v3_lgbm_meta.json)"
+  },
+  "fixed_tree_count": 2000,
+  "fixed_tree_count_source": "models/stuff_plus_v3_lgbm_meta.json n_estimators (no best_iteration recorded)",
+  "seeds": {
+    "lgbm_random_state": 42,
+    "lgbm_seed_b": 123,
+    "subsample_seed": 42,
+    "subsample_fraction": 0.30
+  },
+  "training_seasons": [2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025, 2026],
+  "scoring_seasons": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+  "excluded_seasons_training": [2020],
+  "excluded_seasons_note": "2020 excluded from training (60-game season, structural outlier); scored with season_flag='60-game season'",
+  "excluded_pitch_types": ["PO", "UN", "EP"],
+  "forbidden_features": ["plate_x", "plate_z", "balls", "strikes", "release_extension", "release_pos_x_as", "release_pos_z", "arm_angle", "pitcher_id", "game_id"],
+  "no_early_stopping": true,
+  "no_2026_holdout_retrain": true,
+  "no_5fold_full_data_cv": true,
+  "validation_type": "descriptive (in-sample) for final model; out-of-sample evidence only from pitcher-holdout in ablation subsample (Part 2, labeled conservative)"
+}
