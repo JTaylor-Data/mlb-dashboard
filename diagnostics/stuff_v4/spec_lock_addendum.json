@@ -1,0 +1,33 @@
+{
+  "written_at": "2026-10-02T00:00:00",
+  "note": "Pre-registered thresholds for Stuff+ v4 promotion gates. Written before any computation on stuff-v4-live branch.",
+  "gates": {
+    "gate_v4_v3_corr_min": {
+      "value": 0.85,
+      "description": "Pitcher-season score correlation v4 vs v3, 2021-2025, >= 300 pitches"
+    },
+    "gate_face_validity": {
+      "description": "Fairbanks (2022) and Clase (2022) each rank in top 25 of 2022 qualified pitcher-seasons under v4"
+    }
+  },
+  "inert_thresholds": {
+    "pitcher_season_score_corr_min": 0.995,
+    "mean_abs_change_max": 0.5,
+    "p99_abs_change_max": 2.0,
+    "effective_speed_corr_with_release_extension_max": 0.15
+  },
+  "seed_stability": {
+    "pass_threshold": 0.99,
+    "stop_ship_threshold": 0.95,
+    "description": "Correlation between main model and extra-seed full fit pitcher-season scores"
+  },
+  "next_season_bar": {
+    "description": "Consecutive pairs only, excluding any pair involving 2020, both seasons >= 300 pitches",
+    "corr_stuff_s_xfip_s1_final_max": -0.30,
+    "corr_stuff_s_xfip_s1_holdout_max": -0.25,
+    "incremental_delta_r2_final_min": 0.0,
+    "incremental_delta_r2_holdout_min": 0.0,
+    "incremental_delta_r2_final_95pct_ci_lower_min": 0.0
+  },
+  "leaderboard_min_pitches_per_type": 100
+}
