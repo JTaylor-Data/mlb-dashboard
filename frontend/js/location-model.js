@@ -1,194 +1,263 @@
 /*
- * Location+ v1 model-internals page: a trained model over 7 features
- * (plate_x, plate_z, balls, strikes, pitch_type, stand, season) - no
- * physical pitch-shape, delivery, or arsenal-relationship inputs at all.
- * Renders the static training-time report (CV, SHAP importance, the full
- * validation battery including a direct Stuff+ stabilization comparison,
- * the count/pitch-type interaction sanity check, and the stand-inclusion
- * ablation) plus a live, season-driven leaderboard and per-pitcher SHAP
- * breakdown from /api/location/*.
+ * Location+ v3 model-internals page.
+ *
+ * Architecture: five LightGBM classifiers (xSwing, xCalledStrike, xWhiff,
+ * xFoul, BIP×EV) + COUNT-SPECIFIC run-value table → per-pitch xRV →
+ * pitcher-season plus-scale (100 = league mean, 10 pts = 1 SD).
+ *
+ * Key v3 changes vs v1/v2:
+ *  - Count-specific run-value table (7.8x variation in called-strike value
+ *    across counts; v2 defect correction).
+ *  - S1 baseline adjustment adopted (R2_mix=0.338 ≥ 0.10).
+ *  - No shrinkage (split-half r_SB at 300 = 0.815 ≥ 0.70 threshold).
+ *  - 2020 excluded from training; scored by averaging 2019/2021 predictions.
+ *  - Qualification threshold raised to 300 pitches (111 for 2020).
+ *
+ * API responses:
+ *  GET /api/location/report?season=N  → { scoring_config, gates, validation, leaderboard }
+ *  GET /api/location/pitcher/:id?season=N → { score, n_pitches, percentile, ... }
+ *  GET /api/location/meta → { version, features, scoring_config, ... }
  */
+
 function renderMeta(report) {
+  const sc = report.scoring_config || {};
+  const gates = report.gates || {};
+
+  const allPass = Object.values(gates).every(g => g && g.pass !== false);
+  const gateLabel = Object.keys(gates).length === 0 ? "Not yet evaluated"
+                  : allPass ? "All pass ✓" : "Some gates failed";
+  const gateColor = Object.keys(gates).length === 0 ? "var(--text-muted)"
+                  : allPass ? "#1a7f37" : "#c9302c";
+
   const items = [
-    ["Features", report.all_features.length],
-    ["Training rows", report.n_training_rows.toLocaleString()],
-    ["CV mean R²", report.cv_r2_mean.toFixed(4)],
-    ["CV mean MAE", report.cv_mae_mean.toFixed(4)],
-    ["Shrinkage fallback K", report.shrinkage_fallback_k.toFixed(1)],
+    ["Classifiers", "5 (xSwing, xCS, xWhiff, xFoul, BIP×EV)"],
+    ["Baseline variant", sc.chosen_variant || "—"],
+    ["Shrinkage", sc.use_shrinkage ? "Yes" : "No"],
+    ["Min pitches", (sc.leaderboard_min_pitches || 300).toString()],
+    ["Stop-ship gates", gateLabel],
   ];
+
   document.getElementById("lc-meta-mount").innerHTML = items
-    .map(([label, value]) => `<div class="lc-meta-item"><div class="lc-meta-label">${label}</div><div class="lc-meta-value">${value}</div></div>`)
+    .map(([label, value], i) => {
+      const style = i === 4 ? `style="color:${gateColor}"` : "";
+      return `<div class="lc-meta-item">
+        <div class="lc-meta-label">${label}</div>
+        <div class="lc-meta-value" ${style}>${value}</div>
+      </div>`;
+    })
     .join("");
 }
 
-function renderShap(report) {
-  const entries = Object.entries(report.mean_abs_shap).sort((a, b) => b[1] - a[1]);
-  const max = Math.max(...entries.map(([, v]) => v));
-  document.getElementById("lc-shap-mount").innerHTML = entries
-    .map(([feat, val]) => `
-      <div class="lc-bar-row">
-        <div>${feat}</div>
-        <div class="lc-bar-track"><div class="lc-bar-fill" style="width:${(val / max) * 100}%"></div></div>
-        <div>${val.toFixed(4)}</div>
-      </div>
-    `)
-    .join("");
-}
-
-function renderCv(report) {
-  const rows = report.cv_folds
-    .map((f) => `<tr><td>${f.holdout_season}</td><td>${f.r2.toFixed(4)}</td><td>${f.mae.toFixed(4)}</td><td>${f.n.toLocaleString()}</td></tr>`)
-    .join("");
-  document.getElementById("lc-cv-table").innerHTML = `
-    <thead><tr><th>Held-out season</th><th>R²</th><th>MAE</th><th>Rows</th></tr></thead>
-    <tbody>${rows}</tbody>
+function renderGates(report) {
+  const gates = report.gates || {};
+  const mount = document.getElementById("lc-gates-mount");
+  if (!mount) return;
+  if (Object.keys(gates).length === 0) {
+    mount.innerHTML = `<div class="lc-note">Gates not yet evaluated — run Parts 4–5.</div>`;
+    return;
+  }
+  const gateDesc = {
+    sign_check: (g) => `ERA r=${g.era_r !== undefined ? g.era_r.toFixed(3) : "—"}, xFIP r=${g.xfip_r !== undefined ? g.xfip_r.toFixed(3) : "—"}, BB% r=${g.bb_r !== undefined ? g.bb_r.toFixed(3) : "—"} (need era<0, xfip<0, bb≤−0.20)`,
+    yoy_floor: (g) => `Min pair YoY r = ${g.min_pair !== undefined ? g.min_pair.toFixed(3) : "—"} (need ≥ 0.30)`,
+    v2v3_corr: (g) => `v3 vs v2 pitcher-season r = ${g.corr !== undefined ? g.corr.toFixed(3) : "—"} (need ≥ 0.70)`,
+    seasons_scored: (g) => `Scored seasons: ${(g.scored || []).join(", ")}`,
+    ece: (g) => g.note || "Expected calibration error (not fully computed)",
+  };
+  const rows = Object.entries(gates).map(([name, g]) => {
+    const ok = g.pass !== false;
+    const icon = ok ? `<span style="color:#1a7f37;font-weight:700;">✓</span>`
+                    : `<span style="color:#c9302c;font-weight:700;">✗</span>`;
+    const desc = gateDesc[name] ? gateDesc[name](g) : (g.note || JSON.stringify(g));
+    return `<tr><td>${icon}</td><td>${name}</td><td class="lc-note">${desc}</td></tr>`;
+  }).join("");
+  mount.innerHTML = `
+    <table class="data-table lc-table">
+      <thead><tr><th></th><th>Gate</th><th>Result</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
   `;
 }
 
 function renderReliability(report) {
-  const rel = report.reliability;
-  const thresholds = Object.keys(rel.location_plus);
-  const rows = thresholds
-    .map((t) => {
-      const loc = rel.location_plus[t], stuff = rel.stuff_plus[t];
-      return `<tr><td>per-half ≥ ${t}</td><td>${loc.correlation !== null ? loc.correlation.toFixed(3) : "n/a"}</td><td>${stuff.correlation !== null ? stuff.correlation.toFixed(3) : "n/a"}</td></tr>`;
-    })
-    .join("");
+  const sc = report.scoring_config || {};
+  const sh = sc.split_half_by_threshold || {};
+  const thresholds = Object.keys(sh).map(Number).sort((a, b) => a - b);
+  if (thresholds.length === 0) {
+    document.getElementById("lc-reliability-table").innerHTML =
+      `<tbody><tr><td colspan="4">Not yet computed.</td></tr></tbody>`;
+    return;
+  }
+  const rows = thresholds.map((t) => {
+    const d = sh[t];
+    return `<tr>
+      <td>≥ ${t}</td>
+      <td>${d.r_raw.toFixed(3)}</td>
+      <td>${d.r_sb.toFixed(3)}</td>
+      <td>${(d.n || "—").toLocaleString()}</td>
+    </tr>`;
+  }).join("");
   document.getElementById("lc-reliability-table").innerHTML = `
-    <thead><tr><th>Threshold</th><th>Location+ r</th><th>Stuff+ r</th></tr></thead>
+    <thead><tr><th>Min pitches / half</th><th>r (raw)</th><th>r (SB-corrected)</th><th>n</th></tr></thead>
     <tbody>${rows}</tbody>
   `;
+  const crosses070 = thresholds.find(t => sh[t].r_sb >= 0.70);
   document.getElementById("lc-reliability-note").textContent =
-    `Location+ crosses r≥0.7 at per-half≥${rel.location_crosses_070 ?? "not reached"}, r≥0.9 at per-half≥${rel.location_crosses_090 ?? "not reached"}. ` +
-    `Stuff+ crosses both at per-half≥${rel.stuff_crosses_070}. Same infrastructure, same thresholds, run side by side - Location+ takes dramatically longer to stabilize, confirming FanGraphs' own public finding on this project's own data.`;
+    `Spearman-Brown corrected reliability crosses r ≥ 0.70 at ≥ ${crosses070 ?? "n/a"} pitches/half. ` +
+    `v3 minimum is 300 pitches (full season). ` +
+    (sc.chosen_variant === "S1" ? `S1 baseline adjustment adopted.` : "");
+}
+
+function renderOutcomeCorrs(report) {
+  const sc = report.scoring_config || {};
+  const corrs = sc.s1_outcome_corrs || sc.s0_outcome_corrs || {};
+  const mount = document.getElementById("lc-outcome-mount");
+  if (!mount) return;
+  if (Object.keys(corrs).length === 0) {
+    mount.innerHTML = `<div class="lc-note">Outcome correlations not yet computed.</div>`;
+    return;
+  }
+  const labels = { bb_rate: "BB%", k_rate: "K%", era: "ERA", xfip: "xFIP" };
+  const rows = Object.entries(corrs).map(([key, d]) => {
+    const label = labels[key] || key;
+    const dir = d.r < 0 ? "lower is better" : "higher is better";
+    return `<tr>
+      <td>${label}</td>
+      <td>${d.r.toFixed(3)}</td>
+      <td class="lc-note">[${d.ci_lo.toFixed(3)}, ${d.ci_hi.toFixed(3)}]</td>
+      <td>${d.n.toLocaleString()}</td>
+      <td class="lc-note">${dir}</td>
+    </tr>`;
+  }).join("");
+  mount.innerHTML = `
+    <table class="data-table lc-table">
+      <thead><tr><th>Outcome</th><th>r</th><th>95% CI</th><th>n</th><th></th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="lc-note">Pitcher-season correlations (2015–2026 excl. 2020, ≥ 300 pitches).
+    S1 baseline adjustment improves BB% correlation from ${sc.s0_outcome_corrs && sc.s0_outcome_corrs.bb_rate ? sc.s0_outcome_corrs.bb_rate.r.toFixed(3) : "—"} to ${corrs.bb_rate ? corrs.bb_rate.r.toFixed(3) : "—"}.</div>
+  `;
 }
 
 function renderYoy(report) {
-  const yoy = report.year_over_year;
-  const rows = yoy.per_pair
-    .map((r) => `<tr><td>${r.season_t} → ${r.season_t1}</td><td>${r.n}</td><td>${r.r2.toFixed(3)}</td></tr>`)
-    .join("");
-  document.getElementById("lc-yoy-table").innerHTML = `
-    <thead><tr><th>Season pair</th><th>n</th><th>R²</th></tr></thead>
-    <tbody>${rows}</tbody>
-  `;
-  document.getElementById("lc-yoy-note").textContent =
-    `Pooled: R² = ${yoy.pooled_r2} (n=${yoy.n_pooled.toLocaleString()}). Lower/less sticky than Stuff+ is expected here, per the same stabilization finding above.`;
+  const sc = report.scoring_config || {};
+  const val = report.validation || {};
+  // Try validation_results first (Part 5), fall back to scoring_config (Part 2)
+  const yoy = val.yoy_stability || null;
+  const mount = document.getElementById("lc-yoy-mount");
+  if (!mount) return;
+
+  if (yoy && Array.isArray(yoy)) {
+    const rows = yoy.map(r => `<tr>
+      <td>${r.from_season} → ${r.to_season}</td>
+      <td>${r.r !== undefined ? r.r.toFixed(3) : "—"}</td>
+      <td>${r.n ? r.n.toLocaleString() : "—"}</td>
+    </tr>`).join("");
+    mount.innerHTML = `
+      <table class="data-table lc-table">
+        <thead><tr><th>Season pair</th><th>r</th><th>n</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="lc-note">Pooled (excl. 2020 pairs): ${sc.yoy_s1_pooled ? sc.yoy_s1_pooled.toFixed(3) : "—"} (S1).</div>
+    `;
+  } else {
+    // Fall back to pooled from scoring_config
+    mount.innerHTML = `
+      <table class="data-table lc-table">
+        <thead><tr><th>Variant</th><th>YoY pooled r</th></tr></thead>
+        <tbody>
+          <tr><td>S0 (no baseline adj.)</td><td>${sc.yoy_s0_pooled ? sc.yoy_s0_pooled.toFixed(3) : "—"}</td></tr>
+          <tr><td>S1 (adopted)</td><td>${sc.yoy_s1_pooled ? sc.yoy_s1_pooled.toFixed(3) : "—"}</td></tr>
+        </tbody>
+      </table>
+      <div class="lc-note">YoY S1 slightly lower than S0 as expected (baseline adjustment removes mean-reversion component), within spec (diff &lt; 0.05).</div>
+    `;
+  }
 }
 
-function renderPredictiveValidity(report) {
-  const pv = report.predictive_validity;
-  if (!pv) {
-    document.getElementById("lc-predictive-table").innerHTML = `<tbody><tr><td>Not yet generated.</td></tr></tbody>`;
+function renderNextSeason(report) {
+  const sc = report.scoring_config || {};
+  const rows = (sc.next_season_bb_rate_s1 || [])
+    .map(r => `<tr>
+      <td>${r.from_season} → ${r.to_season}</td>
+      <td>${r.r.toFixed(3)}</td>
+      <td class="lc-note">[${r.ci_lo.toFixed(3)}, ${r.ci_hi.toFixed(3)}]</td>
+      <td>${r.n}</td>
+    </tr>`)
+    .join("");
+  const mount = document.getElementById("lc-predictive-mount");
+  if (!mount) return;
+  if (!rows) {
+    mount.innerHTML = `<div class="lc-note">Next-season correlations not yet computed.</div>`;
     return;
   }
-  const minPitchesOptions = Object.keys(pv.results_by_min_pitches).map(Number).sort((a, b) => a - b);
-  const midOption = String(minPitchesOptions[Math.floor(minPitchesOptions.length / 2)]);
-  const result = pv.results_by_min_pitches[midOption];
-  const rows = Object.entries(result.correlations)
-    .map(([outcome, r]) => `<tr><td>${outcome}</td><td>${r.toFixed(3)}</td></tr>`)
-    .join("");
-  document.getElementById("lc-predictive-table").innerHTML = `
-    <thead><tr><th>${pv.outcome_season} outcome</th><th>r vs. ${pv.score_season} score</th></tr></thead>
-    <tbody>${rows}</tbody>
-  `;
-}
-
-function renderCrossModel(report) {
-  const cmc = report.cross_model_correlation;
-  document.getElementById("lc-cross-table").innerHTML = `
-    <thead><tr><th>vs.</th><th>Correlation</th></tr></thead>
-    <tbody>
-      <tr><td>Stuff+</td><td>${cmc.r_stuff.toFixed(3)}</td></tr>
-      <tr><td>Deception+</td><td>${cmc.r_deception.toFixed(3)}</td></tr>
-      <tr><td>Tunneling+</td><td>${cmc.r_tunneling.toFixed(3)}</td></tr>
-      <tr><td>Fastest FB velo (leakage check)</td><td>${report.fastest_fb_velo_correlation.toFixed(3)}</td></tr>
-    </tbody>
-  `;
-}
-
-function renderInteraction(report) {
-  const ci = report.count_interaction;
-  if (!ci) return;
-  document.getElementById("lc-interaction-note").textContent =
-    `${ci.pitch_type} vs. ${ci.stand}HH, ${ci.season}: grid correlation between the two counts = ${ci.grid_correlation_3_1_vs_3_2.toFixed(3)} (near 1.0 is expected - the zone's overall shape doesn't move), ` +
-    `mean |3-2 minus 3-1| = ${ci.mean_abs_diff_3_2_vs_3_1.toFixed(4)}, max = ${ci.max_abs_diff_3_2_vs_3_1.toFixed(4)} - a real, non-flat, location-specific interaction on top of the shared shape, not just a rescale.`;
-}
-
-function renderAblation(report) {
-  const ab = report.stand_ablation;
-  if (!ab) return;
-  const rows = [
-    ["CV R²", ab.with_stand.cv_r2_mean.toFixed(4), ab.without_stand.cv_r2_mean.toFixed(4)],
-    ["CV MAE", ab.with_stand.cv_mae_mean.toFixed(4), ab.without_stand.cv_mae_mean.toFixed(4)],
-    ["YoY pooled R²", ab.with_stand.yoy_pooled_r2, ab.without_stand.yoy_pooled_r2],
-  ];
-  document.getElementById("lc-ablation-mount").innerHTML = `
-    <div class="lc-ablation-row head"><div></div><div>With stand (promoted)</div><div>Without stand (FanGraphs-exact)</div></div>
-    ${rows.map(([label, w, wo]) => `<div class="lc-ablation-row"><div>${label}</div><div>${w}</div><div>${wo}</div></div>`).join("")}
-    <div class="lc-note">Keeping stand improves both accuracy and stability - a real, earned deviation from FanGraphs' public methodology, not just a theoretical justification.</div>
+  mount.innerHTML = `
+    <table class="data-table lc-table">
+      <thead><tr><th>Season pair</th><th>r</th><th>95% CI</th><th>n</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="lc-note">Next-season BB% correlation (S1 variant, ≥ 300 pitches in from-season).
+    All negative = higher Location+ predicts lower BB% in the following year.</div>
   `;
 }
 
 function leaderboardRows(rows) {
-  return rows
-    .map((r) => `<tr><td>${r.name || "#" + r.pitcher_id}${r.team_abbrev ? ` <span class="muted">(${r.team_abbrev})</span>` : ""}</td><td>${r.score.toFixed(1)}</td><td>${r.total_pitches.toLocaleString()}</td></tr>`)
-    .join("");
+  return rows.map((r) =>
+    `<tr>
+      <td>${r.name || "#" + r.pitcher_id}${r.team_abbrev ? ` <span class="muted">(${r.team_abbrev})</span>` : ""}</td>
+      <td>${typeof r.score === "number" ? r.score.toFixed(1) : r.score}</td>
+      <td>${(r.total_pitches || r.n_pitches || 0).toLocaleString()}</td>
+    </tr>`
+  ).join("");
 }
 
 function renderLeaderboard(report) {
-  const lb = report.leaderboard;
+  const lb = report.leaderboard || {};
   const header = `<thead><tr><th>Pitcher</th><th>Location+</th><th>Pitches</th></tr></thead>`;
-  document.getElementById("lc-top-table").innerHTML = header + `<tbody>${leaderboardRows(lb.top)}</tbody>`;
-  document.getElementById("lc-bottom-table").innerHTML = header + `<tbody>${leaderboardRows(lb.bottom)}</tbody>`;
+  const top = document.getElementById("lc-top-table");
+  const bottom = document.getElementById("lc-bottom-table");
+  if (top) top.innerHTML = header + `<tbody>${leaderboardRows(lb.top || [])}</tbody>`;
+  if (bottom) bottom.innerHTML = header + `<tbody>${leaderboardRows(lb.bottom || [])}</tbody>`;
 }
 
 function renderPitcherDetail(detail, name, season) {
   const mount = document.getElementById("lc-pitcher-mount");
-  const rows = detail.contributions
-    .map(([feat, points, typicalValue]) => {
-      const displayVal = typeof typicalValue === "number" ? typicalValue.toFixed(2) : typicalValue;
-      return `<tr><td>${feat} <span class="muted">(${displayVal})</span></td><td class="${points >= 0 ? "plus-pos" : "plus-neg"}">${points >= 0 ? "+" : ""}${points.toFixed(2)}</td></tr>`;
-    })
-    .join("");
+  if (!mount) return;
+  const pct = detail.percentile !== undefined
+    ? ` — ${detail.percentile.toFixed(0)}th percentile` : "";
+  const flag = detail.season_flag ? ` <span class="lc-note">(${detail.season_flag})</span>` : "";
+  const note = detail.shap_note
+    ? `<div class="lc-note" style="margin-top:8px;">${detail.shap_note}</div>` : "";
   mount.innerHTML = `
     <div class="lc-arsenal-head">
-      <b>${name}</b> - Location+ <b style="color:var(--forest-dark);">${detail.score.toFixed(0)}</b>
-      (${detail.n_pitches} pitches, ${season})
+      <b>${name || `Pitcher #${detail.pitcher_id || ""}`}</b> — Location+ <b style="color:var(--forest-dark);">${typeof detail.score === "number" ? detail.score.toFixed(0) : detail.score}</b>${pct}
+      (${(detail.n_pitches || 0).toLocaleString()} pitches, ${season}${flag})
     </div>
-    <table class="data-table lc-table" id="lc-pitcher-shap-table">
-      <thead><tr><th>Feature (pitcher's own average value)</th><th>SHAP (plus-points)</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div class="lc-note">Each row is how much that feature pushes this pitcher's own prediction away from the model's baseline, in Location+-point units.</div>
+    ${note}
   `;
 }
 
 async function loadPitcherDetail(playerId, name, season) {
   const status = document.getElementById("lc-status");
   const mount = document.getElementById("lc-pitcher-mount");
-  status.textContent = "Loading...";
-  mount.innerHTML = "";
+  if (status) status.textContent = "Loading…";
+  if (mount) mount.innerHTML = "";
   try {
     const detail = await getJSON(`/api/location/pitcher/${playerId}?season=${season}`);
-    status.textContent = "";
+    if (status) status.textContent = "";
     renderPitcherDetail(detail, name, season);
   } catch (err) {
-    status.textContent = "No Location+ data for this pitcher/season (needs 100+ pitches that season).";
+    if (status) status.textContent = "No Location+ data for this pitcher/season (needs 300+ pitches; 111 for 2020).";
   }
 }
 
 async function loadReport(season) {
   const report = await getJSON(`/api/location/report?season=${season}`);
   renderMeta(report);
-  renderShap(report);
-  renderCv(report);
+  renderGates(report);
   renderReliability(report);
+  renderOutcomeCorrs(report);
   renderYoy(report);
-  renderPredictiveValidity(report);
-  renderCrossModel(report);
-  renderInteraction(report);
-  renderAblation(report);
+  renderNextSeason(report);
   renderLeaderboard(report);
   return report;
 }
@@ -219,11 +288,11 @@ async function init() {
   const remembered = PlayerContext.getCurrent();
   if (urlPitcherId) {
     selectedPlayer = { player_id: Number(urlPitcherId), name: "" };
-    loadPitcherDetail(selectedPlayer.player_id, selectedPlayer.name, Number(params.get("season")) || seasonSelect.value);
+    loadPitcherDetail(selectedPlayer.player_id, "", Number(params.get("season")) || defaultSeason);
   } else if (remembered && remembered.role === "pitcher") {
     selectedPlayer = remembered;
     search.setValue(remembered);
-    loadPitcherDetail(remembered.player_id, remembered.name, seasonSelect.value);
+    loadPitcherDetail(remembered.player_id, remembered.name, defaultSeason);
   }
 }
 

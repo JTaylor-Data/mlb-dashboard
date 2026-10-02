@@ -209,3 +209,9 @@ are resolved and stuff_status in stuff_page.json is set to "validated".
 - ND-11: Owner sign-off before merging stuff-page-remake to main
 
 Branch: stuff-page-remake. Tags: pre-stuff-page-remake, post-stuff-page-remake. NOT merged.
+
+---
+
+## [2026-10-02] Location v3 BIP class ordering in v2 re-scoring
+- Default applied: fixed to use v2 meta bip_classes for v2 model predictions; sorted-alphabetical for v3 model predictions
+- Reason: v2 model predict_proba columns must map to training class encoding order (frequency-ordered from v2 meta), not alphabetical. Fixed in rescore_with_v2(); v3 models use sorted() consistently. Mismatch would silently corrupt xRV values.

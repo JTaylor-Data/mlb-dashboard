@@ -1,17 +1,23 @@
 """
-/api/location/* - Location+ v1, promoted to live-serving. The static parts
-of GET /report (features, CV, SHAP importance, the validation battery -
-reliability incl. the direct Stuff+ comparison, year-over-year, cross-model
-correlation, out-of-sample predictive validity, the count/count-interaction
-sanity check, the stand-inclusion ablation) come straight off the
-training-time artifacts in training/location_v1_artifacts/ and
-models/location_plus_v1_report.json (regenerate by re-running
-training/train_location_model.py + validate_location_model.py +
-location_predictive_validity.py + location_count_interaction_check.py +
-location_stand_ablation.py); the leaderboard and per-pitcher breakdown are
-scored live per season via analytics/location_model.py so a season added
-after the model was last trained still works, same pattern
-api/routers/tunneling_report.py's v3 endpoints already use.
+/api/location/* - Location+ v3, promoted to live-serving 2026-10-02.
+
+Architecture: five LightGBM classifiers (xSwing, xCalledStrike, xWhiff, xFoul,
+BIP×EV) combined with a count-specific run-value table to produce per-pitch
+expected run value (xRV). Pitcher-season aggregation → plus-scale (100 = league
+mean, 10 pts = 1 SD). S1 baseline adjustment adopted (R2_mix=0.338 >= 0.10;
+S1 improves BB% corr vs S0). No shrinkage (split-half r_SB at 300 = 0.815 >= 0.70).
+2020 excluded from training; scored by averaging season=2019 and season=2021
+model predictions.
+
+v2 fallback: if models/location_plus_v3_*.txt are missing the scorer falls
+back to v2 automatically — LOCATION_ACTIVE_VERSION in location_v3_model.py
+reflects the live version. Rollback: delete or rename location_plus_v3_*.txt
+and the module falls back to v2.
+
+Leaderboard / pitcher endpoints scored live per season via
+analytics/location_v3_model.py so future seasons work without retraining.
+Static validation artefacts served from diagnostics/location_v3/
+(gate_results.json, validation_results.json, scoring_config.json).
 """
 import json
 from pathlib import Path
@@ -20,83 +26,99 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from api.cache import ttl_cache
 from api.db import get_conn
-from analytics.location_v2_model import _raw_predictions, leaderboard as location_leaderboard, pitcher_breakdown
+from analytics.location_v3_model import (
+    LOCATION_ACTIVE_VERSION,
+    _raw_predictions,
+    leaderboard as location_leaderboard,
+    pitcher_breakdown,
+    model_meta,
+)
 
 router = APIRouter(prefix="/api/location")
 
-MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
-ARTIFACTS_DIR = Path(__file__).resolve().parent.parent.parent / "training" / "location_v1_artifacts"
+ROOT = Path(__file__).resolve().parent.parent.parent
+MODELS_DIR = ROOT / "models"
+DIAG_V3 = ROOT / "diagnostics" / "location_v3"
 
-MIN_PITCHES_QUALIFY = 100
+MIN_PITCHES_QUALIFY = 300   # v3 qualification threshold
 
 
 @ttl_cache()
 def _raw_predictions_table(conn, season):
-    """League-wide raw predictions for one season - cached because scoring
-    a full season is the expensive part; the leaderboard and any
-    per-pitcher SHAP lookup below reuse this instead of re-scoring the
-    league each time. Same pattern as the other three models' own report
-    routers."""
+    """League-wide raw predictions for one season — cached because scoring
+    a full season is the expensive part; leaderboard and per-pitcher
+    endpoints reuse this result."""
     return _raw_predictions(conn, season)
 
 
 @ttl_cache()
 def _pitcher_breakdown_cached(conn, season, pitcher_id):
-    """Per-pitcher Location+ SHAP breakdown — cached."""
+    """Per-pitcher Location+ breakdown — cached."""
     league = _raw_predictions_table(conn, season)
     if league.empty:
         return None
-    return pitcher_breakdown(conn, season, pitcher_id, league, min_pitches=MIN_PITCHES_QUALIFY)
+    return pitcher_breakdown(conn, season, pitcher_id, league,
+                             min_pitches=MIN_PITCHES_QUALIFY)
+
+
+@router.get("/meta")
+def get_model_meta():
+    """Model version, hash, features, training seasons, scoring config,
+    gate results. Used by the frontend banner and under-the-hood cards."""
+    return model_meta()
 
 
 @router.get("/report")
 def get_report(season: int, conn=Depends(get_conn)):
-    """Model architecture (7 features, CV, SHAP importance, Location+-
-    specific shrinkage K's) and the full validation battery, read straight
-    off the training-time artifacts - plus a live-scored leaderboard for
-    the requested season."""
-    report_path = MODELS_DIR / "location_plus_v1_report.json"
-    validation_path = ARTIFACTS_DIR / "location_v1_validation.json"
-    predictive_path = ARTIFACTS_DIR / "location_v1_predictive_validity.json"
-    interaction_path = ARTIFACTS_DIR / "location_v1_count_interaction.json"
-    ablation_path = ARTIFACTS_DIR / "location_v1_stand_ablation.json"
-    if not report_path.exists() or not validation_path.exists():
-        raise HTTPException(404, "No Location+ artifacts found - run train_location_model.py + validate_location_model.py first")
+    """Validation battery (scoring config, gate results, outcome
+    correlations, split-half reliability, YoY stability, next-season
+    predictive validity) plus a live-scored leaderboard for the season."""
+    scoring_path = DIAG_V3 / "scoring_config.json"
+    gate_path = DIAG_V3 / "gate_results.json"
+    validation_path = DIAG_V3 / "validation_results.json"
 
-    report = json.loads(report_path.read_text())
-    validation = json.loads(validation_path.read_text())
-    predictive = json.loads(predictive_path.read_text()) if predictive_path.exists() else None
-    interaction = json.loads(interaction_path.read_text()) if interaction_path.exists() else None
-    ablation = json.loads(ablation_path.read_text()) if ablation_path.exists() else None
+    if not scoring_path.exists():
+        raise HTTPException(
+            404,
+            "Location+ v3 scoring config not found — run "
+            "training/train_location_v3.py first",
+        )
+
+    scoring = json.loads(scoring_path.read_text())
+    gates = json.loads(gate_path.read_text()) if gate_path.exists() else {}
+    validation = (
+        json.loads(validation_path.read_text()) if validation_path.exists() else {}
+    )
 
     lb = location_leaderboard(conn, season, min_pitches=MIN_PITCHES_QUALIFY)
 
     return {
         "season": season,
-        "n_training_rows": report["n_training_rows"],
-        "all_features": report["all_features"],
-        "cv_folds": report["cv_folds"],
-        "cv_r2_mean": report["cv_r2_mean"],
-        "cv_mae_mean": report["cv_mae_mean"],
-        "mean_abs_shap": report["mean_abs_shap"],
-        "shrinkage_k_by_pitch_type": report["shrinkage_k_by_pitch_type"],
-        "shrinkage_fallback_k": report["shrinkage_fallback_k"],
-        "reliability": validation["reliability"],
-        "year_over_year": validation["year_over_year"],
-        "cross_model_correlation": validation["cross_model_correlation"],
-        "fastest_fb_velo_correlation": validation["fastest_fb_velo_correlation"],
-        "predictive_validity": predictive,
-        "count_interaction": interaction,
-        "stand_ablation": ablation,
+        "model_version": LOCATION_ACTIVE_VERSION,
+        "scoring_config": scoring,
+        "gates": gates,
+        "validation": validation,
         "leaderboard": lb,
     }
 
 
+@router.get("/leaderboard")
+def get_leaderboard(season: int, conn=Depends(get_conn)):
+    """Season leaderboard — top/bottom by Location+ score.
+    Qualification: 300 pitches (111 for 2020)."""
+    min_p = 111 if season == 2020 else MIN_PITCHES_QUALIFY
+    return location_leaderboard(conn, season, min_pitches=min_p)
+
+
 @router.get("/pitcher/{pitcher_id}")
 def get_pitcher_breakdown(pitcher_id: int, season: int, conn=Depends(get_conn)):
-    """One pitcher's Location+ score plus a live SHAP breakdown of which
-    inputs (location, count, pitch type, stand, season) are driving it."""
+    """One pitcher's Location+ v3 score and event-component breakdown."""
     breakdown = _pitcher_breakdown_cached(conn, season, pitcher_id)
     if not breakdown:
-        raise HTTPException(404, f"No Location+ data for pitcher {pitcher_id} in {season} (needs {MIN_PITCHES_QUALIFY}+ pitches that season)")
+        raise HTTPException(
+            404,
+            f"No Location+ data for pitcher {pitcher_id} in {season} "
+            f"(needs {MIN_PITCHES_QUALIFY}+ pitches that season; "
+            "2020 minimum is 111)",
+        )
     return breakdown

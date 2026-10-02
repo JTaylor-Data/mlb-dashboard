@@ -292,8 +292,45 @@ def coerce_cats_for_scoring(df, feat_cols, cat_cols):
     return df, all_cats
 
 
+def _build_rv_arrays(rv_count, bip_classes):
+    """Precompute numpy arrays for fast vectorized count-specific RV lookup.
+    Returns: dict of event -> 2D array [4 ball counts x 3 strike counts],
+    and bip_rv_matrix of shape [n_bip_classes, 4, 3].
+    """
+    # balls: 0-3, strikes: 0-2 (12 combinations)
+    MAX_BALLS, MAX_STRIKES = 4, 3
+
+    def build_count_matrix(event):
+        mat = np.zeros((MAX_BALLS, MAX_STRIKES), dtype=np.float64)
+        all_mean = rv_count.get(f"{event}__all", 0.0)
+        for b in range(MAX_BALLS):
+            for s in range(MAX_STRIKES):
+                mat[b, s] = rv_count.get(f"{event}__{b}_{s}", all_mean)
+        return mat
+
+    rv_arrays = {
+        "whiff": build_count_matrix("whiff"),
+        "foul": build_count_matrix("foul"),
+        "called_strike": build_count_matrix("called_strike"),
+        "ball": build_count_matrix("ball"),
+    }
+    rv_hb = rv_count.get("hbp__all", 0.36)
+
+    # BIP matrix: shape [n_bip_classes, 4, 3]
+    bip_rv_matrix = np.zeros((len(bip_classes), MAX_BALLS, MAX_STRIKES), dtype=np.float64)
+    for i, cls in enumerate(bip_classes):
+        all_mean = rv_count.get(f"bip__{cls}__all", 0.0)
+        for b in range(MAX_BALLS):
+            for s in range(MAX_STRIKES):
+                bip_rv_matrix[i, b, s] = rv_count.get(f"bip__{cls}__{b}_{s}", all_mean)
+
+    return rv_arrays, rv_hb, bip_rv_matrix
+
+
 def compute_xrv_count_specific(df, models, rv_count, bip_classes, hbp_rate, feat_cols):
-    """Compute xRV using count-specific run-value table."""
+    """Compute xRV using count-specific run-value table.
+    Uses vectorized numpy array indexing for speed (avoids per-pitch dict lookups).
+    """
     X = df[feat_cols]
     p_sw = models["xswing"].predict(X)
     p_cs = models["xcs"].predict(X)
@@ -301,30 +338,26 @@ def compute_xrv_count_specific(df, models, rv_count, bip_classes, hbp_rate, feat
     p_fo = models["xfoul"].predict(X)
     p_bip_mat = models["bip"].predict(X)  # shape [n, n_classes]
 
-    balls = df["balls"].values
-    strikes = df["strikes"].values
+    balls = df["balls"].clip(0, 3).astype(int).values
+    strikes = df["strikes"].clip(0, 2).astype(int).values
 
-    def rv_key(event, b, s):
-        k = f"{event}__{int(b)}_{int(s)}"
-        return rv_count.get(k, rv_count.get(f"{event}__all", 0.0))
+    # Precompute RV arrays (tiny, done once)
+    rv_arrays, rv_hb, bip_rv_matrix = _build_rv_arrays(rv_count, bip_classes)
 
-    n = len(df)
+    # Vectorized count index lookup
+    rv_wh = rv_arrays["whiff"][balls, strikes]
+    rv_fo = rv_arrays["foul"][balls, strikes]
+    rv_cs = rv_arrays["called_strike"][balls, strikes]
+    rv_ba = rv_arrays["ball"][balls, strikes]
 
-    # BIP component
-    bip_rvs_count = np.zeros(n)
-    for i, cls in enumerate(bip_classes):
-        bip_rv_per_pitch = np.array([
-            rv_count.get(f"bip__{cls}__{int(b)}_{int(s)}",
-                         rv_count.get(f"bip__{cls}__all", 0.0))
-            for b, s in zip(balls, strikes)
-        ])
-        bip_rvs_count += p_bip_mat[:, i] * bip_rv_per_pitch
-
-    rv_wh = np.array([rv_key("whiff", b, s) for b, s in zip(balls, strikes)])
-    rv_fo = np.array([rv_key("foul", b, s) for b, s in zip(balls, strikes)])
-    rv_cs = np.array([rv_key("called_strike", b, s) for b, s in zip(balls, strikes)])
-    rv_ba = np.array([rv_key("ball", b, s) for b, s in zip(balls, strikes)])
-    rv_hb = rv_count.get("hbp__all", 0.36)  # scalar, count-specific HBP rare
+    # BIP component: sum over classes, vectorized
+    # bip_rv_matrix[i, balls, strikes] for each pitch -> shape [n_classes, n_pitches]
+    # p_bip_mat[:, i] shape [n_pitches]
+    bip_rvs_count = np.einsum(
+        "ni,in->n",
+        p_bip_mat,
+        bip_rv_matrix[:, balls, strikes]
+    )
 
     xrv_contact = p_fo * rv_fo + (1.0 - p_fo) * bip_rvs_count
     xrv_swing = p_wh * rv_wh + (1.0 - p_wh) * xrv_contact
@@ -335,9 +368,15 @@ def compute_xrv_count_specific(df, models, rv_count, bip_classes, hbp_rate, feat
 
 
 def rescore_with_v2(df, models, rv_table_data, feat_cols, cat_cols):
-    """Rescore all pitches with v2 models + count-specific RV. Returns per-pitch df."""
+    """Rescore all pitches with v2 models + count-specific RV. Returns per-pitch df.
+
+    IMPORTANT: Uses the v2 meta's bip_classes ordering (not rv_table's) so that
+    p_bip_mat column indices match the training class encoding.
+    """
     rv_count = rv_table_data["rv_count"]
-    bip_classes = rv_table_data["bip_classes"]
+    # Load v2 meta to get the correct BIP class ordering for the v2 model
+    v2_meta = json.loads((MODELS_DIR / "location_plus_v2_meta.json").read_text())
+    bip_classes = v2_meta["bip_classes"]  # Use v2 model's class ordering, not RV table ordering
     hbp_rate = rv_table_data["hbp_rate_no_swing"]
 
     df_scored, all_cats = coerce_cats_for_scoring(df, feat_cols, cat_cols)
@@ -485,22 +524,22 @@ def apply_eb_shrinkage(scores_df, target_reliability=0.70):
 def load_outcomes(conn):
     """Load BB%, K%, ERA, xFIP for qualified pitcher-seasons. Computed from pitches table."""
     log("Loading pitcher-season outcomes...")
-    # Compute BB% and K% from pitch events
-    pa_df = pd.read_sql("""
-        SELECT pitcher_id, season,
-               COUNT(DISTINCT CASE WHEN events IS NOT NULL
-                    AND events NOT IN ('truncated_pa') THEN
-                    (CAST(batter_id AS TEXT) || '_' || CAST(at_bat_number AS TEXT)) END) as pa,
-               COUNT(DISTINCT CASE WHEN events IN ('walk','intent_walk') THEN
-                    (CAST(batter_id AS TEXT) || '_' || CAST(at_bat_number AS TEXT)) END) as bb,
-               COUNT(DISTINCT CASE WHEN events IN ('strikeout','strikeout_double_play') THEN
-                    (CAST(batter_id AS TEXT) || '_' || CAST(at_bat_number AS TEXT)) END) as so
+    # Load terminal pitch of each PA (where events is not null) — fast query
+    events_df = pd.read_sql("""
+        SELECT pitcher_id, season, game_id, at_bat_number, events
         FROM pitches
-        WHERE season BETWEEN 2015 AND 2026
-          AND batter_id IS NOT NULL
-        GROUP BY pitcher_id, season
-        HAVING pa >= 50
+        WHERE events IS NOT NULL
+          AND events NOT IN ('truncated_pa', 'game_advisory')
+          AND season BETWEEN 2015 AND 2026
     """, conn)
+    log(f"  Loaded {len(events_df):,} terminal pitches")
+    # Each row is one PA
+    events_df["bb"] = events_df["events"].isin(["walk", "intent_walk"]).astype(int)
+    events_df["so"] = events_df["events"].isin(["strikeout", "strikeout_double_play"]).astype(int)
+    pa_df = events_df.groupby(["pitcher_id", "season"]).agg(
+        pa=("events", "count"), bb=("bb", "sum"), so=("so", "sum")
+    ).reset_index()
+    pa_df = pa_df[pa_df["pa"] >= 50]
     pa_df["bb_rate"] = pa_df["bb"] / pa_df["pa"].clip(1)
     pa_df["k_rate"] = pa_df["so"] / pa_df["pa"].clip(1)
     # ERA/xFIP from player_advanced_stats
@@ -1094,32 +1133,23 @@ def run_part3(conn, scoring_config):
                         j = valid_classes.index(cls)
                         p_bip[:, j] = p_bip_raw[:, i]
 
-            # Compute OOF xRV with count-specific RV
-            rv_count = json.loads((DIAG_DIR / "count_rv_table.json").read_text())["rv_count"]
-            hbp_rate = json.loads((DIAG_DIR / "count_rv_table.json").read_text())["hbp_rate_no_swing"]
-            bip_classes = json.loads((DIAG_DIR / "count_rv_table.json").read_text())["bip_classes"]
-            balls = te["balls"].values
-            strikes = te["strikes"].values
+            # Compute OOF xRV with count-specific RV (vectorized)
+            rv_data_ab = json.loads((DIAG_DIR / "count_rv_table.json").read_text())
+            rv_count_ab = rv_data_ab["rv_count"]
+            hbp_rate = rv_data_ab["hbp_rate_no_swing"]
+            bip_classes_ab = rv_data_ab["bip_classes"]  # sorted alphabetical for v3 models
 
-            def rv_key(event, b, s):
-                k = f"{event}__{int(b)}_{int(s)}"
-                return rv_count.get(k, rv_count.get(f"{event}__all", 0.0))
+            balls = te["balls"].clip(0, 3).astype(int).values
+            strikes = te["strikes"].clip(0, 2).astype(int).values
 
-            bip_rvs_count = np.zeros(len(te))
-            for i, cls in enumerate(bip_classes):
-                if i < p_bip.shape[1]:
-                    bip_rv_per_pitch = np.array([
-                        rv_count.get(f"bip__{cls}__{int(b)}_{int(s)}",
-                                     rv_count.get(f"bip__{cls}__all", 0.0))
-                        for b, s in zip(balls, strikes)
-                    ])
-                    bip_rvs_count += p_bip[:, i] * bip_rv_per_pitch
+            rv_arrays_ab, rv_hb, bip_rv_matrix_ab = _build_rv_arrays(rv_count_ab, bip_classes_ab)
+            rv_wh = rv_arrays_ab["whiff"][balls, strikes]
+            rv_fo = rv_arrays_ab["foul"][balls, strikes]
+            rv_cs = rv_arrays_ab["called_strike"][balls, strikes]
+            rv_ba = rv_arrays_ab["ball"][balls, strikes]
 
-            rv_wh = np.array([rv_key("whiff", b, s) for b, s in zip(balls, strikes)])
-            rv_fo = np.array([rv_key("foul", b, s) for b, s in zip(balls, strikes)])
-            rv_cs = np.array([rv_key("called_strike", b, s) for b, s in zip(balls, strikes)])
-            rv_ba = np.array([rv_key("ball", b, s) for b, s in zip(balls, strikes)])
-            rv_hb = rv_count.get("hbp__all", 0.36)
+            # p_bip is aligned with bip_classes_ab (trained with sorted classes in ablation)
+            bip_rvs_count = np.einsum("ni,in->n", p_bip, bip_rv_matrix_ab[:, balls, strikes])
 
             xrv_contact = p_fo * rv_fo + (1.0 - p_fo) * bip_rvs_count
             xrv_swing = p_wh * rv_wh + (1.0 - p_wh) * xrv_contact
@@ -1624,8 +1654,7 @@ def main():
             f.write(f"[{datetime.datetime.now().isoformat()}] PART 2 COMPLETE\n")
     else:
         scoring_config = load_checkpoint("part2_metrics")
-        if (DIAG_DIR / "v2_rescored_per_pitch.parquet").exists():
-            per_pitch = pd.read_parquet(DIAG_DIR / "v2_rescored_per_pitch.parquet")
+        # per_pitch (v2 re-scored) is only used inside run_part2; skip loading here
 
     if not args.skip_part3:
         part3_result = run_part3(conn, scoring_config)
