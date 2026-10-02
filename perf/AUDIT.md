@@ -157,11 +157,15 @@ conn.execute("PRAGMA mmap_size=268435456")
 ```
 
 **Approach**: A connection pool (even a pool of 1–4) with PRAGMAs set once at
-open time would eliminate per-request PRAGMA cost entirely. Alternatively, batch
-the 5 PRAGMAs into a single `executescript()` call for a minor improvement.
+open time would eliminate per-request PRAGMA cost entirely.
 
-**Risk**: SQLite connection pools need care under async Uvicorn. Recommend
-Tier 2 (pool of 1 for now, expand if load warrants).
+**Implemented (opt-8)**: `journal_mode=WAL` moved to one-time `_ensure_wal()` at
+startup (WAL persists in the DB file). Remaining 4 per-connection PRAGMAs
+batched into one `executescript()` call, reducing per-request PRAGMA
+round-trips from 5 to 1.
+
+**Risk**: SQLite connection pools need care under async Uvicorn. Pool is still
+Tier 2 / future work — per-connection cost now reduced by 4 round-trips.
 
 ---
 
