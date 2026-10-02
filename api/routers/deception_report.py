@@ -35,6 +35,14 @@ def _raw_predictions_table(conn, season):
     return _raw_predictions(conn, season)
 
 
+@ttl_cache()
+def _pitcher_breakdown_cached(conn, season, pitcher_id):
+    """Per-pitcher SHAP breakdown — cached so repeated player-page loads
+    and career-page loads don't re-run SHAP scoring each time."""
+    league = _raw_predictions_table(conn, season)
+    return pitcher_deception_breakdown(conn, season, pitcher_id, league)
+
+
 @router.get("/report")
 def get_report():
     """The full validation report: CV metrics, SHAP/gain feature
@@ -51,10 +59,7 @@ def get_pitcher_breakdown(pitcher_id: int, conn=Depends(get_conn)):
     """One pitcher's Deception+ score plus a live SHAP breakdown of which
     delivery/body features are driving it, for REPORT_SEASON (this
     proof-of-concept has no season selector yet)."""
-    league = _raw_predictions_table(conn, REPORT_SEASON)
-    if league.empty:
-        raise HTTPException(404, f"No scored pitches for season {REPORT_SEASON}")
-    breakdown = pitcher_deception_breakdown(conn, REPORT_SEASON, pitcher_id, league)
+    breakdown = _pitcher_breakdown_cached(conn, REPORT_SEASON, pitcher_id)
     if not breakdown:
         raise HTTPException(404, f"No pitches found for pitcher {pitcher_id} in {REPORT_SEASON}")
     return breakdown

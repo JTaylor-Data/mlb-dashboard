@@ -1646,13 +1646,43 @@ async function loadPlayer() {
   }
 }
 
+function _monotoneCubicPath(xs, ys) {
+  // Fritsch-Carlson monotone cubic spline → SVG path string
+  const n = xs.length;
+  if (n < 2) return "";
+  const d = [], m = new Array(n);
+  for (let i = 0; i < n - 1; i++) d[i] = (ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]);
+  m[0] = d[0];
+  m[n - 1] = d[n - 2];
+  for (let i = 1; i < n - 1; i++) {
+    if (d[i - 1] * d[i] <= 0) { m[i] = 0; continue; }
+    m[i] = (d[i - 1] + d[i]) / 2;
+  }
+  // Limit slopes for monotonicity
+  for (let i = 0; i < n - 1; i++) {
+    if (Math.abs(d[i]) < 1e-12) { m[i] = m[i + 1] = 0; continue; }
+    const a = m[i] / d[i], b = m[i + 1] / d[i];
+    const t = a * a + b * b;
+    if (t > 9) { const s = 3 / Math.sqrt(t); m[i] = s * a * d[i]; m[i + 1] = s * b * d[i]; }
+  }
+  let path = `M${xs[0].toFixed(1)},${ys[0].toFixed(1)}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h = xs[i + 1] - xs[i];
+    const cp1x = xs[i] + h / 3, cp1y = ys[i] + m[i] * h / 3;
+    const cp2x = xs[i + 1] - h / 3, cp2y = ys[i + 1] - m[i + 1] * h / 3;
+    path += `C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${xs[i + 1].toFixed(1)},${ys[i + 1].toFixed(1)}`;
+  }
+  return path;
+}
+
 function _buildXwobaChart(pts, windowKey) {
-  const W = 540, H = 160, PAD = { top: 14, right: 20, bottom: 14, left: 44 };
+  const W = 540, H = 160, PAD = { top: 14, right: 20, bottom: 20, left: 44 };
   const iW = W - PAD.left - PAD.right;
   const iH = H - PAD.top - PAD.bottom;
 
-  const allY = pts.map(p => p[windowKey]).filter(v => v != null);
-  if (!allY.length) return "";
+  const validPts = pts.filter(p => p[windowKey] != null);
+  if (!validPts.length) return "";
+  const allY = validPts.map(p => p[windowKey]);
 
   const LG_AVG = 0.320;
   const yMin = Math.max(0.150, Math.min(...allY, LG_AVG) - 0.015);
@@ -1675,24 +1705,36 @@ function _buildXwobaChart(pts, windowKey) {
     grid += `<text x="${PAD.left - 5}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="9.5" font-family="var(--font-data,monospace)" fill="var(--text-muted)">.${String(Math.round(v * 1000)).padStart(3, "0")}</text>`;
   }
 
-  // Player line (red)
-  const segments = [];
-  let seg = [];
+  // Player line — monotone cubic smooth segments
+  const lineSegs = [];
+  let run = [];
   for (const p of pts) {
     if (p[windowKey] != null) {
-      seg.push(`${xScale(p.pa_index).toFixed(1)},${yScale(p[windowKey]).toFixed(1)}`);
-    } else if (seg.length) { segments.push(seg.join(" ")); seg = []; }
+      run.push(p);
+    } else if (run.length) {
+      lineSegs.push(run); run = [];
+    }
   }
-  if (seg.length) segments.push(seg.join(" "));
-  const line = segments.map(s =>
-    `<polyline points="${s}" fill="none" stroke="#c9302c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`
-  ).join("");
+  if (run.length) lineSegs.push(run);
+
+  const line = lineSegs.map(seg => {
+    const xs = seg.map(p => xScale(p.pa_index));
+    const ys = seg.map(p => yScale(p[windowKey]));
+    const d = _monotoneCubicPath(xs, ys);
+    return d ? `<path d="${d}" fill="none" stroke="#c9302c" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>` : "";
+  }).join("");
 
   // League avg dashed brown line
   const lgY = yScale(LG_AVG);
-  const lgLine = `<line x1="${PAD.left}" y1="${lgY.toFixed(1)}" x2="${PAD.left + iW}" y2="${lgY.toFixed(1)}" stroke="#7c5c2e" stroke-width="1.4" stroke-dasharray="5,3" opacity="0.8"/>`;
+  const lgLine = `<line x1="${PAD.left}" y1="${lgY.toFixed(1)}" x2="${PAD.left + iW}" y2="${lgY.toFixed(1)}" stroke="#7c5c2e" stroke-width="1.6" stroke-dasharray="5,3" opacity="0.8"/>`;
 
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;">${grid}${lgLine}${line}</svg>`;
+  // X-axis end labels (first valid PA and last PA)
+  const firstPt = validPts[0], lastPt = validPts[validPts.length - 1];
+  const xLabels = `
+    <text x="${xScale(firstPt.pa_index).toFixed(1)}" y="${H - 3}" text-anchor="middle" font-size="9" font-family="var(--font-data,monospace)" fill="var(--text-muted)">PA ${firstPt.pa_index}</text>
+    <text x="${xScale(lastPt.pa_index).toFixed(1)}" y="${H - 3}" text-anchor="middle" font-size="9" font-family="var(--font-data,monospace)" fill="var(--text-muted)">PA ${lastPt.pa_index}</text>`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;">${grid}${lgLine}${line}${xLabels}</svg>`;
 }
 
 async function renderRollingXwoba(playerId, season) {

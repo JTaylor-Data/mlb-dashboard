@@ -27,9 +27,8 @@ from analytics.tunneling_v3_model import raw_predictions_if_cached as _tun_raw_i
 from analytics.location_model import raw_predictions_if_cached as _loc_raw_if_cached
 from api.routers.deception_report import (
     REPORT_SEASON as DEC_SEASON,
-    _raw_predictions_table as _dec_raw_predictions_table,
+    _pitcher_breakdown_cached as _dec_breakdown_cached,
 )
-from analytics.deception_model import pitcher_deception_breakdown as _dec_breakdown
 
 router = APIRouter(prefix="/api")
 
@@ -234,13 +233,6 @@ def _pitcher_career(conn, player_id):
     db_scores = _pitcher_scores_from_db(conn, player_id)
     awards_by_season = _player_awards(conn, player_id)
 
-    # Deception+ league table (current season only)
-    try:
-        dec_league = _dec_raw_predictions_table(conn, DEC_SEASON)
-        dec_league = None if dec_league.empty else dec_league
-    except Exception:
-        dec_league = None
-
     rows = []
     for season, grp in df.groupby("season", sort=True):
         team_id = season_teams.get(int(season))
@@ -292,9 +284,9 @@ def _pitcher_career(conn, player_id):
 
         # Deception+ for current season only
         dec_plus = None
-        if dec_league is not None and int(season) == DEC_SEASON:
+        if int(season) == DEC_SEASON:
             try:
-                bd = _dec_breakdown(conn, DEC_SEASON, player_id, dec_league)
+                bd = _dec_breakdown_cached(conn, DEC_SEASON, player_id)
                 dec_plus = _cf(bd.get("deception_plus"), 1) if bd else None
             except Exception:
                 pass
