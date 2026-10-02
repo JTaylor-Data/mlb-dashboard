@@ -534,7 +534,7 @@ def pitcher_clustered_bootstrap_corr_diff(scores_v, scores_v0, outcomes, pitcher
 
 
 def load_outcomes(seasons=None):
-    """Load pitcher-season ERA, xFIP from player_advanced_stats."""
+    """Load pitcher-season ERA, xFIP from player_advanced_stats. Returns season as str."""
     import sqlite3
     conn = sqlite3.connect(DB_PATH)
     query = """
@@ -549,6 +549,8 @@ def load_outcomes(seasons=None):
     else:
         outcomes = pd.read_sql(query, conn)
     conn.close()
+    # Normalize season to str to match pitch-derived DataFrames (engineer_features casts to str)
+    outcomes["season"] = outcomes["season"].astype(str)
     log(f"Loaded {len(outcomes):,} pitcher-season outcomes (xfip available: {outcomes['xfip'].notna().sum():,})")
     return outcomes
 
@@ -740,7 +742,9 @@ def part2_ablation(haa_coefs):
 
         # (b) same-season outcome correlations
         if outcomes_df is not None and not outcomes_df.empty:
-            merged_out = vs.merge(outcomes_df, on=["pitcher_id", "season"], how="inner")
+            # ensure types match: vs["season"] is str (from engineer_features), outcomes_df["season"] already str
+            vs_merge = vs.copy(); vs_merge["season"] = vs_merge["season"].astype(str)
+            merged_out = vs_merge.merge(outcomes_df, on=["pitcher_id", "season"], how="inner")
             if "xfip" in merged_out.columns and merged_out["xfip"].notna().sum() >= 20:
                 r_xfip, _ = safe_pearsonr(merged_out["stuff_plus_v4"].to_numpy(),
                                            merged_out["xfip"].fillna(np.nan).to_numpy())
@@ -756,8 +760,8 @@ def part2_ablation(haa_coefs):
             for s1, s2 in zip(TRAINING_SEASONS[:-1], TRAINING_SEASONS[1:]):
                 if s1 == 2020 or s2 == 2020:
                     continue
-                ps1 = vs[vs["season"] == s1][["pitcher_id", "stuff_plus_v4"]]
-                out_s2 = outcomes_df[outcomes_df["season"] == s2]
+                ps1 = vs[vs["season"] == str(s1)][["pitcher_id", "stuff_plus_v4"]]
+                out_s2 = outcomes_df[outcomes_df["season"] == str(s2)]
                 pair = ps1.merge(out_s2, on="pitcher_id", how="inner")
                 if not pair.empty:
                     next_season_pairs.append(pair)
@@ -1115,7 +1119,7 @@ def part3_final_fit(final_variant, haa_coefs):
 
         out = season_feat[["pitcher_id", "pitch_type", "stand"]].copy()
         out["pred"] = preds
-        out["season"] = season
+        out["season"] = str(season)
         out["season_flag"] = "60-game season" if season == 2020 else ""
         if "delta_run_exp" in season_feat.columns:
             out["delta_run_exp"] = season_feat["delta_run_exp"].values
@@ -1132,7 +1136,7 @@ def part3_final_fit(final_variant, haa_coefs):
     # Run scoring pipeline
     scored_pitches = []
     for season in SCORING_SEASONS:
-        sdf = raw_preds[raw_preds["season"] == season].copy()
+        sdf = raw_preds[raw_preds["season"] == str(season)].copy()
         if sdf.empty:
             continue
         if sdf["pred"].std() == 0:
@@ -1143,7 +1147,7 @@ def part3_final_fit(final_variant, haa_coefs):
         norm_mean = float(sdf["pred"].mean())
         norm_std = float(sdf["pred"].std())
         g["stuff_plus_v4"] = sm_runtime._to_stuff_plus(g["shrunk_mean"], norm_mean, norm_std)
-        g["season"] = season
+        g["season"] = str(season)
         g["season_flag"] = "60-game season" if season == 2020 else ""
         scored_pitches.append(g)
 
@@ -1154,7 +1158,7 @@ def part3_final_fit(final_variant, haa_coefs):
     # Compute K by pitch type per season (shrinkage constant)
     k_by_season = {}
     for season in SCORING_SEASONS:
-        sdf = raw_preds[raw_preds["season"] == season]
+        sdf = raw_preds[raw_preds["season"] == str(season)]
         if sdf.empty:
             continue
         k_by_type_s, fallback_k_s, _ = sm_runtime._shrinkage_params(sdf)
@@ -1204,8 +1208,8 @@ def part4_validation(scores_df, meta):
 
     # Per-season score mean/std
     for season in SCORING_SEASONS:
-        sdf = scores_df[scores_df["season"] == season]
-        ps = pitcher_scores[pitcher_scores["season"] == season]
+        sdf = scores_df[scores_df["season"] == str(season)]
+        ps = pitcher_scores[pitcher_scores["season"] == str(season)]
         if sdf.empty:
             continue
         validation["season_stats"][str(season)] = {
@@ -1218,7 +1222,7 @@ def part4_validation(scores_df, meta):
 
     # Sanity tables: top/bottom 15 for select seasons
     for season in [2016, 2020, 2022, 2025, 2026]:
-        ps = pitcher_scores[pitcher_scores["season"] == season].copy()
+        ps = pitcher_scores[pitcher_scores["season"] == str(season)].copy()
         if ps.empty:
             continue
         ps = ps.sort_values("stuff_plus_v4", ascending=False)
