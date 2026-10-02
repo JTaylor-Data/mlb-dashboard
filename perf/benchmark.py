@@ -209,7 +209,7 @@ def run_suite(warm_reps: int, runs: int) -> list[dict]:
     """Run the full endpoint suite `runs` times, return all results."""
     all_runs: list[list[dict]] = []
     for run_i in range(runs):
-        print(f"\n── Run {run_i + 1}/{runs} ──────────────────────────────")
+        print(f"\n-- Run {run_i + 1}/{runs} ---------------------------------")
         run_results = []
         for name, method, path in ENDPOINTS:
             if any(path.startswith(s) for s in SKIP_EXTERNAL):
@@ -311,7 +311,7 @@ def main() -> None:
     print(f"Saved: {md_path}")
 
     # Print summary
-    print("\n── Summary (aggregate warm median) ──────────────────────")
+    print("\n-- Summary (aggregate warm median) ----------------------")
     slow = sorted(results, key=lambda x: x.get("aggregate_median_ms", 0), reverse=True)[:10]
     for ep in slow:
         print(f"  {ep['name']:40s} {ep.get('aggregate_median_ms',-1):8.1f} ms")
