@@ -311,31 +311,7 @@ def get_team_stats(team_id: int, season: int = Query(2026), conn=Depends(get_con
         (team_id,),
     ).fetchone()
 
-    # Statcast-derived: pitching aggregates for this team's pitchers
-    pitching = conn.execute(
-        """
-        SELECT
-            COUNT(*) AS total_pitches,
-            COUNT(DISTINCT pitcher_id) AS n_pitchers,
-            AVG(release_speed) AS avg_velo,
-            AVG(release_spin_rate) AS avg_spin,
-            CAST(SUM(CASE WHEN description IN ('swinging_strike','swinging_strike_blocked') THEN 1 ELSE 0 END) AS REAL)
-              / NULLIF(SUM(CASE WHEN description LIKE '%swing%' OR description LIKE '%hit%'
-                               OR description = 'foul' OR description = 'foul_tip'
-                               OR description = 'missed_bunt' THEN 1 ELSE 0 END), 0) AS whiff_rate
-        FROM pitches p
-        JOIN games g ON p.game_id = g.game_id
-        WHERE CAST(g.home_team AS INTEGER) = ? AND g.inning_topbot IS NULL
-           OR p.game_id IN (
-               SELECT game_id FROM games
-               WHERE (CAST(home_team AS INTEGER) = ? AND season = ?)
-                  OR (CAST(away_team AS INTEGER) = ? AND season = ?)
-           )
-        """,
-        (team_id, team_id, season, team_id, season),
-    ).fetchone()
-
-    # Simpler approach — get pitchers by team from players table
+    # Statcast-derived: get pitchers by team from players table
     pitching_stats = conn.execute(
         """
         SELECT
