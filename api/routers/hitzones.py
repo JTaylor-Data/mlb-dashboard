@@ -28,7 +28,7 @@ import pandas as pd
 from fastapi import APIRouter, Depends, Query
 
 
-from api.cache import ttl_cache_all_args
+from api.cache import ttl_cache, ttl_cache_all_args
 from api.db import get_conn
 
 router = APIRouter(prefix="/api")
@@ -37,7 +37,7 @@ PLATE_WIDTH_FT = 17 / 12
 PITCH_TYPE_MERGE = {"KC": "CU"}
 
 
-@ttl_cache_all_args()
+@ttl_cache()
 def _hit_zone_summary(conn, season, batter_id, throws_filter=None):
     where, params = "WHERE season = ? AND batter_id = ? AND plate_x IS NOT NULL AND plate_z IS NOT NULL", (season, batter_id)
     if throws_filter and throws_filter != "ALL":

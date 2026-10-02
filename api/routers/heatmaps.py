@@ -11,7 +11,7 @@ import pandas as pd
 from fastapi import APIRouter, Depends, Query
 
 
-from api.cache import ttl_cache_all_args
+from api.cache import ttl_cache, ttl_cache_all_args
 from api.db import get_conn
 
 router = APIRouter(prefix="/api")
@@ -32,7 +32,7 @@ PITCH_TYPE_MERGE = {"KC": "CU"}   # same merge convention as analytics/player_pa
 MIN_PITCHES_FOR_COMMAND_PCT = 20
 
 
-@ttl_cache_all_args()
+@ttl_cache()
 def _league_command_pool(conn, season, stand_filter=None):
     """Real command percentile pool: for every (pitcher, pitch type) with
     at least MIN_PITCHES_FOR_COMMAND_PCT real pitches this season/split,
@@ -80,7 +80,7 @@ def _league_command_pool(conn, season, stand_filter=None):
     return pool
 
 
-@ttl_cache_all_args()
+@ttl_cache()
 def _pitch_location_summary(conn, season, pitcher_id, stand_filter=None):
     """One row per pitch TYPE: that type's own average (plate_x, plate_z)
     across the season, and its own spread (combined stddev of plate_x/
