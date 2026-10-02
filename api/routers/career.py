@@ -34,6 +34,11 @@ from analytics.deception_model import pitcher_deception_breakdown as _dec_breakd
 router = APIRouter(prefix="/api")
 
 
+@ttl_cache()
+def _league_hr_fb(conn, season):
+    return league_hr_per_fb(conn, season)
+
+
 def _cf(v, decimals=2):
     if v is None:
         return None
@@ -264,7 +269,7 @@ def _pitcher_career(conn, player_id):
         xfip = None
         if ip_dec > 0:
             try:
-                lg_hr_fb = league_hr_per_fb(conn, int(season))
+                lg_hr_fb = _league_hr_fb(conn, int(season))
                 xfip = _cf(compute_xfip(pa, lg_hr_fb), 2)
             except Exception:
                 pass
