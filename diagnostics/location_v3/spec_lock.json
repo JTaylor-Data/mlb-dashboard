@@ -1,0 +1,58 @@
+{
+  "version": "v3",
+  "locked_at": "2026-10-02T00:00:00Z",
+  "baseline_features": ["plate_x", "plate_z", "balls", "strikes", "pitch_type", "stand", "season"],
+  "candidate_changes": [
+    "S1: subtract league mean xRV per (pitch_type x balls x strikes x stand x season) cell",
+    "empirical_bayes_shrinkage: shrink pitcher-season scores toward league mean",
+    "drop_season: remove season from feature set if adoption criteria met",
+    "add_p_throws: add pitcher handedness if adoption criteria met"
+  ],
+  "lgbm_settings": {
+    "note": "Reuse v2 classifier parameters; fixed tree counts; no early stopping on held-out data",
+    "num_leaves": 31,
+    "min_child_samples": 100,
+    "learning_rate": 0.05,
+    "feature_fraction": 0.8,
+    "bagging_fraction": 0.8,
+    "bagging_freq": 5,
+    "reg_alpha": 0.1,
+    "reg_lambda": 0.1,
+    "n_estimators_xswing": 400,
+    "n_estimators_xcs": 400,
+    "n_estimators_xwhiff": 400,
+    "n_estimators_xfoul": 400,
+    "n_estimators_bip": 400
+  },
+  "seeds": {"seed_A": 42, "seed_B": 123},
+  "subsample_fraction": 0.30,
+  "subsample_seed": 42,
+  "metric_definitions": {
+    "YoY_stability": "Pearson correlation of pitcher-season scores across consecutive season pairs (excluding pairs touching 2020)",
+    "split_half_reliability": "Pearson r between odd/even pitch halves for same pitcher-season",
+    "next_season_BB_corr": "Pearson r(Location+ S, BB% S+1) on qualified pitcher-seasons",
+    "incremental_delta_R2": "delta R^2 from adding Location+(S) to last-season BB% to predict S+1 BB%",
+    "ECE": "expected calibration error per classifier",
+    "AUC": "area under ROC curve per classifier",
+    "pitcher_season_corr_v2_v3": "Pearson r of v2 vs v3 pitcher-season scores"
+  },
+  "rules": {
+    "qualified_pitcher_season": ">=300 pitches (2020: scaled by games played ratio ~0.37-0.40, i.e. >=111 pitches)",
+    "run_value_fix": "If event run-value table is not count-specific, replace with count-specific table for all later work. Defect correction, not optimization.",
+    "S1_adoption": "Adopt S1 if share of pitcher-season score variance explained by pitch-type and count mix alone is >=0.10 AND S1 not significantly worse than S0 on split-half reliability or any outcome correlation (paired pitcher-clustered 95% CI includes 0 or favors S1). Otherwise keep S0.",
+    "shrinkage_adoption": "Adopt empirical-Bayes shrinkage if split-half reliability at 300-pitch threshold is <0.70 OR shrunk score improves next-season correlation with CI above 0. Otherwise leave unshrunk; set leaderboard minimum to pitch count where reliability reaches 0.70 (rounded up to nearest 50).",
+    "drop_season": "Drop season only if variant-vs-V0a corr >= (reseed-vs-V0a corr - 0.005) AND CIs of differences in held-out log loss and outcome correlations include 0.",
+    "add_p_throws": "Add p_throws only if held-out log loss improves (CI excluding 0) on >=2 of 4 binary classifiers, next-season BB% corr does not worsen, and pitcher-season corr with Stuff+ v4 rises by <=0.05. Default omit.",
+    "unseen_seasons_policy": "Score with season set to each nearest trained season and average event probabilities (2020: average of 2019 and 2021; future season: latest trained).",
+    "calibration": "Per-classifier ECE flagged >0.02; stop-ship >0.05.",
+    "era_check": "If 2015 plate_x or plate_z distribution has KS stat >0.05 vs 2016, exclude 2015 from training and say so; otherwise include it.",
+    "next_season_bar": "Consecutive pairs only, excluding any pair involving 2020; both seasons >=300 pitches: (i) corr(Location+ S, BB% S+1) <=-0.20 final model and <=-0.15 pitcher-holdout; (ii) incremental delta-R^2 from adding Location+(S) to last-season BB% when predicting S+1 BB%: point estimate >0 in both versions and CI lower bound >0 for final-model version.",
+    "stop_ship_gates": {
+      "correlations_sign": "correlations with ERA and xFIP negative, corr with BB% <=-0.20",
+      "yoy_floor": "no consecutive-season YoY pair (excluding pairs touching 2020) below 0.30",
+      "v2_v3_corr": "v3 vs v2 pitcher-season corr >=0.70",
+      "calibration_max_ece": "every binary classifier ECE <=0.05",
+      "seasons_scored": "all seasons 2015-2026 scored with 2020 flagged 60-game season"
+    }
+  }
+}
