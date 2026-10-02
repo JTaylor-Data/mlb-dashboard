@@ -40,6 +40,15 @@ def _raw_predictions_table(conn, season):
     return _raw_predictions(conn, season)
 
 
+@ttl_cache()
+def _pitcher_breakdown_cached(conn, season, pitcher_id):
+    """Per-pitcher Location+ SHAP breakdown — cached."""
+    league = _raw_predictions_table(conn, season)
+    if league.empty:
+        return None
+    return pitcher_breakdown(conn, season, pitcher_id, league, min_pitches=MIN_PITCHES_QUALIFY)
+
+
 @router.get("/report")
 def get_report(season: int, conn=Depends(get_conn)):
     """Model architecture (7 features, CV, SHAP importance, Location+-
@@ -87,10 +96,7 @@ def get_report(season: int, conn=Depends(get_conn)):
 def get_pitcher_breakdown(pitcher_id: int, season: int, conn=Depends(get_conn)):
     """One pitcher's Location+ score plus a live SHAP breakdown of which
     inputs (location, count, pitch type, stand, season) are driving it."""
-    league = _raw_predictions_table(conn, season)
-    if league.empty:
-        raise HTTPException(404, f"No Location+ scored pitches for season {season}")
-    breakdown = pitcher_breakdown(conn, season, pitcher_id, league, min_pitches=MIN_PITCHES_QUALIFY)
+    breakdown = _pitcher_breakdown_cached(conn, season, pitcher_id)
     if not breakdown:
         raise HTTPException(404, f"No Location+ data for pitcher {pitcher_id} in {season} (needs {MIN_PITCHES_QUALIFY}+ pitches that season)")
     return breakdown
