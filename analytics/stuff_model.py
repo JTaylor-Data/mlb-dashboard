@@ -53,18 +53,32 @@ from analytics.stuff_features import (
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 
+# ---------------------------------------------------------------------------
+# Version switch — change this one constant to roll back to v3.
+# Rollback: set STUFF_ACTIVE_VERSION = "v3"
+# ---------------------------------------------------------------------------
+STUFF_ACTIVE_VERSION = "v4"  # promoted 2026-10-02; rollback: set to "v3"
+
+_MODEL_FILES = {
+    "v3": ("stuff_plus_v3_lgbm.txt", "stuff_plus_v3_lgbm_meta.json"),
+    "v4": ("stuff_plus_v4_lgbm.txt", "stuff_plus_v4_lgbm_meta.json"),
+}
+
 _model = None
 _meta = None
 _explainer = None
+_loaded_version = None  # track which version is currently loaded
 
 
 def _load():
     """Lazy-loaded module-level singletons - the booster and its metadata
     are read from disk once per process, not once per request."""
-    global _model, _meta
-    if _model is None:
-        _model = lgb.Booster(model_file=str(MODELS_DIR / "stuff_plus_v3_lgbm.txt"))
-        _meta = json.loads((MODELS_DIR / "stuff_plus_v3_lgbm_meta.json").read_text())
+    global _model, _meta, _loaded_version
+    if _model is None or _loaded_version != STUFF_ACTIVE_VERSION:
+        model_file, meta_file = _MODEL_FILES[STUFF_ACTIVE_VERSION]
+        _model = lgb.Booster(model_file=str(MODELS_DIR / model_file))
+        _meta = json.loads((MODELS_DIR / meta_file).read_text())
+        _loaded_version = STUFF_ACTIVE_VERSION
     return _model, _meta
 
 
@@ -109,6 +123,9 @@ def _prepare_features(raw_df):
     calibrations = {
         "vaa_coefs": vaa_coefs,
         "spin_calibration": meta["spin_calibration"],
+        # haa_coefs present in v4 meta; absent in v3 meta (engineer_features
+        # skips HAA computation when the key is missing or None).
+        "haa_coefs": meta.get("haa_coefs"),
     }
     pre = merge_pitch_type(raw_df)
     pre = add_movement_columns(pre)
@@ -119,7 +136,7 @@ def _prepare_features(raw_df):
     return feat
 
 
-_raw_predictions_cache = {}  # season -> (dataframe, computed_at) - see docstring below
+_raw_predictions_cache = {}  # (version, season) -> (dataframe, computed_at)
 RAW_PREDICTIONS_CACHE_TTL_SECONDS = 600
 
 
@@ -127,7 +144,8 @@ def raw_predictions_if_cached(season):
     """Return cached raw predictions for a season if available and fresh, else None.
     Does NOT trigger computation — safe to call without blocking."""
     import time as _time
-    cached = _raw_predictions_cache.get(season)
+    cache_key = (STUFF_ACTIVE_VERSION, season)
+    cached = _raw_predictions_cache.get(cache_key)
     if cached is not None and (_time.monotonic() - cached[1]) < RAW_PREDICTIONS_CACHE_TTL_SECONDS:
         return cached[0]
     return None
@@ -151,24 +169,26 @@ def _raw_predictions(conn, season):
     re-run the full season through the LightGBM model - a real, measurable
     chunk of what made "Refresh data" feel slow, doubling the single most
     expensive step in the whole refresh cycle for no reason."""
-    cached = _raw_predictions_cache.get(season)
+    cache_key = (STUFF_ACTIVE_VERSION, season)
+    cached = _raw_predictions_cache.get(cache_key)
     if cached is not None and (time.monotonic() - cached[1]) < RAW_PREDICTIONS_CACHE_TTL_SECONDS:
         return cached[0]
 
+    from analytics.stuff_features import RAW_QUERY_COLUMNS
     df = pd.read_sql(f"""
         SELECT {', '.join(RAW_QUERY_COLUMNS)} FROM pitches
         WHERE season = ? AND delta_run_exp IS NOT NULL
     """, conn, params=(season,))
     if df.empty:
         out = pd.DataFrame(columns=["pitcher_id", "pitch_type", "stand", "pred"])
-        _raw_predictions_cache[season] = (out, time.monotonic())
+        _raw_predictions_cache[cache_key] = (out, time.monotonic())
         return out
     feat = _prepare_features(df)
     model, meta = _load()
     preds = model.predict(feat[meta["all_features"]])
     out = feat[["pitcher_id", "pitch_type", "stand"]].copy()
     out["pred"] = preds
-    _raw_predictions_cache[season] = (out, time.monotonic())
+    _raw_predictions_cache[cache_key] = (out, time.monotonic())
     return out
 
 

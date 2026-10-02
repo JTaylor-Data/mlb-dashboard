@@ -167,11 +167,17 @@ NUMERIC_FEATURES = CORE_NUMERIC_FEATURES + OPTIONAL_NUMERIC_FEATURES
 CATEGORICAL_FEATURES = ["pitch_type", "p_throws", "stand", "season"]
 ALL_FEATURES = NUMERIC_FEATURES + CATEGORICAL_FEATURES
 
-RAW_QUERY_COLUMNS = [
+# v3 query columns (no HAA)
+RAW_QUERY_COLUMNS_V3 = [
     "pitcher_id", "pitch_type", "stand", "p_throws", "season",
     "release_speed", "effective_speed", "release_spin_rate", "spin_axis",
     "pfx_x", "pfx_z", "plate_z", "vy0", "vz0", "ay", "az", "delta_run_exp",
 ]
+# v4 query columns — adds vx0, ax, plate_x, release_pos_x for HAA residual
+RAW_QUERY_COLUMNS_V4 = RAW_QUERY_COLUMNS_V3 + ["vx0", "ax", "plate_x", "release_pos_x"]
+
+# Default: v4 (the promoted version). Callers that need v3 can import RAW_QUERY_COLUMNS_V3.
+RAW_QUERY_COLUMNS = RAW_QUERY_COLUMNS_V4
 
 
 def merge_pitch_type(df):
@@ -376,6 +382,54 @@ def fit_v3_calibrations(df, fit_per_type=True):
     return {"vaa_coefs": vaa_coefs, "spin_calibration": spin_calibration}
 
 
+def compute_haa(df):
+    """Horizontal approach angle (degrees, arm-side mirrored).
+    Uses vx0/vy0/ax/ay — same physics as VAA uses vz0/vy0/az/ay.
+    Mirrors sign by p_throws so LHP and RHP angles are comparable
+    (arm-side positive).  Requires columns: vx0, vy0, ax, ay, p_throws."""
+    vy0 = df["vy0"].to_numpy(dtype=float)
+    vx0 = df["vx0"].to_numpy(dtype=float)
+    ay = df["ay"].to_numpy(dtype=float)
+    ax = df["ax"].to_numpy(dtype=float)
+    y_front = 17.0 / 12.0
+    y_release = -60.5
+    delta_y = y_front - y_release
+    vy_front_sq = np.maximum(vy0 ** 2 + 2 * ay * delta_y, 0.01)
+    vy_front = -np.sqrt(vy_front_sq)
+    t = (vy_front - vy0) / ay
+    vx_front = vx0 + ax * t
+    haa_raw = np.degrees(np.arctan2(vx_front, -vy_front))
+    sign = np.where(df["p_throws"].to_numpy() == "R", -1.0, 1.0)
+    return (haa_raw * sign).astype("float32")
+
+
+def add_haa_residual(df, haa_coefs):
+    """Compute haa_residual: mirrored HAA minus per-type OLS expectation.
+    Requires columns: vx0, vy0, ax, ay, p_throws, plate_x, release_pos_x,
+    release_speed, pitch_type.
+
+    `haa_coefs` is a dict {"pooled": [b0,b1,b2,b3,b4], pitch_type: [...], ...}
+    from meta["haa_coefs"].  OLS formula: expected_haa = b0 + b1*plate_x_m
+    + b2*plate_x_m^2 + b3*release_pos_x_m + b4*release_speed.
+    """
+    df = df.copy()
+    df["haa"] = compute_haa(df)
+    sign = np.where(df["p_throws"].to_numpy() == "R", -1.0, 1.0)
+    px_m = df["plate_x"].to_numpy(dtype=float) * sign
+    rp_m = df["release_pos_x"].to_numpy(dtype=float) * sign
+    v = df["release_speed"].to_numpy(dtype=float)
+    pooled = np.array(haa_coefs["pooled"])
+    per_type = {k: np.array(v_) for k, v_ in haa_coefs.items() if k != "pooled"}
+    expected = np.empty(len(df), dtype=float)
+    for pt, idx in df.groupby(df["pitch_type"].astype(str)).groups.items():
+        coefs = per_type.get(pt, pooled)
+        loc = df.index.get_indexer(idx)
+        design = np.column_stack([np.ones(len(idx)), px_m[loc], px_m[loc] ** 2, rp_m[loc], v[loc]])
+        expected[loc] = design @ coefs
+    df["haa_residual"] = (df["haa"].to_numpy(dtype=float) - expected).astype("float32")
+    return df
+
+
 def engineer_features(df, calibrations, fb_ref_df):
     """Full pipeline: merge KC->CU, exclude non-competitive pitch types
     (PO/UN/EP - see EXCLUDED_PITCH_TYPES), attach hb/ivb, VAA residual,
@@ -386,13 +440,19 @@ def engineer_features(df, calibrations, fb_ref_df):
     (build_stuff_v3_dataset.py, baked into the saved feature table) and
     live scoring (stuff_model.py) call, so the exclusion applies to both
     automatically - no separate SQL filter to keep in sync in either
-    caller."""
+    caller.
+
+    v4 addition: if `calibrations` contains "haa_coefs", haa_residual is
+    computed and appended.  When scoring with v3 (no haa_coefs in meta),
+    the column is absent and the v3 all_features list never asks for it."""
     df = merge_pitch_type(df)
     df = exclude_junk_pitch_types(df)
     df = add_movement_columns(df)
     df = add_vaa_residual(df, calibrations["vaa_coefs"])
     df = add_axis_differential(df, calibrations["spin_calibration"])
     df = add_separation_features(df, fb_ref_df)
+    if "haa_coefs" in calibrations and calibrations["haa_coefs"]:
+        df = add_haa_residual(df, calibrations["haa_coefs"])
     df["season"] = df["season"].astype(str)
     df[CORE_NUMERIC_FEATURES] = df[CORE_NUMERIC_FEATURES].replace([np.inf, -np.inf], np.nan)
     df = df.dropna(subset=CORE_NUMERIC_FEATURES + CATEGORICAL_FEATURES)

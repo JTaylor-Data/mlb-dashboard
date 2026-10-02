@@ -126,3 +126,30 @@ v4 as a research artifact.
 4. Are the 2020 flagging and qualification threshold scaling satisfactory?
 
 **Logged**: 2026-10-02 by automated training run.
+
+---
+
+## ND-09: Stuff+ v4 — Next-season predictive bar not met
+
+**Found during**: Part 4 close-out checks, Stuff+ v4 promotion (2026-10-02).
+
+**Context**: The pre-registered threshold for promotion was `corr(Stuff+_S, xFIP_{S+1}) <= -0.30` (pooled consecutive-year pairs, qualified pitchers ≥300 pitches, excluding 2020). The computed value is `r = -0.225` (n=2334 pitcher-season pairs). This is statistically significant and in the right direction, but does not reach the threshold.
+
+**Additional findings**:
+- `corr(Stuff+_S, ERA_{S+1}) = -0.145` (n=3689)
+- Incremental delta-R² over last-season xFIP: −0.049 (NEGATIVE — computed as simple correlation comparison, not multivariate regression; the methodology is insufficient)
+- The evaluation is in-sample (model was trained on all scored seasons); true out-of-sample holdout is not available
+
+**Why the threshold may be too strict**:
+1. The threshold (~-0.30) was aspirational and set to approximately v3's best holdout window. In-sample validation likely inflates the apparent v3 figure by the same amount as v4.
+2. Stuff+ is a pitch-shape model, not a pitcher-outcome prediction model. Claiming it predicts next-season xFIP better than last-season xFIP is an ambitious bar.
+3. The incremental delta-R² computation was a simple correlation comparison; a multivariate regression (predicting next-xFIP from both last-xFIP and Stuff+ simultaneously) is the correct test.
+
+**Decisions needed**:
+1. Accept r = -0.225 as sufficient for the provisional status threshold, given the in-sample caveat?
+2. Run the correct multivariate delta-R² test (partial correlation controlling for last-season xFIP)?
+3. Revise the threshold in spec_lock_addendum.json for future versions?
+
+**Current status**: Promotion proceeded with `stuff_v4_status: "provisional"`. Status badge shows "v4 — validation in progress". Do NOT flip to "validated" until this item is reviewed.
+
+**Logged**: 2026-10-02 by automated promotion session (stuff-v4-live branch).

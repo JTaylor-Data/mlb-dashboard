@@ -1,33 +1,59 @@
 """
-/api/stuff-model/* - serves the Stuff+ model's training report (from
-`training/train_stuff_v3_lgbm.py`, read straight off disk), a top/bottom
+/api/stuff-model/* - serves the Stuff+ model's training report, a top/bottom
 Stuff+ leaderboard, and per-pitcher SHAP breakdowns, for the "model
-internals" page (`stuff-model.html`). This exists so the model isn't a
-black box: every number the page shows traces back to either the offline
-training report or a live computation against the actual production
-model. v3 architecture - see `Methodology/STUFF_V3_REPORT.md`.
+internals" page (`stuff-model.html`). Promoted to v4 2026-10-02.
+v4 architecture adds haa_residual - see `Methodology/STUFF_V4_COMPLETION.md`.
+Rollback: set analytics.stuff_model.STUFF_ACTIVE_VERSION = "v3".
 """
 import json
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 
-from analytics.stuff_model import _raw_predictions, compute_stuff_plus, pitcher_shap_breakdown
+from analytics.stuff_model import (
+    STUFF_ACTIVE_VERSION, _MODEL_FILES,
+    _raw_predictions, compute_stuff_plus, pitcher_shap_breakdown,
+)
 
 from api.cache import ttl_cache
 from api.db import get_conn
 
 router = APIRouter(prefix="/api/stuff-model")
 
-REPORT_PATH = Path(__file__).resolve().parent.parent.parent / "models" / "stuff_plus_v3_lgbm_report.json"
-PREDICTIVE_VALIDITY_PATH = Path(__file__).resolve().parent.parent.parent / "models" / "stuff_plus_v3_predictive_validity.json"
+_MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
+REPORT_PATH = _MODELS_DIR / "stuff_plus_v3_lgbm_report.json"
+PREDICTIVE_VALIDITY_PATH = _MODELS_DIR / "stuff_plus_v3_predictive_validity.json"
 
-# Same "is this pitcher's sample worth ranking" bar used in
-# training/validate_stuff_v3.py's own year-over-year qualification check.
+# v3 leaderboard min; v4 leaderboard uses per-type min of 100 (configurable)
 LEADERBOARD_MIN_PITCHES = 200
+LEADERBOARD_MIN_PITCHES_PER_TYPE = 100  # spec_lock_addendum: leaderboard_min_pitches_per_type
+
+
+@router.get("/meta")
+def get_model_meta():
+    """Model version, hash, training seasons, scored seasons, features, status.
+    Shows 'Stuff+ v4 (hash <first 8>)' for the current live model."""
+    _, meta_file = _MODEL_FILES[STUFF_ACTIVE_VERSION]
+    meta = json.loads((_MODELS_DIR / meta_file).read_text())
+    model_hash = meta.get("model_hash_sha256", "unknown")
+    return {
+        "active_version": STUFF_ACTIVE_VERSION,
+        "model_hash_sha256": model_hash,
+        "model_hash_short": model_hash[:8],
+        "display_name": f"Stuff+ {STUFF_ACTIVE_VERSION} (hash {model_hash[:8]})",
+        "trained_at": meta.get("trained_at"),
+        "seasons_trained_on": meta.get("seasons_trained_on", []),
+        "scored_seasons": list(range(2016, 2027)),
+        "features": meta.get("all_features", []),
+        "n_training_rows": meta.get("n_training_rows"),
+        "candidate_changes_applied": meta.get("candidate_changes_applied"),
+        "status": "provisional",
+        "status_label": "v4 — validation in progress",
+        "rollback_instruction": "Set analytics.stuff_model.STUFF_ACTIVE_VERSION = 'v3' and restart.",
+    }
 
 
 @ttl_cache()
@@ -61,27 +87,23 @@ def get_report():
 
 
 @ttl_cache()
-def _stuff_leaderboard(conn, season):
-    """Top/bottom 10 pitchers by usage-weighted overall Stuff+ for a
-    season, qualified pitchers only (LEADERBOARD_MIN_PITCHES) - same shape
-    of aggregation `overall_stuff_plus` does per-pitcher, done in bulk here
-    since ranking the whole league one pitcher at a time would mean one
-    Python-level loop per pitcher for no benefit."""
+def _stuff_leaderboard_overall(conn, season, n=15):
+    """Top/bottom N pitchers by usage-weighted overall Stuff+ for a season."""
     table = compute_stuff_plus(conn, season)
     if table.empty:
-        return {"top": [], "bottom": []}
+        return {"top": [], "bottom": [], "season": season, "pitch_type": None}
 
     g = table.reset_index()
     overall = g.groupby("pitcher_id").apply(
         lambda d: pd.Series({
-            "stuff_plus": np.average(d["stuff_plus"], weights=d["n_pitches"]),
-            "n_pitches": d["n_pitches"].sum(),
+            "stuff_plus": float(np.average(d["stuff_plus"], weights=d["n_pitches"])),
+            "n_pitches": int(d["n_pitches"].sum()),
         }),
         include_groups=False,
     ).reset_index()
     overall = overall[overall["n_pitches"] >= LEADERBOARD_MIN_PITCHES]
     if overall.empty:
-        return {"top": [], "bottom": []}
+        return {"top": [], "bottom": [], "season": season, "pitch_type": None}
 
     ids = overall["pitcher_id"].astype(int).tolist()
     placeholders = ",".join("?" * len(ids))
@@ -92,26 +114,107 @@ def _stuff_leaderboard(conn, season):
     """, conn, params=ids)
     overall = overall.merge(names, left_on="pitcher_id", right_on="player_id", how="left")
 
-    def _rows(df):
-        return [
-            dict(
-                pitcher_id=int(r.pitcher_id), name=r.name,
-                team_abbrev=r.team_abbrev if pd.notna(r.team_abbrev) else None,
-                stuff_plus=round(float(r.stuff_plus), 0), n_pitches=int(r.n_pitches),
-            )
-            for r in df.itertuples()
-        ]
+    season_2020_asterisk = int(season) == 2020
 
-    top = overall.sort_values("stuff_plus", ascending=False).head(10)
-    bottom = overall.sort_values("stuff_plus", ascending=True).head(10)
-    return {"top": _rows(top), "bottom": _rows(bottom)}
+    def _rows(df, rank_ascending):
+        df = df.sort_values("stuff_plus", ascending=rank_ascending).head(n).reset_index(drop=True)
+        rows = []
+        for i, r in enumerate(df.itertuples()):
+            row = dict(
+                rank=i + 1,
+                pitcher_id=int(r.pitcher_id),
+                name=getattr(r, "name", None),
+                team_abbrev=r.team_abbrev if pd.notna(r.team_abbrev) else None,
+                stuff_plus=round(float(r.stuff_plus), 1),
+                n_pitches=int(r.n_pitches),
+            )
+            if season_2020_asterisk:
+                row["season_asterisk"] = True
+                row["season_note"] = "2020 was a 60-game season and was not part of the model's training data; treat with caution."
+            rows.append(row)
+        return rows
+
+    return {
+        "top": _rows(overall, rank_ascending=False),
+        "bottom": _rows(overall, rank_ascending=True),
+        "season": season,
+        "pitch_type": None,
+        "min_pitches": LEADERBOARD_MIN_PITCHES,
+    }
+
+
+@ttl_cache()
+def _stuff_leaderboard_by_type(conn, season, pitch_type, n=15):
+    """Top/bottom N pitchers by per-type Stuff+ for a specific pitch type."""
+    table = compute_stuff_plus(conn, season)
+    if table.empty:
+        return {"top": [], "bottom": [], "season": season, "pitch_type": pitch_type}
+
+    g = table.reset_index()
+    g = g[g["pitch_type"] == pitch_type]
+    g = g[g["n_pitches"] >= LEADERBOARD_MIN_PITCHES_PER_TYPE]
+    if g.empty:
+        return {"top": [], "bottom": [], "season": season, "pitch_type": pitch_type}
+
+    ids = g["pitcher_id"].astype(int).tolist()
+    placeholders = ",".join("?" * len(ids))
+    names = pd.read_sql(f"""
+        SELECT p.player_id, p.name, p.team_id, t.abbreviation AS team_abbrev
+        FROM players p LEFT JOIN teams t ON p.team_id = t.team_id
+        WHERE p.player_id IN ({placeholders})
+    """, conn, params=ids)
+    g = g.merge(names, left_on="pitcher_id", right_on="player_id", how="left")
+
+    season_2020_asterisk = int(season) == 2020
+
+    def _rows(df, rank_ascending):
+        df = df.sort_values("stuff_plus", ascending=rank_ascending).head(n).reset_index(drop=True)
+        rows = []
+        for i, r in enumerate(df.itertuples()):
+            row = dict(
+                rank=i + 1,
+                pitcher_id=int(r.pitcher_id),
+                name=getattr(r, "name", None),
+                team_abbrev=r.team_abbrev if pd.notna(r.team_abbrev) else None,
+                pitch_type=pitch_type,
+                stuff_plus=round(float(r.stuff_plus), 1),
+                n_pitches=int(r.n_pitches),
+            )
+            if season_2020_asterisk:
+                row["season_asterisk"] = True
+                row["season_note"] = "2020 was a 60-game season and was not part of the model's training data; treat with caution."
+            rows.append(row)
+        return rows
+
+    return {
+        "top": _rows(g, rank_ascending=False),
+        "bottom": _rows(g, rank_ascending=True),
+        "season": season,
+        "pitch_type": pitch_type,
+        "min_pitches": LEADERBOARD_MIN_PITCHES_PER_TYPE,
+    }
 
 
 @router.get("/leaderboard")
-def get_stuff_leaderboard(season: int, conn=Depends(get_conn)):
-    """Top 10 / bottom 10 Stuff+ pitchers for a season, qualified pitchers
-    only (>= LEADERBOARD_MIN_PITCHES pitches)."""
-    return _stuff_leaderboard(conn, season)
+def get_stuff_leaderboard(
+    season: int = Query(default=2026, ge=2016, le=2026, description="Season (2016–2026)"),
+    pitch_type: str = Query(default=None, description="Pitch type filter (e.g. FF, SL, CU); omit for overall"),
+    n: int = Query(default=15, ge=1, le=50, description="Number of entries per side"),
+    direction: str = Query(default="both", description="top, bottom, or both"),
+    conn=Depends(get_conn),
+):
+    """Top/bottom Stuff+ leaderboard. Overall (usage-weighted) or per pitch type.
+    Season range 2016–2026. 2020 entries carry asterisk note.
+    Overall: >= 200 pitches. Per-type: >= 100 pitches of that type."""
+    if pitch_type:
+        result = _stuff_leaderboard_by_type(conn, season, pitch_type.upper(), n)
+    else:
+        result = _stuff_leaderboard_overall(conn, season, n)
+    if direction == "top":
+        result = {k: v for k, v in result.items() if k != "bottom"}
+    elif direction == "bottom":
+        result = {k: v for k, v in result.items() if k != "top"}
+    return result
 
 
 @router.get("/predictive-validity")
