@@ -17,9 +17,12 @@ DB_PATH = os.environ.get("DB_PATH", "mlb_data.db")
 # per-connection and are batched into a single executescript() call to save
 # 4 round-trips per request vs 5 individual execute() calls.
 def _ensure_wal():
-    _c = sqlite3.connect(DB_PATH)
-    _c.execute("PRAGMA journal_mode=WAL")
-    _c.close()
+    try:
+        _c = sqlite3.connect(DB_PATH)
+        _c.execute("PRAGMA journal_mode=WAL")
+        _c.close()
+    except Exception:
+        pass  # WAL already set or DB not yet present; get_conn() will surface any real error
 
 _ensure_wal()
 
