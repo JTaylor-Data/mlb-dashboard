@@ -42,20 +42,21 @@
     }
   },
   "location_plus": {
-    "status": "draft",
+    "status": "live",
     "slug": "location-model.html",
     "title": "Location+",
     "badge_code": "LOC+",
     "badge_class": "badge-loc",
-    "opening_blurb": "Location+ grades where a pitch was thrown relative to the strike zone and the count, independent of what the pitch is. It fills the deliberate gap left by Stuff+ and Tunneling+, which both exclude plate location by design. The model uses five LightGBM classifiers — predicting swing probability, called-strike probability, whiff probability, foul probability, and batted-ball type distribution — combined through a fixed run-value table to produce a per-pitch expected run value. A pitcher who consistently hits favorable counts and locations scores above 100 regardless of what their pitches do in the air.",
-    "scale_statement": "100 = league average among qualified pitchers that season. 10 points = 1 standard deviation. Minimum 100 pitches to receive a score.",
+    "opening_blurb": "Location+ grades where a pitch was thrown relative to the strike zone and the count, independent of what the pitch does in the air. It fills the deliberate gap left by Stuff+ and Tunneling+, which both exclude plate location by design. The model uses five LightGBM classifiers — predicting swing probability, called-strike probability, whiff probability, foul probability, and batted-ball type distribution — combined through a COUNT-SPECIFIC run-value table to produce a per-pitch expected run value. The count-specific table is the key v3 fix: a called strike on 3-2 is worth ~7.8x more than on 0-0 in run expectancy terms; v2 used a single pooled mean and missed this entirely.",
+    "scale_statement": "100 = league average among qualified pitchers that season. 10 points = 1 standard deviation. Minimum 300 pitches to receive a score (111 for 2020 60-game season).",
     "available_seasons": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
-    "min_pitches_caption": "Leaderboard and scores require 100 or more pitches that season.",
+    "min_pitches_caption": "Leaderboard and scores require 300 or more pitches that season (111 for 2020).",
     "evolution": {
-      "status": "draft",
+      "status": "live",
       "items": [
         "v1 (original): single LightGBM regressor on plate_x, plate_z, count, pitch_type, stand. Developed a sign flip (ERA r = -0.257, xFIP r = -0.507) — higher score was predicting worse pitchers — and by 2024→2025 YoY stability collapsed to r = 0.009.",
-        "v2 (current, promoted 2026-09-21): five-classifier decomposed-event architecture. Each outcome (swing, called strike, whiff, foul, BIP type) is predicted separately and combined via a fixed run-value table. Sign flip resolved (ERA r = +0.208, xFIP r = +0.349). Stability restored (std = 9.99). Trained 2015-2026."
+        "v2 (promoted 2026-09-21): five-classifier decomposed-event architecture. Each outcome (swing, called strike, whiff, foul, BIP type) is predicted separately and combined via a fixed (non-count-specific) run-value table. Sign flip resolved (ERA r = +0.208, xFIP r = +0.349). Stability restored. Trained 2015-2026.",
+        "v3 (current, promoted 2026-10-02): count-specific run-value table fixes the core v2 defect. S1 baseline adjustment adopted (subtracts league mean xRV per pitch-type × count × stand × season cell) — improves BB% correlation from r=−0.590 to r=−0.667. No empirical-Bayes shrinkage (split-half r_SB at 300 = 0.815 >> 0.70 threshold). 2020 excluded from training; scored by averaging 2019/2021 model predictions. Qualification threshold raised to 300 pitches (split-half reliability r_SB=0.815 at 300+ pitches per half). Trained 2015-2025 excl. 2020."
       ]
     }
   },
