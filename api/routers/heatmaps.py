@@ -11,7 +11,7 @@ import pandas as pd
 from fastapi import APIRouter, Depends, Query
 
 
-from api.cache import ttl_cache, ttl_cache_all_args
+from api.cache import ttl_cache
 from api.db import get_conn
 
 router = APIRouter(prefix="/api")
