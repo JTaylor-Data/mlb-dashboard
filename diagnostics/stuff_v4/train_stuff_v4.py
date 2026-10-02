@@ -1243,16 +1243,16 @@ def part4_validation(scores_df, meta):
     for s1, s2 in zip(TRAINING_SEASONS[:-1], TRAINING_SEASONS[1:]):
         if s1 == 2020 or s2 == 2020:
             continue
-        p1 = pitcher_scores[pitcher_scores["season"] == s1][["pitcher_id", "stuff_plus_v4"]].rename(
+        p1 = pitcher_scores[pitcher_scores["season"] == str(s1)][["pitcher_id", "stuff_plus_v4"]].rename(
             columns={"stuff_plus_v4": "s1"})
-        p2 = pitcher_scores[pitcher_scores["season"] == s2][["pitcher_id", "stuff_plus_v4"]].rename(
+        p2 = pitcher_scores[pitcher_scores["season"] == str(s2)][["pitcher_id", "stuff_plus_v4"]].rename(
             columns={"stuff_plus_v4": "s2"})
         merged = p1.merge(p2, on="pitcher_id")
         if len(merged) < 10:
             continue
         r, p = safe_pearsonr(merged["s1"].to_numpy(), merged["s2"].to_numpy())
-        cons_pairs.append({"s1": s1, "s2": s2, "r": r, "n": len(merged)})
-    all_s1 = np.concatenate([np.full(cp["n"], cp["r"]) for cp in cons_pairs])
+        cons_pairs.append({"s1": s1, "s2": s2, "r": float(r) if r is not None else None, "n": len(merged)})
+    all_s1 = np.concatenate([np.full(cp["n"], cp["r"]) for cp in cons_pairs]) if cons_pairs else np.array([])
     yoy_r = float(np.nanmean([cp["r"] for cp in cons_pairs])) if cons_pairs else None
     validation["yoy_stability"] = {
         "consecutive_pairs": cons_pairs,

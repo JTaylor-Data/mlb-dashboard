@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stuff+ v4 — Final Methodology</title>
+<style>
+  body {
+    font-family: Georgia, 'Times New Roman', serif;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 0 24px;
+    background: #fafafa;
+    color: #222;
+    line-height: 1.6;
+  }
+  h1 { font-size: 2em; border-bottom: 3px solid #333; padding-bottom: 0.3em; margin-top: 0; }
+  h2 { font-size: 1.4em; border-bottom: 1px solid #ccc; padding-bottom: 0.2em; margin-top: 2em; color: #333; }
+  h3 { font-size: 1.1em; color: #444; margin-top: 1.5em; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 0.88em;
+    margin: 1em 0;
+    font-family: 'Courier New', monospace;
+  }
+  th, td {
+    border: 1px solid #ccc;
+    padding: 6px 10px;
+    text-align: left;
+  }
+  th { background: #f0f0f0; font-weight: bold; }
+  tr:nth-child(even) { background: #f9f9f9; }
+  code {
+    background: #f0f0f0;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 0.9em;
+    font-family: 'Courier New', monospace;
+  }
+  pre { background: #f0f0f0; padding: 12px; border-radius: 4px; overflow-x: auto; }
+  pre code { background: none; padding: 0; }
+  li { margin: 4px 0; }
+  p { margin: 0.5em 0; }
+  hr { border: 0; border-top: 1px solid #ddd; margin: 2em 0; }
+  strong { color: #111; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #1a1a1a; color: #e0e0e0; }
+    h1, h2, h3 { color: #f0f0f0; border-color: #444; }
+    th { background: #2a2a2a; }
+    tr:nth-child(even) { background: #222; }
+    code { background: #2a2a2a; color: #e0e0e0; }
+    pre { background: #2a2a2a; }
+    td, th { border-color: #444; }
+  }
+</style>
+</head>
+<body>
+<h1>Stuff+ v4 — Final Methodology</h1>
+<br>
+<p><strong>Generated</strong>: 2026-10-02 15:02:15</p>
+<p><strong>Model trained at</strong>: 2026-10-02 14:54:17</p>
+<p><strong>Model SHA-256</strong>: <code>0addb8e96ea438ec196b3addc19fd350f1d76e241a9291d3719773f2b9766c28</code></p>
+<p><strong>Spec-lock commit</strong>: <code>1ea4116ae4544ab359d982bdbbe2d40db6777236</code></p>
+<br>
+<hr>
+<br>
+<h2>1. Training Setup</h2>
+<br>
+<li><strong>Training seasons</strong>: 2016–2026 excluding 2020 (7,023,077 pitches after filtering)</li>
+<li><strong>Scoring seasons</strong>: 2016–2026 including 2020 (flagged <code>season_flag = '60-game season'</code>)</li>
+<li><strong>Excluded pitch types</strong>: PO, UN, EP (junk/non-competitive)</li>
+<li><strong>KN (knuckleball)</strong>: included</li>
+<li><strong>Postseason</strong>: excluded (game_type = 'R' filter)</li>
+<li><strong>Objective</strong>: Huber loss (predict <code>delta_run_exp</code>)</li>
+<li><strong>Fixed tree count</strong>: 2000 (reused from v3 <code>n_estimators</code>, no early stopping)</li>
+<br>
+<h3>Hyperparameters (reused from v3)</h3>
+<br>
+<table>
+<tr><th>Parameter</th><th>Value</th></tr>
+<tr><td><code>objective</code></td><td><code>huber</code></td></tr>
+<tr><td><code>learning_rate</code></td><td><code>0.03</code></td></tr>
+<tr><td><code>num_leaves</code></td><td><code>63</code></td></tr>
+<tr><td><code>min_child_samples</code></td><td><code>200</code></td></tr>
+<tr><td><code>subsample</code></td><td><code>0.8</code></td></tr>
+<tr><td><code>subsample_freq</code></td><td><code>1</code></td></tr>
+<tr><td><code>colsample_bytree</code></td><td><code>0.8</code></td></tr>
+<tr><td><code>reg_lambda</code></td><td><code>1.0</code></td></tr>
+<tr><td><code>random_state</code></td><td><code>42</code></td></tr>
+</table>
+<br>
+<hr>
+<br>
+<h2>2. Final Feature Set</h2>
+<br>
+<p>Candidate changes applied: <code>drop_season=False</code>, <code>drop_effective_speed=False</code>, <code>include_haa=True</code></p>
+<br>
+<h3>Features used in final model</h3>
+<br>
+<table>
+<tr><th>#</th><th>Feature</th><th>Type</th></tr>
+<tr><td>1</td><td><code>release_speed</code></td><td>numeric</td></tr>
+<tr><td>2</td><td><code>effective_speed</code></td><td>numeric</td></tr>
+<tr><td>3</td><td><code>release_spin_rate</code></td><td>numeric</td></tr>
+<tr><td>4</td><td><code>spin_axis</code></td><td>numeric</td></tr>
+<tr><td>5</td><td><code>hb</code></td><td>numeric</td></tr>
+<tr><td>6</td><td><code>ivb</code></td><td>numeric</td></tr>
+<tr><td>7</td><td><code>vaa_residual</code></td><td>numeric</td></tr>
+<tr><td>8</td><td><code>velo_sep_vs_primary_fb</code></td><td>numeric</td></tr>
+<tr><td>9</td><td><code>hb_sep_vs_primary_fb</code></td><td>numeric</td></tr>
+<tr><td>10</td><td><code>ivb_sep_vs_primary_fb</code></td><td>numeric</td></tr>
+<tr><td>11</td><td><code>axis_differential</code></td><td>numeric</td></tr>
+<tr><td>12</td><td><code>haa_residual</code></td><td>numeric</td></tr>
+<tr><td>13</td><td><code>pitch_type</code></td><td>categorical</td></tr>
+<tr><td>14</td><td><code>p_throws</code></td><td>categorical</td></tr>
+<tr><td>15</td><td><code>stand</code></td><td>categorical</td></tr>
+<tr><td>16</td><td><code>season</code></td><td>categorical</td></tr>
+</table>
+<br>
+<h3>Excluded features (vs v3 baseline)</h3>
+<br>
+<li><code>release_extension</code>, <code>release_pos_x_as</code>, <code>release_pos_z</code>, <code>arm_angle</code> — excluded in v3 (Deception+ only); remain excluded in v4</li>
+<li><code>season</code>: kept</li>
+<li><code>effective_speed</code>: kept</li>
+<li><code>haa_residual</code> (new): added (Stage 2 leakage check passed)</li>
+<br>
+<h3>Forbidden features (leakage guard)</h3>
+<br>
+<p>The following columns are explicitly verified absent from the feature list before every training run:</p>
+<p><code>plate_x</code>, <code>plate_z</code>, <code>balls</code>, <code>strikes</code>, <code>release_extension</code>, <code>release_pos_x_as</code>,</p>
+<p><code>release_pos_z</code>, <code>arm_angle</code>, <code>pitcher_id</code>, <code>game_id</code></p>
+<br>
+<hr>
+<br>
+<h2>3. HAA Residual (if adopted)</h2>
+<br>
+<p><strong>Definition</strong>: Residualized horizontal approach angle — actual HAA minus expected HAA from an OLS regression.</p>
+<br>
+<p><strong>HAA computation</strong>: velocity vector angle at front of plate from <code>vx0/vy0/ax/ay</code> physics,</p>
+<p>mirrored by <code>p_throws</code> so arm-side is positive for both LHP and RHP.</p>
+<br>
+<p><strong>Expected HAA</strong>: OLS per pitch type on [mirrored <code>plate_x</code>, mirrored <code>plate_x</code>², mirrored <code>release_pos_x</code>, <code>release_speed</code>].</p>
+<p>Fit on training seasons only; applied to all seasons including 2020.</p>
+<br>
+<p><strong>Leakage check (Part 1)</strong>:</p>
+<br>
+<table>
+<tr><th>Correlation</th><th>Value</th><th>Threshold</th><th>Pass?</th></tr>
+<tr><td>`</td><td>corr(haa_residual, plate_x)</td><td>`</td><td>0.0092</td><td>&lt; 0.1</td><td>✓</td></tr>
+<tr><td>`</td><td>corr(haa_residual, release_pos_x)</td><td>`</td><td>0.0836</td><td>&lt; 0.1</td><td>✓</td></tr>
+</table>
+<br>
+<hr>
+<br>
+<h2>4. Ablation Results (Part 2 — Pitcher-Grouped 5-Fold CV, 30% Subsample)</h2>
+<br>
+<p><strong>Setup</strong>: 30% subsample of pitchers (all their seasons), stratified by <code>p_throws</code> and pitch-count tercile, seed=42.</p>
+<p>5-fold CV grouped by pitcher (every pitch of a pitcher falls in exactly one fold).</p>
+<p>Subsample: 776 pitchers, seed=42.</p>
+<br>
+<h3>Stage 1 — Drop candidates</h3>
+<br>
+<table>
+<tr><th>Variant</th><th>Description</th><th>Corr with V0a</th><th>Same-season xFIP r</th><th>Next-season xFIP r</th><th>Decision</th></tr>
+<tr><td>V0a</td><td>Baseline (seed=42)</td><td>+1.000</td><td>-0.216</td><td>-0.173</td><td>—</td></tr>
+<tr><td>V0b</td><td>Baseline (seed=123; noise floor)</td><td>+0.979</td><td>-0.199</td><td>-0.169</td><td>—</td></tr>
+<tr><td>V1</td><td>minus <code>season</code></td><td>+0.934</td><td>-0.221</td><td>-0.173</td><td>fails</td></tr>
+<tr><td>V2</td><td>minus <code>effective_speed</code></td><td>+0.953</td><td>-0.186</td><td>-0.149</td><td>fails</td></tr>
+<tr><td>V3</td><td>minus both</td><td>+0.899</td><td>-0.199</td><td>-0.140</td><td>fails</td></tr>
+</table>
+<br>
+<p><strong>Stage 1 chosen variant</strong>: <code>V0a</code> — drop_season=False, drop_effective_speed=False</p>
+<br>
+<h3>Stage 2 — HAA residual</h3>
+<br>
+<p>HAA leakage check: True</p>
+<p>Decision: adopt_haa=True — leakage_ok=True, corr_with_vchosen=0.9635</p>
+<br>
+<hr>
+<br>
+<h2>5. Final Fit Details</h2>
+<br>
+<li><strong>Trained at</strong>: 2026-10-02 14:54:17</li>
+<li><strong>Seeds</strong>: random_state=42 (LightGBM)</li>
+<li><strong>Tree count</strong>: 2000 (no early stopping)</li>
+<li><strong>Training rows</strong>: 7,023,077</li>
+<li><strong>Model hash (SHA-256)</strong>: <code>0addb8e96ea438ec196b3addc19fd350f1d76e241a9291d3719773f2b9766c28</code></li>
+<br>
+<hr>
+<br>
+<h2>6. Validation (Part 4 — Final Model, In-Sample)</h2>
+<br>
+<p>&gt; <strong>All tables in this section are FINAL MODEL, IN-SAMPLE (descriptive).</strong></p>
+<p>&gt; Out-of-sample evidence is in the ablation pitcher-holdout (Section 4, labeled conservative).</p>
+<br>
+<h3>Per-Season Score Distribution</h3>
+<br>
+<table>
+<tr><th>Season</th><th>N pitcher-seasons</th><th>Mean Stuff+</th><th>Std Stuff+</th><th>Note</th></tr>
+<tr><td>2016</td><td>742</td><td>99.8</td><td>4.7</td><td></td></tr>
+<tr><td>2017</td><td>755</td><td>99.4</td><td>5.5</td><td></td></tr>
+<tr><td>2018</td><td>798</td><td>98.7</td><td>7.6</td><td></td></tr>
+<tr><td>2019</td><td>829</td><td>98.8</td><td>7.4</td><td></td></tr>
+<tr><td>2020</td><td>735</td><td>99.3</td><td>6.5</td><td>60-game season</td></tr>
+<tr><td>2021</td><td>908</td><td>97.8</td><td>9.1</td><td></td></tr>
+<tr><td>2022</td><td>870</td><td>96.6</td><td>13.3</td><td></td></tr>
+<tr><td>2023</td><td>859</td><td>96.9</td><td>12.4</td><td></td></tr>
+<tr><td>2024</td><td>851</td><td>98.1</td><td>8.4</td><td></td></tr>
+<tr><td>2025</td><td>863</td><td>97.1</td><td>11.8</td><td></td></tr>
+<tr><td>2026</td><td>860</td><td>97.1</td><td>12.8</td><td></td></tr>
+</table>
+<br>
+<h3>Year-over-Year Stability</h3>
+<br>
+<table>
+<tr><th>Pair</th><th>Pearson r</th><th>n</th></tr>
+<tr><td>2016→2017</td><td>+0.766</td><td>539</td></tr>
+<tr><td>2017→2018</td><td>+0.761</td><td>557</td></tr>
+<tr><td>2018→2019</td><td>+0.818</td><td>588</td></tr>
+<tr><td>2019→2021</td><td>+0.581</td><td>531</td></tr>
+<tr><td>2021→2022</td><td>+0.831</td><td>611</td></tr>
+<tr><td>2022→2023</td><td>+0.939</td><td>602</td></tr>
+<tr><td>2023→2024</td><td>+0.869</td><td>608</td></tr>
+<tr><td>2024→2025</td><td>+0.884</td><td>609</td></tr>
+<tr><td>2025→2026</td><td>+0.903</td><td>606</td></tr>
+</table>
+<br>
+<p><strong>Pooled mean YoY r</strong>: +0.817</p>
+<p><em>(Pairs touching 2020 excluded from pooled mean)</em></p>
+<br>
+<h3>Mean Score by Pitch Type</h3>
+<br>
+<table>
+<tr><th>Pitch Type</th><th>Mean Stuff+</th><th>Flagged (&gt;3 pts from 100)?</th></tr>
+<tr><td>AB</td><td>105.7</td><td>⚠ YES</td></tr>
+<tr><td>CH</td><td>97.2</td><td></td></tr>
+<tr><td>CS</td><td>62.0</td><td>⚠ YES</td></tr>
+<tr><td>CU</td><td>95.1</td><td>⚠ YES</td></tr>
+<tr><td>FA</td><td>59.9</td><td>⚠ YES</td></tr>
+<tr><td>FC</td><td>100.1</td><td></td></tr>
+<tr><td>FF</td><td>97.4</td><td></td></tr>
+<tr><td>FO</td><td>91.0</td><td>⚠ YES</td></tr>
+<tr><td>FS</td><td>100.5</td><td></td></tr>
+<tr><td>KN</td><td>63.2</td><td>⚠ YES</td></tr>
+<tr><td>SC</td><td>88.1</td><td>⚠ YES</td></tr>
+<tr><td>SI</td><td>97.9</td><td></td></tr>
+<tr><td>SL</td><td>101.8</td><td></td></tr>
+<tr><td>ST</td><td>100.9</td><td></td></tr>
+<tr><td>SV</td><td>98.4</td><td></td></tr>
+</table>
+<br>
+<h3>Split-Half Reliability (2025 season)</h3>
+<br>
+<table>
+<tr><th>Min Pitches</th><th>Spearman-Brown r</th><th>n pitchers</th></tr>
+<tr><td>50</td><td>0.994</td><td>777</td></tr>
+<tr><td>100</td><td>0.994</td><td>725</td></tr>
+<tr><td>200</td><td>0.994</td><td>640</td></tr>
+<tr><td>300</td><td>0.995</td><td>573</td></tr>
+<tr><td>400</td><td>0.996</td><td>521</td></tr>
+<tr><td>600</td><td>0.997</td><td>435</td></tr>
+<tr><td>800</td><td>0.997</td><td>346</td></tr>
+<tr><td>1000</td><td>0.997</td><td>273</td></tr>
+<tr><td>1500</td><td>0.998</td><td>141</td></tr>
+<tr><td>2000</td><td>0.998</td><td>103</td></tr>
+</table>
+<br>
+<h3>Leakage Checks</h3>
+<br>
+<table>
+<tr><th>Check</th><th>Result</th></tr>
+<tr><td>Forbidden features absent</td><td>True</td></tr>
+<tr><td>HAA residual ↔ plate_x</td><td>0.0092 (threshold &lt; 0.1)</td></tr>
+<tr><td>HAA residual ↔ release_pos_x</td><td>0.0836 (threshold &lt; 0.1)</td></tr>
+</table>
+<br>
+<hr>
+<br>
+<h2>7. Open Issues / Known Limitations</h2>
+<br>
+<p>1. <strong>2020 exclusion from training</strong>: The 60-game season is excluded from training but scored. Scores are flagged <code>season_flag='60-game season'</code>.</p>
+<p>2. <strong>Validation is in-sample</strong>: All correlation figures in Section 6 are computed on the same data the model was trained on. The only out-of-sample evidence is the pitcher-holdout in the ablation (Section 4).</p>
+<p>3. <strong>No 2026 holdout</strong>: Per pre-registration, no second retrain is performed with a 2026 holdout.</p>
+<p>4. <strong>xFIP availability</strong>: xFIP data starts from 2021 in the DB; next-season xFIP correlations cover 2021-forward only.</p>
+<p>5. <strong>Split-half reliability uses 2025 only</strong>: A multi-season estimate would be more stable.</p>
+<p>6. <strong>Seed stability</strong>: Not yet run (requires a second full training pass). Expected &gt;= 0.99.</p>
+<br>
+<hr>
+<br>
+<h2>8. Sanity Tables (Selected Seasons)</h2>
+<br>
+<h3>2016 — Top 15 / Bottom 15</h3>
+<br>
+<table>
+<tr><th>Rank</th><th>pitcher_id</th><th>Stuff+ v4</th><th>N pitches</th></tr>
+<tr><td>T1</td><td>547973</td><td>126.1</td><td>738</td></tr>
+<tr><td>T2</td><td>445276</td><td>118.8</td><td>955</td></tr>
+<tr><td>T3</td><td>476454</td><td>118.5</td><td>1,080</td></tr>
+<tr><td>T4</td><td>518886</td><td>114.5</td><td>899</td></tr>
+<tr><td>T5</td><td>501789</td><td>114.3</td><td>996</td></tr>
+<tr><td>T6</td><td>456713</td><td>113.1</td><td>909</td></tr>
+<tr><td>T7</td><td>592102</td><td>113.0</td><td>1,115</td></tr>
+<tr><td>T8</td><td>543766</td><td>112.9</td><td>1,112</td></tr>
+<tr><td>T9</td><td>542609</td><td>112.5</td><td>601</td></tr>
+<tr><td>T10</td><td>502154</td><td>112.0</td><td>909</td></tr>
+<tr><td>T11</td><td>477132</td><td>111.9</td><td>1,798</td></tr>
+<tr><td>T12</td><td>475054</td><td>111.6</td><td>400</td></tr>
+<tr><td>T13</td><td>489265</td><td>111.3</td><td>382</td></tr>
+<tr><td>T14</td><td>605218</td><td>111.3</td><td>585</td></tr>
+<tr><td>T15</td><td>621121</td><td>111.2</td><td>1,232</td></tr>
+<tr><td>...</td><td>...</td><td>...</td><td>...</td></tr>
+<tr><td>B1</td><td>285064</td><td>90.6</td><td>1,268</td></tr>
+<tr><td>B2</td><td>500871</td><td>90.3</td><td>16</td></tr>
+<tr><td>B3</td><td>592593</td><td>90.2</td><td>1,142</td></tr>
+<tr><td>B4</td><td>462515</td><td>90.0</td><td>222</td></tr>
+<tr><td>B5</td><td>592433</td><td>89.1</td><td>774</td></tr>
+<tr><td>B6</td><td>471083</td><td>88.9</td><td>31</td></tr>
+<tr><td>B7</td><td>456124</td><td>88.8</td><td>36</td></tr>
+<tr><td>B8</td><td>542194</td><td>88.4</td><td>43</td></tr>
+<tr><td>B9</td><td>475247</td><td>87.6</td><td>19</td></tr>
+<tr><td>B10</td><td>534737</td><td>87.0</td><td>1,142</td></tr>
+<tr><td>B11</td><td>600301</td><td>86.8</td><td>6</td></tr>
+<tr><td>B12</td><td>592407</td><td>85.9</td><td>18</td></tr>
+<tr><td>B13</td><td>446381</td><td>85.2</td><td>16</td></tr>
+<tr><td>B14</td><td>534606</td><td>80.0</td><td>12</td></tr>
+<tr><td>B15</td><td>460269</td><td>78.8</td><td>7</td></tr>
+</table>
+<br>
+<h3>2020 — Top 15 / Bottom 15</h3>
+<br>
+<table>
+<tr><th>Rank</th><th>pitcher_id</th><th>Stuff+ v4</th><th>N pitches</th></tr>
+<tr><td>T1</td><td>547973</td><td>119.2</td><td>199</td></tr>
+<tr><td>T2</td><td>676979</td><td>117.7</td><td>82</td></tr>
+<tr><td>T3</td><td>663770</td><td>117.0</td><td>54</td></tr>
+<tr><td>T4</td><td>607192</td><td>116.2</td><td>954</td></tr>
+<tr><td>T5</td><td>594798</td><td>115.3</td><td>1,134</td></tr>
+<tr><td>T6</td><td>605447</td><td>114.8</td><td>237</td></tr>
+<tr><td>T7</td><td>521230</td><td>114.7</td><td>370</td></tr>
+<tr><td>T8</td><td>642207</td><td>114.6</td><td>431</td></tr>
+<tr><td>T9</td><td>434378</td><td>113.7</td><td>73</td></tr>
+<tr><td>T10</td><td>664126</td><td>113.3</td><td>490</td></tr>
+<tr><td>T11</td><td>622251</td><td>112.1</td><td>471</td></tr>
+<tr><td>T12</td><td>475054</td><td>112.1</td><td>138</td></tr>
+<tr><td>T13</td><td>668687</td><td>111.8</td><td>404</td></tr>
+<tr><td>T14</td><td>621052</td><td>111.7</td><td>369</td></tr>
+<tr><td>T15</td><td>621111</td><td>111.5</td><td>600</td></tr>
+<tr><td>...</td><td>...</td><td>...</td><td>...</td></tr>
+<tr><td>B1</td><td>571974</td><td>77.1</td><td>8</td></tr>
+<tr><td>B2</td><td>460077</td><td>76.6</td><td>30</td></tr>
+<tr><td>B3</td><td>606115</td><td>76.1</td><td>9</td></tr>
+<tr><td>B4</td><td>621532</td><td>73.9</td><td>16</td></tr>
+<tr><td>B5</td><td>669289</td><td>73.6</td><td>40</td></tr>
+<tr><td>B6</td><td>576397</td><td>73.1</td><td>11</td></tr>
+<tr><td>B7</td><td>570560</td><td>72.8</td><td>2</td></tr>
+<tr><td>B8</td><td>608348</td><td>72.3</td><td>12</td></tr>
+<tr><td>B9</td><td>621011</td><td>71.1</td><td>8</td></tr>
+<tr><td>B10</td><td>623168</td><td>70.6</td><td>2</td></tr>
+<tr><td>B11</td><td>571788</td><td>70.2</td><td>28</td></tr>
+<tr><td>B12</td><td>670712</td><td>70.2</td><td>4</td></tr>
+<tr><td>B13</td><td>592407</td><td>68.8</td><td>13</td></tr>
+<tr><td>B14</td><td>453943</td><td>63.5</td><td>13</td></tr>
+<tr><td>B15</td><td>641645</td><td>62.8</td><td>9</td></tr>
+</table>
+<br>
+<h3>2022 — Top 15 / Bottom 15</h3>
+<br>
+<table>
+<tr><th>Rank</th><th>pitcher_id</th><th>Stuff+ v4</th><th>N pitches</th></tr>
+<tr><td>T1</td><td>664126</td><td>124.6</td><td>351</td></tr>
+<tr><td>T2</td><td>661403</td><td>123.8</td><td>920</td></tr>
+<tr><td>T3</td><td>594838</td><td>121.4</td><td>5</td></tr>
+<tr><td>T4</td><td>607192</td><td>118.9</td><td>114</td></tr>
+<tr><td>T5</td><td>642585</td><td>117.7</td><td>993</td></tr>
+<tr><td>T6</td><td>664854</td><td>117.2</td><td>954</td></tr>
+<tr><td>T7</td><td>547973</td><td>114.6</td><td>678</td></tr>
+<tr><td>T8</td><td>621363</td><td>113.1</td><td>973</td></tr>
+<tr><td>T9</td><td>594798</td><td>112.8</td><td>940</td></tr>
+<tr><td>T10</td><td>660271</td><td>112.6</td><td>2,623</td></tr>
+<tr><td>T11</td><td>605447</td><td>112.0</td><td>987</td></tr>
+<tr><td>T12</td><td>521230</td><td>112.0</td><td>948</td></tr>
+<tr><td>T13</td><td>605483</td><td>111.9</td><td>2,338</td></tr>
+<tr><td>T14</td><td>445276</td><td>111.9</td><td>998</td></tr>
+<tr><td>T15</td><td>621242</td><td>111.9</td><td>922</td></tr>
+<tr><td>...</td><td>...</td><td>...</td><td>...</td></tr>
+<tr><td>B1</td><td>596117</td><td>42.9</td><td>49</td></tr>
+<tr><td>B2</td><td>641914</td><td>42.1</td><td>9</td></tr>
+<tr><td>B3</td><td>621433</td><td>41.1</td><td>58</td></tr>
+<tr><td>B4</td><td>545121</td><td>39.6</td><td>2</td></tr>
+<tr><td>B5</td><td>676391</td><td>38.4</td><td>42</td></tr>
+<tr><td>B6</td><td>640461</td><td>38.2</td><td>26</td></tr>
+<tr><td>B7</td><td>543281</td><td>37.7</td><td>57</td></tr>
+<tr><td>B8</td><td>592743</td><td>37.7</td><td>25</td></tr>
+<tr><td>B9</td><td>425877</td><td>34.4</td><td>39</td></tr>
+<tr><td>B10</td><td>571976</td><td>32.3</td><td>38</td></tr>
+<tr><td>B11</td><td>543829</td><td>31.0</td><td>28</td></tr>
+<tr><td>B12</td><td>643524</td><td>30.3</td><td>26</td></tr>
+<tr><td>B13</td><td>444876</td><td>27.6</td><td>15</td></tr>
+<tr><td>B14</td><td>622268</td><td>25.4</td><td>8</td></tr>
+<tr><td>B15</td><td>621011</td><td>14.5</td><td>26</td></tr>
+</table>
+<br>
+<h3>2025 — Top 15 / Bottom 15</h3>
+<br>
+<table>
+<tr><th>Rank</th><th>pitcher_id</th><th>Stuff+ v4</th><th>N pitches</th></tr>
+<tr><td>T1</td><td>547973</td><td>119.9</td><td>917</td></tr>
+<tr><td>T2</td><td>695243</td><td>117.3</td><td>971</td></tr>
+<tr><td>T3</td><td>643511</td><td>116.8</td><td>976</td></tr>
+<tr><td>T4</td><td>661403</td><td>115.0</td><td>746</td></tr>
+<tr><td>T5</td><td>656730</td><td>114.0</td><td>752</td></tr>
+<tr><td>T6</td><td>695505</td><td>113.7</td><td>764</td></tr>
+<tr><td>T7</td><td>656629</td><td>112.4</td><td>218</td></tr>
+<tr><td>T8</td><td>642585</td><td>112.3</td><td>626</td></tr>
+<tr><td>T9</td><td>682254</td><td>111.9</td><td>858</td></tr>
+<tr><td>T10</td><td>691799</td><td>111.8</td><td>610</td></tr>
+<tr><td>T11</td><td>683618</td><td>111.5</td><td>258</td></tr>
+<tr><td>T12</td><td>445276</td><td>111.4</td><td>868</td></tr>
+<tr><td>T13</td><td>676879</td><td>111.0</td><td>1,033</td></tr>
+<tr><td>T14</td><td>661395</td><td>110.4</td><td>1,073</td></tr>
+<tr><td>T15</td><td>694819</td><td>109.8</td><td>1,162</td></tr>
+<tr><td>...</td><td>...</td><td>...</td><td>...</td></tr>
+<tr><td>B1</td><td>683766</td><td>51.3</td><td>5</td></tr>
+<tr><td>B2</td><td>681987</td><td>51.1</td><td>8</td></tr>
+<tr><td>B3</td><td>670032</td><td>51.0</td><td>8</td></tr>
+<tr><td>B4</td><td>669707</td><td>50.6</td><td>6</td></tr>
+<tr><td>B5</td><td>694359</td><td>47.4</td><td>21</td></tr>
+<tr><td>B6</td><td>642215</td><td>47.3</td><td>11</td></tr>
+<tr><td>B7</td><td>650489</td><td>46.0</td><td>2</td></tr>
+<tr><td>B8</td><td>624431</td><td>43.6</td><td>33</td></tr>
+<tr><td>B9</td><td>622569</td><td>43.2</td><td>13</td></tr>
+<tr><td>B10</td><td>596142</td><td>40.9</td><td>11</td></tr>
+<tr><td>B11</td><td>691594</td><td>38.6</td><td>169</td></tr>
+<tr><td>B12</td><td>543592</td><td>37.5</td><td>16</td></tr>
+<tr><td>B13</td><td>608671</td><td>31.7</td><td>4</td></tr>
+<tr><td>B14</td><td>645305</td><td>19.5</td><td>15</td></tr>
+<tr><td>B15</td><td>672724</td><td>15.6</td><td>40</td></tr>
+</table>
+<br>
+<h3>2026 — Top 15 / Bottom 15</h3>
+<br>
+<table>
+<tr><th>Rank</th><th>pitcher_id</th><th>Stuff+ v4</th><th>N pitches</th></tr>
+<tr><td>T1</td><td>695243</td><td>120.2</td><td>1,149</td></tr>
+<tr><td>T2</td><td>694819</td><td>118.4</td><td>2,646</td></tr>
+<tr><td>T3</td><td>695505</td><td>114.4</td><td>2,512</td></tr>
+<tr><td>T4</td><td>547973</td><td>113.8</td><td>816</td></tr>
+<tr><td>T5</td><td>594027</td><td>113.6</td><td>607</td></tr>
+<tr><td>T6</td><td>811315</td><td>113.1</td><td>81</td></tr>
+<tr><td>T7</td><td>683618</td><td>113.0</td><td>946</td></tr>
+<tr><td>T8</td><td>445276</td><td>112.9</td><td>725</td></tr>
+<tr><td>T9</td><td>656730</td><td>112.2</td><td>872</td></tr>
+<tr><td>T10</td><td>696519</td><td>112.1</td><td>580</td></tr>
+<tr><td>T11</td><td>671922</td><td>111.9</td><td>1,226</td></tr>
+<tr><td>T12</td><td>670970</td><td>111.8</td><td>1,312</td></tr>
+<tr><td>T13</td><td>669062</td><td>111.6</td><td>953</td></tr>
+<tr><td>T14</td><td>676879</td><td>111.5</td><td>1,580</td></tr>
+<tr><td>T15</td><td>679885</td><td>111.4</td><td>232</td></tr>
+<tr><td>...</td><td>...</td><td>...</td><td>...</td></tr>
+<tr><td>B1</td><td>571771</td><td>40.7</td><td>3</td></tr>
+<tr><td>B2</td><td>691594</td><td>38.8</td><td>73</td></tr>
+<tr><td>B3</td><td>620443</td><td>37.2</td><td>4</td></tr>
+<tr><td>B4</td><td>656716</td><td>36.9</td><td>33</td></tr>
+<tr><td>B5</td><td>623168</td><td>35.7</td><td>26</td></tr>
+<tr><td>B6</td><td>655316</td><td>34.4</td><td>28</td></tr>
+<tr><td>B7</td><td>680474</td><td>32.2</td><td>14</td></tr>
+<tr><td>B8</td><td>624431</td><td>28.6</td><td>40</td></tr>
+<tr><td>B9</td><td>664774</td><td>24.0</td><td>11</td></tr>
+<tr><td>B10</td><td>677588</td><td>17.7</td><td>11</td></tr>
+<tr><td>B11</td><td>543309</td><td>16.5</td><td>18</td></tr>
+<tr><td>B12</td><td>683734</td><td>13.9</td><td>62</td></tr>
+<tr><td>B13</td><td>686475</td><td>9.3</td><td>38</td></tr>
+<tr><td>B14</td><td>678391</td><td>6.2</td><td>35</td></tr>
+<tr><td>B15</td><td>596117</td><td>-0.8</td><td>36</td></tr>
+</table>
+<br>
+</body>
+</html>

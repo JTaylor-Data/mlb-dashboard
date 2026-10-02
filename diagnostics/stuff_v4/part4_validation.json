@@ -1,0 +1,1044 @@
+{
+  "note": "All results are final model, in-sample (descriptive) unless labeled pitcher-holdout",
+  "n_pitcher_seasons": 9070,
+  "season_stats": {
+    "2016": {
+      "n_pitcher_type_seasons": 3110,
+      "n_pitcher_seasons": 742,
+      "mean_score": 99.75366535097146,
+      "std_score": 4.667865015396015,
+      "season_flag": ""
+    },
+    "2017": {
+      "n_pitcher_type_seasons": 3226,
+      "n_pitcher_seasons": 755,
+      "mean_score": 99.43640526238936,
+      "std_score": 5.485828448535653,
+      "season_flag": ""
+    },
+    "2018": {
+      "n_pitcher_type_seasons": 3277,
+      "n_pitcher_seasons": 798,
+      "mean_score": 98.70518972928082,
+      "std_score": 7.556628019036419,
+      "season_flag": ""
+    },
+    "2019": {
+      "n_pitcher_type_seasons": 3350,
+      "n_pitcher_seasons": 829,
+      "mean_score": 98.77075450477497,
+      "std_score": 7.374331117353162,
+      "season_flag": ""
+    },
+    "2020": {
+      "n_pitcher_type_seasons": 2943,
+      "n_pitcher_seasons": 735,
+      "mean_score": 99.27057894153369,
+      "std_score": 6.487915542748324,
+      "season_flag": "60-game season"
+    },
+    "2021": {
+      "n_pitcher_type_seasons": 3734,
+      "n_pitcher_seasons": 908,
+      "mean_score": 97.81006814860919,
+      "std_score": 9.102692581600111,
+      "season_flag": ""
+    },
+    "2022": {
+      "n_pitcher_type_seasons": 3571,
+      "n_pitcher_seasons": 870,
+      "mean_score": 96.56446716498517,
+      "std_score": 13.347789675967915,
+      "season_flag": ""
+    },
+    "2023": {
+      "n_pitcher_type_seasons": 3691,
+      "n_pitcher_seasons": 859,
+      "mean_score": 96.86914609305798,
+      "std_score": 12.425797485997611,
+      "season_flag": ""
+    },
+    "2024": {
+      "n_pitcher_type_seasons": 3758,
+      "n_pitcher_seasons": 851,
+      "mean_score": 98.10408211800011,
+      "std_score": 8.382279140215001,
+      "season_flag": ""
+    },
+    "2025": {
+      "n_pitcher_type_seasons": 3824,
+      "n_pitcher_seasons": 863,
+      "mean_score": 97.07475088155307,
+      "std_score": 11.774525036876362,
+      "season_flag": ""
+    },
+    "2026": {
+      "n_pitcher_type_seasons": 3963,
+      "n_pitcher_seasons": 860,
+      "mean_score": 97.10615201430967,
+      "std_score": 12.780313672569857,
+      "season_flag": ""
+    }
+  },
+  "sanity_tables": {
+    "2016": {
+      "top_15": [
+        {
+          "pitcher_id": 547973,
+          "stuff_plus_v4": 126.1392121616555,
+          "n_pitches": 738.0
+        },
+        {
+          "pitcher_id": 445276,
+          "stuff_plus_v4": 118.79163167013472,
+          "n_pitches": 955.0
+        },
+        {
+          "pitcher_id": 476454,
+          "stuff_plus_v4": 118.52272019678642,
+          "n_pitches": 1080.0
+        },
+        {
+          "pitcher_id": 518886,
+          "stuff_plus_v4": 114.51310885574657,
+          "n_pitches": 899.0
+        },
+        {
+          "pitcher_id": 501789,
+          "stuff_plus_v4": 114.26703282685598,
+          "n_pitches": 996.0
+        },
+        {
+          "pitcher_id": 456713,
+          "stuff_plus_v4": 113.09160829002415,
+          "n_pitches": 909.0
+        },
+        {
+          "pitcher_id": 592102,
+          "stuff_plus_v4": 112.95794937201072,
+          "n_pitches": 1115.0
+        },
+        {
+          "pitcher_id": 543766,
+          "stuff_plus_v4": 112.89838142430128,
+          "n_pitches": 1112.0
+        },
+        {
+          "pitcher_id": 542609,
+          "stuff_plus_v4": 112.49117746391569,
+          "n_pitches": 601.0
+        },
+        {
+          "pitcher_id": 502154,
+          "stuff_plus_v4": 112.0328094643469,
+          "n_pitches": 909.0
+        },
+        {
+          "pitcher_id": 477132,
+          "stuff_plus_v4": 111.94990295951652,
+          "n_pitches": 1798.0
+        },
+        {
+          "pitcher_id": 475054,
+          "stuff_plus_v4": 111.57951497603167,
+          "n_pitches": 400.0
+        },
+        {
+          "pitcher_id": 489265,
+          "stuff_plus_v4": 111.30270777691392,
+          "n_pitches": 382.0
+        },
+        {
+          "pitcher_id": 605218,
+          "stuff_plus_v4": 111.29170772234059,
+          "n_pitches": 585.0
+        },
+        {
+          "pitcher_id": 621121,
+          "stuff_plus_v4": 111.1953706601742,
+          "n_pitches": 1232.0
+        }
+      ],
+      "bottom_15": [
+        {
+          "pitcher_id": 285064,
+          "stuff_plus_v4": 90.58242633895563,
+          "n_pitches": 1268.0
+        },
+        {
+          "pitcher_id": 500871,
+          "stuff_plus_v4": 90.31217478434144,
+          "n_pitches": 16.0
+        },
+        {
+          "pitcher_id": 592593,
+          "stuff_plus_v4": 90.1701229565566,
+          "n_pitches": 1142.0
+        },
+        {
+          "pitcher_id": 462515,
+          "stuff_plus_v4": 89.9654392308179,
+          "n_pitches": 222.0
+        },
+        {
+          "pitcher_id": 592433,
+          "stuff_plus_v4": 89.12733804143053,
+          "n_pitches": 774.0
+        },
+        {
+          "pitcher_id": 471083,
+          "stuff_plus_v4": 88.921728056422,
+          "n_pitches": 31.0
+        },
+        {
+          "pitcher_id": 456124,
+          "stuff_plus_v4": 88.80796315238634,
+          "n_pitches": 36.0
+        },
+        {
+          "pitcher_id": 542194,
+          "stuff_plus_v4": 88.4006721599669,
+          "n_pitches": 43.0
+        },
+        {
+          "pitcher_id": 475247,
+          "stuff_plus_v4": 87.63037235849986,
+          "n_pitches": 19.0
+        },
+        {
+          "pitcher_id": 534737,
+          "stuff_plus_v4": 86.98493372965788,
+          "n_pitches": 1142.0
+        },
+        {
+          "pitcher_id": 600301,
+          "stuff_plus_v4": 86.77486749202063,
+          "n_pitches": 6.0
+        },
+        {
+          "pitcher_id": 592407,
+          "stuff_plus_v4": 85.86000099524406,
+          "n_pitches": 18.0
+        },
+        {
+          "pitcher_id": 446381,
+          "stuff_plus_v4": 85.17280886929282,
+          "n_pitches": 16.0
+        },
+        {
+          "pitcher_id": 534606,
+          "stuff_plus_v4": 79.98850434348353,
+          "n_pitches": 12.0
+        },
+        {
+          "pitcher_id": 460269,
+          "stuff_plus_v4": 78.82242266804413,
+          "n_pitches": 7.0
+        }
+      ]
+    },
+    "2020": {
+      "top_15": [
+        {
+          "pitcher_id": 547973,
+          "stuff_plus_v4": 119.22359522125707,
+          "n_pitches": 199.0
+        },
+        {
+          "pitcher_id": 676979,
+          "stuff_plus_v4": 117.74338077575098,
+          "n_pitches": 82.0
+        },
+        {
+          "pitcher_id": 663770,
+          "stuff_plus_v4": 116.97788010609699,
+          "n_pitches": 54.0
+        },
+        {
+          "pitcher_id": 607192,
+          "stuff_plus_v4": 116.15799581085433,
+          "n_pitches": 954.0
+        },
+        {
+          "pitcher_id": 594798,
+          "stuff_plus_v4": 115.2863259112682,
+          "n_pitches": 1134.0
+        },
+        {
+          "pitcher_id": 605447,
+          "stuff_plus_v4": 114.8207099846307,
+          "n_pitches": 237.0
+        },
+        {
+          "pitcher_id": 521230,
+          "stuff_plus_v4": 114.6780820381516,
+          "n_pitches": 370.0
+        },
+        {
+          "pitcher_id": 642207,
+          "stuff_plus_v4": 114.60384191890748,
+          "n_pitches": 431.0
+        },
+        {
+          "pitcher_id": 434378,
+          "stuff_plus_v4": 113.72851176475484,
+          "n_pitches": 73.0
+        },
+        {
+          "pitcher_id": 664126,
+          "stuff_plus_v4": 113.33193663871258,
+          "n_pitches": 490.0
+        },
+        {
+          "pitcher_id": 622251,
+          "stuff_plus_v4": 112.08347713240217,
+          "n_pitches": 471.0
+        },
+        {
+          "pitcher_id": 475054,
+          "stuff_plus_v4": 112.07920431758362,
+          "n_pitches": 138.0
+        },
+        {
+          "pitcher_id": 668687,
+          "stuff_plus_v4": 111.7957515179428,
+          "n_pitches": 404.0
+        },
+        {
+          "pitcher_id": 621052,
+          "stuff_plus_v4": 111.65227995706762,
+          "n_pitches": 369.0
+        },
+        {
+          "pitcher_id": 621111,
+          "stuff_plus_v4": 111.49835160123834,
+          "n_pitches": 600.0
+        }
+      ],
+      "bottom_15": [
+        {
+          "pitcher_id": 571974,
+          "stuff_plus_v4": 77.08092576977984,
+          "n_pitches": 8.0
+        },
+        {
+          "pitcher_id": 460077,
+          "stuff_plus_v4": 76.56866496383829,
+          "n_pitches": 30.0
+        },
+        {
+          "pitcher_id": 606115,
+          "stuff_plus_v4": 76.11915666572463,
+          "n_pitches": 9.0
+        },
+        {
+          "pitcher_id": 621532,
+          "stuff_plus_v4": 73.90026143461822,
+          "n_pitches": 16.0
+        },
+        {
+          "pitcher_id": 669289,
+          "stuff_plus_v4": 73.6055013880422,
+          "n_pitches": 40.0
+        },
+        {
+          "pitcher_id": 576397,
+          "stuff_plus_v4": 73.0504777177537,
+          "n_pitches": 11.0
+        },
+        {
+          "pitcher_id": 570560,
+          "stuff_plus_v4": 72.81547184668506,
+          "n_pitches": 2.0
+        },
+        {
+          "pitcher_id": 608348,
+          "stuff_plus_v4": 72.2730808198531,
+          "n_pitches": 12.0
+        },
+        {
+          "pitcher_id": 621011,
+          "stuff_plus_v4": 71.12673910659257,
+          "n_pitches": 8.0
+        },
+        {
+          "pitcher_id": 623168,
+          "stuff_plus_v4": 70.58473900834335,
+          "n_pitches": 2.0
+        },
+        {
+          "pitcher_id": 571788,
+          "stuff_plus_v4": 70.22917009329798,
+          "n_pitches": 28.0
+        },
+        {
+          "pitcher_id": 670712,
+          "stuff_plus_v4": 70.1649519445598,
+          "n_pitches": 4.0
+        },
+        {
+          "pitcher_id": 592407,
+          "stuff_plus_v4": 68.83331562495088,
+          "n_pitches": 13.0
+        },
+        {
+          "pitcher_id": 453943,
+          "stuff_plus_v4": 63.47864740379647,
+          "n_pitches": 13.0
+        },
+        {
+          "pitcher_id": 641645,
+          "stuff_plus_v4": 62.81246014845067,
+          "n_pitches": 9.0
+        }
+      ]
+    },
+    "2022": {
+      "top_15": [
+        {
+          "pitcher_id": 664126,
+          "stuff_plus_v4": 124.55500267599338,
+          "n_pitches": 351.0
+        },
+        {
+          "pitcher_id": 661403,
+          "stuff_plus_v4": 123.82355568904994,
+          "n_pitches": 920.0
+        },
+        {
+          "pitcher_id": 594838,
+          "stuff_plus_v4": 121.35573335139335,
+          "n_pitches": 5.0
+        },
+        {
+          "pitcher_id": 607192,
+          "stuff_plus_v4": 118.92988230035449,
+          "n_pitches": 114.0
+        },
+        {
+          "pitcher_id": 642585,
+          "stuff_plus_v4": 117.65427967701777,
+          "n_pitches": 993.0
+        },
+        {
+          "pitcher_id": 664854,
+          "stuff_plus_v4": 117.15837653178971,
+          "n_pitches": 954.0
+        },
+        {
+          "pitcher_id": 547973,
+          "stuff_plus_v4": 114.57915307981047,
+          "n_pitches": 678.0
+        },
+        {
+          "pitcher_id": 621363,
+          "stuff_plus_v4": 113.12903689331868,
+          "n_pitches": 973.0
+        },
+        {
+          "pitcher_id": 594798,
+          "stuff_plus_v4": 112.8356696051896,
+          "n_pitches": 940.0
+        },
+        {
+          "pitcher_id": 660271,
+          "stuff_plus_v4": 112.64863073650075,
+          "n_pitches": 2623.0
+        },
+        {
+          "pitcher_id": 605447,
+          "stuff_plus_v4": 112.03377802780072,
+          "n_pitches": 987.0
+        },
+        {
+          "pitcher_id": 521230,
+          "stuff_plus_v4": 111.95254846536571,
+          "n_pitches": 948.0
+        },
+        {
+          "pitcher_id": 605483,
+          "stuff_plus_v4": 111.94707522179502,
+          "n_pitches": 2338.0
+        },
+        {
+          "pitcher_id": 445276,
+          "stuff_plus_v4": 111.86452946826049,
+          "n_pitches": 998.0
+        },
+        {
+          "pitcher_id": 621242,
+          "stuff_plus_v4": 111.85305034482916,
+          "n_pitches": 922.0
+        }
+      ],
+      "bottom_15": [
+        {
+          "pitcher_id": 596117,
+          "stuff_plus_v4": 42.864012557927076,
+          "n_pitches": 49.0
+        },
+        {
+          "pitcher_id": 641914,
+          "stuff_plus_v4": 42.094620846660995,
+          "n_pitches": 9.0
+        },
+        {
+          "pitcher_id": 621433,
+          "stuff_plus_v4": 41.11509230787767,
+          "n_pitches": 58.0
+        },
+        {
+          "pitcher_id": 545121,
+          "stuff_plus_v4": 39.555620329005365,
+          "n_pitches": 2.0
+        },
+        {
+          "pitcher_id": 676391,
+          "stuff_plus_v4": 38.414044990406,
+          "n_pitches": 42.0
+        },
+        {
+          "pitcher_id": 640461,
+          "stuff_plus_v4": 38.22898673572005,
+          "n_pitches": 26.0
+        },
+        {
+          "pitcher_id": 543281,
+          "stuff_plus_v4": 37.705881132925775,
+          "n_pitches": 57.0
+        },
+        {
+          "pitcher_id": 592743,
+          "stuff_plus_v4": 37.67736146181862,
+          "n_pitches": 25.0
+        },
+        {
+          "pitcher_id": 425877,
+          "stuff_plus_v4": 34.37168910928318,
+          "n_pitches": 39.0
+        },
+        {
+          "pitcher_id": 571976,
+          "stuff_plus_v4": 32.33120864741339,
+          "n_pitches": 38.0
+        },
+        {
+          "pitcher_id": 543829,
+          "stuff_plus_v4": 31.00144311562954,
+          "n_pitches": 28.0
+        },
+        {
+          "pitcher_id": 643524,
+          "stuff_plus_v4": 30.26008826863368,
+          "n_pitches": 26.0
+        },
+        {
+          "pitcher_id": 444876,
+          "stuff_plus_v4": 27.55138754700641,
+          "n_pitches": 15.0
+        },
+        {
+          "pitcher_id": 622268,
+          "stuff_plus_v4": 25.42553657112728,
+          "n_pitches": 8.0
+        },
+        {
+          "pitcher_id": 621011,
+          "stuff_plus_v4": 14.524793638757899,
+          "n_pitches": 26.0
+        }
+      ]
+    },
+    "2025": {
+      "top_15": [
+        {
+          "pitcher_id": 547973,
+          "stuff_plus_v4": 119.93035784353273,
+          "n_pitches": 917.0
+        },
+        {
+          "pitcher_id": 695243,
+          "stuff_plus_v4": 117.32645750789324,
+          "n_pitches": 971.0
+        },
+        {
+          "pitcher_id": 643511,
+          "stuff_plus_v4": 116.78497830682979,
+          "n_pitches": 976.0
+        },
+        {
+          "pitcher_id": 661403,
+          "stuff_plus_v4": 115.01393004355774,
+          "n_pitches": 746.0
+        },
+        {
+          "pitcher_id": 656730,
+          "stuff_plus_v4": 113.95910363910703,
+          "n_pitches": 752.0
+        },
+        {
+          "pitcher_id": 695505,
+          "stuff_plus_v4": 113.71765026990715,
+          "n_pitches": 764.0
+        },
+        {
+          "pitcher_id": 656629,
+          "stuff_plus_v4": 112.36528620287197,
+          "n_pitches": 218.0
+        },
+        {
+          "pitcher_id": 642585,
+          "stuff_plus_v4": 112.31983676957864,
+          "n_pitches": 626.0
+        },
+        {
+          "pitcher_id": 682254,
+          "stuff_plus_v4": 111.9394720357052,
+          "n_pitches": 858.0
+        },
+        {
+          "pitcher_id": 691799,
+          "stuff_plus_v4": 111.78912952067273,
+          "n_pitches": 610.0
+        },
+        {
+          "pitcher_id": 683618,
+          "stuff_plus_v4": 111.54066026163545,
+          "n_pitches": 258.0
+        },
+        {
+          "pitcher_id": 445276,
+          "stuff_plus_v4": 111.35010533466337,
+          "n_pitches": 868.0
+        },
+        {
+          "pitcher_id": 676879,
+          "stuff_plus_v4": 110.97214322973768,
+          "n_pitches": 1033.0
+        },
+        {
+          "pitcher_id": 661395,
+          "stuff_plus_v4": 110.42682475812575,
+          "n_pitches": 1073.0
+        },
+        {
+          "pitcher_id": 694819,
+          "stuff_plus_v4": 109.76616881282905,
+          "n_pitches": 1162.0
+        }
+      ],
+      "bottom_15": [
+        {
+          "pitcher_id": 683766,
+          "stuff_plus_v4": 51.309054308011106,
+          "n_pitches": 5.0
+        },
+        {
+          "pitcher_id": 681987,
+          "stuff_plus_v4": 51.0563825871674,
+          "n_pitches": 8.0
+        },
+        {
+          "pitcher_id": 670032,
+          "stuff_plus_v4": 50.95009117640965,
+          "n_pitches": 8.0
+        },
+        {
+          "pitcher_id": 669707,
+          "stuff_plus_v4": 50.630161356310076,
+          "n_pitches": 6.0
+        },
+        {
+          "pitcher_id": 694359,
+          "stuff_plus_v4": 47.351276592682474,
+          "n_pitches": 21.0
+        },
+        {
+          "pitcher_id": 642215,
+          "stuff_plus_v4": 47.256614672211306,
+          "n_pitches": 11.0
+        },
+        {
+          "pitcher_id": 650489,
+          "stuff_plus_v4": 45.989064437621565,
+          "n_pitches": 2.0
+        },
+        {
+          "pitcher_id": 624431,
+          "stuff_plus_v4": 43.59607687413831,
+          "n_pitches": 33.0
+        },
+        {
+          "pitcher_id": 622569,
+          "stuff_plus_v4": 43.20136835213963,
+          "n_pitches": 13.0
+        },
+        {
+          "pitcher_id": 596142,
+          "stuff_plus_v4": 40.86247466424832,
+          "n_pitches": 11.0
+        },
+        {
+          "pitcher_id": 691594,
+          "stuff_plus_v4": 38.56783791635547,
+          "n_pitches": 169.0
+        },
+        {
+          "pitcher_id": 543592,
+          "stuff_plus_v4": 37.45838463302028,
+          "n_pitches": 16.0
+        },
+        {
+          "pitcher_id": 608671,
+          "stuff_plus_v4": 31.680248473325648,
+          "n_pitches": 4.0
+        },
+        {
+          "pitcher_id": 645305,
+          "stuff_plus_v4": 19.539311842971994,
+          "n_pitches": 15.0
+        },
+        {
+          "pitcher_id": 672724,
+          "stuff_plus_v4": 15.586390046046114,
+          "n_pitches": 40.0
+        }
+      ]
+    },
+    "2026": {
+      "top_15": [
+        {
+          "pitcher_id": 695243,
+          "stuff_plus_v4": 120.20835953692752,
+          "n_pitches": 1149.0
+        },
+        {
+          "pitcher_id": 694819,
+          "stuff_plus_v4": 118.44560309627815,
+          "n_pitches": 2646.0
+        },
+        {
+          "pitcher_id": 695505,
+          "stuff_plus_v4": 114.43267631151177,
+          "n_pitches": 2512.0
+        },
+        {
+          "pitcher_id": 547973,
+          "stuff_plus_v4": 113.79033919692465,
+          "n_pitches": 816.0
+        },
+        {
+          "pitcher_id": 594027,
+          "stuff_plus_v4": 113.6182604190094,
+          "n_pitches": 607.0
+        },
+        {
+          "pitcher_id": 811315,
+          "stuff_plus_v4": 113.05274959007488,
+          "n_pitches": 81.0
+        },
+        {
+          "pitcher_id": 683618,
+          "stuff_plus_v4": 113.00353850672379,
+          "n_pitches": 946.0
+        },
+        {
+          "pitcher_id": 445276,
+          "stuff_plus_v4": 112.8882782311472,
+          "n_pitches": 725.0
+        },
+        {
+          "pitcher_id": 656730,
+          "stuff_plus_v4": 112.24979779703857,
+          "n_pitches": 872.0
+        },
+        {
+          "pitcher_id": 696519,
+          "stuff_plus_v4": 112.14471787216029,
+          "n_pitches": 580.0
+        },
+        {
+          "pitcher_id": 671922,
+          "stuff_plus_v4": 111.92258240071601,
+          "n_pitches": 1226.0
+        },
+        {
+          "pitcher_id": 670970,
+          "stuff_plus_v4": 111.81140559556658,
+          "n_pitches": 1312.0
+        },
+        {
+          "pitcher_id": 669062,
+          "stuff_plus_v4": 111.6288827132161,
+          "n_pitches": 953.0
+        },
+        {
+          "pitcher_id": 676879,
+          "stuff_plus_v4": 111.4691727411704,
+          "n_pitches": 1580.0
+        },
+        {
+          "pitcher_id": 679885,
+          "stuff_plus_v4": 111.39415682369028,
+          "n_pitches": 232.0
+        }
+      ],
+      "bottom_15": [
+        {
+          "pitcher_id": 571771,
+          "stuff_plus_v4": 40.661918609356654,
+          "n_pitches": 3.0
+        },
+        {
+          "pitcher_id": 691594,
+          "stuff_plus_v4": 38.77807096463186,
+          "n_pitches": 73.0
+        },
+        {
+          "pitcher_id": 620443,
+          "stuff_plus_v4": 37.19841521506728,
+          "n_pitches": 4.0
+        },
+        {
+          "pitcher_id": 656716,
+          "stuff_plus_v4": 36.89566514357438,
+          "n_pitches": 33.0
+        },
+        {
+          "pitcher_id": 623168,
+          "stuff_plus_v4": 35.666381250518825,
+          "n_pitches": 26.0
+        },
+        {
+          "pitcher_id": 655316,
+          "stuff_plus_v4": 34.445750236921995,
+          "n_pitches": 28.0
+        },
+        {
+          "pitcher_id": 680474,
+          "stuff_plus_v4": 32.174262663337046,
+          "n_pitches": 14.0
+        },
+        {
+          "pitcher_id": 624431,
+          "stuff_plus_v4": 28.586744836721614,
+          "n_pitches": 40.0
+        },
+        {
+          "pitcher_id": 664774,
+          "stuff_plus_v4": 23.98184676398317,
+          "n_pitches": 11.0
+        },
+        {
+          "pitcher_id": 677588,
+          "stuff_plus_v4": 17.733164327486875,
+          "n_pitches": 11.0
+        },
+        {
+          "pitcher_id": 543309,
+          "stuff_plus_v4": 16.47658572849835,
+          "n_pitches": 18.0
+        },
+        {
+          "pitcher_id": 683734,
+          "stuff_plus_v4": 13.943407439494273,
+          "n_pitches": 62.0
+        },
+        {
+          "pitcher_id": 686475,
+          "stuff_plus_v4": 9.257528149042614,
+          "n_pitches": 38.0
+        },
+        {
+          "pitcher_id": 678391,
+          "stuff_plus_v4": 6.242571412579503,
+          "n_pitches": 35.0
+        },
+        {
+          "pitcher_id": 596117,
+          "stuff_plus_v4": -0.7726503039715075,
+          "n_pitches": 36.0
+        }
+      ]
+    }
+  },
+  "era_checks": {},
+  "mean_by_pitch_type": {
+    "AB": 105.72110553173893,
+    "CH": 97.15911308954662,
+    "CS": 61.99453567913145,
+    "CU": 95.09667028242418,
+    "FA": 59.89201651175957,
+    "FC": 100.1070322956993,
+    "FF": 97.39598665383608,
+    "FO": 90.97514211454143,
+    "FS": 100.54363539428682,
+    "KN": 63.19366346892863,
+    "SC": 88.111657566428,
+    "SI": 97.93338416776201,
+    "SL": 101.79119619940901,
+    "ST": 100.87973439116298,
+    "SV": 98.4059328001232
+  },
+  "flagged_pitch_types_far_from_100": {
+    "AB": 105.72110553173893,
+    "CS": 61.99453567913145,
+    "CU": 95.09667028242418,
+    "FA": 59.89201651175957,
+    "FO": 90.97514211454143,
+    "KN": 63.19366346892863,
+    "SC": 88.111657566428
+  },
+  "yoy_stability": {
+    "consecutive_pairs": [
+      {
+        "s1": 2016,
+        "s2": 2017,
+        "r": 0.7658410991750223,
+        "n": 539
+      },
+      {
+        "s1": 2017,
+        "s2": 2018,
+        "r": 0.7611000819854877,
+        "n": 557
+      },
+      {
+        "s1": 2018,
+        "s2": 2019,
+        "r": 0.8180608489106048,
+        "n": 588
+      },
+      {
+        "s1": 2019,
+        "s2": 2021,
+        "r": 0.5814944830185961,
+        "n": 531
+      },
+      {
+        "s1": 2021,
+        "s2": 2022,
+        "r": 0.8305872868090494,
+        "n": 611
+      },
+      {
+        "s1": 2022,
+        "s2": 2023,
+        "r": 0.939339591349858,
+        "n": 602
+      },
+      {
+        "s1": 2023,
+        "s2": 2024,
+        "r": 0.8689693486803858,
+        "n": 608
+      },
+      {
+        "s1": 2024,
+        "s2": 2025,
+        "r": 0.884078018278386,
+        "n": 609
+      },
+      {
+        "s1": 2025,
+        "s2": 2026,
+        "r": 0.9031980806681982,
+        "n": 606
+      }
+    ],
+    "pooled_mean_r": 0.8169632043195098,
+    "note": "Pairs touching 2020 excluded"
+  },
+  "seed_stability": {
+    "note": "Seed stability refit deferred (requires full retraining). See PROMOTION_CHECKLIST.md.",
+    "expected": ">= 0.99"
+  },
+  "leakage_checks": {
+    "forbidden_features_absent": true,
+    "forbidden_features_checked": [
+      "pitch_id",
+      "game_id",
+      "strikes",
+      "plate_z",
+      "pitcher_id",
+      "arm_angle",
+      "release_extension",
+      "release_pos_x_as",
+      "release_pos_z",
+      "balls",
+      "batter_id",
+      "plate_x",
+      "player_id"
+    ],
+    "features_used": [
+      "release_speed",
+      "effective_speed",
+      "release_spin_rate",
+      "spin_axis",
+      "hb",
+      "ivb",
+      "vaa_residual",
+      "velo_sep_vs_primary_fb",
+      "hb_sep_vs_primary_fb",
+      "ivb_sep_vs_primary_fb",
+      "axis_differential",
+      "haa_residual",
+      "pitch_type",
+      "p_throws",
+      "stand",
+      "season"
+    ]
+  },
+  "split_half_reliability": {
+    "50": {
+      "raw_r": 0.9877091802733927,
+      "spearman_brown": 0.9938165905512814,
+      "n_pitchers": 777
+    },
+    "100": {
+      "raw_r": 0.9875742090689317,
+      "spearman_brown": 0.9937482631469197,
+      "n_pitchers": 725
+    },
+    "200": {
+      "raw_r": 0.9886910554194677,
+      "spearman_brown": 0.9943133728339986,
+      "n_pitchers": 640
+    },
+    "300": {
+      "raw_r": 0.9896379873036418,
+      "spearman_brown": 0.9947920110278952,
+      "n_pitchers": 573
+    },
+    "400": {
+      "raw_r": 0.992419907575944,
+      "spearman_brown": 0.9961955346886298,
+      "n_pitchers": 521
+    },
+    "600": {
+      "raw_r": 0.9935512644405462,
+      "spearman_brown": 0.9967652020419633,
+      "n_pitchers": 435
+    },
+    "800": {
+      "raw_r": 0.9937249563997479,
+      "spearman_brown": 0.9968526031737178,
+      "n_pitchers": 346
+    },
+    "1000": {
+      "raw_r": 0.9934551322106483,
+      "spearman_brown": 0.9967168221227565,
+      "n_pitchers": 273
+    },
+    "1500": {
+      "raw_r": 0.9953200400165664,
+      "spearman_brown": 0.9976545316592946,
+      "n_pitchers": 141
+    },
+    "2000": {
+      "raw_r": 0.9966628717539948,
+      "spearman_brown": 0.9983286471175408,
+      "n_pitchers": 103
+    }
+  }
+}

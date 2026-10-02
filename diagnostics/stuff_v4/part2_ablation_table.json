@@ -1,0 +1,83 @@
+{
+  "variants_table": {
+    "V0a": {
+      "n_pitcher_seasons": 2212,
+      "corr_with_v0a": 1.0,
+      "same_season_xfip_corr": -0.21606943701301493,
+      "same_season_era_corr": -0.16533497330687802,
+      "next_season_xfip_corr": -0.17341764637332208,
+      "next_season_era_corr": -0.09835811292799586
+    },
+    "V0b": {
+      "n_pitcher_seasons": 2212,
+      "corr_with_v0a": 0.9785651298838871,
+      "same_season_xfip_corr": -0.19853518197208977,
+      "same_season_era_corr": -0.15334806712802446,
+      "next_season_xfip_corr": -0.16949251285807665,
+      "next_season_era_corr": -0.09220097695225606
+    },
+    "V1": {
+      "n_pitcher_seasons": 2212,
+      "corr_with_v0a": 0.9337907813259411,
+      "same_season_xfip_corr": -0.22107976075551208,
+      "same_season_era_corr": -0.18199025365013732,
+      "next_season_xfip_corr": -0.17261193560634347,
+      "next_season_era_corr": -0.09056385010346557
+    },
+    "V2": {
+      "n_pitcher_seasons": 2212,
+      "corr_with_v0a": 0.9527501481718772,
+      "same_season_xfip_corr": -0.1859558808230006,
+      "same_season_era_corr": -0.15278492808403665,
+      "next_season_xfip_corr": -0.14935021658836717,
+      "next_season_era_corr": -0.08995758073494126
+    },
+    "V3": {
+      "n_pitcher_seasons": 2212,
+      "corr_with_v0a": 0.8987159757292842,
+      "same_season_xfip_corr": -0.19934228159481698,
+      "same_season_era_corr": -0.18033992027433324,
+      "next_season_xfip_corr": -0.14015868360430778,
+      "next_season_era_corr": -0.0810910489687106
+    },
+    "Vchosen": {
+      "n_pitcher_seasons": 2212
+    },
+    "Vchosen_HAA": {
+      "n_pitcher_seasons": 2212
+    }
+  },
+  "stage1_result": {
+    "per_variant": {
+      "V1": "fails",
+      "V2": "fails",
+      "V3": "fails"
+    },
+    "chosen_variant": "V0a",
+    "drop_season": false,
+    "drop_effective_speed": false,
+    "v0a_v0b_diff": 0.9785651298838871
+  },
+  "stage2_result": {
+    "adopt_haa": true,
+    "reason": "leakage_ok=True, corr_with_vchosen=0.9635",
+    "haa_audit": {
+      "corr_with_plate_x": 0.0022865121359201394,
+      "corr_with_release_pos_x": -0.08371260180032648,
+      "leakage_ok": true
+    },
+    "corr_vchosen_vs_vchosen_haa": 0.9634571703906477
+  },
+  "final_variant": {
+    "drop_season": false,
+    "drop_effective_speed": false,
+    "include_haa": true,
+    "stage1_chosen": "V0a",
+    "stage2_adopt_haa": true
+  },
+  "subsample_n_pitchers": 776,
+  "subsample_fraction": 0.3,
+  "subsample_seed": 42,
+  "n_folds": 5,
+  "elapsed_minutes": 31.558487760000087
+}
