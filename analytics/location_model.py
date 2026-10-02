@@ -34,6 +34,15 @@ _raw_predictions_cache = {}
 _model_cache = {}
 
 
+def raw_predictions_if_cached(season):
+    """Return cached raw predictions if available and fresh, else None. Non-blocking."""
+    import time as _time
+    cached = _raw_predictions_cache.get(season)
+    if cached is not None and (_time.monotonic() - cached[1]) < RAW_PREDICTIONS_CACHE_TTL_SECONDS:
+        return cached[0]
+    return None
+
+
 def _load():
     if "model" not in _model_cache:
         _model_cache["model"] = lgb.Booster(model_file=str(BOOSTER_PATH))

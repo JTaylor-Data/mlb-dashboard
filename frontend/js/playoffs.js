@@ -62,7 +62,7 @@ function wildcardHtml(race) {
     .map((t) => {
       const rdColor = t.run_diff > 0 ? "#1a7f37" : t.run_diff < 0 ? "#c9302c" : "var(--text-muted)";
       return `
-        <tr class="${t.rank === 3 ? "wc-cutline" : ""}">
+        <tr class="${t.rank === 3 ? "wc-cutline" : ""}${t.in_wc_spot ? " wc-in-spot" : ""}">
           <td class="wc-rank">${t.rank}</td>
           <td>${teamLogoHtml(t.team_id, 26)}</td>
           <td class="team-cell">${teamNameHtml(t)}</td>

@@ -60,7 +60,7 @@ def compute_xfip(pa_df, league_hr_fb_rate):
     ip = outs / 3
     if ip == 0:
         return np.nan
-    fb = (pa_df["bb_type"] == "fly_ball").sum()
+    fb = (pa_df["bb_type"] == "fly_ball").sum() if "bb_type" in pa_df.columns else 0
     bb_hbp = pa_df["events"].isin(WALK_EVENTS | HBP_EVENTS).sum()
     k = pa_df["events"].isin(STRIKEOUT_EVENTS).sum()
     return ((13 * fb * league_hr_fb_rate) + (3 * bb_hbp) - (2 * k)) / ip + FIP_CONSTANT_APPROX
@@ -124,13 +124,14 @@ def league_average_batter_row(conn, season, throws_filter=None):
 PITCH_TYPE_MERGE = {"KC": "CU"}
 
 
-def _load(conn, season, id_col, player_id, extra_filter_col=None, extra_filter_val=None):
+def _load(conn, season, id_col, player_id, extra_filter_col=None, extra_filter_val=None, columns=None):
     where = ["season = ?", f"{id_col} = ?"]
     params = [season, player_id]
     if extra_filter_col and extra_filter_val and extra_filter_val != "ALL":
         where.append(f"{extra_filter_col} = ?")
         params.append(extra_filter_val)
-    df = pd.read_sql(f"SELECT * FROM pitches WHERE {' AND '.join(where)}", conn, params=params)
+    cols = ", ".join(columns) if columns else "*"
+    df = pd.read_sql(f"SELECT {cols} FROM pitches WHERE {' AND '.join(where)}", conn, params=params)
     if "pitch_type" in df.columns:
         df["pitch_type"] = df["pitch_type"].replace(PITCH_TYPE_MERGE)
     return df
@@ -138,12 +139,19 @@ def _load(conn, season, id_col, player_id, extra_filter_col=None, extra_filter_v
 
 # ---------------------------------------------------------------- Pitcher --
 
+_PITCHER_PT_COLS = [
+    "pitch_type", "description", "zone", "events",
+    "woba_denom", "woba_value", "estimated_woba_using_speedangle",
+    "release_speed", "release_spin_rate", "pfx_x", "pfx_z", "p_throws",
+]
+
+
 def pitcher_pitch_table(conn, season, pitcher_id, stand_filter=None, stuff_plus_table=None):
     """One row per pitch type: usage%, OPS against, velo, spin, IVB, HB,
     zone%, chase%, whiff%, K%, stuff_plus (if a precomputed
     stuff_plus_table is passed - see stuff_model.compute_stuff_plus).
     Extension lives in the percentiles panel now, not here."""
-    df = _load(conn, season, "pitcher_id", pitcher_id, "stand", stand_filter)
+    df = _load(conn, season, "pitcher_id", pitcher_id, "stand", stand_filter, columns=_PITCHER_PT_COLS)
     if df.empty:
         return pd.DataFrame()
     # Excludes the same non-competitive pitch types Stuff+ itself excludes
@@ -164,13 +172,16 @@ def pitcher_pitch_table(conn, season, pitcher_id, stand_filter=None, stuff_plus_
 
     rows = []
     for pt, group in df.groupby("pitch_type"):
+        usage_pct = len(group) / total * 100
+        if usage_pct < 1.0:
+            continue
         swings = group["is_swing"].sum()
         out_zone_n = group["out_zone"].sum()
         pa = group[group["events"].notna()]
         k = pa["events"].isin(STRIKEOUT_EVENTS).sum()
         rows.append(dict(
             pitch_type=pt,
-            usage_pct=len(group) / total * 100,
+            usage_pct=usage_pct,
             n_pitches=len(group),
             ops=_pa_outcome_metrics(pa)["OPS"],
             velo=group["release_speed"].mean(),
@@ -244,12 +255,18 @@ def movement_plot_data(conn, season, pitcher_id, stand_filter=None):
     chart look backwards compared to Savant's own real chart for the same
     pitcher (raw pfx_x needs the sign flip for RHP specifically; LHP was
     fine either way, which is why only righties looked wrong)."""
-    df = _load(conn, season, "pitcher_id", pitcher_id, "stand", stand_filter)
+    df = _load(conn, season, "pitcher_id", pitcher_id, "stand", stand_filter,
+               columns=["pitch_type", "pfx_x", "pfx_z", "p_throws"])
     # Same non-competitive pitch types excluded from the pitch table
     # (EXCLUDED_PITCH_TYPES = pitchouts/eephus/unclassified) - these aren't
     # real pitch shapes worth plotting a movement point for.
     df = df[~df["pitch_type"].isin(EXCLUDED_PITCH_TYPES)]
     df = df[df["pfx_x"].notna() & df["pfx_z"].notna()].copy()
+    if df.empty:
+        return df[["pitch_type"]].iloc[:0]
+    total_n = len(df)
+    keep = {pt for pt, g in df.groupby("pitch_type") if len(g) / total_n * 100 >= 1.0}
+    df = df[df["pitch_type"].isin(keep)]
     df = _add_arm_side_hb(df)
     df["HB"] = df["hb"]
     df["IVB"] = df["pfx_z"] * 12
@@ -378,8 +395,11 @@ def similar_arm_angle_movement(conn, season, pitcher_id, arm_angles=None):
     return out.to_dict("index")
 
 
+_COUNTING_COLS = ["events", "woba_denom", "woba_value", "estimated_woba_using_speedangle", "game_id"]
+
+
 def pitcher_counting_stats(conn, season, pitcher_id, stand_filter=None, games_started=None, league_hr_fb_rate=None):
-    df = _load(conn, season, "pitcher_id", pitcher_id, "stand", stand_filter)
+    df = _load(conn, season, "pitcher_id", pitcher_id, "stand", stand_filter, columns=_COUNTING_COLS)
     pa = df[df["events"].notna()]
     outcomes = _pa_outcome_metrics(pa)
     ip_display, outs = innings_pitched(pa)
@@ -402,17 +422,25 @@ def pitcher_counting_stats(conn, season, pitcher_id, stand_filter=None, games_st
 
 # ----------------------------------------------------------------- Batter --
 
+_BATTER_PT_COLS = [
+    "pitch_type", "description", "zone", "events",
+    "woba_denom", "woba_value", "estimated_woba_using_speedangle",
+    "launch_speed", "launch_angle",
+]
+
+
 def batter_pitch_type_table(conn, season, batter_id, throws_filter=None):
     """Batter performance vs. each pitch type, same metric shape as the
     splits tab: OPS, wOBA, xwOBA, K%, whiff%, Barrel%."""
-    df = _load(conn, season, "batter_id", batter_id, "p_throws", throws_filter)
+    df = _load(conn, season, "batter_id", batter_id, "p_throws", throws_filter, columns=_BATTER_PT_COLS)
     if df.empty:
         return pd.DataFrame()
     df = _add_flags(df)
 
+    total_pitches = len(df)
     rows = []
     for pt, group in df.groupby("pitch_type"):
-        if len(group) <= 10:
+        if len(group) / total_pitches * 100 < 1.0:
             continue
         pa_group = group[group["events"].notna()]
         row = _pa_outcome_metrics(pa_group)
@@ -581,8 +609,11 @@ def player_last_n_games(conn, season, player_id, role, n=5):
     return out
 
 
+_SWING_COLS = ["bat_speed", "swing_length", "attack_angle", "attack_direction", "swing_path_tilt", "launch_speed"]
+
+
 def swing_profile(conn, season, batter_id, throws_filter=None):
-    df = _load(conn, season, "batter_id", batter_id, "p_throws", throws_filter)
+    df = _load(conn, season, "batter_id", batter_id, "p_throws", throws_filter, columns=_SWING_COLS)
     df = df[df["bat_speed"].notna()]
     cols = ["bat_speed", "swing_length", "attack_angle", "attack_direction", "swing_path_tilt"]
     result = df[cols].mean().to_dict()
@@ -614,7 +645,7 @@ def batter_wrc_plus(conn, season, batter_id, throws_filter=None, league_woba=Non
 
 
 def batter_counting_stats(conn, season, batter_id, throws_filter=None):
-    df = _load(conn, season, "batter_id", batter_id, "p_throws", throws_filter)
+    df = _load(conn, season, "batter_id", batter_id, "p_throws", throws_filter, columns=_COUNTING_COLS)
     pa = df[df["events"].notna()]
     outcomes = _pa_outcome_metrics(pa)
     return dict(
@@ -628,3 +659,60 @@ def batter_counting_stats(conn, season, batter_id, throws_filter=None):
         wOBA=outcomes["wOBA"],
         xwOBA=outcomes["xwOBA"],
     )
+
+
+def batter_rolling_xwoba(conn, season, batter_id, windows=(50, 100, 250)):
+    """Rolling xwOBA for a batter over the given PA-count windows.
+
+    Returns a list of {pa_index, date, <window>: xwoba_value} dicts, one per
+    qualifying PA (woba_denom == 1), ordered chronologically. Each window's
+    value is NaN until enough PAs have accumulated.
+    """
+    df = pd.read_sql(
+        """
+        SELECT game_date, at_bat_number, pitch_number,
+               events, woba_denom, estimated_woba_using_speedangle
+        FROM pitches
+        WHERE season = ? AND batter_id = ?
+        ORDER BY game_date, at_bat_number, pitch_number
+        """,
+        conn,
+        params=(season, batter_id),
+    )
+    if df.empty:
+        return []
+
+    # One row per PA (last pitch of the AB)
+    pa = (
+        df[df["events"].notna()]
+        .groupby(["game_date", "at_bat_number"], sort=False)
+        .last()
+        .reset_index()
+    )
+    pa = pa.sort_values(["game_date", "at_bat_number"]).reset_index(drop=True)
+
+    # Qualifying PAs for xwOBA
+    qualifying_mask = pa["woba_denom"] == 1
+    qpa = pa[qualifying_mask].copy()
+    qpa["_xw"] = qpa["estimated_woba_using_speedangle"].astype(float)
+    qpa = qpa.reset_index(drop=True)
+
+    if qpa.empty:
+        return []
+
+    # Build one point per qualifying PA with rolling means for each window
+    points = []
+    xw_vals = qpa["_xw"].values
+    dates = qpa["game_date"].values
+    total = len(qpa)
+
+    for i in range(total):
+        pt = {"pa_index": i + 1, "date": str(dates[i])}
+        for w in windows:
+            if i + 1 >= w:
+                pt[str(w)] = float(np.mean(xw_vals[i + 1 - w: i + 1]))
+            else:
+                pt[str(w)] = None
+        points.append(pt)
+
+    return points

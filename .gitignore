@@ -46,3 +46,14 @@ pitcher_cv/out_*/
 pitcher_cv/deception_v4/landmarks/
 pitcher_cv/deception_v4/frames/
 pitcher_cv/deception_v4/videos/
+
+# v2 training artifacts (large parquet/JSON, regenerable)
+training/v2_artifacts/
+training/v2_checkpoints/
+
+# Performance audit derived cache and golden snapshots (runtime, not source)
+derived_cache.db
+derived_cache.db-shm
+derived_cache.db-wal
+mlb_data.db.bak_pre_perf
+perf/golden/

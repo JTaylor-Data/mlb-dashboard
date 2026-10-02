@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stuff+ v3 — Methodology</title>
+<style>
+  :root { --green: #1a5c38; --green-light: #e8f3ee; --border: #d0d5c8; --muted: #5a6450; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; background: #fff; padding: 40px 48px; max-width: 900px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--green); padding-bottom: 16px; margin-bottom: 28px; }
+  .model-name { font-size: 28px; font-weight: bold; color: var(--green); letter-spacing: -0.5px; }
+  .model-sub { font-size: 14px; color: var(--muted); font-family: monospace; margin-top: 4px; }
+  .badges { display: flex; gap: 8px; margin-top: 10px; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; font-weight: bold; }
+  .badge-live { background: var(--green-light); color: var(--green); border: 1px solid var(--green); }
+  .badge-season { background: #e8f0f8; color: #1a4070; border: 1px solid #a8c0d8; }
+  h2 { font-size: 15px; color: var(--green); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin: 24px 0 12px; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Arial', sans-serif; }
+  h3 { font-size: 13px; font-weight: bold; margin: 16px 0 6px; font-family: 'Arial', sans-serif; }
+  p { margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0 16px; }
+  th { background: var(--green); color: #fff; text-align: left; padding: 6px 10px; font-family: monospace; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #f7f9f5; }
+  code { font-family: monospace; font-size: 12px; background: #f0f2ed; padding: 1px 4px; border-radius: 3px; }
+  .callout { background: #fff8e6; border-left: 4px solid #c89a00; padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-warn { background: #fde8ea; border-left: 4px solid #b91c2c; }
+  .section { margin-bottom: 28px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: monospace; }
+  @media print {
+    body { padding: 20px 28px; }
+    header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="model-name">Stuff+ v3</div>
+  <div class="model-sub">models/stuff_plus_v3_lgbm.txt · analytics/stuff_features.py · analytics/stuff_model.py</div>
+  <div class="badges">
+    <span class="badge badge-live">● LIVE</span>
+    <span class="badge badge-season">Training: 2016–2026 (11 seasons)</span>
+    <span class="badge badge-season">Last updated: Sep 2026</span>
+  </div>
+</header>
+
+<div class="section">
+<h2>1. What It Measures</h2>
+<p>Stuff+ grades the <strong>physical shape</strong> of a pitch — velocity, movement, spin, and how these compare to the pitcher's own fastball. It explicitly excludes location, count, and pitcher identity. Two hard rules enforced at training time via <code>assert_no_identifiers()</code>:</p>
+<ul style="margin: 8px 0 8px 20px;">
+  <li><strong>No plate_x / plate_z / balls / strikes</strong> — those belong to Location+ (command/sequencing, not pitch quality)</li>
+  <li><strong>No pitcher_id / game_id</strong> — a model that sees identity memorizes "good pitcher" rather than learning why a pitch shape works</li>
+</ul>
+<p>100 = league average that season. Each 10 points = 1 standard deviation. A 115 means the pitch quality is 1.5 SD above average.</p>
+</div>
+
+<div class="section">
+<h2>2. Feature Set (15 Total)</h2>
+<div class="two-col">
+<div>
+<table>
+  <tr><th>Feature</th><th>What it captures</th></tr>
+  <tr><td><code>release_speed</code></td><td>Raw velocity at release</td></tr>
+  <tr><td><code>effective_speed</code></td><td>Perceived velocity (extension-adjusted)</td></tr>
+  <tr><td><code>release_spin_rate</code></td><td>RPM at release</td></tr>
+  <tr><td><code>spin_axis</code></td><td>Clock-face spin-axis angle</td></tr>
+  <tr><td><code>hb</code></td><td>Horizontal break, arm-side-adjusted</td></tr>
+  <tr><td><code>ivb</code></td><td>Induced vertical break</td></tr>
+  <tr><td><code>vaa_residual</code></td><td>VAA minus expected from height+velo</td></tr>
+  <tr><td><code>axis_differential</code></td><td>Seam-shifted-wake / active-spin proxy</td></tr>
+  <tr><td><code>velo_sep_vs_primary_fb</code></td><td>Δ velo vs. this pitcher's fastball</td></tr>
+  <tr><td><code>hb_sep_vs_primary_fb</code></td><td>Δ HB vs. this pitcher's fastball</td></tr>
+  <tr><td><code>ivb_sep_vs_primary_fb</code></td><td>Δ IVB vs. this pitcher's fastball</td></tr>
+</table>
+</div>
+<div>
+<table>
+  <tr><th>Categorical</th><th>Values</th></tr>
+  <tr><td><code>pitch_type</code></td><td>FF, SI, SL, CH, CU, etc.</td></tr>
+  <tr><td><code>p_throws</code></td><td>R / L</td></tr>
+  <tr><td><code>stand</code></td><td>R / L</td></tr>
+  <tr><td><code>season</code></td><td>2016–2026</td></tr>
+</table>
+<div class="callout" style="margin-top:12px;">
+<strong>Notably absent from v3:</strong> <code>release_extension</code>, <code>release_pos_x_as</code>, <code>release_pos_z</code>, <code>arm_angle</code>. These were in v2 but are delivery/mechanics properties — now Deception+-exclusive. Removing them dropped Stuff+/Deception+ correlation from 0.535 to 0.377.
+</div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<h2>3. Key Feature Details</h2>
+<h3>VAA Residual</h3>
+<p>Raw VAA is confounded with plate height and velocity. <code>fit_vaa_expectation()</code> fits <code>vaa ~ plate_z + plate_z² + release_speed</code> per CV fold (not leaking held-out season). The residual captures "flatter or steeper than physics predicts" — the genuine pitch-quality component of approach angle.</p>
+
+<h3>axis_differential (SSW proxy)</h3>
+<p>The gap between "what spin axis would pure Magnus physics need to produce this pitch's real movement" and the actual measured <code>spin_axis</code>. A proxy for seam-shifted-wake / active spin. Calibrated empirically from FF population data (not from documented conventions, to avoid silent sign bugs). SHAP importance ranks 4th of 15; EDoF higher than hb/ivb — confirms distinct signal, not collinearity.</p>
+
+<h3>Primary-Fastball Separation</h3>
+<p>For each pitcher-season, the <strong>highest-usage</strong> FF/SI/FC is the primary fastball reference. Every other pitch gets separation features (<code>velo_sep</code>, <code>hb_sep</code>, <code>ivb_sep</code>) against that reference. Primary pitch itself gets <strong>true NaN</strong> (not zero) — LightGBM handles natively. Ablation confirmed 1-slot outperforms 2-slot and 3-slot on YoY stability (r²: 0.754 vs. 0.692 vs. 0.720). More slots add noise without predictive gain.</p>
+
+<h3>Pitch-Type Exclusions</h3>
+<p><code>PO</code>, <code>UN</code>, <code>EP</code> excluded from training AND scoring — these score above mean predicted run value (not real competitive attempts). <code>KN</code> deliberately kept despite known modeling difficulty.</p>
+</div>
+
+<div class="section">
+<h2>4. Model Architecture</h2>
+<table>
+  <tr><th>Component</th><th>Detail</th></tr>
+  <tr><td>Model type</td><td>LightGBM regressor, Huber loss</td></tr>
+  <tr><td>CV methodology</td><td>Leave-one-season-out (LOSO), 2016–2025 holdouts</td></tr>
+  <tr><td>Training data</td><td>2016–2026 (2015 excluded: spin_axis 0% populated)</td></tr>
+  <tr><td>Training rows</td><td>~6.6 M pitches (2016–2026, after exclusions)</td></tr>
+  <tr><td>Identity guard</td><td><code>assert_no_identifiers()</code> before every .fit()</td></tr>
+  <tr><td>Booster file</td><td><code>models/stuff_plus_v3_lgbm.txt</code></td></tr>
+  <tr><td>Metadata</td><td><code>models/stuff_plus_v3_lgbm_meta.json</code></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>5. Scoring Pipeline</h2>
+<p><strong>Step 1 — Empirical-Bayes shrinkage.</strong> Each pitcher's raw per-pitch-type mean is shrunk toward the pitch type's league mean. Shrinkage constants <em>K</em> (in units of pitches) are estimated fresh per season via method-of-moments variance decomposition — never hardcoded. In practice K = 0.4–2.8 for all well-populated pitch types (stabilizes almost immediately).</p>
+<p><strong>Step 2 — Plus-scale.</strong> <code>100 − 10 × (shrunk_pred − season_mean) / season_std</code>, computed within each season. Overall score = usage-weighted average across arsenal.</p>
+<p><strong>SHAP breakdown</strong> uses unshrunk predictions — shrinkage is a statistical correction, not attributable to any feature, so it's excluded from per-feature attribution.</p>
+</div>
+
+<div class="section">
+<h2>6. Validation Summary</h2>
+<table>
+  <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+  <tr><td>Year-over-year Pearson r</td><td>0.907</td><td>Best of the four models; most stable trait</td></tr>
+  <tr><td>Split-half reliability (50 pitches/half)</td><td>0.992</td><td>Stabilizes almost immediately</td></tr>
+  <tr><td>Correlation with Tunneling+</td><td>~0.05–0.12</td><td>Near-independent (different skills)</td></tr>
+  <tr><td>Correlation with Deception+</td><td>0.377 (v3) vs. 0.535 (v2)</td><td>Reduced by removing shared mechanics features</td></tr>
+  <tr><td>Same-season ERA correlation</td><td>+0.222</td><td>Positive — higher score = better pitcher (correct)</td></tr>
+  <tr><td>Same-season xFIP correlation</td><td>+0.414</td><td>Positive (correct)</td></tr>
+</table>
+<p><strong>Top seasons:</strong> Pete Fairbanks 2022 (124.2), Emmanuel Clase 2022 (122.0), Félix Bautista 2023 (121.5), Clase 2021 (119.9), Clase 2024 (118.4).</p>
+</div>
+
+<div class="section">
+<h2>7. Known Limitations</h2>
+<table>
+  <tr><th>Limitation</th><th>Details</th></tr>
+  <tr><td>Knuckleball (KN)</td><td>Scores ~72 (below avg) by construction — slow, little conventional movement. The pitch's real value (unpredictability) is unmeasurable from raw shape.</td></tr>
+  <tr><td>2015 excluded</td><td>spin_axis is 0% populated in 2015; training starts 2016.</td></tr>
+  <tr><td>Pitcher identity excluded</td><td>By design — generalizes to unseen pitch shapes, but cannot account for deceptive mechanics.</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>8. File Locations</h2>
+<table>
+  <tr><th>File</th><th>Purpose</th></tr>
+  <tr><td><code>analytics/stuff_features.py</code></td><td>Shared feature engineering (training AND scoring — single source of truth)</td></tr>
+  <tr><td><code>analytics/stuff_model.py</code></td><td>Runtime scoring: loads booster, builds FB reference, applies shrinkage</td></tr>
+  <tr><td><code>models/stuff_plus_v3_lgbm.txt</code></td><td>Trained LightGBM booster</td></tr>
+  <tr><td><code>models/stuff_plus_v3_lgbm_meta.json</code></td><td>Feature lists, category levels, calibrations (vaa_coefs, spin_calibration)</td></tr>
+  <tr><td><code>api/routers/stuff_model_report.py</code></td><td>API endpoints: /api/stuff-model/*</td></tr>
+  <tr><td><code>training/train_stuff_v3_lgbm.py</code></td><td>Training script</td></tr>
+  <tr><td><code>Methodology/STUFF_V3_REPORT.md</code></td><td>Full validation/ablation report</td></tr>
+</table>
+</div>
+
+<footer>
+  Stuff+ v3 · MLB Dashboard · Last updated 2026-09-21 · STATUS: LIVE
+</footer>
+
+</body>
+</html>

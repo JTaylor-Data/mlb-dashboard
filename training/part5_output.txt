@@ -1,0 +1,54 @@
+﻿[13:57:04] Part 5 — Deception+ v1 feature-set audit
+[13:57:04] Loading pitches 2021–2025 for feature matrix...
+[13:57:33]   Loaded 3,555,909 rows
+[13:57:38]   After engineer_features: 3,517,259 rows
+[13:57:38] 
+=== 1. Collinearity matrix (numeric features) ===
+[13:57:40] Pearson correlation matrix:
+[13:57:40]   arm_angle                      x release_pos_x_as              : r = -0.546
+[13:57:40]   arm_angle                      x release_pos_z                 : r = +0.812
+[13:57:40]   release_extension              x height_in                     : r = +0.335
+[13:57:40]   release_pos_x_as               x release_pos_z                 : r = -0.439
+[13:57:40]   arm_angle_std                  x release_consistency           : r = +0.575
+[13:57:40]   height_in                      x weight_lb                     : r = +0.403
+[13:57:40] 
+Key pair: arm_angle x release_pos_z: r = +0.812
+[13:57:40] 
+=== 2. SHAP mean |SHAP| — sampling 50,000 rows from season 2025 ===
+[13:57:41]   Season 2025 rows: 708,795
+[13:57:41]   Sample size: 50,000
+[13:58:21] 
+Mean |SHAP| per feature:
+[13:58:21]   release_consistency           : 0.00096
+[13:58:21]   release_extension             : 0.00078
+[13:58:21]   release_extension_std         : 0.00053
+[13:58:21]   release_pos_z                 : 0.00050
+[13:58:21]   arm_angle                     : 0.00049
+[13:58:21]   arm_angle_std                 : 0.00045
+[13:58:21]   weight_lb                     : 0.00041
+[13:58:21]   release_pos_x_as              : 0.00038
+[13:58:21]   height_in                     : 0.00037
+[13:58:21]   season                        : 0.00025
+[13:58:21] 
+Group totals (sum of mean |SHAP|):
+[13:58:21]   raw_delivery        : 0.00214  (42.0%)
+[13:58:21]   variability         : 0.00193  (37.9%)
+[13:58:21]   bio                 : 0.00078  (15.3%)
+[13:58:21]   season              : 0.00025  (4.8%)
+[13:58:21] 
+=== 3. Bio feature (height_in / weight_lb) SHAP summary ===
+[13:58:21]   height_in: mean |SHAP| = 0.00037  mean SHAP = -0.00005  std = 0.00060
+[13:58:21]   weight_lb: mean |SHAP| = 0.00041  mean SHAP = -0.00001  std = 0.00075
+[13:58:21] 
+=== 4. Season-level vs. rolling window note ===
+[13:58:21]   Current implementation: arm_angle_std / release_extension_std are computed
+[13:58:21]   as the season-long standard deviation per (pitcher_id, season) pair.
+[13:58:21]   This means the _std value for every pitch a pitcher throws in a season
+[13:58:21]   is identical — it's a season-level aggregate, not a pitch-level running stat.
+[13:58:21]   Rolling window alternative: compute std over last N pitches.
+[13:58:21]   Advantage: captures mid-season delivery changes (e.g., mechanical adjustment).
+[13:58:21]   Disadvantage: introduces look-ahead bias unless carefully implemented.
+[13:58:21]   Recommendation: defer. Season-level aggregation is the honest, simple choice
+[13:58:21]   and aligns with the 'year-over-year' framing of Deception+ as a whole.
+[13:58:21] 
+Audit results saved to C:\Users\joshs\Desktop\mlb_dashboard\training\v2_artifacts\deception_audit.json

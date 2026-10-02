@@ -37,7 +37,9 @@ function slotHtml(id, team, isWinner, size) {
 }
 
 function recordHtml(record) {
-  return record ? `<div class="bracket-record">${record}</div>` : "";
+  return record
+    ? `<div class="bracket-record">${record}</div>`
+    : `<div class="bracket-record" style="visibility:hidden">0-0</div>`;
 }
 
 // One matchup: a stacked pair of slots (team_a on top, team_b below), plus
@@ -89,15 +91,19 @@ function leagueColumnsHtml(bracket, leaguePrefix, leagueLabel) {
   const wcCol = `
     <div class="bracket-col">
       <div class="bracket-col-label">Wild Card</div>
-      ${pairHtml(`${leaguePrefix}-wc-0`, wc[0])}
-      ${wc.length > 1 ? pairHtml(`${leaguePrefix}-wc-1`, wc[1]) : ""}
+      <div class="bracket-col-body">
+        ${pairHtml(`${leaguePrefix}-wc-0`, wc[0])}
+        ${wc.length > 1 ? pairHtml(`${leaguePrefix}-wc-1`, wc[1]) : ""}
+      </div>
     </div>
   `;
   const dsCol = `
     <div class="bracket-col">
       <div class="bracket-col-label">Division Series</div>
-      ${pairHtml(`${leaguePrefix}-ds-0`, ds[0])}
-      ${ds.length > 1 ? pairHtml(`${leaguePrefix}-ds-1`, ds[1]) : ""}
+      <div class="bracket-col-body">
+        ${pairHtml(`${leaguePrefix}-ds-0`, ds[0])}
+        ${ds.length > 1 ? pairHtml(`${leaguePrefix}-ds-1`, ds[1]) : ""}
+      </div>
     </div>
   `;
   const csCol = `

@@ -57,10 +57,20 @@ function pitcherRowHtml(p, gamesCol, isTop) {
 }
 
 function rosterHtml(data) {
-  const label = data.is_real_postseason_roster ? "Playoff Roster" : "Projected Playoff Roster";
-  const note = data.is_real_postseason_roster
-    ? "Real postseason games are underway for this team - this list is still built from real current-season usage patterns (this project has no source for the actual announced postseason active roster), so treat it as a best-estimate, not official."
-    : "First-pass estimate from real current-season usage (PA for batters, starts/appearances for pitchers) among players who've actually played for this team this season and aren't on the IL - not a simulation of real 26-man roster rules.";
+  let label, note;
+  if (data.roster_round_label) {
+    label = `${data.roster_round_label} Roster`;
+    const pulledDate = data.roster_pulled_at ? data.roster_pulled_at.slice(0, 10) : null;
+    note = `Official submitted ${data.roster_round_label} roster`
+      + (pulledDate ? ` (pulled ${pulledDate})` : "")
+      + ". Stats shown are regular-season numbers from Statcast.";
+  } else if (data.is_real_postseason_roster) {
+    label = "Playoff Roster (Estimated)";
+    note = "Postseason is underway — roster estimated from regular-season usage (PA/starts/appearances). Pull a round-specific postseason roster to see the official submitted list.";
+  } else {
+    label = "Projected Playoff Roster";
+    note = "First-pass estimate from real current-season usage (PA for batters, starts/appearances for pitchers) among players who've actually played for this team this season and aren't on the IL — not a simulation of real 26-man roster rules.";
+  }
 
   const topBatters = topIndices(data.lineup, "war", 3, "desc");
   const topRotation = topIndices(data.rotation, "war", 1, "desc");

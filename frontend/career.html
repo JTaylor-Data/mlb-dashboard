@@ -1,59 +1,129 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Career - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=40" />
+  <link rel="stylesheet" href="css/theme.css?v=45" />
   <style>
+    /* â”€â”€ Controls row â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .career-controls {
       display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
-      margin-bottom: 20px;
+      margin: 0 16px 16px;
     }
-    .career-role-toggle { display: flex; gap: 4px; }
-    .career-role-btn {
-      padding: 7px 16px; font-size: 12px; font-weight: 600;
-      border: 1px solid var(--border); border-radius: var(--radius);
-      background: var(--surface); color: var(--text); cursor: pointer;
-    }
-    .career-role-btn.active {
-      background: var(--accent); color: #fff; border-color: var(--accent);
-    }
-    #career-player-input {
-      width: 100%; box-sizing: border-box;
-    }
+    .player-search { min-width: 260px; position: relative; }
 
-    /* ── Career table ─────────────────────────────────────── */
+    /* â”€â”€ Career aggregate summary box â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    #career-summary {
+      margin: 0 16px 16px;
+      display: none;
+    }
+    .career-summary-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 18px;
+    }
+    .career-summary-header {
+      display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .career-summary-name {
+      font-size: 15px; font-weight: 800; color: var(--forest-dark);
+    }
+    .career-summary-note {
+      font-size: 11px; color: var(--text-muted);
+    }
+    .career-summary-stats {
+      display: flex; flex-wrap: wrap; gap: 0;
+    }
+    .cs-stat {
+      text-align: center; padding: 4px 16px;
+      border-right: 1px solid var(--border);
+    }
+    .cs-stat:first-child { padding-left: 0; }
+    .cs-stat:last-child  { border-right: none; }
+    .cs-label { font-size: 10px; font-weight: 700; text-transform: uppercase;
+                letter-spacing: 0.4px; color: var(--text-muted); }
+    .cs-value { font-size: 20px; font-weight: 800; color: var(--text);
+                font-variant-numeric: tabular-nums; line-height: 1.2; }
+    .cs-sub   { font-size: 10px; color: var(--text-muted); margin-top: 1px; }
+
+    /* â”€â”€ Career table card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    #career-card {
+      margin: 0 16px;
+    }
     #career-title {
-      font-size: 16px; font-weight: 700; color: var(--text);
-      margin-bottom: 14px; min-height: 24px;
+      font-size: 15px; font-weight: 700; color: var(--text);
+      margin-bottom: 12px; min-height: 22px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .career-sel-note {
+      font-size: 11px; font-weight: 400; color: var(--text-muted);
     }
     .ct-scroll { overflow-x: auto; }
+
+    /* â”€â”€ Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .career-table {
-      width: 100%; border-collapse: collapse; font-size: 13px;
+      width: 100%; border-collapse: collapse; font-size: 12.5px;
       font-variant-numeric: tabular-nums;
     }
-    .career-table thead th {
-      padding: 8px 10px; text-align: right; font-size: 10px;
-      font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
-      color: var(--text-muted); border-bottom: 2px solid var(--border);
-      white-space: nowrap;
+    /* Group header row */
+    .career-table thead tr.ct-group-row th {
+      padding: 4px 6px 2px; font-size: 9px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.5px;
+      color: var(--text-muted); text-align: center;
+      background: var(--surface-alt); border-bottom: none;
     }
-    .career-table thead th:first-child,
-    .career-table thead th:nth-child(2) { text-align: left; }
-    .career-table tbody tr { border-bottom: 1px solid var(--border); }
+    /* Column header row */
+    .career-table thead tr.ct-col-row th {
+      padding: 7px 8px; text-align: right; font-size: 10px;
+      font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase;
+      color: var(--text-muted); border-bottom: 2px solid var(--border);
+      white-space: nowrap; cursor: default;
+    }
+    .career-table thead tr.ct-col-row th:first-child,
+    .career-table thead tr.ct-col-row th.ct-left { text-align: left; }
+
+    /* Group divider via border-left */
+    .ct-group-start { border-left: 2px solid var(--border) !important; }
+
+    .career-table tbody tr { border-bottom: 1px solid var(--border); cursor: pointer; }
     .career-table tbody tr:hover { background: var(--surface-alt); }
+    .career-table tbody tr.ct-selected {
+      background: color-mix(in srgb, var(--accent) 10%, transparent) !important;
+    }
     .career-table tbody td {
-      padding: 7px 10px; text-align: right; color: var(--text);
+      padding: 6px 8px; text-align: center; color: var(--text);
     }
     .career-table tbody td:first-child,
-    .career-table tbody td:nth-child(2) { text-align: left; font-weight: 600; }
+    .career-table tbody td.ct-left { text-align: left; font-weight: 600; }
+    .career-table thead tr.ct-col-row th:not(:first-child):not(.ct-left) { text-align: center; }
+
+    /* Per-162 / totals bottom row */
+    .ct-summary-row td {
+      background: var(--surface-alt); font-weight: 700;
+      border-top: 2px solid var(--border); color: var(--forest-dark);
+    }
+    .ct-summary-row td:first-child { font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
+
+    /* Team cell: logo + abbr */
+    .ct-team { display: flex; align-items: center; gap: 5px; }
+    .ct-team-logo { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
+    .ct-team-abbr { font-weight: 700; font-size: 12px; }
+
     .ct-dash { color: var(--text-muted); }
     .ct-score { font-weight: 700; }
     .ct-good { color: #1a7f37; }
     .ct-bad  { color: #c9302c; }
-    .ct-even { background: var(--surface-alt); }
-    .ct-even:hover { background: var(--border); }
+    .ct-bold-top10 { font-weight: 800; }
+
+    /* Awards cell */
+    .ct-awards { font-size: 10px; font-weight: 700; letter-spacing: 0.3px;
+                 color: var(--text-muted); text-align: center !important; }
+    .ct-award-as { color: var(--accent); }
+
+    /* Position cell */
+    .ct-pos { font-weight: 700; font-size: 11px; text-align: center !important; }
 
     .career-note {
       font-size: 11px; color: var(--text-muted); margin-top: 12px; line-height: 1.5;
@@ -65,43 +135,50 @@
   <div id="subnav"></div>
 
   <div class="page-container">
-    <h1 class="page-title">Career Stats</h1>
-    <p style="color:var(--text-muted);font-size:13px;margin-bottom:20px;">
-      Season-by-season history across all data in the pipeline (2021–present).
-      Players who changed teams mid-season appear as one row per team.
+    <h1 style="color:var(--forest-dark);font-weight:800;font-size:26px;margin:20px 16px 4px;">Career Stats</h1>
+    <p style="color:var(--text-muted);font-size:13px;margin: 0 16px 20px;">
+      Season-by-season history across all data in the pipeline.
+      Click any row (or multiple rows) to compute selected-year totals and averages in the summary above.
     </p>
 
-    <div class="career-controls" style="margin: 0 8px 0 8px;">
-      <div class="career-role-toggle">
-        <button class="career-role-btn active" data-role="pitcher">Pitcher</button>
-        <button class="career-role-btn" data-role="batter">Batter</button>
-      </div>
-      <div class="player-search" style="min-width:240px;position:relative;">
+    <div class="career-controls">
+      <div class="player-search">
         <input type="text" class="player-search-input" id="career-player-input"
-               placeholder="Search any player…" autocomplete="off" />
+               placeholder="Search any playerâ€¦" autocomplete="off" />
         <div class="player-search-dropdown" id="career-player-dropdown"></div>
       </div>
     </div>
 
-    <div class="card" style="margin: 0 8px;">
+    <div id="career-summary">
+      <div class="career-summary-card">
+        <div class="career-summary-header">
+          <span class="career-summary-name" id="cs-name"></span>
+          <span class="career-summary-note" id="cs-note">Career totals â€” click rows to select specific seasons</span>
+        </div>
+        <div class="career-summary-stats" id="cs-stats"></div>
+      </div>
+    </div>
+
+    <div class="card" id="career-card">
       <div id="career-title"></div>
       <div id="career-mount">
         <div class="empty-state">Select a player to view their career stats.</div>
       </div>
-      <div class="career-note">
-        Pitcher model scores (Stuff+, Tunneling+, Location+) are season-level averages from the same
-        models used throughout the dashboard. Deception+ shown for 2025 only (current report season).
-        IP and xFIP are computed from Statcast pitch data; ERA is not available (Statcast carries no
-        official scorer rulings). AVG/OBP/SLG/wRC+ for batters sourced from
-        <code>player_advanced_stats</code> where available.
+      <div class="career-note" id="career-note" style="display:none;">
+        ERA sourced from MLB Stats API (official earned runs); falls back to RA/9 from Statcast if unavailable.
+        Pitcher model scores (Stuff+, Tun+, Loc+, Dec+) are season-level averages pre-computed from Statcast.
+        WAR, xFIP, wRC+ from MLB Stats API. <b>Avg/Season</b> row shows per-season averages across all seasons shown.
       </div>
     </div>
   </div>
 
   <script src="js/api.js?v=18"></script>
   <script src="js/player-context.js?v=1"></script>
-  <script src="js/nav.js?v=111"></script>
-  <script src="js/player-search.js?v=9"></script>
-  <script src="js/career.js?v=3"></script>
+  <script src="js/nav.js?v=113"></script>
+  <script src="js/player-search.js?v=21"></script>
+  <script src="js/career.js?v=6"></script>
 </body>
 </html>
+
+
+

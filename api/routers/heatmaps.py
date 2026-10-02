@@ -104,8 +104,11 @@ def _pitch_location_summary(conn, season, pitcher_id, stand_filter=None):
     command_pool = _league_command_pool(conn, season, stand_filter)
     pitcher_command = command_pool.get(pitcher_id, {})
 
+    total_n = len(df)
     pitches = []
     for pt, group in df.groupby("pitch_type"):
+        if len(group) / total_n * 100 < 1.0:
+            continue
         std_x = float(group["plate_x"].std(ddof=0)) if len(group) > 1 else 0.0
         std_z = float(group["plate_z"].std(ddof=0)) if len(group) > 1 else 0.0
         pitches.append({

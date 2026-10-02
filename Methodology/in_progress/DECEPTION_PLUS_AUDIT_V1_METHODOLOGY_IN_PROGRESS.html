@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deception+ v1 — Feature Audit &amp; Decomposed Architecture Study</title>
+<style>
+  :root { --orange: #92540e; --orange-light: #fef3e2; --border: #d0d5c8; --muted: #5a6450; --green: #1a5c38; --purple: #5a1e8c; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; background: #fff; padding: 40px 48px; max-width: 900px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--orange); padding-bottom: 16px; margin-bottom: 28px; }
+  .model-name { font-size: 28px; font-weight: bold; color: var(--orange); letter-spacing: -0.5px; }
+  .model-sub { font-size: 14px; color: var(--muted); font-family: monospace; margin-top: 4px; }
+  .badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; font-weight: bold; }
+  .badge-inprog { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange); }
+  .badge-diag   { background: #f0e8f8; color: var(--purple); border: 1px solid #9a6ac0; }
+  .badge-live   { background: #e8f3ee; color: var(--green); border: 1px solid var(--green); }
+  .badge-season { background: #e8f0f8; color: #1a4070; border: 1px solid #a8c0d8; }
+  h2 { font-size: 15px; color: var(--orange); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin: 24px 0 12px; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Arial', sans-serif; }
+  h3 { font-size: 13px; font-weight: bold; margin: 16px 0 6px; font-family: 'Arial', sans-serif; }
+  p { margin-bottom: 10px; }
+  ul, ol { margin: 8px 0 12px 22px; line-height: 1.9; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0 16px; }
+  th { background: var(--orange); color: #fff; text-align: left; padding: 6px 10px; font-family: monospace; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #faf9f7; }
+  code { font-family: monospace; font-size: 12px; background: #f0f2ed; padding: 1px 4px; border-radius: 3px; }
+  .callout      { background: #fff8e6; border-left: 4px solid #c89a00; padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-good { background: #e8f3ee; border-left: 4px solid var(--green); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-warn { background: #fde8ea; border-left: 4px solid #b91c2c; padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-info { background: #eef3fb; border-left: 4px solid #1a4070; padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .section { margin-bottom: 28px; }
+  .pct-bar { display: inline-block; height: 10px; background: var(--orange); border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: monospace; }
+  @media print {
+    body { padding: 20px 28px; }
+    th, .badge, .callout, .callout-good, .callout-warn, .callout-info { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="model-name">Deception+ v1 — Feature Audit &amp; Decomposed Architecture Study</div>
+  <div class="model-sub">Parts 5 &amp; 6 of 2026-09-21 diagnostic session · Live model unchanged</div>
+  <div class="badges">
+    <span class="badge badge-live">✓ LIVE MODEL UNCHANGED</span>
+    <span class="badge badge-diag">DIAGNOSTIC ONLY</span>
+    <span class="badge badge-inprog">⧗ IN PROGRESS</span>
+    <span class="badge badge-season">Validated: 2021–2025 · 2026-09-21</span>
+  </div>
+</header>
+
+<div class="callout-good">
+  <strong>Conclusion: Deception+ v1 (live Huber-loss regressor) is the correct architecture. Do not change it.</strong><br>
+  Part 5 confirms the feature set is internally coherent, and Part 6 shows the decomposed-classifier architecture
+  produces near-coin-flip outcome classifiers (AUC 0.51–0.53) — as expected for indirect mechanics features.
+  The live regressor has stronger ERA signal (r = +0.564 vs +0.311 decomposed) and is the right choice.
+</div>
+
+<div class="section">
+<h2>Part 5 — Feature-Set Audit</h2>
+
+<h3>Collinearity matrix (r ≥ 0.30 shown)</h3>
+<div class="callout">
+The arm_angle / release_pos_z collinearity is well-known and already documented in HANDOFF.md and in the live
+SHAP visualizations. This audit re-confirms the number and checks for any surprises across the full matrix.
+</div>
+<table>
+  <tr><th>Feature A</th><th>Feature B</th><th>Pearson r</th><th>Interpretation</th></tr>
+  <tr><td><code>arm_angle</code></td><td><code>release_pos_z</code></td><td style="color:#b91c2c"><strong>+0.812</strong></td><td>Highest collinearity in the model — submarine pitchers sit very low (documented; combined SHAP is the correct read)</td></tr>
+  <tr><td><code>arm_angle</code></td><td><code>release_pos_x_as</code></td><td>−0.546</td><td>Lower arm = closer to body on release side; expected anatomically</td></tr>
+  <tr><td><code>release_pos_x_as</code></td><td><code>release_pos_z</code></td><td>−0.439</td><td>Partial consequence of the arm_angle correlation chain</td></tr>
+  <tr><td><code>arm_angle_std</code></td><td><code>release_consistency</code></td><td>+0.575</td><td>Both measure delivery variability — consistent pitchers show low on both</td></tr>
+  <tr><td><code>release_extension</code></td><td><code>height_in</code></td><td>+0.335</td><td>Taller pitchers release slightly further forward on average</td></tr>
+  <tr><td><code>height_in</code></td><td><code>weight_lb</code></td><td>+0.403</td><td>Body size correlation; expected</td></tr>
+</table>
+
+<h3>SHAP feature importance by group</h3>
+<p>Sample: 50,000 pitches from the 2025 season. Mean |SHAP| per feature, grouped by type.</p>
+<table>
+  <tr><th>Feature Group</th><th>Features</th><th>Sum of mean |SHAP|</th><th>Share</th></tr>
+  <tr>
+    <td>Raw delivery</td>
+    <td><code>arm_angle</code>, <code>release_extension</code>, <code>release_pos_x_as</code>, <code>release_pos_z</code></td>
+    <td>0.00214</td>
+    <td><span class="pct-bar" style="width:42px"></span>42%</td>
+  </tr>
+  <tr>
+    <td>Variability</td>
+    <td><code>arm_angle_std</code>, <code>release_extension_std</code>, <code>release_consistency</code></td>
+    <td>0.00193</td>
+    <td><span class="pct-bar" style="width:38px; background:#5a1e8c"></span>38%</td>
+  </tr>
+  <tr>
+    <td>Bio</td>
+    <td><code>height_in</code>, <code>weight_lb</code></td>
+    <td>0.00078</td>
+    <td><span class="pct-bar" style="width:15px; background:#1a4070"></span>15%</td>
+  </tr>
+  <tr>
+    <td>Season</td>
+    <td><code>season</code></td>
+    <td>0.00025</td>
+    <td><span class="pct-bar" style="width:5px; background:#c89a00"></span>5%</td>
+  </tr>
+</table>
+
+<h3>Individual feature rankings (top 5)</h3>
+<table>
+  <tr><th>Rank</th><th>Feature</th><th>Mean |SHAP|</th><th>Group</th></tr>
+  <tr><td>1</td><td><code>release_consistency</code></td><td>0.00096</td><td>Variability</td></tr>
+  <tr><td>2</td><td><code>release_extension</code></td><td>0.00078</td><td>Raw delivery</td></tr>
+  <tr><td>3</td><td><code>release_extension_std</code></td><td>0.00053</td><td>Variability</td></tr>
+  <tr><td>4</td><td><code>release_pos_z</code></td><td>0.00050</td><td>Raw delivery</td></tr>
+  <tr><td>5</td><td><code>arm_angle</code></td><td>0.00049</td><td>Raw delivery</td></tr>
+</table>
+
+<div class="callout-info">
+<strong>Key finding: release_consistency is the #1 feature.</strong> This is the season-level standard deviation
+of the pitcher's release position (both x and z combined) — a per-(pitcher, season) constant. A pitcher
+who releases from the exact same spot every time is harder to pick up than one who varies. The variability group
+(38%) is nearly as important as the raw delivery group (42%) — delivery consistency matters almost as much
+as where you're delivering from.
+</div>
+
+<h3>Bio feature (height / weight) analysis</h3>
+<table>
+  <tr><th>Feature</th><th>Mean |SHAP|</th><th>Mean SHAP</th><th>Std SHAP</th><th>Interpretation</th></tr>
+  <tr><td><code>height_in</code></td><td>0.00037</td><td>−0.00005</td><td>0.00060</td><td>No systematic direction; contributes at extremes</td></tr>
+  <tr><td><code>weight_lb</code></td><td>0.00041</td><td>−0.00001</td><td>0.00075</td><td>No systematic direction; contributes at extremes</td></tr>
+</table>
+<p>Mean SHAP ≈ 0 for both: neither "bigger is better" nor "smaller is better" systematically.
+The 15% total group share reflects that body type does differentiate extreme outliers (very short/heavy,
+very tall/lean) but has no consistent directional effect in the middle of the distribution.</p>
+
+<h3>Rolling window vs. season-level aggregation</h3>
+<div class="callout">
+<strong>Recommendation: defer. Season-level aggregation is the correct default.</strong><br>
+Current implementation: <code>arm_angle_std</code>, <code>release_extension_std</code>, <code>release_consistency</code>
+are all computed as the season-long standard deviation per (pitcher_id, season) — every pitch that pitcher throws
+in a season gets the same value. A rolling-window alternative (std over last N pitches) would capture
+mid-season mechanical adjustments but introduces look-ahead bias unless carefully caretaken.
+The season-level framing aligns with how Deception+ is positioned (a season-level assessment), and the feature
+already has strong SHAP contribution as-is. Rolling windows are a future enhancement, not a present need.
+</div>
+</div>
+
+<div class="section">
+<h2>Part 6 — Deception+ Under Decomposed-Classifier Architecture</h2>
+
+<div class="callout-warn">
+<strong>Hypothesis confirmed: mechanics features produce near-coin-flip outcome classifiers. Do not promote.</strong><br>
+All 4 binary classifiers returned AUC 0.51–0.53 in LOSO CV — within ~1–2% of random chance.
+This is expected and documented. The decomposed architecture only helps when features directly drive
+outcome classification (plate position → called strike, pitch shape → swing). Delivery mechanics are
+too indirect for that.
+</div>
+
+<h3>Classifier AUCs (LOSO CV, 2021–2025)</h3>
+<table>
+  <tr><th>Classifier</th><th>Deception+ decomposed</th><th>Location+ v2 reference</th><th>Gap</th></tr>
+  <tr><td>xSwing%</td><td style="color:#b91c2c">0.512</td><td style="color:#1a5c38">0.848</td><td>−0.336</td></tr>
+  <tr><td>xCS%</td><td style="color:#b91c2c">0.520</td><td style="color:#1a5c38">0.981</td><td>−0.461</td></tr>
+  <tr><td>xWhiff%</td><td style="color:#b91c2c">0.529</td><td style="color:#1a5c38">0.754</td><td>−0.225</td></tr>
+  <tr><td>xFoul%</td><td style="color:#b91c2c">0.516</td><td style="color:#1a5c38">0.621</td><td>−0.105</td></tr>
+  <tr><td>BIP distribution (log-loss)</td><td>2.628</td><td>—</td><td>—</td></tr>
+</table>
+
+<h3>Full comparison: decomposed vs. live v1 (2021–2025, 2,868 pitcher-seasons each)</h3>
+<table>
+  <tr><th>Metric</th><th>Live v1 (Huber regressor)</th><th>Decomposed v1</th><th>Better</th></tr>
+  <tr>
+    <td>ERA Pearson r (same-season)</td>
+    <td style="color:#1a5c38"><strong>+0.564</strong></td>
+    <td style="color:#b91c2c">+0.311</td>
+    <td>v1 by 0.253 — large gap</td>
+  </tr>
+  <tr>
+    <td>xFIP Pearson r (same-season)</td>
+    <td>+0.470</td>
+    <td>+0.480</td>
+    <td>Essentially tied (+0.010)</td>
+  </tr>
+  <tr>
+    <td>YoY Pearson r (pooled)</td>
+    <td>0.472</td>
+    <td style="color:#1a5c38"><strong>0.783</strong></td>
+    <td>Decomposed by 0.311 — large gap</td>
+  </tr>
+  <tr>
+    <td>Stuff+ cross-correlation r</td>
+    <td>0.396</td>
+    <td>0.524</td>
+    <td>v1 lower (more independent from Stuff+)</td>
+  </tr>
+</table>
+
+<div class="callout-info">
+<strong>The YoY stability paradox.</strong> The decomposed architecture achieves dramatically higher YoY stability
+(0.783 vs 0.472) — but this is not an achievement, it's a symptom. Delivery mechanics (arm slot, release
+consistency) are effectively time-invariant per pitcher: Tyler Rogers threw submarines in 2021 and 2022.
+The decomposed model's high stability means it's learning pitcher identity, not per-pitch outcome contribution.
+The live Huber regressor trades some stability for a much stronger ERA signal (+0.564 vs +0.311), which is
+the correct tradeoff for a model that's supposed to grade deception quality, not just identify consistent deliveries.
+</div>
+
+<div class="callout-info">
+<strong>Cross-model correlation with Stuff+.</strong> The decomposed version correlates more strongly with Stuff+
+(r = 0.524 vs r = 0.396 for live v1). This makes sense: the decomposed architecture's high-stability scores
+are effectively capturing "pitchers with unusual mechanics" which partially overlaps with "pitchers with
+unusual pitch shapes" (what Stuff+ captures). Live v1's lower Stuff+ correlation is evidence it's capturing
+something more genuinely distinct.
+</div>
+
+<h3>Why the classifiers are near-coin-flip</h3>
+<p>The gap between delivery mechanics and per-pitch outcome classification has a clear causal structure:</p>
+<ul>
+  <li><strong>Location+ v2</strong>: plate_x/plate_z directly determine whether an umpire calls a strike. xCS% AUC = 0.981 because the feature IS the outcome (up to the strike zone boundary).</li>
+  <li><strong>Stuff+ features</strong>: velo, spin, break directly shape whether a hitter swings and makes contact. xWhiff% AUC = 0.754.</li>
+  <li><strong>Deception+ features</strong>: arm slot, release height, delivery consistency are ONE hop further removed. They influence the hitter's visual read, which influences the swing decision, which influences the outcome. The classifiers are working (0.51–0.53 > 0.50), but the 0.01–0.03 lift above chance doesn't justify a five-classifier architecture.</li>
+</ul>
+<p>The live Huber regressor bypasses the classification step and directly predicts delta_run_exp, which aggregates the effect of all these indirect mechanisms. That's the right level of abstraction for this feature set.</p>
+</div>
+
+<div class="section">
+<h2>Summary and Recommendations</h2>
+<table>
+  <tr><th>Question</th><th>Finding</th><th>Action</th></tr>
+  <tr><td>Is arm_angle/release_pos_z collinearity a problem?</td><td>r = +0.812 — confirmed high. Combined SHAP view already handles this.</td><td>No change needed</td></tr>
+  <tr><td>Are bio features (height/weight) doing real work?</td><td>15% of total SHAP, no directional bias. Non-negligible at extremes.</td><td>Keep them</td></tr>
+  <tr><td>Should _std features be rolling windows?</td><td>Season-level is the honest, look-ahead-safe default. Rolling is a future enhancement.</td><td>Defer</td></tr>
+  <tr><td>Does the decomposed architecture improve Deception+?</td><td>No. ERA signal drops sharply (0.564 → 0.311). YoY stability rises but for the wrong reason (pitcher identity, not quality signal).</td><td>Live v1 unchanged</td></tr>
+  <tr><td>Should Deception+ v2 be built at all?</td><td>Only if new features are added (e.g., CV-based delivery timing from pitcher_cv/). The current feature set is maxed out under the regressor architecture.</td><td>Defer until new features exist</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>Artifact Locations</h2>
+<table>
+  <tr><th>File</th><th>Purpose</th></tr>
+  <tr><td><code>training/v2_artifacts/deception_audit.json</code></td><td>Part 5: collinearity matrix, SHAP by feature/group, bio detail</td></tr>
+  <tr><td><code>training/v2_artifacts/deception_decomposed_v1_diagnostic.json</code></td><td>Part 6: CV AUCs, ERA/xFIP/YoY comparison, cross-model correlations</td></tr>
+  <tr><td><code>training/part5_deception_audit.py</code></td><td>Part 5 training script</td></tr>
+  <tr><td><code>training/part6_deception_decomposed.py</code></td><td>Part 6 training script</td></tr>
+</table>
+</div>
+
+<footer>
+  Deception+ v1 Feature Audit &amp; Decomposed Architecture Study · MLB Dashboard · Created 2026-09-21 · STATUS: DIAGNOSTIC COMPLETE — LIVE MODEL UNCHANGED
+</footer>
+
+</body>
+</html>

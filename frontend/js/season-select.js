@@ -18,5 +18,8 @@ function createSeasonSelect(selectEl, onChange) {
     get value() {
       return Number(selectEl.value);
     },
+    set(season) {
+      selectEl.value = String(season);
+    },
   };
 }

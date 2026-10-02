@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Top Performers - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=40" />
+  <link rel="stylesheet" href="css/theme.css?v=45" />
   <style>
     /* .controls-row's shared align-items:center vertically centers each
        sibling's WHOLE block - fine on every other page, where every
@@ -38,6 +38,12 @@
       <div id="walkoff-mount"></div>
     </div>
 
+    <div class="rs-freeze-banner" id="rs-freeze-banner" style="display:none;">
+      <span class="rs-freeze-banner-icon">&#128197;</span>
+      Regular season complete &mdash; showing final 2026 regular-season top performers.
+      <a href="playoffs-top-performers.html" style="margin-left:auto; color:var(--forest-dark); font-weight:800;">Postseason leaders &rarr;</a>
+    </div>
+    <script>(function(){var d=new Date().toISOString().slice(0,10);if(d>='2026-10-01')document.getElementById('rs-freeze-banner').style.display='flex';})();</script>
     <div class="muted" style="font-size:12px; margin-bottom:14px;">
       Ranked by a per-day weighted score (batters: HR, then H, then RBI, then SB; pitchers: ER (lower is better),
       then IP, then K, then H allowed). WPA (Win Probability Added, straight from Statcast's own per-pitch win
@@ -50,8 +56,11 @@
 
   <script src="js/api.js?v=8"></script>
   <script src="js/gradient.js?v=23"></script>
-  <script src="js/nav.js?v=111"></script>
+  <script src="js/nav.js?v=113"></script>
   <script src="js/player-context.js?v=1"></script>
-  <script src="js/top-performers.js?v=11"></script>
+  <script src="js/top-performers.js?v=12"></script>
 </body>
 </html>
+
+
+

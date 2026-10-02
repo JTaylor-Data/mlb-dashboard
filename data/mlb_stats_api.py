@@ -25,7 +25,16 @@ BASE_URL = "https://statsapi.mlb.com/api/v1"
 TIMEOUT = 30  # seconds per request
 DB_PATH = "mlb_data.db"
 
-VALID_ROSTER_TYPES = {"fullRoster", "40Man", "active", "depthChart"}
+VALID_ROSTER_TYPES = {"fullRoster", "40Man", "active", "depthChart",
+                      "postseasonRoster"}
+# Postseason round-specific roster_type keys used in the local DB.
+# Map these to the MLB API roster type to request when pulling.
+POSTSEASON_ROUND_MAP = {
+    "postseason_WC":  "postseasonRoster",
+    "postseason_DS":  "postseasonRoster",
+    "postseason_LCS": "postseasonRoster",
+    "postseason_WS":  "postseasonRoster",
+}
 
 
 # ---------------------------------------------------------------------------
@@ -60,6 +69,8 @@ def ensure_tables(conn: sqlite3.Connection) -> None:
             game_time_et                 TEXT,
             home_team_id                 INTEGER,
             away_team_id                 INTEGER,
+            home_team_name               TEXT,
+            away_team_name               TEXT,
             home_probable_pitcher_id     INTEGER,
             away_probable_pitcher_id     INTEGER,
             venue_id                     INTEGER,
@@ -83,11 +94,14 @@ def team_roster(team_id: int, roster_type: str = "active",
     roster_type must be one of: fullRoster, 40Man, active, depthChart.
     Returns a list of player dicts.
     """
-    if roster_type not in VALID_ROSTER_TYPES:
-        raise ValueError(f"roster_type must be one of {VALID_ROSTER_TYPES}, got {roster_type!r}")
+    # Postseason round keys (postseason_WC etc.) are stored in the local DB
+    # under those keys but fetched from the MLB API as "postseasonRoster".
+    api_roster_type = POSTSEASON_ROUND_MAP.get(roster_type, roster_type)
+    if api_roster_type not in VALID_ROSTER_TYPES:
+        raise ValueError(f"roster_type must be one of {VALID_ROSTER_TYPES | set(POSTSEASON_ROUND_MAP)}, got {roster_type!r}")
 
     url = f"{BASE_URL}/teams/{team_id}/roster"
-    params = {"rosterType": roster_type, "season": season}
+    params = {"rosterType": api_roster_type, "season": season}
     resp = requests.get(url, params=params, timeout=TIMEOUT)
     resp.raise_for_status()
     data = resp.json()
@@ -180,6 +194,8 @@ def schedule(start_date: str, end_date: str, sport_id: int = 1,
                 "game_time_et": game_time_et,
                 "home_team_id": home["team"]["id"],
                 "away_team_id": away["team"]["id"],
+                "home_team_name": home["team"].get("name"),
+                "away_team_name": away["team"].get("name"),
                 "home_probable_pitcher_id": (home.get("probablePitcher") or {}).get("id"),
                 "away_probable_pitcher_id": (away.get("probablePitcher") or {}).get("id"),
                 "venue_id": venue.get("id"),
@@ -198,15 +214,27 @@ def schedule(start_date: str, end_date: str, sport_id: int = 1,
         except Exception:
             pass  # Column already exists
 
+    # Migration: add name columns that may not exist in older DBs
+    for col in [("home_team_name", "TEXT"), ("away_team_name", "TEXT")]:
+        try:
+            conn.execute(f"ALTER TABLE schedule_games ADD COLUMN {col[0]} {col[1]}")
+            conn.commit()
+        except Exception:
+            pass  # Column already exists
+
     conn.executemany(
         """INSERT INTO schedule_games
            (game_pk, game_date, game_time_et, home_team_id, away_team_id,
+            home_team_name, away_team_name,
             home_probable_pitcher_id, away_probable_pitcher_id,
             venue_id, venue_name, game_status, pulled_at)
            VALUES (:game_pk, :game_date, :game_time_et, :home_team_id, :away_team_id,
+                   :home_team_name, :away_team_name,
                    :home_probable_pitcher_id, :away_probable_pitcher_id,
                    :venue_id, :venue_name, :game_status, :pulled_at)
            ON CONFLICT(game_pk) DO UPDATE SET
+             home_team_name=excluded.home_team_name,
+             away_team_name=excluded.away_team_name,
              home_probable_pitcher_id=excluded.home_probable_pitcher_id,
              away_probable_pitcher_id=excluded.away_probable_pitcher_id,
              venue_id=excluded.venue_id,

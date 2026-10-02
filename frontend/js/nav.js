@@ -25,6 +25,8 @@ const MODELS_GROUP = [
 const PLAYOFFS_GROUP = [
   { href: "playoffs-bracket.html", label: "Bracket" },
   { href: "playoffs.html", label: "WC Race" },
+  { href: "playoffs-games.html", label: "Projected Games" },
+  { href: "playoffs-top-performers.html", label: "Top Performers" },
   { href: "playoffs-roster.html", label: "Rosters" },
 ];
 
@@ -67,7 +69,12 @@ function initNav() {
   getJSON("/api/meta")
     .then((meta) => {
       const el = document.getElementById("nav-data-as-of");
-      if (el && meta.latest_game_date) el.textContent = `Data as of ${meta.latest_game_date}`;
+      if (el) {
+        const pitchDate = meta.latest_game_date;
+        const schedDate = meta.latest_schedule_date;
+        const displayDate = (schedDate && (!pitchDate || schedDate > pitchDate)) ? schedDate : pitchDate;
+        if (displayDate) el.textContent = `Data as of ${displayDate}`;
+      }
     })
     .catch(() => {});
 
@@ -95,7 +102,12 @@ function initNav() {
       }
       const meta = await getJSON("/api/meta");
       const el = document.getElementById("nav-data-as-of");
-      if (el && meta.latest_game_date) el.textContent = `Data as of ${meta.latest_game_date}`;
+      if (el) {
+        const pitchDate = meta.latest_game_date;
+        const schedDate = meta.latest_schedule_date;
+        const displayDate = (schedDate && (!pitchDate || schedDate > pitchDate)) ? schedDate : pitchDate;
+        if (displayDate) el.textContent = `Data as of ${displayDate}`;
+      }
       if (typeof window.onDataRefresh === "function") {
         await window.onDataRefresh();
       } else {

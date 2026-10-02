@@ -150,11 +150,27 @@ def _recent_starts_inner(conn, season, pitcher_id, n=5):
     }
 
 
-def _team_name(conn, team_id):
+def _team_name(conn, team_id, fallback_name=None):
     row = conn.execute(
         "SELECT name, abbreviation FROM teams WHERE team_id = ?", (team_id,)
     ).fetchone()
-    return {"team_id": team_id, "name": row[0], "abbreviation": row[1]} if row else {"team_id": team_id, "name": str(team_id), "abbreviation": str(team_id)}
+    if row:
+        return {"team_id": team_id, "name": row[0], "abbreviation": row[1]}
+    if fallback_name:
+        # Try to match by name to get the canonical team_id (for logos) and abbreviation.
+        # Postseason games use placeholder IDs but the MLB API returns real team names.
+        canonical = conn.execute(
+            "SELECT team_id, abbreviation FROM teams WHERE name = ?", (fallback_name,)
+        ).fetchone()
+        if canonical:
+            return {"team_id": canonical[0], "name": fallback_name, "abbreviation": canonical[1]}
+        # True placeholder like "ATL/PHI" — use placeholder ID and derive short label.
+        abbr = fallback_name
+        if len(abbr) > 8:
+            parts = fallback_name.split()
+            abbr = "".join(w[:2].upper() for w in parts[:3])
+        return {"team_id": team_id, "name": fallback_name, "abbreviation": abbr}
+    return None
 
 
 def _player_name(conn, player_id):
@@ -181,7 +197,8 @@ def get_probable_pitchers(
         """SELECT game_pk, game_date, home_team_id, away_team_id,
                   home_probable_pitcher_id, away_probable_pitcher_id,
                   venue_name, game_status, pulled_at, venue_id,
-                  COALESCE(game_time_et, '') as game_time_et
+                  COALESCE(game_time_et, '') as game_time_et,
+                  home_team_name, away_team_name
            FROM schedule_games WHERE game_date = ?
            ORDER BY game_pk""",
         (game_date,),
@@ -201,7 +218,8 @@ def get_probable_pitchers(
                 """SELECT game_pk, game_date, home_team_id, away_team_id,
                           home_probable_pitcher_id, away_probable_pitcher_id,
                           venue_name, game_status, pulled_at, venue_id,
-                          COALESCE(game_time_et, '') as game_time_et
+                          COALESCE(game_time_et, '') as game_time_et,
+                          home_team_name, away_team_name
                    FROM schedule_games WHERE game_date = ?
                    ORDER BY game_pk""",
                 (game_date,),
@@ -212,9 +230,17 @@ def get_probable_pitchers(
     pulled_at = rows[0][8] if rows else None
     games = []
     for r in rows:
-        game_pk, gdate, home_id, away_id, home_pp, away_pp, venue, status, _, venue_id, game_time_et = r
-        home_team = _team_name(conn, home_id)
-        away_team = _team_name(conn, away_id)
+        # rows may have 11 cols (old DB) or 13 cols (with team names)
+        game_pk, gdate, home_id, away_id, home_pp, away_pp, venue, status, _, venue_id, game_time_et = r[:11]
+        home_stored_name = r[11] if len(r) > 11 else None
+        away_stored_name = r[12] if len(r) > 12 else None
+        home_team = _team_name(conn, home_id, home_stored_name)
+        away_team = _team_name(conn, away_id, away_stored_name)
+
+        # Skip games where both teams are completely unresolvable (stale
+        # placeholder entries that were never updated with real team data).
+        if home_team is None and away_team is None:
+            continue
 
         def build_pitcher(pid):
             if not pid:

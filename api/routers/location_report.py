@@ -20,7 +20,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from api.cache import ttl_cache
 from api.db import get_conn
-from analytics.location_model import _raw_predictions, leaderboard as location_leaderboard, pitcher_breakdown
+from analytics.location_v2_model import _raw_predictions, leaderboard as location_leaderboard, pitcher_breakdown
 
 router = APIRouter(prefix="/api/location")
 

@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Location+ v2 — Methodology (IN PROGRESS)</title>
+<style>
+  :root { --orange: #92540e; --orange-light: #fef3e2; --border: #d0d5c8; --muted: #5a6450; --green: #1a5c38; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; background: #fff; padding: 40px 48px; max-width: 900px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--orange); padding-bottom: 16px; margin-bottom: 28px; }
+  .model-name { font-size: 28px; font-weight: bold; color: var(--orange); letter-spacing: -0.5px; }
+  .model-sub { font-size: 14px; color: var(--muted); font-family: monospace; margin-top: 4px; }
+  .badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; font-weight: bold; }
+  .badge-inprog { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange); }
+  .badge-good { background: #e8f3ee; color: #1a5c38; border: 1px solid #1a5c38; }
+  .badge-season { background: #e8f0f8; color: #1a4070; border: 1px solid #a8c0d8; }
+  h2 { font-size: 15px; color: var(--orange); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin: 24px 0 12px; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Arial', sans-serif; }
+  h3 { font-size: 13px; font-weight: bold; margin: 16px 0 6px; font-family: 'Arial', sans-serif; }
+  p { margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0 16px; }
+  th { background: var(--orange); color: #fff; text-align: left; padding: 6px 10px; font-family: monospace; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #faf9f7; }
+  code { font-family: monospace; font-size: 12px; background: #f0f2ed; padding: 1px 4px; border-radius: 3px; }
+  .callout { background: #fff8e6; border-left: 4px solid var(--orange); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-good { background: #e8f3ee; border-left: 4px solid var(--green); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .section { margin-bottom: 28px; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: monospace; }
+  @media print {
+    body { padding: 20px 28px; }
+    th, .badge, .callout, .callout-good { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="model-name">Location+ v2 — IN PROGRESS</div>
+  <div class="model-sub">training/v2_artifacts/location_plus_v2_* · Candidate for location_plus_v1.txt replacement</div>
+  <div class="badges">
+    <span class="badge badge-inprog">⧗ IN PROGRESS — not live</span>
+    <span class="badge badge-good">✓ Fixes v1 sign-flip</span>
+    <span class="badge badge-season">Validated: 2015–2025 · 2026-09-21</span>
+  </div>
+</header>
+
+<div class="callout-good">
+  <strong>Why this exists:</strong> Location+ v1 has a sign-flip issue (ERA r = −0.257, xFIP r = −0.507 — higher score predicts a <em>worse</em> pitcher) and a stability collapse after 2023 (YoY r → 0.009 for 2024→2025). v2 fixes both: ERA r = +0.208, xFIP r = +0.349, std = 9.99 (vs. v1's std = 3.07). This is a candidate for production promotion.
+</div>
+
+<div class="section">
+<h2>1. Architecture — Decomposed Classifier Design</h2>
+<p>Location+ v2 replaces v1's single regression model with a <strong>five-classifier decomposed architecture</strong> that mirrors how pitching outcomes actually branch:</p>
+<ol style="margin: 8px 0 8px 20px; line-height: 2;">
+  <li><strong>xSwing%</strong> — Will the batter swing?</li>
+  <li><strong>xCS%</strong> — Given no swing, is it a called strike?</li>
+  <li><strong>xWhiff%</strong> — Given a swing, does the batter miss?</li>
+  <li><strong>xFoul%</strong> — Given a swing and contact, is it a foul?</li>
+  <li><strong>BIP type × EV distribution</strong> — Given a batted ball, what type at what exit velocity? (20-class multiclass)</li>
+</ol>
+<p>Each classifier outputs a probability. These combine via a <strong>fixed run-value table</strong> (<code>training/v2_artifacts/run_value_table.json</code>) to produce a per-pitch expected run value (xRV). xRV is aggregated across pitcher-seasons, then converted to the plus-scale.</p>
+<p>The run-value table is <strong>fixed and shared</strong> across all four decomposed models (Location+ v2, Tunneling+ v2, Stuff+ decomposed v1). No rebuilding needed at scoring time.</p>
+</div>
+
+<div class="section">
+<h2>2. Feature Set (7 Total)</h2>
+<p>Same inputs as Location+ v1 — the architecture change is in the classifiers, not the features.</p>
+<table>
+  <tr><th>Feature</th><th>Type</th><th>What it captures</th></tr>
+  <tr><td><code>plate_x</code></td><td>Numeric</td><td>Horizontal crossing location</td></tr>
+  <tr><td><code>plate_z</code></td><td>Numeric</td><td>Vertical crossing location</td></tr>
+  <tr><td><code>balls</code></td><td>Numeric</td><td>Count balls (0–3)</td></tr>
+  <tr><td><code>strikes</code></td><td>Numeric</td><td>Count strikes (0–2)</td></tr>
+  <tr><td><code>pitch_type</code></td><td>Categorical</td><td>Pitch classification</td></tr>
+  <tr><td><code>stand</code></td><td>Categorical</td><td>Batter handedness</td></tr>
+  <tr><td><code>season</code></td><td>Categorical</td><td>Season year</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>3. Classifier Performance (LOSO CV, 2015–2025)</h2>
+<div class="callout">
+<strong>AUC guide:</strong> 0.50 = coin flip (useless). 0.70 = useful. 0.80 = strong. 0.90 = very strong. The xCS% AUC is very high because the strike zone is a nearly deterministic function of plate location — exactly what this model's features directly capture.
+</div>
+<table>
+  <tr><th>Classifier</th><th>Mean AUC</th><th>Why that level makes sense</th></tr>
+  <tr><td>xSwing%</td><td>0.848</td><td>Plate location strongly predicts swing decisions — high AUC expected</td></tr>
+  <tr><td>xCS% (called strike)</td><td>0.981</td><td>Strike zone is nearly deterministic from plate_x/plate_z — highest AUC of any classifier</td></tr>
+  <tr><td>xWhiff%</td><td>0.754</td><td>Location contributes to whiffs but pitch quality (Stuff+) matters more here</td></tr>
+  <tr><td>xFoul%</td><td>0.621</td><td>Weakest — fouling is harder to predict from location alone</td></tr>
+  <tr><td>BIP distribution (multiclass)</td><td>N/A (log-loss only)</td><td>20-class multiclass; no AUC; model converged correctly</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>4. Validation Results vs. Live v1</h2>
+<table>
+  <tr><th>Metric</th><th>Live v1</th><th>v2 Candidate</th><th>Winner</th></tr>
+  <tr><td>Score std</td><td style="color:#b91c2c">3.07</td><td style="color:#1a5c38">9.99</td><td>v2 — much better spread</td></tr>
+  <tr><td>ERA correlation</td><td style="color:#b91c2c">−0.257 (backwards)</td><td style="color:#1a5c38">+0.208</td><td>v2 — correct direction</td></tr>
+  <tr><td>xFIP correlation</td><td style="color:#b91c2c">−0.507 (backwards)</td><td style="color:#1a5c38">+0.349</td><td>v2 — correct direction</td></tr>
+  <tr><td>YoY Pearson r (2023→2024)</td><td style="color:#b91c2c">0.090 (collapsed)</td><td>Not separately computed</td><td>—</td></tr>
+  <tr><td>→ Next-yr whiff%</td><td>r = 0.112</td><td>r = −0.065</td><td>Weak for both — not a key metric for Location+</td></tr>
+  <tr><td>→ Next-yr SwStr%</td><td>r = 0.015</td><td>r = 0.028</td><td>Essentially tied (both near zero)</td></tr>
+  <tr><td>Pitcher-seasons scored</td><td>8,947</td><td>8,247</td><td>v1 slightly more coverage</td></tr>
+</table>
+<h3>Cross-model correlations</h3>
+<table>
+  <tr><th>Pair</th><th>r</th><th>Interpretation</th></tr>
+  <tr><td>Location+ v2 × Tunneling+ v2</td><td>+0.617</td><td>Both v2 candidates in sync — positive direction</td></tr>
+  <tr><td>Location+ v1 × Location+ v2</td><td>(negative)</td><td>v1 and v2 rank pitchers in opposite directions — reflects sign flip</td></tr>
+  <tr><td>Location+ v2 × Stuff+</td><td>−0.045</td><td>Near-independent (correct — different skills)</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>5. Training Details</h2>
+<table>
+  <tr><th>Component</th><th>Detail</th></tr>
+  <tr><td>Classifier architecture</td><td>5 LightGBM classifiers (binary × 4, multiclass × 1)</td></tr>
+  <tr><td>LightGBM params</td><td>objective=binary/multiclass, n_estimators=500, num_leaves=31, lr=0.05, min_child_samples=200, subsample=0.8, colsample=0.8, reg_lambda=1.0</td></tr>
+  <tr><td>CV methodology</td><td>Leave-one-season-out (LOSO), 2015–2025</td></tr>
+  <tr><td>Training data</td><td>2015–2025 (11 seasons; ~6.6 M pitches)</td></tr>
+  <tr><td>Scoring pipeline</td><td>5 classifiers → probabilities → run-value table → per-pitch xRV → pitcher-season mean → to_plus_scale</td></tr>
+  <tr><td>Training script</td><td><code>training/train_v2_models.py</code></td></tr>
+  <tr><td>Validation script</td><td><code>training/validate_v2_complete.py</code></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>6. Promotion Checklist</h2>
+<table>
+  <tr><th>Step</th><th>Status</th></tr>
+  <tr><td>Classifier AUCs validated (LOSO)</td><td>✓ Complete — 2026-09-21</td></tr>
+  <tr><td>ERA/xFIP correlations correct direction</td><td>✓ Confirmed</td></tr>
+  <tr><td>Spot-check scores on known pitchers</td><td>⧗ Pending</td></tr>
+  <tr><td>Copy booster files to models/ directory</td><td>⧗ Pending</td></tr>
+  <tr><td>Wire into api/ routes</td><td>⧗ Pending</td></tr>
+  <tr><td>Update HANDOFF.md</td><td>⧗ Pending</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>7. Artifact Locations</h2>
+<table>
+  <tr><th>File</th><th>Purpose</th></tr>
+  <tr><td><code>training/v2_artifacts/location_plus_v2_scores.parquet</code></td><td>Per pitcher-season scores</td></tr>
+  <tr><td><code>training/v2_artifacts/location_plus_v2_per_pitch.parquet</code></td><td>Per-pitch xRV and probabilities</td></tr>
+  <tr><td><code>training/v2_artifacts/location_plus_v2_meta.json</code></td><td>Feature lists, CV AUCs, BIP classes</td></tr>
+  <tr><td><code>training/v2_artifacts/run_value_table.json</code></td><td>Shared run-value table (do not rebuild)</td></tr>
+  <tr><td><code>training/validate_v2_complete.py</code></td><td>Validation script (Parts A+B+C)</td></tr>
+  <tr><td><code>training/validate_v2_complete.log</code></td><td>Full validation output including v1 vs v2 comparison</td></tr>
+</table>
+</div>
+
+<footer>
+  Location+ v2 · MLB Dashboard · Created 2026-09-21 · STATUS: IN PROGRESS — CANDIDATE FOR PROMOTION
+</footer>
+
+</body>
+</html>

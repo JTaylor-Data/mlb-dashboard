@@ -19,8 +19,8 @@ from analytics.percentiles import (
     pitcher_percentile_metrics, player_percentiles, player_percentiles_allow_unqualified,
 )
 from analytics.player_page import (
-    all_pitcher_arm_angles, batter_counting_stats, batter_pitch_type_table, batter_wrc_plus,
-    field_zone_pcts, league_average_batter_row, league_average_swing_profile,
+    all_pitcher_arm_angles, batter_counting_stats, batter_pitch_type_table, batter_rolling_xwoba,
+    batter_wrc_plus, field_zone_pcts, league_average_batter_row, league_average_swing_profile,
     league_hr_per_fb, movement_plot_data, pitch_usage_by_stand, pitcher_arm_angle,
     pitcher_counting_stats, pitcher_league_avg_row, pitcher_pitch_table, pitcher_rubber_position,
     player_last_n_games, similar_arm_angle_movement, swing_profile,
@@ -426,31 +426,31 @@ def _table_to_rows(df, columns, fmt_map, league_avg_dict=None):
 
 @ttl_cache()
 def _all_players(conn, season):
-    # One row per (player, role) - a true two-way player (has both thrown
-    # and batted) shows up twice, once per role, which is the right call for
-    # a search box: picking "Ohtani (Pitcher)" vs "Ohtani (Hitter)" should
-    # load two different views, not one ambiguous merged one. bats/throws
-    # and (for pitchers) the SP/RP classification feed the search dropdown's
-    # own handedness/role tag (e.g. "R-SP", "LHH") instead of a flat
-    # "P"/"Hitter" label.
-    # Distinct pitcher_id/batter_id pulled first (narrow, answered straight
-    # from idx_pitches_season_pitcher/_batter as a covering index - no row
-    # lookups needed), THEN joined to players - not DISTINCT'd on the full
-    # joined row width like the original query. Confirmed ~11x faster
-    # (1.7s -> 0.15s) via EXPLAIN QUERY PLAN + direct timing on a real
-    # season - the original forced SQLite to look up every matching pitch
-    # row by rowid just to dedupe on player_id, when the season+id
-    # composite index can answer "which player_ids" on its own.
+    # One row per (player, role) across ALL seasons so inactive players still
+    # appear in search. `latest_season` lets the frontend auto-select the
+    # player's most recent active season instead of defaulting to the current
+    # one (where they may have no data). The pitcher_role classification uses
+    # the requested season for active players; inactive ones fall back to
+    # their own latest season.
     df = pd.read_sql("""
-        SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws, 'pitcher' AS role
+        SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws,
+               'pitcher' AS role, p.latest_season
         FROM players pl
-        JOIN (SELECT DISTINCT pitcher_id FROM pitches WHERE season = ?) p ON pl.player_id = p.pitcher_id
+        JOIN (SELECT pitcher_id, MAX(season) AS latest_season FROM pitches GROUP BY pitcher_id) p
+          ON pl.player_id = p.pitcher_id
         UNION
-        SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws, 'batter' AS role
+        SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws,
+               'batter' AS role, b.latest_season
         FROM players pl
-        JOIN (SELECT DISTINCT batter_id FROM pitches WHERE season = ?) p ON pl.player_id = p.batter_id
+        JOIN (SELECT batter_id, MAX(season) AS latest_season FROM pitches GROUP BY batter_id) b
+          ON pl.player_id = b.batter_id
+        -- Exclude pitchers from the batter list (except Ohtani who truly plays both)
+        WHERE pl.player_id = 660271
+           OR pl.player_id NOT IN (
+               SELECT pitcher_id FROM pitches GROUP BY pitcher_id
+           )
         ORDER BY name
-    """, conn, params=(season, season))
+    """, conn)
     pitcher_roles = _pitcher_roles(conn, season)
     df = df.merge(
         pitcher_roles[["role"]].rename(columns={"role": "pitcher_role"}),
@@ -462,12 +462,6 @@ def _all_players(conn, season):
 
 @router.get("/players/all")
 def list_all_players(season: int = Query(2026), conn=Depends(get_conn)):
-    # A plain-Python None assigned into a DataFrame column here gets
-    # silently upcast to NaN by pandas' string-dtype inference (confirmed
-    # directly, not assumed) - which json.dumps then rejects outright (NaN
-    # isn't valid JSON). _clean() is this project's own established fix for
-    # exactly this NaN-vs-None gap, applied here per-record since
-    # to_dict(orient="records") is what actually re-materializes the NaNs.
     records = _all_players(conn, season).to_dict(orient="records")
     for r in records:
         if "pitcher_role" in r:
@@ -1176,3 +1170,14 @@ def get_pitcher_outing(
         "sequences": sequences,
     }
 
+
+
+@router.get("/players/{player_id}/rolling-xwoba")
+def get_rolling_xwoba(
+    player_id: int,
+    season: int = Query(2026),
+    conn=Depends(get_conn),
+):
+    """Rolling xwOBA for a batter over 50/100/250-PA windows."""
+    points = batter_rolling_xwoba(conn, season, player_id)
+    return {"points": points}

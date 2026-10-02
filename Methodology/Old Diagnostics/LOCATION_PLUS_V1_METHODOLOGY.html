@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Location+ v1 — Methodology</title>
+<style>
+  :root { --green: #1a5c38; --green-light: #e8f3ee; --border: #d0d5c8; --muted: #5a6450; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; background: #fff; padding: 40px 48px; max-width: 900px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--green); padding-bottom: 16px; margin-bottom: 28px; }
+  .model-name { font-size: 28px; font-weight: bold; color: var(--green); letter-spacing: -0.5px; }
+  .model-sub { font-size: 14px; color: var(--muted); font-family: monospace; margin-top: 4px; }
+  .badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; font-weight: bold; }
+  .badge-live { background: var(--green-light); color: var(--green); border: 1px solid var(--green); }
+  .badge-warn { background: #fde8ea; color: #b91c2c; border: 1px solid #b91c2c; }
+  .badge-season { background: #e8f0f8; color: #1a4070; border: 1px solid #a8c0d8; }
+  h2 { font-size: 15px; color: var(--green); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin: 24px 0 12px; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Arial', sans-serif; }
+  h3 { font-size: 13px; font-weight: bold; margin: 16px 0 6px; font-family: 'Arial', sans-serif; }
+  p { margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0 16px; }
+  th { background: var(--green); color: #fff; text-align: left; padding: 6px 10px; font-family: monospace; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #f7f9f5; }
+  code { font-family: monospace; font-size: 12px; background: #f0f2ed; padding: 1px 4px; border-radius: 3px; }
+  .callout-crit { background: #fde8ea; border-left: 4px solid #b91c2c; padding: 12px 14px; margin: 16px 0; font-size: 13px; }
+  .callout { background: #fff8e6; border-left: 4px solid #c89a00; padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .section { margin-bottom: 28px; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: monospace; }
+  @media print {
+    body { padding: 20px 28px; }
+    th, .badge, .callout, .callout-crit { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="model-name">Location+ v1</div>
+  <div class="model-sub">models/location_plus_v1.txt · analytics/location_features.py</div>
+  <div class="badges">
+    <span class="badge badge-live">● LIVE</span>
+    <span class="badge badge-warn">⚠ SIGN-FLIP ISSUE — see §7</span>
+    <span class="badge badge-warn">⚠ STABILITY COLLAPSE 2023+ — see §8</span>
+    <span class="badge badge-season">Training: 2015–2026 (12 seasons)</span>
+  </div>
+</header>
+
+<div class="callout-crit">
+  <strong>⚠ Two critical issues found 2026-09-21:</strong> (1) Same-season ERA r = −0.257, xFIP r = −0.507 — higher score predicts a <em>worse</em> pitcher, which is backwards. (2) Year-over-year Pearson r collapsed to 0.090 for 2023→2024 and 0.009 for 2024→2025 — near-zero predictive stability in recent seasons. A v2 candidate fixes both issues. Promotion pending. See <code>training/validate_v2_complete.log</code>.
+</div>
+
+<div class="section">
+<h2>1. What It Measures</h2>
+<p>Location+ grades where a pitch ended up and how valuable that location was, <strong>given the count</strong>. It fills the deliberate gap left by Stuff+, Deception+, and Tunneling+, all of which exclude plate location by design.</p>
+<p>Follows FanGraphs' public Location+ methodology (their Pitching primer) with one deliberate deviation: <code>stand</code> is included (FanGraphs excludes it). The deviation is empirically tested — see §6. <code>p_throws</code> remains excluded, per FanGraphs' reasoning that pitcher handedness alone is a matchup concept, not a location property.</p>
+<p>The accepted limitation: Statcast captures <em>where a pitch actually crossed</em>, not catcher target or pitcher intent. This measures location-value-achieved, not intent. FanGraphs tested intent-based data and found it added no predictive value — accepted here for the same reason.</p>
+<p>100 = league average. 10 points = 1 SD. Spread is compressed vs. Stuff+ (smaller underlying lever).</p>
+</div>
+
+<div class="section">
+<h2>2. Feature Set (7 Total)</h2>
+<table>
+  <tr><th>Feature</th><th>Type</th><th>What it captures</th></tr>
+  <tr><td><code>plate_x</code></td><td>Numeric</td><td>Horizontal crossing location (feet from center)</td></tr>
+  <tr><td><code>plate_z</code></td><td>Numeric</td><td>Vertical crossing location (feet from ground)</td></tr>
+  <tr><td><code>balls</code></td><td>Numeric</td><td>Count balls (0–3)</td></tr>
+  <tr><td><code>strikes</code></td><td>Numeric</td><td>Count strikes (0–2)</td></tr>
+  <tr><td><code>pitch_type</code></td><td>Categorical</td><td>Pitch classification</td></tr>
+  <tr><td><code>stand</code></td><td>Categorical</td><td>Batter handedness (inside/outside depends on this)</td></tr>
+  <tr><td><code>season</code></td><td>Categorical</td><td>Season year</td></tr>
+</table>
+<p><strong>SHAP importance order:</strong> plate_x (1st) → plate_z (2nd) → balls (3rd) → strikes (4th) → pitch_type (5th) → stand (6th) → season (7th). Location dominates as expected.</p>
+<p><strong>Excluded by design:</strong> Every physical/mechanical feature from Stuff+, Deception+, and Tunneling+. <code>p_throws</code>. <code>pitcher_id</code>.</p>
+</div>
+
+<div class="section">
+<h2>3. Model Architecture</h2>
+<table>
+  <tr><th>Component</th><th>Detail</th></tr>
+  <tr><td>Model type</td><td>LightGBM regressor, Huber loss</td></tr>
+  <tr><td>CV methodology</td><td>Leave-one-season-out (LOSO)</td></tr>
+  <tr><td>Training data</td><td>2015–2026 (12 seasons; full backfill)</td></tr>
+  <tr><td>Training rows</td><td>4,135,036 (all seasons, after exclusions)</td></tr>
+  <tr><td>Target</td><td><code>delta_run_exp</code> per pitch</td></tr>
+  <tr><td>CV mean R²</td><td>0.0333 (≈ 4–5× higher than Stuff+ or Tunneling+, as expected — location directly determines outcome)</td></tr>
+  <tr><td>Identity guard</td><td><code>assert_no_identifiers()</code> before every .fit()</td></tr>
+  <tr><td>Pitch-type exclusions</td><td>PO, UN, EP (imported from stuff_features.py — not redefined)</td></tr>
+  <tr><td>Booster file</td><td><code>models/location_plus_v1.txt</code></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>4. Scoring Pipeline</h2>
+<p><strong>Empirical-Bayes shrinkage.</strong> K values (pitches needed to trust a sample) are dramatically larger than Stuff+'s, estimated fresh from Location+'s own data. K ranges from ~11 (CS) to ~165 (FF). Reusing Stuff+'s K ≈ 2 here would under-shrink badly — a pitcher's 30-fastball sample would be treated as nearly fully reliable when Location+'s own data says FF needs ~165 pitches.</p>
+<table>
+  <tr><th>Pitch type</th><th>K (pitches)</th><th>Pitch type</th><th>K (pitches)</th></tr>
+  <tr><td>CS</td><td>10.9</td><td>SV</td><td>86.0</td></tr>
+  <tr><td>KN</td><td>12.5</td><td>ST</td><td>90.0</td></tr>
+  <tr><td>FA</td><td>44.8</td><td>SL</td><td>112.7</td></tr>
+  <tr><td>FS</td><td>64.5</td><td>SI</td><td>140.1</td></tr>
+  <tr><td>CU</td><td>78.7</td><td>FC</td><td>142.0</td></tr>
+  <tr><td>CH</td><td>78.9</td><td>FF</td><td>164.6</td></tr>
+</table>
+<p><strong>Plus-scale:</strong> <code>100 − 10 × (shrunk_pred − season_mean) / season_std</code>, within each season.</p>
+</div>
+
+<div class="section">
+<h2>5. Validation — Core Numbers</h2>
+<table>
+  <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+  <tr><td>CV mean R²</td><td>0.0333</td><td>~4–5× Stuff+/Tunneling+; plate location directly determines outcome</td></tr>
+  <tr><td>Split-half reliability (50 pitches/half)</td><td>0.597</td><td>vs. Stuff+ 0.992 at same threshold — much noisier</td></tr>
+  <tr><td>Split-half r ≥ 0.9 achieved at</td><td>Not reached within tested range</td><td>Even at 600 pitches/half (1,200 total), r ≈ 0.79</td></tr>
+  <tr><td>YoY r² pooled (v1 report, 2021–2026)</td><td>0.368</td><td>Per the original build report (2021–2025 pairs)</td></tr>
+  <tr><td>Cross-model vs. Stuff+</td><td>r = −0.070</td><td>Near-independent (correct)</td></tr>
+  <tr><td>Cross-model vs. Tunneling+</td><td>r = 0.563</td><td>Unexpectedly high — likely shared command skill, not shared features</td></tr>
+</table>
+<div class="callout">
+<strong>Stabilization implication:</strong> Even at the 100-pitch qualifying threshold used for leaderboards, Location+'s split-half r is only ~0.59 — much noisier than Stuff+. A Location+ leaderboard needs a much higher pitch minimum to be trusted, and even then is noisier than equivalent Stuff+ numbers.
+</div>
+</div>
+
+<div class="section">
+<h2>6. The stand-Inclusion Deviation (vs. FanGraphs)</h2>
+<p>FanGraphs excludes <code>stand</code> from their public Location+. This project keeps it. Ablation confirms it earns its place:</p>
+<table>
+  <tr><th></th><th>With stand (current)</th><th>Without stand (FanGraphs-exact)</th><th>Δ</th></tr>
+  <tr><td>CV R²</td><td>0.0333</td><td>0.0313</td><td>+0.0020 (+6% relative)</td></tr>
+  <tr><td>YoY pooled r²</td><td>0.368</td><td>0.303</td><td>+0.065 (+21% relative)</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>7. ⚠ Critical Issue — Sign Flip</h2>
+<div class="callout-crit">
+Location+ v1's ERA and xFIP correlations are <strong>negative</strong> — a higher score predicts a <em>worse</em> pitcher. This was found in the 2026-09-21 validation study. The v2 candidate corrects this.
+</div>
+<table>
+  <tr><th>Model</th><th>ERA r</th><th>xFIP r</th><th>Direction</th></tr>
+  <tr><td>Location+ v1 (LIVE)</td><td style="color:#b91c2c">−0.257</td><td style="color:#b91c2c">−0.507</td><td style="color:#b91c2c">BACKWARDS</td></tr>
+  <tr><td>Location+ v2 (candidate)</td><td style="color:#1a5c38">+0.208</td><td style="color:#1a5c38">+0.349</td><td style="color:#1a5c38">Correct</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>8. ⚠ Critical Issue — Stability Collapse After 2023</h2>
+<div class="callout-crit">
+Year-over-year Pearson r collapsed dramatically in recent seasons. The model was reasonably stable through 2022, then fell apart. Score std = 3.07 (severely compressed, vs. v2's std = 10.0).
+</div>
+<table>
+  <tr><th>Season pair</th><th>Pearson r</th><th>sklearn R²</th></tr>
+  <tr><td>2015→2016 through 2021→2022</td><td>0.36–0.52</td><td>Mixed (−0.09 to +0.20)</td></tr>
+  <tr><td>2022→2023</td><td>0.811</td><td>+0.572</td></tr>
+  <tr><td>2023→2024</td><td style="color:#b91c2c">0.090</td><td style="color:#b91c2c">−1.480</td></tr>
+  <tr><td>2024→2025</td><td style="color:#b91c2c">0.009</td><td style="color:#b91c2c">−0.464</td></tr>
+  <tr><td>Pooled (all pairs)</td><td>0.361</td><td>−0.160</td></tr>
+</table>
+<p>The pooled sklearn R² = −0.160 (reported previously as "the YoY number") and pooled Pearson r = 0.361 are both correct — they measure different things. The R² is negative because the score compression (std = 3.07) means "predict everyone at 94" beats using the actual score. The v2 candidate (std ≈ 10) addresses this.</p>
+</div>
+
+<div class="section">
+<h2>9. File Locations</h2>
+<table>
+  <tr><th>File</th><th>Purpose</th></tr>
+  <tr><td><code>analytics/location_features.py</code></td><td>Feature engineering; also contains canonical <code>to_plus_scale()</code> used by all four models</td></tr>
+  <tr><td><code>models/location_plus_v1.txt</code></td><td>Trained LightGBM booster</td></tr>
+  <tr><td><code>models/location_plus_v1_meta.json</code></td><td>Feature lists, shrinkage K values</td></tr>
+  <tr><td><code>training/location_v1_artifacts/</code></td><td>Validation outputs, count-interaction plots</td></tr>
+  <tr><td><code>Methodology/LOCATION_V1_REPORT.md</code></td><td>Full build and validation report</td></tr>
+  <tr><td><code>training/validate_v2_complete.log</code></td><td>2026-09-21 sign-flip and stability findings</td></tr>
+  <tr><td><code>training/v2_artifacts/location_plus_v2_*</code></td><td>v2 candidate artifacts</td></tr>
+</table>
+</div>
+
+<footer>
+  Location+ v1 · MLB Dashboard · Last updated 2026-09-21 · STATUS: LIVE (sign-flip + stability issues — v2 candidate pending)
+</footer>
+
+</body>
+</html>

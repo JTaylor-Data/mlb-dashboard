@@ -56,6 +56,12 @@ const playerSearch = createPlayerSearch(
   async (p) => {
     state.playerId = p.player_id;
     state.mode = p.role;
+    // If this player wasn't active in the current season, auto-switch to
+    // their most recent active season so the page loads with real data.
+    if (p.latest_season && p.latest_season !== state.season) {
+      seasonSelect.set(p.latest_season);
+      state.season = p.latest_season;
+    }
     applyRoleChrome();
     await loadPlayer();
   }
@@ -251,22 +257,19 @@ function renderPercentileGroups(groups, colorFn, layout) {
     })
     .join("");
   const cls = layout === "grid" ? "rt-panel rt-panel-grid" : "rt-panel";
-  const unqBanner = anyUnqualified
-    ? `<div class="rt-unqualified-banner">Doesn't meet this season/split's qualifying threshold - percentiles below are shaded and computed against the real qualified population only.</div>`
-    : "";
-  return `<div class="card ${cls}">${unqBanner}${sections}</div>`;
+  return `<div class="card ${cls}" data-any-unqualified="${anyUnqualified ? '1' : '0'}">${sections}</div>`;
 }
 
 function renderPercentiles(groups) {
   const mount = document.getElementById("pitcher-percentiles-mount");
   const section = document.getElementById("pitcher-percentiles-section");
-  // When no data: clear the mount and put a small note beside the heading
-  // (the heading lives in index.html as an <h2> sibling of the mount).
   const heading = section ? section.querySelector("h2") : null;
+
+  // Clear any prior inline notes
   if (heading) {
-    const existing = heading.querySelector(".pct-no-data-note");
-    if (existing) existing.remove();
+    heading.querySelectorAll(".pct-no-data-note, .pct-unqualified-note").forEach(el => el.remove());
   }
+
   if (!groups || !groups.length) {
     mount.innerHTML = "";
     if (heading) {
@@ -277,7 +280,17 @@ function renderPercentiles(groups) {
     }
     return;
   }
+
   mount.innerHTML = renderPercentileGroups(groups, pctColor, "grid");
+
+  // Move the unqualified note inline to the heading (no box inside the card)
+  const card = mount.querySelector("[data-any-unqualified]");
+  if (heading && card && card.dataset.anyUnqualified === "1") {
+    const note = document.createElement("span");
+    note.className = "pct-unqualified-note";
+    note.textContent = " — unqualified; ranked vs. qualified population, shaded";
+    heading.appendChild(note);
+  }
 }
 
 // Arm-side-adjusted HB (positive = arm side, for EITHER hand, per Savant's
@@ -1629,7 +1642,109 @@ async function loadPlayer() {
     // Hide outing section for batters
     const outingSection = document.getElementById("outing-section");
     if (outingSection) outingSection.style.display = "none";
+    await renderRollingXwoba(state.playerId, state.season);
   }
+}
+
+function _buildXwobaChart(pts, windowKey) {
+  const W = 540, H = 160, PAD = { top: 14, right: 20, bottom: 14, left: 44 };
+  const iW = W - PAD.left - PAD.right;
+  const iH = H - PAD.top - PAD.bottom;
+
+  const allY = pts.map(p => p[windowKey]).filter(v => v != null);
+  if (!allY.length) return "";
+
+  const LG_AVG = 0.320;
+  const yMin = Math.max(0.150, Math.min(...allY, LG_AVG) - 0.015);
+  const yMax = Math.min(0.540, Math.max(...allY, LG_AVG) + 0.015);
+  const xMax = pts.length;
+
+  const xScale = v => PAD.left + (v / xMax) * iW;
+  const yScale = v => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * iH;
+
+  // Y ticks at 0.05 intervals
+  const yTicks = [];
+  for (let v = Math.ceil(yMin / 0.05) * 0.05; v <= yMax + 0.001; v += 0.05) {
+    yTicks.push(parseFloat(v.toFixed(3)));
+  }
+
+  let grid = "";
+  for (const v of yTicks) {
+    const y = yScale(v).toFixed(1);
+    grid += `<line x1="${PAD.left}" y1="${y}" x2="${PAD.left + iW}" y2="${y}" stroke="var(--border)" stroke-width="0.7" stroke-dasharray="2,3"/>`;
+    grid += `<text x="${PAD.left - 5}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="9.5" font-family="var(--font-data,monospace)" fill="var(--text-muted)">.${String(Math.round(v * 1000)).padStart(3, "0")}</text>`;
+  }
+
+  // Player line (red)
+  const segments = [];
+  let seg = [];
+  for (const p of pts) {
+    if (p[windowKey] != null) {
+      seg.push(`${xScale(p.pa_index).toFixed(1)},${yScale(p[windowKey]).toFixed(1)}`);
+    } else if (seg.length) { segments.push(seg.join(" ")); seg = []; }
+  }
+  if (seg.length) segments.push(seg.join(" "));
+  const line = segments.map(s =>
+    `<polyline points="${s}" fill="none" stroke="#c9302c" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`
+  ).join("");
+
+  // League avg dashed brown line
+  const lgY = yScale(LG_AVG);
+  const lgLine = `<line x1="${PAD.left}" y1="${lgY.toFixed(1)}" x2="${PAD.left + iW}" y2="${lgY.toFixed(1)}" stroke="#7c5c2e" stroke-width="1.4" stroke-dasharray="5,3" opacity="0.8"/>`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;">${grid}${lgLine}${line}</svg>`;
+}
+
+async function renderRollingXwoba(playerId, season) {
+  const section = document.getElementById("rolling-xwoba-section");
+  const mount = document.getElementById("rolling-xwoba-mount");
+  const toggleContainer = document.getElementById("rolling-xwoba-toggle");
+  if (!section || !mount) return;
+
+  let result;
+  try {
+    result = await getJSON(`/api/players/${playerId}/rolling-xwoba?season=${season}`);
+  } catch (e) {
+    section.style.display = "none";
+    return;
+  }
+
+  const pts = result.points || [];
+  if (pts.length < 50) {
+    section.style.display = "none";
+    return;
+  }
+
+  section.style.display = "";
+
+  const WINDOWS = [
+    { key: "50",  label: "50 PA"  },
+    { key: "100", label: "100 PA" },
+    { key: "250", label: "250 PA" },
+  ];
+
+  let activeWindow = "100";
+
+  function renderToggle() {
+    if (!toggleContainer) return;
+    toggleContainer.innerHTML = WINDOWS.map(w =>
+      `<button class="xwoba-win-btn${w.key === activeWindow ? " active" : ""}" data-win="${w.key}">${w.label}</button>`
+    ).join("");
+    toggleContainer.querySelectorAll("button").forEach(btn => {
+      btn.addEventListener("click", () => {
+        activeWindow = btn.dataset.win;
+        renderToggle();
+        renderChart();
+      });
+    });
+  }
+
+  function renderChart() {
+    mount.innerHTML = _buildXwobaChart(pts, activeWindow);
+  }
+
+  renderToggle();
+  renderChart();
 }
 
 // Fire-and-forget prefetches for the two most-visited adjacent pages so

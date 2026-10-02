@@ -57,6 +57,11 @@ from api.warmup import warm_cache_sync
 EARLIEST_SEASON_START = date(2021, 3, 20)
 PLAYERS_GAMES_RECENT_WINDOW_DAYS = pull_statcast.RECENT_WINDOW_DAYS
 
+# Set True once the regular season ends. Skips team-stat pulls (W/L records
+# are frozen) and model cache clears (RS scores are final); Statcast and
+# schedule pulls still run to ingest postseason pitch data.
+POSTSEASON_MODE = True
+
 _status = {"state": "idle", "detail": "", "started_at": None, "finished_at": None}
 _lock = threading.Lock()
 
@@ -86,9 +91,12 @@ def _run(full_warmup):
 
         season = end.year
 
-        print("[refresh] updating team stats...", flush=True)
-        _status["detail"] = "Updating team stats..."
-        pull_team_stats.run(season)
+        if not POSTSEASON_MODE:
+            print("[refresh] updating team stats...", flush=True)
+            _status["detail"] = "Updating team stats..."
+            pull_team_stats.run(season)
+        else:
+            print("[refresh] postseason mode — skipping team stats (RS records frozen)", flush=True)
 
         print("[refresh] updating upcoming schedule / probable pitchers...", flush=True)
         _status["detail"] = "Updating upcoming schedule..."
@@ -99,10 +107,17 @@ def _run(full_warmup):
         _status["detail"] = "Updating remaining schedule..."
         pull_remaining_schedule.run(season)
 
-        # Prospects don't change daily — skip on manual Refresh clicks (full_warmup=False)
-        # to avoid a slow network call the user didn't ask for. Daily scheduler still runs it.
-        if full_warmup:
-            print("[refresh] updating prospect rankings + scouting...", flush=True)
+        print("[refresh] updating rosters + schedule via MLB Stats API...", flush=True)
+        _status["detail"] = "Updating rosters/schedule..."
+        try:
+            from pulls.refresh_mlb_stats import run as _refresh_mlb_stats
+            _refresh_mlb_stats(season=season, skip_news=False, postseason=POSTSEASON_MODE)
+        except Exception as _me:
+            print(f"[refresh] refresh_mlb_stats failed (non-fatal): {_me}", flush=True)
+
+        # Prospects: skip on manual refresh clicks; weekly on Mondays during scheduled runs.
+        if full_warmup and date.today().weekday() == 0:
+            print("[refresh] updating prospect rankings + scouting (weekly Monday run)...", flush=True)
             _status["detail"] = "Updating prospect rankings..."
             try:
                 from pulls import pull_prospects, pull_prospect_scouting
@@ -113,13 +128,21 @@ def _run(full_warmup):
 
         print("[refresh] refreshing computed stats...", flush=True)
         _status["detail"] = "Refreshing computed stats..."
-        if full_warmup:
+        if full_warmup and not POSTSEASON_MODE:
             # Scheduled/startup refresh: clear everything including model caches,
             # then do a full warmup (includes L/R splits, similar players, etc.)
             cache.clear_all()
             stuff_model.clear_cache()
             deception_model.clear_cache()
             boxscore.clear_cache()
+        elif full_warmup and POSTSEASON_MODE:
+            # Postseason: RS model scores are final — don't nuke and recompute them.
+            # Only clear daily-data caches that change with each new postseason game.
+            boxscore.clear_cache()
+            from api.routers.top_performers import _leaderboard
+            from api.routers.standings import _standings
+            _leaderboard.clear()
+            _standings.clear()
         else:
             # Manual refresh button: only clear the daily-data caches. Model
             # scoring caches (Stuff+, Tunneling+, Deception+, Location+) don't

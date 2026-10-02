@@ -1,0 +1,188 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Projected Games - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=45" />
+  <style>
+    #motd-mount { margin-bottom: 24px; }
+    .motd-card {
+      background: var(--surface); border: 2px solid #c9a227;
+      border-radius: var(--radius); box-shadow: 0 2px 12px rgba(201,162,39,0.18);
+      overflow: hidden;
+    }
+    .motd-header {
+      background: linear-gradient(90deg, #2a1f00 0%, #5a3d00 60%, #2a1f00 100%);
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 18px;
+    }
+    .motd-crown { font-size: 16px; color: #f0c040; }
+    .motd-title {
+      font-size: 11px; font-weight: 900; letter-spacing: 1.5px;
+      text-transform: uppercase; color: #f0c040;
+    }
+
+    #games-mount { display: flex; flex-direction: column; gap: 12px; }
+    .game-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden;
+    }
+    .game-card-inner {
+      display: grid;
+      grid-template-columns: 200px 190px 1fr;
+    }
+    @media (max-width: 860px) { .game-card-inner { grid-template-columns: 1fr; } }
+
+    .matchup-col {
+      display: flex; flex-direction: column; align-items: stretch;
+      background: var(--surface-alt);
+      border-right: 1px solid var(--border);
+      padding: 14px 10px 10px;
+      gap: 2px;
+    }
+    .matchup-logos-row,
+    .matchup-abbrs-row,
+    .matchup-cities-row {
+      display: grid;
+      grid-template-columns: 1fr 28px 1fr;
+      align-items: center;
+    }
+    .team-block    { display: flex; justify-content: center; }
+    .at-sign       { text-align: center; font-size: 15px; color: var(--text-muted); line-height: 1; }
+    .team-abbr     { text-align: center; font-size: 15px; font-weight: 900; letter-spacing: 0.5px; color: var(--text); }
+    .team-city     { text-align: center; font-size: 9px; color: var(--text-muted); line-height: 1.3; }
+    .team-abbr-spacer, .team-city-spacer { }
+    .team-logo-lg  { width: 56px; height: 56px; object-fit: contain; display: block; }
+
+    .matchup-time-row {
+      margin-top: 8px; text-align: center;
+      border-top: 1px solid var(--border); padding-top: 7px;
+    }
+    .game-time {
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
+      letter-spacing: 0.3px;
+    }
+
+    .venue-col {
+      display: flex; flex-direction: column;
+      border-right: 1px solid var(--border); overflow: hidden;
+      position: relative;
+    }
+    .venue-photo {
+      width: 100%; flex: 1; object-fit: cover; object-position: center top;
+      display: block; min-height: 100px; max-height: 150px;
+    }
+    .venue-name-label {
+      font-size: 11px; font-weight: 700; color: var(--text-muted);
+      text-align: center; padding: 6px 8px; line-height: 1.2;
+      background: var(--surface); border-top: 1px solid var(--border);
+    }
+
+    .pitchers-col { display: grid; grid-template-columns: 1fr 1px 1fr; }
+    .pitchers-divider { background: var(--border); }
+
+    .pitcher-card {
+      padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .pitcher-card.tbd-card {
+      align-items: center; justify-content: center; text-align: center;
+    }
+    .tbd-name { font-size: 22px; font-weight: 800; color: var(--text); font-style: italic; }
+
+    .pitcher-role-label {
+      font-size: 9px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.6px; color: var(--text-muted);
+    }
+    .pitcher-card.tbd-card .pitcher-role-label { text-align: center; }
+    .pitcher-card-inner { display: flex; align-items: flex-start; gap: 12px; }
+
+    .pitcher-headshot {
+      width: 64px; height: 80px; border-radius: 7px;
+      object-fit: cover; object-position: center top;
+      border: 1px solid var(--border); flex-shrink: 0;
+    }
+    .pitcher-headshot-placeholder {
+      width: 64px; height: 80px; border-radius: 7px;
+      background: var(--surface-alt); border: 1px solid var(--border); flex-shrink: 0;
+    }
+    .pitcher-card-info { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+    .pitcher-name-row { font-size: 16px; font-weight: 900; line-height: 1.2; }
+    .pitcher-name-link { color: var(--forest-dark); text-decoration: none; }
+    .pitcher-name-link:hover { text-decoration: underline; color: var(--forest-light); }
+    .pitcher-name-link.no-link { color: var(--text); cursor: default; }
+
+    .pitcher-scores-row { display: flex; gap: 4px; flex-wrap: wrap; }
+    .score-block {
+      display: flex; flex-direction: column; align-items: center;
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 3px 7px; background: var(--surface); min-width: 48px;
+    }
+    .score-block.good { background: #d4edda; border-color: #a8d5b5; }
+    .score-block.bad  { background: #f8d7da; border-color: #f1aeb5; }
+    .score-block-label {
+      font-size: 8px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.4px; color: var(--text-muted); line-height: 1;
+    }
+    .score-block.good .score-block-label { color: #1a7f37; }
+    .score-block.bad  .score-block-label { color: #c9302c; }
+    .score-block-value {
+      font-size: 14px; font-weight: 900; font-family: var(--font-data);
+      color: var(--text); line-height: 1.2;
+    }
+    .score-block.good .score-block-value { color: #1a7f37; }
+    .score-block.bad  .score-block-value { color: #c9302c; }
+
+    .recent-row { display: flex; flex-direction: column; gap: 5px; }
+    .recent-label {
+      font-size: 8px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--text-muted);
+    }
+    .recent-stats { display: flex; gap: 4px; flex-wrap: wrap; }
+    .stat-block {
+      display: flex; flex-direction: column; align-items: center;
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 3px 7px; background: var(--surface-alt); min-width: 44px;
+    }
+    .stat-block-label {
+      font-size: 8px; font-weight: 800; text-transform: uppercase;
+      letter-spacing: 0.4px; color: var(--text-muted); line-height: 1;
+    }
+    .stat-block-value {
+      font-size: 14px; font-weight: 900; font-family: var(--font-data);
+      color: var(--text); line-height: 1.2;
+    }
+    .recent-empty { font-size: 11px; color: var(--text-muted); font-style: italic; }
+
+    .freshness-note { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; margin-top: -2px; }
+    .no-games { font-size: 14px; color: var(--text-muted); margin-top: 24px; }
+    .date-section-label {
+      font-size: 13px; font-weight: 800; letter-spacing: 0.5px;
+      color: var(--text-muted); margin: 20px 0 8px; padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+    }
+    .date-section-label:first-child { margin-top: 0; }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="subnav"></div>
+  <div class="page">
+    <h1>Postseason Games</h1>
+    <div class="loading-bar" id="page-loading"><div class="loading-bar-fill"></div></div>
+
+    <div class="freshness-note" id="freshness-note"></div>
+    <div id="motd-mount"></div>
+    <div id="games-mount"></div>
+  </div>
+
+  <script src="js/api.js?v=9"></script>
+  <script src="js/gradient.js?v=23"></script>
+  <script src="js/nav.js?v=113"></script>
+  <script src="js/probable-pitchers.js?v=6"></script>
+</body>
+</html>
+
+
+

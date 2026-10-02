@@ -1,12 +1,12 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Outing Breakdown - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=40" />
+  <link rel="stylesheet" href="css/theme.css?v=45" />
   <style>
-    /* ── Controls ────────────────────────────────────────────────── */
+    /* â”€â”€ Controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     /* Outing select hidden until a pitcher is chosen */
     #outing-select-group { display: none; }
     /* Viewing toggle hidden until an outing with two pitchers is loaded */
@@ -20,7 +20,7 @@
     #outing-viewing-group .toggle-group button { font-size: 12px; padding: 4px 11px; max-width: 180px;
       white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    /* ── Stat line ───────────────────────────────────────────────── */
+    /* â”€â”€ Stat line â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .stat-line-card {
       background: var(--surface); border: 1px solid var(--border);
       border-radius: var(--radius); padding: 14px 18px; margin-bottom: 18px;
@@ -39,7 +39,7 @@
     .stat-box-value { font-size: 20px; font-weight: 900; font-family: var(--font-data);
       color: var(--text); line-height: 1.2; }
 
-    /* ── Two-panel layout ────────────────────────────────────────── */
+    /* â”€â”€ Two-panel layout â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .outing-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
     @media (max-width: 860px) { .outing-panels { grid-template-columns: 1fr; } }
 
@@ -50,17 +50,17 @@
     .panel-title { font-size: 10px; font-weight: 800; text-transform: uppercase;
       letter-spacing: 0.5px; color: var(--text-muted); margin-bottom: 14px; }
 
-    /* ── Data tables ─────────────────────────────────────────────── */
+    /* â”€â”€ Data tables â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     table.outing-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
     table.outing-table th {
       font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px;
       color: var(--text-muted); padding: 4px 8px; border-bottom: 1px solid var(--border);
-      text-align: right; white-space: nowrap; background: var(--surface-alt);
+      text-align: center; white-space: nowrap; background: var(--surface-alt);
     }
     table.outing-table th:first-child { text-align: left; }
     table.outing-table td {
       padding: 6px 8px; border-bottom: 1px solid var(--border);
-      text-align: right; font-family: var(--font-data); vertical-align: middle;
+      text-align: center; font-family: var(--font-data); vertical-align: middle;
     }
     table.outing-table td:first-child { text-align: left; font-family: inherit; }
     table.outing-table tr:last-child td { border-bottom: none; }
@@ -80,17 +80,17 @@
     .pt-chip { font-size: 11px; font-weight: 800; letter-spacing: 0.3px; }
     .result-cell-hi { font-weight: 800; color: var(--forest-dark); }
 
-    /* ── Global font-size bump ──────────────────────────────────── */
+    /* â”€â”€ Global font-size bump â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .page { font-size: 14px; }
     table.outing-table { font-size: 13px; }
     table.outing-table th { font-size: 10px; }
 
-    /* ── Outing hero header ─────────────────────────────────────── */
+    /* â”€â”€ Outing hero header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .outing-hero {
       display: flex; justify-content: space-between; align-items: flex-start;
-      margin-bottom: 20px; flex-wrap: wrap; gap: 14px;
+      margin-bottom: 10px; flex-wrap: wrap; gap: 14px;
     }
-    .outing-hero-left { display: flex; align-items: flex-start; gap: 12px; }
+    .outing-hero-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .outing-hero-name-block { display: flex; flex-direction: column; gap: 6px; }
     .outing-headshot {
       width: 62px; height: 62px; border-radius: 6px; object-fit: cover;
@@ -99,11 +99,11 @@
     .outing-team-logo { width: 40px; height: 40px; object-fit: contain; }
     .outing-player-name { font-size: 22px; font-weight: 900; color: var(--text); line-height: 1.1; }
     .outing-meta { font-size: 12px; color: var(--text-muted); }
-    .outing-hero-right { display: flex; gap: 8px; flex-shrink: 0; align-items: flex-start; }
+    .outing-hero-right { display: flex; gap: 20px; flex-shrink: 0; align-items: flex-start; }
 
-    /* 2×2 velo/EV grid */
-    .hero-velo-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 6px;
+    /* Two stacked velo/EV columns */
+    .hero-velo-stack {
+      display: flex; flex-direction: column; gap: 6px;
     }
 
     /* Pitcher line card */
@@ -138,7 +138,7 @@
     table.outing-table tr.outing-all-row { border-top: 2px solid var(--border); font-weight: 700; }
     table.outing-table tr.outing-all-row td { border-bottom: none; }
 
-    /* ── Player search dropdown ──────────────────────────────────── */
+    /* â”€â”€ Player search dropdown â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     /* Reuse the shared .player-search wrapper from index.html */
     .player-search { position: relative; }
     .player-search-dropdown {
@@ -158,7 +158,7 @@
     .player-search-empty { padding: 8px 10px; font-size: 12px; color: var(--text-muted); }
     .player-search-input { width: 100%; }
 
-    /* ── Pitch sequence chart ───────────────────────────────────── */
+    /* â”€â”€ Pitch sequence chart â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .seq-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
     .seq-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 700; color: var(--text-muted); }
     .seq-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
@@ -194,7 +194,7 @@
     <h1>Outing Breakdown</h1>
     <div class="loading-bar" id="page-loading"><div class="loading-bar-fill"></div></div>
 
-    <!-- Single controls row — matches the dashboard pattern exactly -->
+    <!-- Single controls row â€” matches the dashboard pattern exactly -->
     <div class="controls-row" style="align-items:flex-end; flex-wrap:wrap;">
 
       <!-- Pitcher search (always visible) -->
@@ -202,18 +202,18 @@
         <span class="control-label">Pitcher</span>
         <div class="player-search" style="min-width:240px;">
           <input type="text" class="player-search-input" id="outing-player-search"
-                 placeholder="Search any pitcher…" autocomplete="off" />
+                 placeholder="Search any pitcherâ€¦" autocomplete="off" />
           <div class="player-search-dropdown" id="outing-player-dropdown"></div>
         </div>
       </div>
 
-      <!-- Outing select — appears once a pitcher is chosen -->
+      <!-- Outing select â€” appears once a pitcher is chosen -->
       <div id="outing-select-group">
         <span class="control-label">Outing</span>
-        <select id="outing-select"><option value="">Select…</option></select>
+        <select id="outing-select"><option value="">Selectâ€¦</option></select>
       </div>
 
-      <!-- Viewing toggle — appears once an outing with both pitchers is loaded -->
+      <!-- Viewing toggle â€” appears once an outing with both pitchers is loaded -->
       <div id="outing-viewing-group">
         <span class="control-label">Viewing</span>
         <div class="toggle-group" id="outing-viewing-toggle">
@@ -224,14 +224,17 @@
 
     </div>
 
-    <div id="outing-body" style="margin-top:24px;"></div>
+    <div id="outing-body" style="margin-top:12px;"></div>
   </div>
 
   <script src="js/api.js?v=9"></script>
   <script src="js/gradient.js?v=23"></script>
-  <script src="js/nav.js?v=111"></script>
+  <script src="js/nav.js?v=113"></script>
   <script src="js/player-context.js?v=1"></script>
-  <script src="js/player-search.js?v=9"></script>
-  <script src="js/outings.js?v=7"></script>
+  <script src="js/player-search.js?v=21"></script>
+  <script src="js/outings.js?v=8"></script>
 </body>
 </html>
+
+
+

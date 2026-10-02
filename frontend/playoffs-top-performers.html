@@ -1,0 +1,52 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Postseason Top Performers - MLB Dashboard</title>
+  <link rel="stylesheet" href="css/theme.css?v=45" />
+  <style>
+    #top-performers-controls { align-items: flex-end; }
+    .outing-btn { font-size: 10px; font-weight: 700; color: var(--forest-dark); text-decoration: none;
+      letter-spacing: 0.2px; margin-left: 4px; opacity: 0.75; }
+    .outing-btn:hover { opacity: 1; text-decoration: underline; }
+    .performer-role-toggle { display: flex; gap: 0; margin-bottom: 16px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; width: fit-content; }
+    .performer-role-toggle button { background: var(--surface); border: none; padding: 7px 22px; font-size: 13px; font-weight: 700; cursor: pointer; color: var(--text-muted); transition: background 0.1s, color 0.1s; }
+    .performer-role-toggle button.active { background: var(--forest); color: #fff; }
+    .performer-role-toggle button:hover:not(.active) { background: var(--surface-alt); }
+  </style>
+</head>
+<body>
+  <div id="nav"></div>
+  <div id="subnav"></div>
+  <div class="page">
+    <h1>Postseason Top Performers</h1>
+    <div class="loading-bar" id="page-loading"><div class="loading-bar-fill"></div></div>
+
+    <div class="controls-row" id="top-performers-controls">
+      <div>
+        <span class="control-label">Date</span>
+        <input type="date" id="date-input" />
+      </div>
+      <div id="walkoff-mount"></div>
+    </div>
+
+    <div class="muted" style="font-size:12px; margin-bottom:14px;">
+      Ranked by a per-day weighted score (batters: HR, then H, then RBI, then SB; pitchers: ER (lower is better),
+      then IP, then K, then H allowed). WPA (Win Probability Added) is shown but does not drive the order.
+      Box score stats are live, official numbers from the MLB Stats API.
+    </div>
+
+    <div id="performers-mount"></div>
+  </div>
+
+  <script src="js/api.js?v=8"></script>
+  <script src="js/gradient.js?v=23"></script>
+  <script src="js/nav.js?v=113"></script>
+  <script src="js/player-context.js?v=1"></script>
+  <script src="js/top-performers.js?v=12"></script>
+</body>
+</html>
+
+
+

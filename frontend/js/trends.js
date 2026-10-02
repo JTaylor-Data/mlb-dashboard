@@ -20,7 +20,7 @@ let state = {
   role: "pitcher",
   season: "2026",
   activeCat: "Physical",
-  horizonDays: 180,
+  horizon: "days365",   // e.g. "games5", "days180", "pa50", "career"
   showLgAvg: true,
   playerId: null,
   playerName: null,
@@ -55,19 +55,51 @@ async function initTrendsSearch(role) {
 
 // ── horizon filter ────────────────────────────────────────────────────────
 
-function filterByHorizon(games, days) {
-  if (!games || !games.length || !days) return games;
-  const cutoff = new Date();
-  cutoff.setDate(cutoff.getDate() - days);
-  const cutStr = cutoff.toISOString().slice(0, 10);
-  const filtered = games.filter(g => g.game_date >= cutStr);
-  return filtered.length >= 2 ? filtered : games;
+// horizon codes: "games5", "days180", "days365", "days1095", "career",
+//                "pa50", "pa150", "pa250"
+function filterByHorizon(games, horizon) {
+  if (!games || !games.length || !horizon || horizon === "career") return games;
+
+  // PA-based (batters): keep last N plate appearances by going backwards
+  const paMatch = horizon.match(/^pa(\d+)$/);
+  if (paMatch) {
+    const target = parseInt(paMatch[1], 10);
+    let accum = 0;
+    let cutIdx = 0;
+    for (let i = games.length - 1; i >= 0; i--) {
+      accum += games[i].n_pa || 0;
+      if (accum >= target) { cutIdx = i; break; }
+    }
+    const filtered = games.slice(cutIdx);
+    return filtered.length >= 2 ? filtered : games;
+  }
+
+  // Game-count based (pitchers): last N games
+  const gamesMatch = horizon.match(/^games(\d+)$/);
+  if (gamesMatch) {
+    const n = parseInt(gamesMatch[1], 10);
+    const filtered = games.slice(-n);
+    return filtered.length >= 1 ? filtered : games;
+  }
+
+  // Days-based
+  const daysMatch = horizon.match(/^days(\d+)$/);
+  if (daysMatch) {
+    const days = parseInt(daysMatch[1], 10);
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - days);
+    const cutStr = cutoff.toISOString().slice(0, 10);
+    const filtered = games.filter(g => g.game_date >= cutStr);
+    return filtered.length >= 2 ? filtered : games;
+  }
+
+  return games;
 }
 
 // ── chart rendering ───────────────────────────────────────────────────────
 
-function buildChart(allGames, displays, horizonDays, lgAvgs, showLgAvg) {
-  const games = filterByHorizon(allGames, horizonDays);
+function buildChart(allGames, displays, horizon, lgAvgs, showLgAvg) {
+  const games = filterByHorizon(allGames, horizon);
   if (!games || !games.length) {
     return `<div class="trend-empty">No data for this player / period.</div>`;
   }
@@ -102,12 +134,16 @@ function buildChart(allGames, displays, horizonDays, lgAvgs, showLgAvg) {
     yTicks.push({ v, y: yPos(v) });
   }
 
-  // X ticks
+  // X ticks — density scales with horizon breadth
   const xTicks = [];
-  if (games.length <= 25) {
+  const maxTicks = horizon === "career" || horizon === "days1095" ? 6
+    : horizon === "days365" ? 8
+    : horizon === "days180" ? 8
+    : games.length <= 25 ? games.length : 10;
+  if (games.length <= maxTicks) {
     games.forEach((g, i) => xTicks.push({ i, label: fmtDate(g.game_date) }));
   } else {
-    const step = Math.ceil(games.length / 10);
+    const step = Math.ceil(games.length / maxTicks);
     for (let i = 0; i < games.length; i += step) {
       xTicks.push({ i, label: fmtDate(games[i].game_date) });
     }
@@ -395,7 +431,7 @@ function renderChart() {
     return;
   }
 
-  chartMount.innerHTML = buildChart(state.data.games, state.activeDisplays, state.horizonDays, state.lgAvgs, state.showLgAvg);
+  chartMount.innerHTML = buildChart(state.data.games, state.activeDisplays, state.horizon, state.lgAvgs, state.showLgAvg);
 
   // Legend
   let legendHtml = state.activeDisplays.map(d =>
@@ -424,6 +460,7 @@ function renderChart() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   state.season = "2026";
+  state.horizon = "days365";
   document.getElementById("lg-avg-toggle").checked = true;
 
   // Role toggle
@@ -444,9 +481,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         b.classList.toggle("active", b === btn));
       document.querySelectorAll(".cat-tab").forEach(t =>
         t.classList.toggle("active", t.dataset.cat === "Physical"));
+      syncHorizonGroup();
       await initTrendsSearch(state.role);
     });
   });
+
+  syncHorizonGroup(); // set correct horizon group on load
 
   // Year select
   document.getElementById("year-select").addEventListener("change", async (e) => {
@@ -455,15 +495,33 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (state.playerId) await render();
   });
 
-  // Horizon toggle
-  document.querySelectorAll(".pill-btn[data-days]").forEach(btn => {
-    btn.addEventListener("click", () => {
-      state.horizonDays = Number(btn.dataset.days);
-      document.querySelectorAll(".pill-btn[data-days]").forEach(b =>
-        b.classList.toggle("active", b === btn));
-      renderChart();
+  // Horizon toggle — shared handler for both pitcher and batter groups
+  function wireHorizonButtons() {
+    document.querySelectorAll(".pill-btn[data-horizon]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.horizon = btn.dataset.horizon;
+        document.querySelectorAll(".pill-btn[data-horizon]").forEach(b =>
+          b.classList.toggle("active", b === btn && b.closest(".horizon-group").style.display !== "none"));
+        renderChart();
+      });
     });
-  });
+  }
+  wireHorizonButtons();
+
+  // Show the right horizon group for the current role and reset active button
+  function syncHorizonGroup() {
+    const isPitcher = state.role === "pitcher";
+    const pitcherGroup = document.getElementById("horizon-pitcher");
+    const batterGroup  = document.getElementById("horizon-batter");
+    if (pitcherGroup) pitcherGroup.style.display = isPitcher ? "" : "none";
+    if (batterGroup)  batterGroup.style.display  = isPitcher ? "none" : "";
+    // default horizon per role
+    state.horizon = isPitcher ? "days365" : "pa150";
+    document.querySelectorAll(".pill-btn[data-horizon]").forEach(b => {
+      const inActiveGroup = !b.closest(".horizon-group") || b.closest(".horizon-group").style.display !== "none";
+      b.classList.toggle("active", inActiveGroup && b.dataset.horizon === state.horizon);
+    });
+  }
 
   // Category tabs
   document.querySelectorAll(".cat-tab").forEach(tab => {

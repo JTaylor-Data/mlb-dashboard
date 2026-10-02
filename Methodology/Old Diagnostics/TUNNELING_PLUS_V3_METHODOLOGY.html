@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tunneling+ v3 — Methodology</title>
+<style>
+  :root { --green: #1a5c38; --green-light: #e8f3ee; --border: #d0d5c8; --muted: #5a6450; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; background: #fff; padding: 40px 48px; max-width: 900px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--green); padding-bottom: 16px; margin-bottom: 28px; }
+  .model-name { font-size: 28px; font-weight: bold; color: var(--green); letter-spacing: -0.5px; }
+  .model-sub { font-size: 14px; color: var(--muted); font-family: monospace; margin-top: 4px; }
+  .badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; font-weight: bold; }
+  .badge-live { background: var(--green-light); color: var(--green); border: 1px solid var(--green); }
+  .badge-warn { background: #fde8ea; color: #b91c2c; border: 1px solid #b91c2c; }
+  .badge-season { background: #e8f0f8; color: #1a4070; border: 1px solid #a8c0d8; }
+  h2 { font-size: 15px; color: var(--green); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin: 24px 0 12px; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Arial', sans-serif; }
+  h3 { font-size: 13px; font-weight: bold; margin: 16px 0 6px; font-family: 'Arial', sans-serif; }
+  p { margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0 16px; }
+  th { background: var(--green); color: #fff; text-align: left; padding: 6px 10px; font-family: monospace; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #f7f9f5; }
+  code { font-family: monospace; font-size: 12px; background: #f0f2ed; padding: 1px 4px; border-radius: 3px; }
+  .callout { background: #fff8e6; border-left: 4px solid #c89a00; padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-warn { background: #fde8ea; border-left: 4px solid #b91c2c; }
+  .callout-crit { background: #fde8ea; border-left: 4px solid #b91c2c; padding: 12px 14px; margin: 16px 0; font-size: 13px; }
+  .section { margin-bottom: 28px; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: monospace; }
+  @media print {
+    body { padding: 20px 28px; }
+    th, .badge, .callout, .callout-warn, .callout-crit { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="model-name">Tunneling+ v3</div>
+  <div class="model-sub">models/tunneling_v3.txt · analytics/tunneling_features.py · analytics/tunneling_v3_model.py</div>
+  <div class="badges">
+    <span class="badge badge-live">● LIVE</span>
+    <span class="badge badge-warn">⚠ SIGN-FLIP ISSUE — see §7</span>
+    <span class="badge badge-season">Training: 2015–2026 (12 seasons)</span>
+  </div>
+</header>
+
+<div class="callout-crit">
+  <strong>⚠ Critical finding (2026-09-21):</strong> Tunneling+ v3's same-season ERA correlation is <strong>−0.218</strong> and xFIP correlation is <strong>−0.348</strong>. A higher score predicts a <em>worse</em> pitcher — this is backwards. A v2 candidate exists that fixes this (ERA r = +0.182, xFIP r = +0.337). Promotion decision pending. See <code>training/validate_v2_complete.log</code>.
+</div>
+
+<div class="section">
+<h2>1. What It Measures</h2>
+<p>Tunneling+ grades how indistinguishable a pitcher's pitches look out of the hand before they separate near the plate — the "deception through similarity" dimension of pitching. v3 learns this directly from real outcomes (run value) using lag-context features, rather than computing an explicit geometric similarity ratio.</p>
+<p>100 = league average that season. Each 10 points = 1 SD. Score spread is deliberately tight (~95–104 typical range) — tunneling is a real but smaller lever than raw stuff quality.</p>
+<p><strong>Excluded by design:</strong> absolute plate coordinates (plate_x/plate_z), pitcher identity, physical pitch shape (those belong to Location+ and Stuff+).</p>
+</div>
+
+<div class="section">
+<h2>2. Architecture Overview — How v3 Differs from v1/v2</h2>
+<table>
+  <tr><th></th><th>v1</th><th>v2</th><th>v3 (current)</th></tr>
+  <tr><td>Scoring</td><td>Hand-built geometric-mean composite</td><td>9 composite candidates + 2 trained grains</td><td><strong>Single LightGBM model</strong></td></tr>
+  <tr><td>Pairing logic</td><td>Pitch-type pair aggregates</td><td>Real consecutive different-type pairs (lag-1)</td><td><strong>Real pairs, lag 1–6 pitches back</strong></td></tr>
+  <tr><td>Same-type prior</td><td>N/A</td><td>Excluded</td><td><strong>Included</strong> — 2nd fastball in a row is real signal</td></tr>
+  <tr><td>Decision point</td><td>Fixed 23.5 ft, all pitchers</td><td>Pitcher-specific 200ms commit point</td><td><strong>Same as v2</strong> — reused from saved table</td></tr>
+  <tr><td>Output grain</td><td>Per pitch-type pair → pitcher</td><td>Per pair or per pitch</td><td><strong>Per real pitch → pitcher-season avg</strong></td></tr>
+</table>
+<p>The key shift: v3 has <strong>no "pair" concept at the scoring level</strong>. Every pitch from the 2nd of an at-bat onward is one training row, described by its relationship to up to 6 prior pitches in that at-bat. The model predicts that pitch's own run-value outcome directly.</p>
+</div>
+
+<div class="section">
+<h2>3. The Commit Point (Reused from v2)</h2>
+<p>For each pitcher-season: find the hardest FF/SI/FC by <code>effective_speed</code>, compute where it was <strong>200ms before arriving</strong> using that pitch's real trajectory. That distance = the pitcher's commit point — applied to every pitch they throw that season.</p>
+<p>Commit-point distance <strong>grows with velocity</strong> (harder thrower = more ground covered at a fixed time). A pitcher with no qualifying FF/SI/FC gets no commit point and is absent from v3 output.</p>
+<p><strong>Source file:</strong> <code>training/tunneling_v2_artifacts/200ms/pitcher_season_commit_point.csv</code> — 9,348 pitcher-seasons, covers 2015–2026. v3 reads this directly, does not re-derive it.</p>
+</div>
+
+<div class="section">
+<h2>4. Feature Set (28 Total)</h2>
+<p>For each real pitch (2nd of at-bat onward), look back up to 6 real prior pitches in that at-bat:</p>
+<table>
+  <tr><th>Feature (×6 lag slots)</th><th>What it captures</th></tr>
+  <tr><td><code>lagN_commit_distance</code></td><td>Distance between this pitch and the N-back pitch at this pitcher's own commit point</td></tr>
+  <tr><td><code>lagN_plate_distance</code></td><td>Distance between them at the plate</td></tr>
+  <tr><td><code>lagN_shape_break</code></td><td>How much the pair "pops apart early / tracks back late" vs. linear interpolation</td></tr>
+  <tr><td><code>lagN_pitch_type</code></td><td>What pitch type was thrown N pitches back (categorical)</td></tr>
+</table>
+<p>6 lag slots × 4 features = <strong>24 lag features</strong>. Plus 4 current-pitch categoricals: <code>pitch_type</code>, <code>p_throws</code>, <code>stand</code>, <code>season</code> = <strong>28 total</strong>. A lag slot beyond the at-bat's actual pitch count is <strong>true NaN</strong> (never zero-filled) — LightGBM handles natively. No pitch-type-pair identity feature exists — the model never sees "FF vs. CH", only sequential pitch context.</p>
+</div>
+
+<div class="section">
+<h2>5. Training Details</h2>
+<table>
+  <tr><th>Component</th><th>Detail</th></tr>
+  <tr><td>Model type</td><td>LightGBM regressor, Huber loss</td></tr>
+  <tr><td>CV methodology</td><td>Leave-one-season-out (LOSO), 2015–2025 holdouts</td></tr>
+  <tr><td>Training data</td><td>2015–2026 (12 seasons; 2026 train-only, partial season)</td></tr>
+  <tr><td>Target</td><td><code>delta_run_exp</code> of the <em>current</em> pitch (not a pair score)</td></tr>
+  <tr><td>Qualifying threshold</td><td>≥ 100 total pitches per pitcher-season (one rule, not per pair)</td></tr>
+  <tr><td>Identity guard</td><td><code>assert_no_identifiers()</code> before every .fit()</td></tr>
+  <tr><td>Booster file</td><td><code>models/tunneling_v3.txt</code></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>6. Validation Summary</h2>
+<table>
+  <tr><th>Metric</th><th>Value</th><th>Notes</th></tr>
+  <tr><td>Split-half reliability</td><td>~0.85–0.91</td><td>Reasonable within-season signal</td></tr>
+  <tr><td>Sequential same-at-bat z-score</td><td>~135.5</td><td>Substantially improved over live v1 (84.7)</td></tr>
+  <tr><td>Year-over-year r²</td><td>0.31–0.53</td><td>Weaker than Stuff+; expected for a sequencing skill</td></tr>
+  <tr><td>Cross-model correlation vs. Stuff+</td><td>r ≈ 0.05–0.12</td><td>Near-independent (confirms distinct skill)</td></tr>
+  <tr><td>Same-season ERA correlation</td><td><strong style="color:#b91c2c">−0.218</strong></td><td>⚠ BACKWARDS — higher score predicts worse ERA</td></tr>
+  <tr><td>Same-season xFIP correlation</td><td><strong style="color:#b91c2c">−0.348</strong></td><td>⚠ BACKWARDS — higher score predicts worse xFIP</td></tr>
+</table>
+<p><strong>Top seasons:</strong> Kevin Ginkel 2025 (113.5), Cionel Pérez 2021 (113.2), Garrett Cleavinger 2022 (112.3), Alex Vesia 2023/2024 (112.1/111.3). <strong>Bottom:</strong> Matt Bowman 2024 (82.9), Rich Hill 2021–2023 (~85–87).</p>
+</div>
+
+<div class="section">
+<h2>7. ⚠ Known Critical Issue — Sign Flip</h2>
+<div class="callout-crit">
+Tunneling+ v3 ranks pitchers in the <strong>wrong direction</strong> relative to ERA/xFIP. This was discovered in the 2026-09-21 validation study (Parts A+C). The live Location+ v1 model has the same problem. The v2 candidates for both models fix this. Evidence: <code>training/validate_v2_complete.log</code>, consolidated validation report (artifact). Promotion decision is pending — see HANDOFF.md.
+</div>
+<table>
+  <tr><th>Model</th><th>ERA r</th><th>xFIP r</th><th>Direction</th></tr>
+  <tr><td>Tunneling+ v3 (LIVE)</td><td style="color:#b91c2c">−0.218</td><td style="color:#b91c2c">−0.348</td><td style="color:#b91c2c">BACKWARDS</td></tr>
+  <tr><td>Tunneling+ v2 (candidate)</td><td style="color:#1a5c38">+0.182</td><td style="color:#1a5c38">+0.337</td><td style="color:#1a5c38">Correct</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>8. File Locations</h2>
+<table>
+  <tr><th>File</th><th>Purpose</th></tr>
+  <tr><td><code>analytics/tunneling_features.py</code></td><td>Shared feature engineering (v2 and v3 both use this)</td></tr>
+  <tr><td><code>analytics/tunneling_v3_model.py</code></td><td>Runtime scoring, leaderboard, SHAP grouped by lag slot</td></tr>
+  <tr><td><code>models/tunneling_v3.txt</code></td><td>Trained LightGBM booster</td></tr>
+  <tr><td><code>training/tunneling_v2_artifacts/200ms/pitcher_season_commit_point.csv</code></td><td>Commit-point table (9,348 pitcher-seasons) — read at runtime</td></tr>
+  <tr><td><code>api/routers/tunneling_report.py</code></td><td>API: /api/tunneling/v3/*</td></tr>
+  <tr><td><code>analytics/tunneling_model.py</code></td><td>v1 engine — still powers tunnel3d.html (3D viewer), untouched</td></tr>
+  <tr><td><code>training/train_tunneling_v3_model.py</code></td><td>Training script</td></tr>
+  <tr><td><code>Methodology/TUNNELING_V3_REPORT.md</code></td><td>Full validation report</td></tr>
+  <tr><td><code>training/validate_v2_complete.log</code></td><td>2026-09-21 validation: sign-flip and YoY findings</td></tr>
+</table>
+</div>
+
+<footer>
+  Tunneling+ v3 · MLB Dashboard · Last updated 2026-09-21 · STATUS: LIVE (sign-flip issue pending)
+</footer>
+
+</body>
+</html>

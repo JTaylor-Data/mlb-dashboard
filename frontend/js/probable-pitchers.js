@@ -187,27 +187,57 @@ function gameCardHtml(game, dateStr) {
   return `<div class="game-card"><div class="game-card-inner">${gameCardInnerHtml(game, dateStr)}</div></div>`;
 }
 
-async function loadGames(dateStr) {
+function dateOffsetStr(base, daysAhead) {
+  const d = new Date(base + "T12:00:00Z");
+  d.setUTCDate(d.getUTCDate() + daysAhead);
+  return d.toISOString().slice(0, 10);
+}
+
+function formatDateLabel(dateStr) {
+  const d = new Date(dateStr + "T12:00:00Z");
+  return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: "UTC" });
+}
+
+async function loadGames(startDate, windowDays = 7) {
   setPageLoading(true);
   const mount = document.getElementById("games-mount");
   const motdMount = document.getElementById("motd-mount");
   const note = document.getElementById("freshness-note");
   try {
-    const url = `/api/probable-pitchers?date=${dateStr}&season=2026`;
-    const cached = window._prefetchCache && window._prefetchCache[url];
-    const data = (cached && cached !== "pending") ? cached : await getJSON(url);
-    note.textContent = data.pulled_at
-      ? `Data pulled: ${data.pulled_at.slice(0, 16).replace("T", " ")} UTC`
+    // Fetch all days in parallel
+    const dates = Array.from({ length: windowDays }, (_, i) => dateOffsetStr(startDate, i));
+    const results = await Promise.all(dates.map(d =>
+      getJSON(`/api/probable-pitchers?date=${d}&season=2026`).catch(() => null)
+    ));
+
+    const latestPull = results.map(r => r && r.pulled_at).filter(Boolean).sort().pop();
+    note.textContent = latestPull
+      ? `Data pulled: ${latestPull.slice(0, 16).replace("T", " ")} UTC`
       : "";
-    if (!data.games || !data.games.length) {
-      mount.innerHTML = `<div class="no-games">No games found for ${dateStr}.</div>`;
-      motdMount.innerHTML = "";
-      return;
+
+    // MOTD from the first day that has games
+    const firstResult = results.find(r => r && r.games && r.games.length);
+    const motd = firstResult ? findMatchupOfDay(firstResult.games) : null;
+    motdMount.innerHTML = motd ? matchupOfDayHtml(motd, dates[results.indexOf(firstResult)]) : "";
+
+    let html = "";
+    let anyGames = false;
+    for (let i = 0; i < dates.length; i++) {
+      const data = results[i];
+      if (!data || !data.games || !data.games.length) continue;
+      anyGames = true;
+      const dateLabel = formatDateLabel(dates[i]);
+      const dayGames = motd && i === results.indexOf(firstResult)
+        ? data.games.filter(g => g.game_pk !== motd.game_pk)
+        : data.games;
+      html += `<div class="date-section-label">${dateLabel}</div>`;
+      html += dayGames.map(g => gameCardHtml(g, dates[i])).join("");
     }
-    const motd = findMatchupOfDay(data.games);
-    motdMount.innerHTML = matchupOfDayHtml(motd, dateStr);
-    const nonMotdGames = motd ? data.games.filter(g => g.game_pk !== motd.game_pk) : data.games;
-    mount.innerHTML = nonMotdGames.map(g => gameCardHtml(g, dateStr)).join("");
+    if (!anyGames) {
+      mount.innerHTML = `<div class="no-games">No upcoming games found in the next ${windowDays} days.</div>`;
+    } else {
+      mount.innerHTML = html;
+    }
   } catch (err) {
     mount.innerHTML = `<div class="empty-state">Error: ${err.message}</div>`;
   } finally {
@@ -216,9 +246,6 @@ async function loadGames(dateStr) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const dateInput = document.getElementById("date-input");
   const today = new Date().toISOString().slice(0, 10);
-  dateInput.value = today;
-  dateInput.addEventListener("change", () => loadGames(dateInput.value));
   loadGames(today);
 });

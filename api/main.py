@@ -58,8 +58,13 @@ admin_router = APIRouter(prefix="/api")
 @admin_router.get("/meta")
 def get_meta(conn=Depends(get_conn)):
     row = conn.execute("SELECT MAX(game_date) FROM games").fetchone()
+    sched_row = conn.execute("SELECT MAX(game_date) FROM schedule_games WHERE game_date <= date('now')").fetchone()
     seasons = [r[0] for r in conn.execute("SELECT DISTINCT season FROM pitches ORDER BY season DESC")]
-    return {"latest_game_date": row[0] if row else None, "available_seasons": seasons}
+    return {
+        "latest_game_date": row[0] if row else None,
+        "latest_schedule_date": sched_row[0] if sched_row else None,
+        "available_seasons": seasons,
+    }
 
 
 @admin_router.post("/admin/refresh-cache")

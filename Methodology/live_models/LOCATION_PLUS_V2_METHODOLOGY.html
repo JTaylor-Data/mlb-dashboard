@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Location+ v2 — Methodology</title>
+<style>
+  :root { --orange: #92540e; --orange-light: #fef3e2; --border: #d0d5c8; --muted: #5a6450; --green: #1a5c38; --red: #b91c2c; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; background: #fff; padding: 40px 48px; max-width: 960px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--orange); padding-bottom: 16px; margin-bottom: 28px; }
+  .model-name { font-size: 28px; font-weight: bold; color: var(--orange); letter-spacing: -0.5px; }
+  .model-sub { font-size: 13px; color: var(--muted); font-family: monospace; margin-top: 4px; }
+  .badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; font-weight: bold; }
+  .badge-live { background: #e8f3ee; color: #1a5c38; border: 1px solid #1a5c38; }
+  .badge-fixed { background: #e8f3ee; color: #1a5c38; border: 1px solid #1a5c38; }
+  .badge-note { background: #fff8e6; color: #7a5800; border: 1px solid #c89a00; }
+  .badge-season { background: #e8f0f8; color: #1a4070; border: 1px solid #a8c0d8; }
+  h2 { font-size: 15px; color: var(--orange); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin: 28px 0 12px; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Arial', sans-serif; }
+  h3 { font-size: 13px; font-weight: bold; margin: 16px 0 6px; font-family: 'Arial', sans-serif; }
+  p { margin-bottom: 10px; }
+  ul { margin: 6px 0 10px 20px; }
+  li { margin-bottom: 4px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0 16px; }
+  th { background: var(--orange); color: #fff; text-align: left; padding: 6px 10px; font-family: monospace; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:nth-child(even) td { background: #faf9f7; }
+  td.good { color: var(--green); font-weight: bold; }
+  td.bad  { color: var(--red);  font-weight: bold; }
+  code { font-family: monospace; font-size: 12px; background: #f0f2ed; padding: 1px 4px; border-radius: 3px; }
+  .callout { background: #fff8e6; border-left: 4px solid #c89a00; padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-good { background: #e8f3ee; border-left: 4px solid var(--green); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-warn { background: #fde8ea; border-left: 4px solid var(--red); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .section { margin-bottom: 28px; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+  .metric-box { background: #f8f7f5; border: 1px solid var(--border); border-radius: 4px; padding: 10px 14px; }
+  .metric-box .label { font-family: monospace; font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .metric-box .value { font-size: 22px; font-weight: bold; color: var(--orange); font-family: monospace; }
+  .metric-box .sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: monospace; }
+  @media print {
+    body { padding: 20px 28px; }
+    th, .badge, .callout, .callout-good, .callout-warn { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="model-name">Location+ v2</div>
+  <div class="model-sub">models/location_plus_v2_{xswing,xcs,xwhiff,xfoul,bip}.txt · Promoted 2026-09-21</div>
+  <div class="badges">
+    <span class="badge badge-live">✓ LIVE — promoted 2026-09-21</span>
+    <span class="badge badge-fixed">✓ Fixes v1 sign-flip and stability collapse</span>
+    <span class="badge badge-season">Training: 2015–2026 · 12 seasons</span>
+  </div>
+</header>
+
+<div class="section">
+<h2>What It Measures</h2>
+<p>Location+ measures <strong>command quality</strong> — where a pitch is thrown relative to the strike zone, independent of what the pitch is. A called-strike on a corner against a same-hand batter in a hitter's count earns more than a ball off the plate; Location+ captures how much value a pitcher extracts purely from pitch placement.</p>
+<p>It fills the deliberate gap left by Stuff+ (physical shape only, excludes plate location) and Tunneling+ (sequence context only, excludes plate location). Together the three models give orthogonal decompositions of why a pitch was effective.</p>
+<div class="callout-good"><strong>Why v2?</strong> The previous live model (<code>location_plus_v1.txt</code>, single regressor) had two critical failures: (1) a sign-flip (ERA r = −0.257, xFIP r = −0.507 — higher score = worse pitcher), and (2) a stability collapse (YoY r = 0.009 for 2024→2025, std = 3.07). v2 fixes both: ERA r = +0.208, xFIP r = +0.349, YoY r = 0.361 pooled, std = 9.99.</div>
+</div>
+
+<div class="section">
+<h2>Architecture</h2>
+<p>Same five-classifier decomposed architecture as Tunneling+ v2: each classifier predicts one outcome probability, combined via a fixed run-value table into per-pitch xRV, then aggregated to pitcher-season and plus-scaled.</p>
+<table>
+  <thead><tr><th>Classifier</th><th>Target</th><th>LOSO AUC</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td>xSwing%</td><td>did the batter swing?</td><td class="good">0.848</td><td>Location is highly informative about swing decisions</td></tr>
+    <tr><td>xCS%</td><td>called strike (no swing)?</td><td class="good">0.981</td><td>Near-perfect: plate_x/z directly determines strike zone</td></tr>
+    <tr><td>xWhiff%</td><td>swinging strike?</td><td class="good">0.754</td><td>Count matters significantly here</td></tr>
+    <tr><td>xFoul%</td><td>foul ball?</td><td>0.621</td><td>Moderate signal; location relevant but not dominant</td></tr>
+    <tr><td>BIP type×EV</td><td>20-class contact type × exit velo bin</td><td>—</td><td>Plate position predicts contact quality</td></tr>
+  </tbody>
+</table>
+
+<p>Each classifier is <code>LGBMClassifier(n_estimators=500, num_leaves=31, learning_rate=0.05, min_child_samples=50, subsample=0.8, colsample_bytree=0.8)</code>. Leave-one-season-out CV on 2015–2025 for model selection; retrained on full 2015–2026 for live inference.</p>
+
+<h3>Combine Formula</h3>
+<p>Same as Tunneling+ v2. Per-pitch xRV:</p>
+<p><code>xRV = p_sw × (p_wh × rv_whiff + (1−p_wh) × (p_fo × rv_foul + (1−p_fo) × (p_bip · bip_rvs))) + (1−p_sw) × (p_cs × rv_cs + hbp_rate × rv_hbp + clip(1−p_cs−hbp_rate,0,1) × rv_ball)</code></p>
+<p>Fixed run values from a 2021–2025 league-average table. HBP rate = 0.51%.</p>
+</div>
+
+<div class="section">
+<h2>Features</h2>
+<p><strong>7 features total</strong> — the minimal set that captures where a pitch was thrown and the context that governs the strike zone:</p>
+<table>
+  <thead><tr><th>Feature</th><th>Type</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>plate_x</code></td><td>numeric</td><td>Horizontal plate position (feet from center, catcher's perspective)</td></tr>
+    <tr><td><code>plate_z</code></td><td>numeric</td><td>Vertical plate position (feet from ground)</td></tr>
+    <tr><td><code>balls</code></td><td>numeric</td><td>Ball count at pitch delivery</td></tr>
+    <tr><td><code>strikes</code></td><td>numeric</td><td>Strike count at pitch delivery</td></tr>
+    <tr><td><code>pitch_type</code></td><td>categorical</td><td>Pitch type (needed — whiff rates differ by pitch type at same location)</td></tr>
+    <tr><td><code>stand</code></td><td>categorical</td><td>Batter handedness (L/R)</td></tr>
+    <tr><td><code>season</code></td><td>categorical</td><td>Season year</td></tr>
+  </tbody>
+</table>
+<p><strong>Exclusions by design:</strong> no pitcher identity (generalizes across pitchers), no pitch shape (that's Stuff+), no sequence geometry (that's Tunneling+).</p>
+</div>
+
+<div class="section">
+<h2>Training Data</h2>
+<ul>
+  <li><strong>Seasons:</strong> 2015–2026 (12 seasons; full backfill completed Sep 2026)</li>
+  <li><strong>Pitches:</strong> ≈ 8.1M total; all pitches with valid plate position are usable (no commit-point filtering needed)</li>
+  <li><strong>Pitcher-seasons (live scores):</strong> 8,247 (≥300 qualifying pitches)</li>
+  <li><strong>Regular-season only:</strong> spring training / postseason filtered at ingest (<code>game_type = 'R'</code>)</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Validation Results</h2>
+<div class="two-col">
+  <div class="metric-box"><div class="label">ERA CORRELATION (r)</div><div class="value">+0.208</div><div class="sub">higher plus = better pitcher = lower ERA ✓</div></div>
+  <div class="metric-box"><div class="label">xFIP CORRELATION (r)</div><div class="value">+0.349</div><div class="sub">correct direction (v1 was −0.507)</div></div>
+  <div class="metric-box"><div class="label">YoY STABILITY (pooled r)</div><div class="value">0.361</div><div class="sub">v1 was 0.009 for 2024→2025 (collapse)</div></div>
+  <div class="metric-box"><div class="label">STANDARD DEVIATION</div><div class="value">9.99</div><div class="sub">v1 was 3.07 (compression caused instability)</div></div>
+</div>
+
+<h3>v1 vs v2 Comparison</h3>
+<table>
+  <thead><tr><th>Metric</th><th>Location+ v1 (single regressor)</th><th>Location+ v2 (decomposed)</th></tr></thead>
+  <tbody>
+    <tr><td>ERA r</td><td class="bad">−0.257 (sign-flipped)</td><td class="good">+0.208 ✓</td></tr>
+    <tr><td>xFIP r</td><td class="bad">−0.507 (sign-flipped)</td><td class="good">+0.349 ✓</td></tr>
+    <tr><td>YoY r (2024→2025)</td><td class="bad">0.009 (collapsed)</td><td class="good">0.361 (pooled)</td></tr>
+    <tr><td>Score std</td><td class="bad">3.07 (compressed)</td><td class="good">9.99 ✓</td></tr>
+    <tr><td>xSwing% AUC</td><td>—</td><td>0.848</td></tr>
+    <tr><td>xCS% AUC</td><td>—</td><td>0.981</td></tr>
+    <tr><td>xWhiff% AUC</td><td>—</td><td>0.754</td></tr>
+    <tr><td>xFoul% AUC</td><td>—</td><td>0.621</td></tr>
+  </tbody>
+</table>
+
+<h3>v1/v2 Cross-Correlation</h3>
+<p>Location+ v1 and Location+ v2 cross-correlate at r ≈ −0.48 to −0.60 (negative), confirming the old and new versions rank pitchers in opposite directions — the sign-flip was a fundamental inversion, not a rescaling. Location+ v2 × Tunneling+ v2 = r = +0.617 (both correctly signed).</p>
+</div>
+
+<div class="section">
+<h2>Known Issues</h2>
+<ul>
+  <li><strong>No SHAP breakdown in live API:</strong> decomposed-classifier architecture has no single SHAP model to query. The <code>/pitcher/{id}</code> endpoint returns a <code>shap_note</code> field; the frontend should display this gracefully (pending fix).</li>
+  <li><strong>Pitch Locations chart orientation:</strong> chart on the player page may show RHH/LHH backwards vs. Baseball Savant orientation. Deferred investigation.</li>
+  <li><strong>YoY stability:</strong> r = 0.361 (pooled) is weaker than Stuff+ v3 (r = 0.907) — expected given that command is a more volatile skill than physical pitch quality.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Files</h2>
+<table>
+  <thead><tr><th>File</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td><code>models/location_plus_v2_{xswing,xcs,xwhiff,xfoul,bip}.txt</code></td><td>Live LightGBM boosters</td></tr>
+    <tr><td><code>models/location_plus_v2_meta.json</code></td><td>feat_cols, cat_cols, bip_classes, hbp_rate, cv_results</td></tr>
+    <tr><td><code>analytics/location_v2_model.py</code></td><td>Live scoring module (called per-request by <code>api/routers/location_report.py</code>)</td></tr>
+    <tr><td><code>analytics/location_features.py</code></td><td>Feature engineering + <code>to_plus_scale()</code> shared utility</td></tr>
+    <tr><td><code>training/v2_artifacts/location_plus_v2_*.parquet</code></td><td>Cached pitcher-season scores (2015–2025)</td></tr>
+    <tr><td><code>training/v2_artifacts/run_value_table.json</code></td><td>Fixed run values (shared with Tunneling+ v2)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<footer>
+  Location+ v2 · Promoted 2026-09-21 · Replaces location_plus_v1.txt (sign-flip + stability collapse fixed) · MLB Dashboard
+</footer>
+
+</body>
+</html>

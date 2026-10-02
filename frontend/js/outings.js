@@ -239,7 +239,14 @@
       </div>
     </div>`;
 
-    const avgVeloBox = data.avg_velo != null ? heroBox("Avg Velo", `${data.avg_velo.toFixed(1)}`) : "";
+    // Avg FB velo: weighted avg of fastball pitch types only
+    const FB_TYPES = new Set(["FF", "SI", "FC", "FA"]);
+    const fbPts = (data.pitch_types || []).filter(p => FB_TYPES.has(p.pitch_type) && p.avg_velo != null);
+    const avgFbVelo = fbPts.length
+      ? fbPts.reduce((s, p) => s + p.avg_velo * p.count, 0) / fbPts.reduce((s, p) => s + p.count, 0)
+      : null;
+
+    const avgVeloBox = avgFbVelo != null ? heroBox("Avg FB Velo", `${avgFbVelo.toFixed(1)}`) : "";
     const maxVeloBox = data.max_velo != null ? heroBox("Max Velo", `${data.max_velo.toFixed(1)}`) : "";
     const avgEvBox   = data.avg_ev   != null ? heroBox("Avg EV",   `${data.avg_ev.toFixed(1)}`)   : "";
     const maxEvBox   = data.max_ev   != null ? heroBox("Max EV",   `${data.max_ev.toFixed(1)}`)   : "";
@@ -251,13 +258,12 @@
         <div class="outing-hero-name-block">
           <div class="outing-player-name">${data.player_name || ""}</div>
           <div class="outing-meta">${meta}</div>
-          ${lineCard}
         </div>
+        ${lineCard}
       </div>
       <div class="outing-hero-right">
-        <div class="hero-velo-grid">
-          ${avgVeloBox}${maxVeloBox}${avgEvBox}${maxEvBox}
-        </div>
+        <div class="hero-velo-stack">${avgVeloBox}${maxVeloBox}</div>
+        <div class="hero-velo-stack">${avgEvBox}${maxEvBox}</div>
       </div>
     </div>`;
   }
@@ -363,38 +369,23 @@
     const rows = pts.map(pt => {
       const color      = pitchColor(pt.pitch_type);
       const fullName   = pitchFullNameLocal(pt.pitch_type);
-      const avgDrop    = toDrop(pt.avg_ivb);
-      // Drop increases when IVB decreases (and vice versa): Δdrop = -Δivb_in
-      const dropDelta  = pt.ivb_delta != null ? +(-pt.ivb_delta * 12).toFixed(1) : null;
       const avgIvbIn   = toIn(pt.avg_ivb);
       const ivbDeltaIn = toIn(pt.ivb_delta);
       const avgHbIn    = toIn(pt.avg_hb);
       const hbDeltaIn  = toIn(pt.hb_delta);
       const spin       = pt.avg_spin != null ? Math.round(pt.avg_spin) : null;
+      const stuffPlus  = pt.stuff_plus != null ? Math.round(pt.stuff_plus) : "—";
       return `<tr>
         <td><span class="pt-chip" style="color:${color};">${fullName}</span></td>
-        <td>${avgDrop ?? "—"}</td>
-        <td>${deltaHtml(dropDelta)}</td>
         <td>${avgIvbIn ?? "—"}</td>
-        <td>${deltaHtml(ivbDeltaIn)}</td>
+        <td class="col-divider-right">${deltaHtml(ivbDeltaIn)}</td>
         <td>${avgHbIn ?? "—"}</td>
-        <td>${deltaHtml(hbDeltaIn)}</td>
+        <td class="col-divider-right">${deltaHtml(hbDeltaIn)}</td>
         <td>${spin ?? "—"}</td>
         <td>${deltaHtml(pt.spin_delta)}</td>
+        <td>${stuffPlus}</td>
       </tr>`;
     }).join("");
-
-    const allIvb  = wtAvg(p => p.avg_ivb);
-    const allHb   = wtAvg(p => p.avg_hb);
-    const allSpin = wtAvg(p => p.avg_spin);
-
-    const allRow = `<tr class="outing-all-row">
-      <td><strong>ALL</strong></td>
-      <td>${toDrop(allIvb) ?? "—"}</td><td>—</td>
-      <td>${toIn(allIvb)   ?? "—"}</td><td>—</td>
-      <td>${toIn(allHb)    ?? "—"}</td><td>—</td>
-      <td>${allSpin != null ? Math.round(allSpin) : "—"}</td><td>—</td>
-    </tr>`;
 
     return `<div class="panel-card">
       <div class="panel-title">Movement &amp; Spin</div>
@@ -402,12 +393,12 @@
         <table class="outing-table">
           <thead><tr>
             <th style="text-align:left;">Pitch</th>
-            <th>Drop (in)</th><th title="vs. season avg">±Drop</th>
-            <th>IVB (in)</th><th title="vs. season avg">±IVB</th>
-            <th>HB (in)</th><th title="vs. season avg">±HB</th>
+            <th>IVB (in)</th><th class="col-divider-right" title="vs. season avg">±IVB</th>
+            <th>HB (in)</th><th class="col-divider-right" title="vs. season avg">±HB</th>
             <th>Spin (rpm)</th><th title="vs. season avg">±Spin</th>
+            <th>Stuff+</th>
           </tr></thead>
-          <tbody>${rows}${allRow}</tbody>
+          <tbody>${rows}</tbody>
         </table>
       </div>
     </div>`;

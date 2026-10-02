@@ -316,23 +316,26 @@ select, input[type="date"] {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 14px;
+  overflow: visible;
+  min-height: 0;
 }
 .player-card-id {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 180px;
+  flex-shrink: 0;
+  min-width: 0;
 }
-.player-card-id img { width: 46px; height: 46px; }
-.player-card-name { font-size: 21px; font-weight: 800; color: var(--forest-dark); }
+.player-card-id img { width: 46px; height: 46px; flex-shrink: 0; }
+.player-card-name { font-size: 21px; font-weight: 800; color: var(--forest-dark); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .player-card-position {
   font-size: 11px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
   color: var(--forest-dark); background: var(--bark-tint); border: 1px solid var(--bark);
-  border-radius: 20px; padding: 3px 9px; line-height: 1; align-self: center;
+  border-radius: 20px; padding: 3px 9px; line-height: 1; align-self: center; flex-shrink: 0; white-space: nowrap;
 }
-.player-card-stats { display: flex; flex-wrap: wrap; gap: 4px; }
+.player-card-stats { display: flex; flex-wrap: nowrap; gap: 4px; flex-shrink: 1; min-width: 0; overflow: hidden; }
 .stat-block { text-align: center; padding: 0 14px; }
 .stat-block-label { font-size: 11px; color: var(--text-muted); }
 .stat-block-value { font-size: 18px; font-weight: 700; color: var(--text); }
@@ -522,7 +525,7 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
 }
 .il-badge:hover { background: #b91c1c; }
 .il-detail {
-  position: absolute; top: calc(100% + 6px); left: 0; z-index: 20;
+  position: absolute; top: calc(100% + 6px); left: 0; z-index: 100;
   background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
   padding: 10px 12px; min-width: 230px; box-shadow: 0 4px 14px rgba(0,0,0,0.15);
   font-size: 12.5px; color: var(--text); line-height: 1.7;
@@ -562,9 +565,8 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
   ) !important;
 }
 .rt-row-unqualified .rt-badge { opacity: 0.55; }
-.rt-unqualified-banner {
-  font-size: 11.5px; color: var(--text-muted); background: var(--surface-alt);
-  border: 1px dashed var(--border); border-radius: 6px; padding: 6px 10px; margin-bottom: 4px;
+.pct-unqualified-note {
+  font-size: 12px; font-weight: 400; color: var(--text-muted); margin-left: 6px;
 }
 .pct-no-data-note {
   font-size: 12px; font-weight: 400; color: var(--text-muted);
@@ -937,7 +939,10 @@ table.farm-table img.team-logo { width: 28px; height: 28px; vertical-align: midd
 table.wc-table td, table.wc-table th { padding: 12px 16px; font-size: 13.5px; }
 table.wc-table td.wc-rank { font-weight: 800; color: var(--text-muted); }
 table.wc-table td.team-cell { font-weight: 800; font-size: 14px; color: var(--forest-dark); }
-tr.wc-cutline td { border-bottom: 3px dashed var(--gold); }
+tr.wc-cutline td { border-bottom: 3px solid var(--bark-light); }
+tr.wc-in-spot td { background: var(--bark-tint); }
+tr.wc-in-spot td:first-child { box-shadow: inset 4px 0 0 var(--bark); }
+tr.wc-in-spot:first-child td { border-top: none; }
 .wc-in {
   color: var(--forest-dark); background: var(--gold); border-radius: 5px; padding: 3px 9px;
   font-size: 10.5px; font-weight: 800; letter-spacing: 0.3px;
@@ -948,6 +953,14 @@ tr.wc-cutline td { border-bottom: 3px dashed var(--gold); }
    wrapper - per direction. */
 .bracket-title-row { display: flex; align-items: center; gap: 12px; }
 .bracket-title { font-size: 24px; font-weight: 800; color: var(--forest-dark); }
+.rs-freeze-banner {
+  background: var(--bark-tint); border: 1px solid var(--bark-light);
+  border-radius: var(--radius); padding: 10px 16px; margin-bottom: 16px;
+  font-size: 12px; font-weight: 700; color: var(--bark-dark);
+  display: flex; align-items: center; gap: 8px;
+}
+.rs-freeze-banner-icon { font-size: 14px; }
+
 .bracket-real-badge {
   font-size: 10.5px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
   background: var(--forest); color: #fff; border-radius: 5px; padding: 3px 9px;
@@ -987,9 +1000,10 @@ tr.wc-cutline td { border-bottom: 3px dashed var(--gold); }
    ("condense the middle... spread out the WC and DS rounds, it's a bit
    cramped there"). */
 .bracket-half { display: flex; flex-direction: column; flex: 1.7 1 0; }
-.bracket-half-cols { display: flex; flex-direction: row; flex: 1 1 auto; }
+.bracket-half-cols { display: flex; flex-direction: row; flex: 1 1 auto; min-height: 520px; }
 .bracket-league-title { font-size: 13px; font-weight: 800; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 8px; padding-left: 2px; height: 16px; line-height: 16px; }
-.bracket-col { display: flex; flex-direction: column; justify-content: space-around; gap: 20px; min-width: 116px; padding: 0 8px; position: relative; z-index: 1; flex: 1 1 0; }
+.bracket-col { display: flex; flex-direction: column; justify-content: flex-start; gap: 0; min-width: 116px; padding: 0 8px; position: relative; z-index: 1; flex: 1 1 0; }
+.bracket-col-body { display: flex; flex-direction: column; justify-content: space-around; flex: 1 1 auto; gap: 20px; padding-top: 47px; }
 /* CS / NL Champion / AL Champion / the center trophy column - each is
    [header label, then a flex:1 body that centers its real content within
    whatever height is left]. Stretched (see .bracket-wrap) to match
@@ -1003,13 +1017,15 @@ tr.wc-cutline td { border-bottom: 3px dashed var(--gold); }
    higher than WC/DS's. With align-items:stretch a margin-top shrinks the
    stretched height by the same amount rather than re-centering it, so the
    column's bottom edge (and thus the body's centered range) is unaffected. */
-.bracket-col-standalone { display: flex; flex-direction: column; min-width: 116px; padding: 0 8px; margin-top: 44px; position: relative; z-index: 1; flex: 0.75 1 0; }
+.bracket-col-standalone { display: flex; flex-direction: column; min-width: 116px; padding: 0 8px; margin-top: 24px; position: relative; z-index: 1; flex: 0.75 1 0; }
 .bracket-col-standalone-body { display: flex; flex-direction: column; justify-content: center; flex: 1 1 auto; }
-.bracket-col-label-spacer { height: 33px; } /* matches .bracket-col-label's own rendered height (font + margin + border) for the center column, which has no label text of its own to create that same offset */
+.bracket-col-label-spacer { height: 47px; } /* 39px box + 8px margin-bottom = total space all labels take (including two-line "DIVISION SERIES") */
 .bracket-col-label {
   font-size: 12px; font-weight: 800; letter-spacing: 0.9px; color: var(--bark);
-  text-align: center; text-transform: uppercase; margin-bottom: 8px;
+  text-align: center; text-transform: uppercase; margin-bottom: 0;
   border-bottom: 2px solid var(--bark-light); padding-bottom: 5px;
+  min-height: 39px; display: flex; align-items: flex-end; justify-content: center;
+  position: absolute; top: 0; left: 8px; right: 8px;
 }
 .bracket-slot {
   background: var(--surface-alt); border: 2px solid var(--bark-light); border-radius: 11px;
@@ -1048,7 +1064,7 @@ tr.wc-cutline td { border-bottom: 3px dashed var(--gold); }
    slots instead of clearly above them, confirmed via real measured
    coordinates before this fix (bottom edge landing within 2px of the side
    slots' top edge). */
-.bracket-ws-winner-slot { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 18px; }
+.bracket-ws-winner-slot { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 28px; }
 .bracket-ws-winner-slot .bracket-slot { min-width: 126px; }
 .bracket-ws-winner-placeholder { color: var(--text-muted); font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; }
 .bracket-trophy { filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25)); }

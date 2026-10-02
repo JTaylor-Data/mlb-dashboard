@@ -236,6 +236,7 @@ def _batter_rows(conn, player_id, seasons):
             "sweet_spot_pct": _cf(sweet_spot / n_ev * 100, 1) if n_ev else None,
             "hard_hit_pct":   _cf(hard / n_ev * 100, 1) if n_ev else None,
             "barrel_pct":     _cf(barrel / n_ev * 100, 1) if n_ev else None,
+            "n_pa":           n_pa,
             "xwoba":          _cf(xwoba_vals.mean(), 3) if len(xwoba_vals) else None,
             "whiff_pct":      _cf(whiffs / swings * 100, 1) if swings else None,
             "k_pct":          _cf(k / n_pa * 100, 1) if n_pa else None,

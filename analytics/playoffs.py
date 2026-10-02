@@ -61,6 +61,16 @@ BULLPEN_SIZE = 7
 REGULAR_SEASON_GAMES = 162  # a team logging more than this many real games this season is a live signal real postseason games have started
 WC_RACE_DISPLAY_LIMIT = 10  # the race is only meaningful near the cutline - per direction, the list doesn't need to go past 10
 
+# Postseason round roster types stored in the rosters table, in descending
+# recency (WS is most recent, WC is earliest — we always show the most
+# advanced round we have data for, and fall back to earlier rounds).
+POSTSEASON_ROUND_TYPES = [
+    ("postseason_WS",  "World Series"),
+    ("postseason_LCS", "LCS"),
+    ("postseason_DS",  "Division Series"),
+    ("postseason_WC",  "Wild Card"),
+]
+
 SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule"
 POSTSEASON_GAME_TYPES = "F,D,L,W"  # F=Wild Card, D=Division Series, L=Championship Series, W=World Series
 
@@ -574,6 +584,8 @@ def _team_pitchers(conn, season, team_id, roles_df):
     return out
 
 
+_OF_FALLBACK = {"LF": ["CF", "RF"], "CF": ["LF", "RF"], "RF": ["LF", "CF"]}
+
 def _build_lineup(batters):
     by_pos, used = {}, set()
     for pos in LINEUP_POSITIONS:
@@ -582,6 +594,17 @@ def _build_lineup(batters):
         by_pos[pos] = best
         if best:
             used.add(best["player_id"])
+    # Outfield fallback: if an OF slot is empty, fill it with the best remaining
+    # player from adjacent OF positions (e.g. RF from LF/CF candidates).
+    for pos in ("LF", "CF", "RF"):
+        if by_pos.get(pos) is None:
+            for alt in _OF_FALLBACK[pos]:
+                candidates = [b for b in batters if b["position"] == alt and b["player_id"] not in used]
+                if candidates:
+                    best = max(candidates, key=lambda b: b["n_pa"])
+                    by_pos[pos] = best
+                    used.add(best["player_id"])
+                    break
     bench_pool = sorted((b for b in batters if b["player_id"] not in used), key=lambda b: -b["n_pa"])
     return by_pos, bench_pool
 
@@ -626,33 +649,128 @@ def _pitcher_stat_line(conn, season, player_id, name, role_row):
     }
 
 
-def projected_roster(conn, season, team_id, games_played_this_team=None):
-    """Lineup (by position, highest-PA player at each) / bench / rotation
-    (top 3 by games started) / bullpen (top BULLPEN_SIZE by games
-    pitched) for `team_id`, built from real current-season usage among
-    players who've actually recorded a pitch for this team this season and
-    aren't on the IL. `games_played_this_team`: if the caller already has
-    this team's games-played count (e.g. from standings), pass it so the
-    "has the postseason started" label below doesn't need a second query.
+def _live_postseason_roster(team_id: int, season: int):
+    """Live pull of postseason roster directly from the MLB Stats API.
 
-    ROSTER-SWITCH NOTE: this project has no real data source for a team's
-    ACTUAL announced postseason active roster (a real front-office
-    decision, not something Statcast publishes) - so rather than fabricate
-    one, `is_real_postseason_roster` below is just a label: once this
-    team's real games-played count exceeds a normal 162-game season (the
-    live, honest signal that postseason games are actually being played),
-    the roster still reflects the same real-usage projection, just
-    relabeled from "Projected" to reflect that real playoff games are
-    underway. See this module's own docstring."""
+    Returns (player_id_set, pulled_at) — bypasses the rosters DB table so the
+    data is always current (the postseason eligibility list changes frequently
+    as teams add/replace players between rounds). Falls back to empty set on
+    any network error so the caller can degrade to the usage-based projection.
+    """
+    import requests
+    from datetime import datetime
+    url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster"
+    params = {"rosterType": "postseasonRoster", "season": season}
+    try:
+        resp = requests.get(url, params=params, timeout=15)
+        resp.raise_for_status()
+        data = resp.json()
+        ids = {int(p["person"]["id"]) for p in data.get("roster", [])}
+        pulled_at = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        return ids, pulled_at
+    except Exception:
+        return set(), None
+
+
+def _find_reported_roster(conn, season, team_id):
+    """Look for an actual submitted postseason roster in the rosters table.
+
+    Tries each round in descending recency (WS → LCS → DS → WC).  Returns
+    (roster_type_key, round_label, pulled_at, player_id_set) for the most
+    advanced round that has data, or (None, None, None, set()) if none found.
+    """
+    for rtype, label in POSTSEASON_ROUND_TYPES:
+        rows = conn.execute(
+            """SELECT player_id, pulled_at FROM rosters
+               WHERE team_id = ? AND roster_type = ?
+               ORDER BY pulled_at DESC""",
+            (team_id, rtype),
+        ).fetchall()
+        if rows:
+            return rtype, label, rows[0][1], {r[0] for r in rows}
+    return None, None, None, set()
+
+
+def projected_roster(conn, season, team_id, games_played_this_team=None):
+    """Lineup / bench / rotation / bullpen for `team_id`.
+
+    Data path (tried in order):
+      1. A submitted postseason roster from the rosters table
+         (roster_type = postseason_WC/DS/LCS/WS, populated by the admin
+         pull script that calls mlb_stats_api.team_roster with a postseason
+         roster_type).  When found, the player pool is restricted to those
+         26 (or however many are stored) players.  Stats still come from
+         regular-season Statcast (the only source we have), so the quality
+         flags in the return dict tell the frontend exactly what it's showing.
+      2. Usage-based projection from all players who recorded a Statcast
+         pitch for this team this season and aren't on the IL.
+
+    The roster_source / roster_round_label / roster_pulled_at keys in the
+    return dict let the frontend show an honest label rather than a generic
+    "Projected" for both cases."""
     roles_df = classify_pitcher_roles(conn, season)
     batters = _team_batters(conn, season, team_id)
     pitchers = _team_pitchers(conn, season, team_id, roles_df)
+
+    # Postseason: live pull from MLB API (fresher than any DB-cached data).
+    # Fall back to the DB if the live call fails, then fall back to projection.
+    # Check schedule_games for postseason games (more reliable than game count,
+    # since teams can finish the regular season with 161 games due to weather/ties).
+    has_postseason_games = bool(conn.execute(
+        "SELECT 1 FROM schedule_games WHERE (home_team_id = ? OR away_team_id = ?) LIMIT 1",
+        (team_id, team_id),
+    ).fetchone())
+    is_postseason = has_postseason_games or bool(
+        games_played_this_team and games_played_this_team >= REGULAR_SEASON_GAMES
+    )
+    rtype, round_label, pulled_at, reported_ids = None, None, None, set()
+    if is_postseason:
+        live_ids, live_at = _live_postseason_roster(team_id, season)
+        if live_ids:
+            reported_ids, pulled_at = live_ids, live_at
+            rtype, round_label = "postseason_live", "Postseason"
+        else:
+            rtype, round_label, pulled_at, reported_ids = _find_reported_roster(conn, season, team_id)
+            # Override the round label when falling back to DB — the DB stores all
+            # rounds with the same eligibility list, so "World Series Roster" is
+            # misleading for a team still in the Wild Card round.
+            if round_label:
+                round_label = "Postseason"
+    else:
+        rtype, round_label, pulled_at, reported_ids = _find_reported_roster(conn, season, team_id)
+
+    if reported_ids:
+        batters = [b for b in batters if b["player_id"] in reported_ids]
+        pitchers = [p for p in pitchers if p["player_id"] in reported_ids]
+        # Postseason only: re-add any pitchers on the live roster that were
+        # dropped by the IL filter in _team_pitchers. An official postseason
+        # roster supersedes IL status (teams activate players for the playoffs).
+        if is_postseason:
+            existing_pids = {p["player_id"] for p in pitchers}
+            for pid in reported_ids - existing_pids:
+                if pid in roles_df.index:
+                    prow = conn.execute(
+                        "SELECT name FROM players WHERE player_id = ?", (pid,)
+                    ).fetchone()
+                    r = roles_df.loc[pid]
+                    if str(r.get("team_id", "")) == str(team_id) or True:
+                        pitchers.append(dict(
+                            player_id=pid,
+                            name=prow[0] if prow else str(pid),
+                            role=r["role"],
+                            games_started=int(r["games_started"]),
+                            games_pitched=int(r["games_pitched"]),
+                        ))
     war_lookup = _war_lookup(conn, season)
 
     by_pos, bench_pool = _build_lineup(batters)
     bench = bench_pool[:BENCH_SIZE]
 
-    starters = sorted((p for p in pitchers if p["role"] == "SP"), key=lambda p: -p["games_started"])[:ROTATION_SIZE]
+    # Postseason: show all SPs on the official roster (not capped at 3), since
+    # the playoff rotation is manager-determined and may not match regular-season
+    # GS rank. Regular-season projection still caps at ROTATION_SIZE.
+    rotation_cap = None if is_postseason else ROTATION_SIZE
+    starters = sorted((p for p in pitchers if p["role"] == "SP"), key=lambda p: -p["games_started"])[:rotation_cap]
     relievers = sorted((p for p in pitchers if p["role"] == "RP"), key=lambda p: -p["games_pitched"])[:BULLPEN_SIZE]
 
     lineup = []
@@ -682,12 +800,16 @@ def projected_roster(conn, season, team_id, games_played_this_team=None):
             line["war"] = None
         bullpen_out.append(line)
 
-    is_postseason = bool(games_played_this_team and games_played_this_team > REGULAR_SEASON_GAMES)
-
     return {
         "team_id": team_id,
         "season": season,
-        "is_real_postseason_roster": is_postseason,
+        "is_real_postseason_roster": is_postseason or bool(reported_ids),
+        # Roster sourcing: when a real submitted postseason roster exists in
+        # the rosters table, these fields say which round and when it was pulled.
+        # When falling back to usage-based projection, all three are None.
+        "roster_source": rtype,
+        "roster_round_label": round_label,
+        "roster_pulled_at": pulled_at,
         "lineup": lineup,
         "bench": bench_out,
         "rotation": rotation_out,

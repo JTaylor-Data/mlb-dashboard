@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tunneling+ v2 — Corrected Sequential Test</title>
+<style>
+  :root {
+    --orange: #92540e; --orange-light: #fef3e2; --border: #d0d5c8;
+    --muted: #5a6450; --green: #1a5c38; --red: #b91c2c; --blue: #1a4070;
+    --blue-light: #eef3fb; --warn: #c89a00; --warn-light: #fff8e6;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; background: #fff; padding: 40px 48px; max-width: 960px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--orange); padding-bottom: 16px; margin-bottom: 28px; }
+  .model-name { font-size: 28px; font-weight: bold; color: var(--orange); letter-spacing: -0.5px; }
+  .model-sub { font-size: 14px; color: var(--muted); font-family: monospace; margin-top: 4px; }
+  .badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; font-weight: bold; }
+  .badge-live     { background: #e8f3ee; color: var(--green); border: 1px solid var(--green); }
+  .badge-concern  { background: #fde8e8; color: var(--red); border: 1px solid var(--red); }
+  .badge-diag     { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange); }
+  .badge-season   { background: #e8f0f8; color: var(--blue); border: 1px solid #a8c0d8; }
+  h2 { font-size: 15px; color: var(--orange); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin: 28px 0 12px; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Arial', sans-serif; }
+  h3 { font-size: 13px; font-weight: bold; margin: 16px 0 6px; font-family: 'Arial', sans-serif; }
+  p { margin-bottom: 10px; }
+  ul, ol { margin: 8px 0 12px 22px; line-height: 1.9; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0 16px; }
+  th { background: var(--orange); color: #fff; text-align: left; padding: 6px 10px; font-family: monospace; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #faf9f7; }
+  code { font-family: monospace; font-size: 12px; background: #f0f2ed; padding: 1px 4px; border-radius: 3px; }
+  .callout      { background: var(--warn-light); border-left: 4px solid var(--warn); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-good { background: #e8f3ee; border-left: 4px solid var(--green); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-bad  { background: #fde8e8; border-left: 4px solid var(--red); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-info { background: var(--blue-light); border-left: 4px solid var(--blue); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .stat-row { display: flex; gap: 24px; margin: 16px 0; flex-wrap: wrap; }
+  .stat-box { text-align: center; min-width: 120px; }
+  .big-stat { font-size: 32px; font-weight: bold; font-family: monospace; }
+  .big-stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .section { margin-bottom: 28px; }
+  .highlight-row td { background: #fef3e2 !important; font-weight: bold; }
+  .null-row td { background: #fde8e8 !important; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: monospace; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 12px 0; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } .stat-row { gap: 16px; } }
+  @media print {
+    body { padding: 20px 28px; }
+    th, .badge, .callout, .callout-good, .callout-bad, .callout-info { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="model-name">Tunneling+ v2 — Corrected Sequential Same-At-Bat Test</div>
+  <div class="model-sub">SHAP geometry isolation · xWhiff% classifier only · 2026-09-21</div>
+  <div class="badges">
+    <span class="badge badge-live">✓ MODEL UNCHANGED</span>
+    <span class="badge badge-concern">⚠ VALIDATION CONCERN</span>
+    <span class="badge badge-diag">DIAGNOSTIC ONLY</span>
+    <span class="badge badge-season">Scored: 2021–2025 · 200K sample</span>
+  </div>
+</header>
+
+<div class="callout-bad">
+  <strong>Result: isolated lag-geometry signal is null (z = −1.7 to +1.6). Pitch-type sequencing is the real signal (z = 18.6).</strong><br>
+  The prior Part 4 test (z = 180.1) was close to circular: it bucketed pitches by the model's full blended xRV,
+  which already incorporates the model's own xWhiff% prediction as one of five inputs. When the geometry
+  features are isolated — independent of pitch-type information — they show no predictive signal for real whiff
+  rates. Tunneling+ v2's xWhiff% component is primarily learning pitch-type sequencing, not geometric tunneling.
+</div>
+
+<div class="section">
+<h2>Why the Prior Test Was Insufficient</h2>
+<p>The prior Part 4 sequential test bucketed pitches by the <strong>full blended xRV</strong>
+(xSwing% × xWhiff% × xFoul% × BIP×EV + xCS% combined via a run-value table). One of those five
+inputs is the model's own predicted xWhiff% probability — which is computed from the same lag-geometry
+features we're trying to validate. Asking "does the model's full xRV output predict real whiff rate?" and
+then finding z = 180.1 is therefore unsurprising but uninformative: the model's direct xWhiff% prediction
+was riding along in the xRV numerator.</p>
+
+<p>The correct question is: <em>do the lag-geometry features specifically predict real whiff rate on
+their own, independent of pitch-type identity?</em> This test answers that question directly.</p>
+</div>
+
+<div class="section">
+<h2>Key Numbers</h2>
+<div class="stat-row">
+  <div class="stat-box">
+    <div class="big-stat" style="color: var(--red)">−1.7</div>
+    <div class="big-stat-label">Lag-1 geometry SHAP z<br>(primary — null)</div>
+  </div>
+  <div class="stat-box">
+    <div class="big-stat" style="color: var(--red)">+1.6</div>
+    <div class="big-stat-label">All-lag geometry SHAP z<br>(secondary — null)</div>
+  </div>
+  <div class="stat-box">
+    <div class="big-stat" style="color: var(--orange)">18.6</div>
+    <div class="big-stat-label">Pitch-type lag SHAP z<br>(confound control — real signal)</div>
+  </div>
+  <div class="stat-box">
+    <div class="big-stat" style="color: var(--muted)">180.1</div>
+    <div class="big-stat-label">Prior Part 4 full-xRV z<br>(circular — not informative)</div>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h2>Methodology</h2>
+
+<h3>Step 1 — Load xWhiff% classifier only</h3>
+<p>Used <code>tunneling_plus_v2_xwhiff.txt</code> (one of the five v2 classifiers) in isolation.
+The xWhiff% sub-model takes all 28 features: 18 numeric lag columns
+(<code>lagN_{commit_distance, plate_distance, shape_break}</code> for N=1–6) and 10 categorical
+columns (6 <code>lagN_pitch_type</code> + <code>pitch_type, p_throws, stand, season</code>).
+
+<h3>Step 2 — Compute SHAP values</h3>
+<p>Used <code>shap.TreeExplainer</code> on a stratified random sample of 200,000 rows from
+the 2021–2025 commit-table corpus (2,635,868 total lag rows). Sample preserves the 13.6%
+overall whiff rate.</p>
+
+<h3>Step 3 — Three isolated scores</h3>
+<table>
+  <tr><th>Score</th><th>Features summed</th><th>Purpose</th></tr>
+  <tr>
+    <td><code>lag1_geom_shap</code></td>
+    <td><code>lag1_commit_distance</code>, <code>lag1_plate_distance</code>, <code>lag1_shape_break</code></td>
+    <td><strong>Primary result</strong>: lag-1 geometry only (closest analog to the original v3 consecutive-pair test)</td>
+  </tr>
+  <tr>
+    <td><code>alllag_geom_shap</code></td>
+    <td>Same 3 features × all 6 lag slots (18 total)</td>
+    <td>Secondary: does geometry matter at any lag depth?</td>
+  </tr>
+  <tr>
+    <td><code>pt_lag_shap</code></td>
+    <td><code>lag1_pitch_type</code> … <code>lag6_pitch_type</code></td>
+    <td><strong>Confound control</strong>: pitch-type sequencing only — how much of any whiff effect is just pitch-type history?</td>
+  </tr>
+</table>
+
+<h3>Step 4 — Tercile z-test</h3>
+<p>For each score, bucket 200K rows into low/mid/high terciles. Compute real whiff rate per
+tercile. z-test = (high_score whiff − low_score whiff) / pooled SE.
+Sign: positive z means high SHAP score (model says features push xWhiff% up) → more real whiffs,
+which is what we would expect if the signal is genuine.</p>
+</div>
+
+<div class="section">
+<h2>Results</h2>
+
+<h3>Lag-1 Geometry (Primary Result)</h3>
+<table>
+  <tr><th>Tercile</th><th>Score range</th><th>Whiff Rate</th><th>n</th></tr>
+  <tr class="null-row"><td>high_lag1_geom</td><td>model says geometry pushing xWhiff% up</td><td>13.06%</td><td>66,667</td></tr>
+  <tr><td>mid</td><td>—</td><td>14.22%</td><td>66,666</td></tr>
+  <tr class="null-row"><td>low_lag1_geom</td><td>model says geometry pushing xWhiff% down</td><td>13.37%</td><td>66,667</td></tr>
+</table>
+<p><strong>z = −1.706</strong> — statistically indistinguishable from zero. Slightly negative (wrong direction).
+The model's attribution of xWhiff% to lag-1 geometry does not predict real whiff rates.</p>
+
+<h3>All-Lag Geometry (Secondary Check)</h3>
+<table>
+  <tr><th>Tercile</th><th>Whiff Rate</th><th>n</th></tr>
+  <tr class="null-row"><td>high (all-lag geom)</td><td>13.50%</td><td>66,667</td></tr>
+  <tr><td>mid</td><td>13.96%</td><td>66,666</td></tr>
+  <tr class="null-row"><td>low (all-lag geom)</td><td>13.19%</td><td>66,667</td></tr>
+</table>
+<p><strong>z = +1.635</strong> — positive but noise-level. Summing across all 6 lag slots
+does not recover a meaningful geometry signal.</p>
+
+<h3>Pitch-Type Lag SHAP (Confound Control)</h3>
+<table>
+  <tr><th>Tercile</th><th>Whiff Rate</th><th>n</th></tr>
+  <tr class="highlight-row"><td>high (pitch-type lag)</td><td>15.70%</td><td>66,667</td></tr>
+  <tr><td>mid</td><td>12.78%</td><td>66,666</td></tr>
+  <tr class="highlight-row"><td>low (pitch-type lag)</td><td>12.17%</td><td>66,667</td></tr>
+</table>
+<p><strong>z = 18.622</strong> — large, genuine, in the correct direction. When the model
+attributes higher xWhiff% to the pitch-type lag sequence, real whiff rates are meaningfully
+higher. This is the actual source of the model's discriminating power.</p>
+
+<h3>Side-by-Side Comparison</h3>
+<table>
+  <tr><th>Score</th><th>z</th><th>Interpretation</th></tr>
+  <tr class="null-row"><td>Lag-1 geometry SHAP</td><td style="color:var(--red)"><strong>−1.706</strong></td><td>Null — geometry features not predictive of real whiff</td></tr>
+  <tr class="null-row"><td>All-lag geometry SHAP</td><td style="color:var(--red)"><strong>+1.635</strong></td><td>Null — extending to all 6 lags recovers nothing</td></tr>
+  <tr class="highlight-row"><td>Pitch-type lag SHAP</td><td style="color:var(--green)"><strong>+18.622</strong></td><td>Real signal — pitch-type sequencing effects are genuine</td></tr>
+  <tr><td>Prior Part 4 full-xRV (Part 4)</td><td style="color:var(--muted)">180.1</td><td>Largely circular — model's own xWhiff% in numerator</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>What This Means</h2>
+
+<div class="callout-bad">
+<strong>The lag-geometry features have no isolatable predictive signal for real whiff rates.</strong>
+The model's ability to discriminate xWhiff% comes from pitch-type sequencing (z = 18.6), not from
+the geometric commit/plate/shape-break distances that motivated the tunneling feature design.
+The prior z = 180.1 result was not a validation of the geometry concept — it was mostly a test
+of whether the model's embedded whiff probability predicted whiff (trivially yes) and pitch-type
+sequencing effects (genuinely real but not tunneling-geometry-specific).
+</div>
+
+<h3>Important caveats</h3>
+<ul>
+  <li><strong>This is SHAP attribution for xWhiff% only.</strong> The geometry features may have signal in the other four classifiers (xCS%, xFoul%, BIP type × EV, xSwing%). This test only isolates xWhiff%.</li>
+  <li><strong>SHAP attribution ≠ marginal effect.</strong> Tree SHAP measures each feature's individual attribution holding others fixed, but interaction effects between geometry and pitch-type are distributed across both feature groups. The geometry features may contribute through interactions that SHAP attributes to pitch_type.</li>
+  <li><strong>Sample is 200K of 2.6M rows.</strong> The z-scores of ±1.7 and +1.6 are precise enough at this sample size to rule out any meaningful effect — a real effect would produce z >> 10. This is not a power concern.</li>
+  <li><strong>The model stays live.</strong> This is a validation-quality diagnostic, not a promotion decision. Tunneling+ v2 replaced v3 to fix a sign-flip in ERA/xFIP correlations, which remains resolved. This finding does not reverse that decision.</li>
+</ul>
+
+<div class="callout-info">
+<strong>What the geometry features might still be doing:</strong> The commit/plate/shape-break distance
+features capture real physical measurements of pitch-to-pitch similarity. They may improve xCS% (called-strike
+positioning), xSwing% (inducing swings), or BIP quality control more than xWhiff% specifically. A fuller
+test would run this same SHAP isolation across all five sub-models. For now, the xWhiff% result is the
+clearest signal because it's the outcome most directly linked to the "hitter confusion" theory behind
+tunneling geometry.
+</div>
+
+<h3>For future Tunneling+ work</h3>
+<ul>
+  <li>Run the same SHAP isolation on xCS%, xSwing%, xFoul% to see if geometry features have signal in other outcome classifiers.</li>
+  <li>Consider whether the geometry features should be replaced or supplemented with features that more directly capture batter perception difficulty (e.g., release-point distance for consecutive pitches from a hitter's perspective).</li>
+  <li>The pitch-type sequencing signal (z = 18.6) is real and worth preserving in any redesign — it should be explicit rather than implicit in the lag_pitch_type categorical feature.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>SHAP Distributions</h2>
+<table>
+  <tr><th>Score</th><th>Mean</th><th>Std</th><th>p10</th><th>p90</th></tr>
+  <tr><td>Lag-1 geometry SHAP</td><td>+0.069</td><td>0.219</td><td>−0.126</td><td>+0.352</td></tr>
+  <tr><td>All-lag geometry SHAP</td><td>+0.209</td><td>0.478</td><td>−0.224</td><td>+0.777</td></tr>
+  <tr><td>Pitch-type lag SHAP</td><td>−0.005</td><td>0.084</td><td>−0.107</td><td>+0.097</td></tr>
+</table>
+<p>The geometry SHAP distributions are wide (high variance), while the pitch-type lag SHAP
+distribution is narrow but directional. Wide variance + no whiff prediction = the geometry
+features are contributing to the model's per-pitch predictions but their direction doesn't
+align with real outcomes — consistent with overfitting to noise or capturing a confounder
+(e.g., pitch-type-correlated geometry patterns that have no independent causal pathway to whiff).</p>
+</div>
+
+<div class="section">
+<h2>Artifact Locations</h2>
+<table>
+  <tr><th>File</th><th>Purpose</th></tr>
+  <tr><td><code>training/v2_artifacts/part_a_tunneling_shap_geometry.json</code></td><td>Full results: all three z-scores, tercile whiff tables</td></tr>
+  <tr><td><code>training/part_a_tunneling_shap_geometry.py</code></td><td>Test script</td></tr>
+  <tr><td><code>training/v2_artifacts/tunneling_v2_sequential_test.json</code></td><td>Prior Part 4 result (z = 180.1, full xRV — the test this corrects)</td></tr>
+</table>
+</div>
+
+<footer>
+  Tunneling+ v2 Corrected Sequential Test · MLB Dashboard · Created 2026-09-21 ·
+  STATUS: DIAGNOSTIC — geometry signal null; pitch-type sequencing confirmed real
+</footer>
+
+</body>
+</html>

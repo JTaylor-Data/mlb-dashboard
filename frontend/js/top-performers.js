@@ -124,6 +124,10 @@ document.addEventListener("click", (e) => {
 
 (async function init() {
   const meta = await getJSON("/api/meta");
-  dateInput.value = meta.latest_game_date;
+  const today = new Date().toISOString().slice(0, 10);
+  const schedDate = meta.latest_schedule_date;
+  const pitchDate = meta.latest_game_date;
+  // Default to today during postseason; fall back to latest pitch date
+  dateInput.value = (schedDate && schedDate >= today) ? today : (pitchDate || today);
   await loadTopPerformers();
 })();

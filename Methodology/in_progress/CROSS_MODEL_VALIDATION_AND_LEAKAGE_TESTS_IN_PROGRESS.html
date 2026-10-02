@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cross-Model Validation</title>
+<style>
+  :root { --or:#92540e; --orl:#fef3e2; --bd:#d0d5c8; --mu:#5a6450; --gn:#1a5c38; --rd:#b91c2c; --bg:#fff; --fg:#1a1a1a; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --or:#d4823a;--orl:#2d1a05;--bd:#444;--mu:#9aab90;--gn:#5ecb90;--rd:#f87171;--bg:#1a1a1a;--fg:#e8e8e8; }
+  }
+  :root[data-theme="dark"] { --or:#d4823a;--orl:#2d1a05;--bd:#444;--mu:#9aab90;--gn:#5ecb90;--rd:#f87171;--bg:#1a1a1a;--fg:#e8e8e8; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Georgia,serif;font-size:13px;line-height:1.6;background:var(--bg);color:var(--fg);padding:40px 48px;max-width:1100px;margin:0 auto}
+  header{border-bottom:3px solid var(--or);padding-bottom:16px;margin-bottom:28px}
+  .model-name{font-size:26px;font-weight:bold;color:var(--or)}
+  .model-sub{font-family:monospace;font-size:12px;color:var(--mu);margin-top:4px}
+  .badges{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .badge{padding:3px 10px;border-radius:4px;font-family:monospace;font-size:11px;font-weight:bold}
+  .badge-warn{background:#fff3cd;color:#7a5800;border:1px solid #c89a00}
+  h2{font-size:14px;color:var(--or);border-bottom:1px solid var(--bd);padding-bottom:5px;margin:28px 0 12px;text-transform:uppercase;letter-spacing:.04em;font-family:Arial,sans-serif}
+  h3{font-size:13px;font-weight:bold;margin:16px 0 6px;font-family:Arial,sans-serif}
+  p{margin-bottom:10px}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin:10px 0 16px;overflow-x:auto;display:block}
+  th{background:var(--or);color:#fff;text-align:left;padding:6px 8px;font-family:monospace;font-size:11px;white-space:nowrap}
+  td{padding:4px 8px;border-bottom:1px solid var(--bd);vertical-align:top;font-family:monospace;white-space:nowrap}
+  tr:nth-child(even) td{background:var(--orl)}
+  td.good{color:var(--gn);font-weight:bold}
+  td.bad{color:var(--rd);font-weight:bold}
+  code{font-family:monospace;font-size:12px;background:var(--orl);padding:1px 4px;border-radius:3px}
+  .callout{background:var(--orl);border-left:4px solid #c89a00;padding:10px 14px;margin:12px 0;font-size:12px}
+  .section{margin-bottom:28px}
+  footer{margin-top:40px;padding-top:12px;border-top:1px solid var(--bd);font-size:11px;color:var(--mu);font-family:monospace}
+</style>
+</head>
+<body>
+<header>
+  <div class="model-name">Cross-Model Validation &amp; Leakage Tests</div>
+  <div class="model-sub">training/cross_model_validation.py · Generated 2026-09-28 21:07</div>
+  <div class="badges">
+    <span class="badge badge-warn">⚠ IN PROGRESS — not final</span>
+    <span class="badge badge-warn">Live models untouched — R&amp;D only</span>
+  </div>
+</header>
+
+<div class="callout"><strong>Sign convention:</strong>
+r(plus_score, ERA) is <strong>NEGATIVE</strong> for correctly-signed models (higher score = better pitcher = lower ERA).
+Green cells = negative ERA r / positive YoY r. The methodology docs' "+0.208"/"+0.182" ERA r values
+used an inverted convention — values here supersede those.
+</div>
+
+<div class="section">
+<h2>Part 1 — Unified Validation (2021–2025, min 300 pitches)</h2>
+<h3>1.1 Concurrent &amp; Predictive Validity</h3>
+<table>
+  <thead><tr><th>Model</th><th>ERA r [CI]</th><th>xFIP r [CI]</th><th>YoY r [CI]</th><th>Split-half SB [CI]</th><th>n</th></tr></thead>
+  <tbody><tr><td><strong>Stuff+ v3</strong></td><td class="good">-0.333 [-0.365,-0.301]</td><td class="good">-0.409 [-0.439,-0.378]</td><td class="good">+0.938 [+0.933,+0.942]</td><td class="good">+0.995 [+0.994,+0.995]</td><td>2880</td></tr><tr><td><strong>Location+ v2</strong></td><td class="good">-0.182 [-0.217,-0.147]</td><td class="good">-0.279 [-0.312,-0.245]</td><td class="good">+0.589 [+0.560,+0.616]</td><td class="good">+0.801 [+0.789,+0.813]</td><td>2880</td></tr><tr><td><strong>Tunneling+ v2</strong></td><td class="good">-0.218 [-0.253,-0.183]</td><td class="good">-0.339 [-0.371,-0.306]</td><td class="good">+0.643 [+0.617,+0.667]</td><td class="good">+0.887 [+0.879,+0.894]</td><td>2880</td></tr><tr><td><strong>Deception+ v1</strong></td><td class="good">-0.551 [-0.576,-0.525]</td><td class="good">-0.463 [-0.491,-0.434]</td><td class="good">+0.612 [+0.587,+0.637]</td><td class="good">+0.998 [+0.997,+0.998]</td><td>2880</td></tr></tbody>
+</table>
+<h3>1.2 Strict OOS: train 2021–2024, test 2025</h3>
+<table>
+  <thead><tr><th>Model</th><th>ERA r [CI]</th><th>xFIP r</th><th>n</th><th>Note</th></tr></thead>
+  <tbody><tr><td>Stuff+ v3</td><td class="good">-0.376 [-0.432,-0.317]</td><td class="good">-0.524</td><td>863</td><td style='font-size:10px;color:#888'>live model (2025 in training range)</td></tr><tr><td>Location+ v2</td><td class="good">-0.247 [-0.314,-0.177]</td><td class="good">-0.368</td><td>725</td><td style='font-size:10px;color:#888'></td></tr><tr><td>Tunneling+ v2</td><td class="good">-0.196 [-0.262,-0.129]</td><td class="good">-0.291</td><td>806</td><td style='font-size:10px;color:#888'></td></tr><tr><td>Deception+ v1</td><td class="good">-0.292 [-0.352,-0.230]</td><td class="good">-0.434</td><td>873</td><td style='font-size:10px;color:#888'></td></tr></tbody>
+</table>
+</div>
+
+<div class="section">
+<h2>Part 2 — Tunneling+ Location-Leakage Test</h2>
+<p>LOSO 5-fold AUC for 4 classifiers across 6 nested feature sets (2021–2025).<br>
+L = location (7), T = tunneling (28), G = geometry lags (18), S = pt-type seq lags (6), T-G = T minus geometry.</p>
+<h3>2.1 LOSO Mean AUC</h3>
+<table><thead><tr><th>Feature Set</th><th>xswing</th><th>xcs</th><th>xwhiff</th><th>xfoul</th></tr></thead><tbody><tr><td><strong>L</strong></td><td>—</td><td>—</td><td>—</td><td>—</td></tr><tr><td><strong>T</strong></td><td>—</td><td>—</td><td>—</td><td>—</td></tr><tr><td><strong>L+G</strong></td><td>—</td><td>—</td><td>—</td><td>—</td></tr><tr><td><strong>L+S</strong></td><td>—</td><td>—</td><td>—</td><td>—</td></tr><tr><td><strong>L+G+S</strong></td><td>—</td><td>—</td><td>—</td><td>—</td></tr><tr><td><strong>T-G</strong></td><td>—</td><td>—</td><td>—</td><td>—</td></tr></tbody></table>
+<h3>2.2 Geometry → Plate Position R²</h3>
+<p>Ridge regression: 18 geometry lag features → plate_x or plate_z (2024 season).</p>
+<p>plate_x R² = nan ✓ low &nbsp;|&nbsp; plate_z R² = nan ✓ low</p>
+<p>Threshold: &gt;0.05 = non-trivial encoding. Threshold for AUC delta: &gt;0.010.</p>
+</div>
+
+<div class="section">
+<h2>Part 3 — Deception+ Identity-Proxy Ablation</h2>
+<p>V0 = full features, V1 = drop height/weight, V-rand = randomize height/weight (seeds 0/1/2).<br>
+Huber LightGBM LOSO 5-fold on 2021–2025. |ΔCV R²| &gt;0.010 or |ΔYoY r| &gt;0.050 = meaningful memorization.</p>
+<table>
+  <thead><tr><th>Variant</th><th>CV R²</th><th>YoY r</th><th>ERA r</th><th>xFIP r</th></tr></thead>
+  <tbody><tr><td><strong>V0</strong></td><td>-0.00049</td><td class="good">+0.495</td><td class="good">-0.199</td><td class="good">-0.292</td></tr><tr><td><strong>V1</strong></td><td>-0.00054</td><td class="good">+0.423</td><td class="good">-0.198</td><td class="good">-0.291</td></tr><tr><td><strong>V-rand-0</strong></td><td>-0.00056</td><td class="good">+0.485</td><td class="good">-0.204</td><td class="good">-0.307</td></tr><tr><td><strong>V-rand-1</strong></td><td>-0.00058</td><td class="good">+0.538</td><td class="good">-0.201</td><td class="good">-0.311</td></tr><tr><td><strong>V-rand-2</strong></td><td>-0.00054</td><td class="good">+0.460</td><td class="good">-0.207</td><td class="good">-0.309</td></tr></tbody>
+</table>
+</div>
+
+<footer>Cross-Model Validation · 2026-09-28 21:07 · training/cross_model_validation.py · All live models untouched</footer>
+</body></html>

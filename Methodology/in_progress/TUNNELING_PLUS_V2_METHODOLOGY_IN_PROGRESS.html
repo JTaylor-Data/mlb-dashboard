@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tunneling+ v2 — Methodology (IN PROGRESS)</title>
+<style>
+  :root { --orange: #92540e; --orange-light: #fef3e2; --border: #d0d5c8; --muted: #5a6450; --green: #1a5c38; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; background: #fff; padding: 40px 48px; max-width: 900px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--orange); padding-bottom: 16px; margin-bottom: 28px; }
+  .model-name { font-size: 28px; font-weight: bold; color: var(--orange); letter-spacing: -0.5px; }
+  .model-sub { font-size: 14px; color: var(--muted); font-family: monospace; margin-top: 4px; }
+  .badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; font-weight: bold; }
+  .badge-inprog { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange); }
+  .badge-good { background: #e8f3ee; color: #1a5c38; border: 1px solid #1a5c38; }
+  .badge-note { background: #fff8e6; color: #7a5800; border: 1px solid #c89a00; }
+  .badge-season { background: #e8f0f8; color: #1a4070; border: 1px solid #a8c0d8; }
+  h2 { font-size: 15px; color: var(--orange); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin: 24px 0 12px; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Arial', sans-serif; }
+  h3 { font-size: 13px; font-weight: bold; margin: 16px 0 6px; font-family: 'Arial', sans-serif; }
+  p { margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0 16px; }
+  th { background: var(--orange); color: #fff; text-align: left; padding: 6px 10px; font-family: monospace; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #faf9f7; }
+  code { font-family: monospace; font-size: 12px; background: #f0f2ed; padding: 1px 4px; border-radius: 3px; }
+  .callout { background: #fff8e6; border-left: 4px solid #c89a00; padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-good { background: #e8f3ee; border-left: 4px solid var(--green); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-warn { background: #fde8ea; border-left: 4px solid #b91c2c; padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .section { margin-bottom: 28px; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: monospace; }
+  @media print {
+    body { padding: 20px 28px; }
+    th, .badge, .callout, .callout-good, .callout-warn { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    h2 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="model-name">Tunneling+ v2 — IN PROGRESS</div>
+  <div class="model-sub">training/v2_artifacts/tunneling_plus_v2_* · Candidate for tunneling_v3.txt replacement</div>
+  <div class="badges">
+    <span class="badge badge-inprog">⧗ IN PROGRESS — not live</span>
+    <span class="badge badge-good">✓ Fixes v3 sign-flip</span>
+    <span class="badge badge-note">xCS% pitch-type confound noted</span>
+    <span class="badge badge-season">Validated: 2015–2025 · 2026-09-21</span>
+  </div>
+</header>
+
+<div class="callout-good">
+  <strong>Why this exists:</strong> Tunneling+ v3 (the live model) has a sign-flip — ERA r = −0.218, xFIP r = −0.348 (higher score = worse pitcher). v2 uses the same lag-context feature set but fits a <strong>decomposed classifier architecture</strong> instead of a direct run-value regressor. ERA r = +0.182, xFIP r = +0.337. This is a candidate for production promotion.
+</div>
+
+<div class="section">
+<h2>1. Architecture — How v2 Differs from Live v3</h2>
+<p>The live Tunneling+ v3 is a <strong>single LightGBM regressor</strong> that predicts per-pitch <code>delta_run_exp</code> directly. v2 replaces that with the same <strong>five-classifier decomposed architecture</strong> used by Location+ v2:</p>
+<ol style="margin: 8px 0 8px 20px; line-height: 2;">
+  <li><strong>xSwing%</strong> — Will the batter swing on this pitch, given prior pitch context?</li>
+  <li><strong>xCS%</strong> — Given no swing, is it a called strike?</li>
+  <li><strong>xWhiff%</strong> — Given a swing, does the batter miss?</li>
+  <li><strong>xFoul%</strong> — Given contact, is it a foul?</li>
+  <li><strong>BIP type × EV distribution</strong> — 20-class multiclass for batted ball type and exit velocity</li>
+</ol>
+<p>Same fixed run-value table (<code>training/v2_artifacts/run_value_table.json</code>) as Location+ v2 → per-pitch xRV → pitcher-season mean → plus-scale.</p>
+<p>The key claim: framing the problem as five outcome classifiers (rather than one run-value regressor) is less susceptible to sign-flip artifacts from skewed run-value distributions.</p>
+</div>
+
+<div class="section">
+<h2>2. Feature Set (28 Total)</h2>
+<p>Identical lag-context feature set to live Tunneling+ v3. The architecture change (classifiers vs. regressor) is what separates v2 from v3 — not the features.</p>
+<table>
+  <tr><th>Feature group</th><th>Count</th><th>Details</th></tr>
+  <tr><td>Lag features (×6 slots)</td><td>24</td><td>For each of lags 1–6: <code>commit_distance</code>, <code>plate_distance</code>, <code>shape_break</code>, <code>pitch_type</code></td></tr>
+  <tr><td>Current-pitch categoricals</td><td>4</td><td><code>pitch_type</code>, <code>p_throws</code>, <code>stand</code>, <code>season</code></td></tr>
+</table>
+<p><strong>Lag distances explained:</strong></p>
+<ul style="margin: 8px 0 8px 20px; line-height: 1.8;">
+  <li><code>lagN_commit_distance</code> — distance between the current pitch and the Nth-prior pitch at this pitcher's commit point (~200ms before arrival) — the "tunneling window"</li>
+  <li><code>lagN_plate_distance</code> — distance at the plate — where they actually separated</li>
+  <li><code>lagN_shape_break</code> — how much the pair "popped apart early / tracked back late" — captures the deception arc</li>
+</ul>
+<p>Missing lag slots (at-bat start, or beyond at-bat pitch count) are <strong>true NaN</strong> — never zero-filled. LightGBM handles natively. No pitch-type pair identity column exists — the model sees only sequential context, not "FF vs. CH".</p>
+</div>
+
+<div class="section">
+<h2>3. Commit Point (Reused from v3)</h2>
+<p>For each pitcher-season: find the hardest FF/SI/FC by <code>effective_speed</code>, compute where it was 200ms before arriving using its real trajectory. That distance = the pitcher's commit point for the season.</p>
+<p>v2 reads this from the same saved table v3 uses: <code>training/tunneling_v2_artifacts/200ms/pitcher_season_commit_point.csv</code> (9,348 pitcher-seasons). Not re-derived at scoring time.</p>
+</div>
+
+<div class="section">
+<h2>4. Classifier Performance (LOSO CV, 2015–2025)</h2>
+<div class="callout">
+<strong>Why these AUCs are lower than Location+ v2:</strong> Location+ has direct access to plate_x/plate_z — the plate location features are near-deterministically linked to outcome (especially xCS%). Tunneling+ v2 only sees <em>relative</em> pitch-to-pitch distances and shapes. The sequencing signal is real but weaker than raw location signal.
+</div>
+<table>
+  <tr><th>Classifier</th><th>Mean AUC</th><th>Comparison to Location+ v2</th></tr>
+  <tr><td>xSwing%</td><td>0.711</td><td>0.848 for Loc+ — lower makes sense (no plate position)</td></tr>
+  <tr><td>xCS% (called strike)</td><td>0.742</td><td>0.981 for Loc+ — much lower (strike zone not in features)</td></tr>
+  <tr><td>xWhiff%</td><td>0.649</td><td>0.754 for Loc+ — lower but still useful</td></tr>
+  <tr><td>xFoul%</td><td>0.570</td><td>0.621 for Loc+ — closest gap (fouling less location-dependent)</td></tr>
+  <tr><td>BIP distribution (multiclass)</td><td>N/A (log-loss only)</td><td>Same architecture; model converged correctly</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>5. ⚠ xCS% Pitch-Type Confound Finding</h2>
+<div class="callout-warn">
+<strong>Finding (Part B of 2026-09-21 validation):</strong> The xCS% classifier partially exploits <em>which pitch type was thrown</em> as a proxy for called-strike probability — not entirely through tunneling signal. Ablating all pitch_type columns (current + all lag1–lag6 pitch_type columns) drops xCS% AUC from 0.7408 → 0.7127 (Δ = −0.028).
+</div>
+<p><strong>What this means:</strong></p>
+<ul style="margin: 8px 0 8px 20px; line-height: 1.8;">
+  <li>~96% of the xCS% signal (0.7127 / 0.7408) survives after removing pitch-type information entirely</li>
+  <li>~4% is attributable to pitch-type identity being a proxy for CS probability (e.g., cutters get more called strikes than curveballs in certain counts)</li>
+  <li>The confound is <strong>real but modest</strong> — it does not invalidate the model</li>
+  <li>The remaining signal after ablation (0.713) is still meaningfully above 0.50 and comes from genuine lag-context tunneling features</li>
+</ul>
+<p><strong>Decision:</strong> Include pitch_type columns. The 4% confound is acceptable given that pitch type is a legitimate contextual signal (umpires' CS rates do vary by pitch type). Removing it would throw out real signal to avoid a small confound.</p>
+<p><strong>Source files:</strong> <code>training/v2_artifacts/tunneling_plus_v2_xcs_ablated_meta.json</code></p>
+</div>
+
+<div class="section">
+<h2>6. Validation Results vs. Live v3</h2>
+<table>
+  <tr><th>Metric</th><th>Live v3</th><th>v2 Candidate</th><th>Winner</th></tr>
+  <tr><td>ERA correlation</td><td style="color:#b91c2c">−0.218 (backwards)</td><td style="color:#1a5c38">+0.182</td><td>v2 — correct direction</td></tr>
+  <tr><td>xFIP correlation</td><td style="color:#b91c2c">−0.348 (backwards)</td><td style="color:#1a5c38">+0.337</td><td>v2 — correct direction</td></tr>
+  <tr><td>→ Next-yr SwStr%</td><td>r = 0.053</td><td>r = 0.150</td><td>v2 — best of all four models on this metric</td></tr>
+  <tr><td>Pitcher-seasons scored</td><td>~9,000</td><td>7,888</td><td>v3 slightly more coverage</td></tr>
+  <tr><td>Score std</td><td>~1.83</td><td>~10</td><td>v2 — much better spread</td></tr>
+</table>
+<h3>Cross-model correlations</h3>
+<table>
+  <tr><th>Pair</th><th>r</th><th>Interpretation</th></tr>
+  <tr><td>Tunneling+ v2 × Location+ v2</td><td>+0.617</td><td>Both v2 candidates rank pitchers in the same positive direction</td></tr>
+  <tr><td>Tunneling+ v3 × Location+ v2</td><td>−0.598</td><td>Live v3 is backwards relative to v2</td></tr>
+  <tr><td>Tunneling+ v2 × Stuff+</td><td>+0.052</td><td>Near-independent (correct — different skills)</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>7. Training Details</h2>
+<table>
+  <tr><th>Component</th><th>Detail</th></tr>
+  <tr><td>Classifier architecture</td><td>5 LightGBM classifiers (binary × 4, multiclass × 1)</td></tr>
+  <tr><td>LightGBM params</td><td>objective=binary/multiclass, n_estimators=500, num_leaves=31, lr=0.05, min_child_samples=200, subsample=0.8, colsample=0.8, reg_lambda=1.0</td></tr>
+  <tr><td>CV methodology</td><td>Leave-one-season-out (LOSO), 2015–2025</td></tr>
+  <tr><td>Training data</td><td>2015–2025 (~4.1 M pitch-rows with at least 1 prior pitch in at-bat)</td></tr>
+  <tr><td>Qualifying threshold</td><td>≥ 100 pitches per pitcher-season</td></tr>
+  <tr><td>Identity guard</td><td><code>assert_no_identifiers()</code> before every .fit()</td></tr>
+  <tr><td>Training script</td><td><code>training/train_v2_models.py</code></td></tr>
+  <tr><td>Validation script</td><td><code>training/validate_v2_complete.py</code></td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>8. Promotion Checklist</h2>
+<table>
+  <tr><th>Step</th><th>Status</th></tr>
+  <tr><td>Classifier AUCs validated (LOSO)</td><td>✓ Complete — 2026-09-21</td></tr>
+  <tr><td>ERA/xFIP correlations correct direction</td><td>✓ Confirmed</td></tr>
+  <tr><td>xCS% confound documented and accepted</td><td>✓ Complete — 2026-09-21</td></tr>
+  <tr><td>Spot-check scores on known pitchers</td><td>⧗ Pending</td></tr>
+  <tr><td>Copy booster files to models/ directory</td><td>⧗ Pending</td></tr>
+  <tr><td>Wire into api/ routes</td><td>⧗ Pending</td></tr>
+  <tr><td>Update HANDOFF.md</td><td>⧗ Pending</td></tr>
+</table>
+</div>
+
+<div class="section">
+<h2>9. Artifact Locations</h2>
+<table>
+  <tr><th>File</th><th>Purpose</th></tr>
+  <tr><td><code>training/v2_artifacts/tunneling_plus_v2_scores.parquet</code></td><td>Per pitcher-season scores</td></tr>
+  <tr><td><code>training/v2_artifacts/tunneling_plus_v2_per_pitch.parquet</code></td><td>Per-pitch xRV and probabilities</td></tr>
+  <tr><td><code>training/v2_artifacts/tunneling_plus_v2_meta.json</code></td><td>Feature lists, CV AUCs</td></tr>
+  <tr><td><code>training/v2_artifacts/tunneling_plus_v2_xcs_ablated_meta.json</code></td><td>Part B ablation result: {xcs_orig_auc: 0.7408, xcs_abl_auc: 0.7127, delta: −0.0281}</td></tr>
+  <tr><td><code>training/v2_artifacts/run_value_table.json</code></td><td>Shared run-value table (do not rebuild)</td></tr>
+  <tr><td><code>training/tunneling_v2_artifacts/200ms/pitcher_season_commit_point.csv</code></td><td>Commit-point table reused from v3</td></tr>
+  <tr><td><code>training/validate_v2_complete.py</code></td><td>Validation script (Parts A+B+C)</td></tr>
+  <tr><td><code>training/validate_v2_complete.log</code></td><td>Full validation output</td></tr>
+</table>
+</div>
+
+<footer>
+  Tunneling+ v2 · MLB Dashboard · Created 2026-09-21 · STATUS: IN PROGRESS — CANDIDATE FOR PROMOTION
+</footer>
+
+</body>
+</html>

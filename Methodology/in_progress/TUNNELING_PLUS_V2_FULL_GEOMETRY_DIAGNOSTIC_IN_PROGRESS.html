@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tunneling+ v2 — Full Geometry Diagnostic &amp; Sequencing+ v1</title>
+<style>
+  :root {
+    --orange: #92540e; --orange-light: #fef3e2; --border: #d0d5c8;
+    --muted: #5a6450; --green: #1a5c38; --red: #b91c2c; --blue: #1a4070;
+    --blue-light: #eef3fb; --warn: #c89a00; --warn-light: #fff8e6;
+    --purple: #5b2d82; --purple-light: #f3eef9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; background: #fff; padding: 40px 48px; max-width: 980px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--orange); padding-bottom: 16px; margin-bottom: 28px; }
+  .model-name { font-size: 28px; font-weight: bold; color: var(--orange); letter-spacing: -0.5px; }
+  .model-sub  { font-size: 14px; color: var(--muted); font-family: monospace; margin-top: 4px; }
+  .badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; font-weight: bold; }
+  .badge-live    { background: #e8f3ee; color: var(--green);  border: 1px solid var(--green); }
+  .badge-concern { background: #fde8e8; color: var(--red);    border: 1px solid var(--red); }
+  .badge-diag    { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange); }
+  .badge-season  { background: #e8f0f8; color: var(--blue);   border: 1px solid #a8c0d8; }
+  .badge-candidate { background: var(--purple-light); color: var(--purple); border: 1px solid #b09acc; }
+  .badge-pending { background: #f5f5f5; color: #888; border: 1px solid #ccc; }
+  h2 { font-size: 15px; color: var(--orange); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin: 32px 0 12px; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Arial', sans-serif; }
+  h3 { font-size: 13px; font-weight: bold; margin: 16px 0 6px; font-family: 'Arial', sans-serif; }
+  p { margin-bottom: 10px; }
+  ul, ol { margin: 8px 0 12px 22px; line-height: 1.9; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0 16px; }
+  th { background: var(--orange); color: #fff; text-align: left; padding: 6px 10px; font-family: monospace; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); font-family: monospace; }
+  tr:nth-child(even) td { background: #faf9f7; }
+  .td-text { font-family: Georgia, serif; }
+  code { font-family: monospace; font-size: 12px; background: #f0f2ed; padding: 1px 4px; border-radius: 3px; }
+  .callout      { background: var(--warn-light); border-left: 4px solid var(--warn); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-good { background: #e8f3ee;  border-left: 4px solid var(--green); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-bad  { background: #fde8e8;  border-left: 4px solid var(--red);   padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-info { background: var(--blue-light); border-left: 4px solid var(--blue); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-purple { background: var(--purple-light); border-left: 4px solid var(--purple); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .section { margin-bottom: 32px; }
+  .highlight-row td { background: #fef3e2 !important; font-weight: bold; }
+  .null-row td { background: #fde8e8 !important; }
+  .wrong-row td { background: #fde8e8 !important; font-style: italic; }
+  .real-row td { background: #e8f3ee !important; font-weight: bold; }
+  .pending-row td { background: #f5f5f5 !important; color: #999; }
+  .num-pos { color: var(--green); font-weight: bold; }
+  .num-neg { color: var(--red); }
+  .num-muted { color: var(--muted); }
+  .stat-row { display: flex; gap: 24px; margin: 16px 0; flex-wrap: wrap; }
+  .stat-box { text-align: center; min-width: 110px; }
+  .big-stat { font-size: 28px; font-weight: bold; font-family: monospace; }
+  .big-stat-label { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: monospace; }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin: 12px 0; }
+  .toc { background: #faf9f7; border: 1px solid var(--border); padding: 14px 18px; margin-bottom: 28px; font-size: 12px; border-radius: 4px; }
+  .toc ol { margin: 6px 0 0 18px; }
+  .toc li { margin-bottom: 3px; }
+  .toc a { color: var(--orange); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } .stat-row { gap: 16px; } body { padding: 20px 16px; } }
+  @media print {
+    body { padding: 20px 28px; }
+    th, .badge, .callout, .callout-good, .callout-bad, .callout-info { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="model-name">Tunneling+ v2 — Full Geometry Diagnostic &amp; Sequencing+ v1</div>
+  <div class="model-sub">Part A2: 15-z-score SHAP isolation (5 classifiers) · Part B: sequencing-only model · 2026-09-21</div>
+  <div class="badges">
+    <span class="badge badge-live">✓ v2 LIVE — UNCHANGED</span>
+    <span class="badge badge-concern">⚠ GEOMETRY MIXED</span>
+    <span class="badge badge-candidate">◈ SEQ+ v1 CANDIDATE</span>
+    <span class="badge badge-diag">DIAGNOSTIC ONLY</span>
+    <span class="badge badge-season">Part A2: COMPLETE · Part B: COMPLETE · 2021–2025</span>
+  </div>
+</header>
+
+<div class="toc">
+  <strong>Contents</strong>
+  <ol>
+    <li><a href="#background">Background &amp; methodology</a></li>
+    <li><a href="#part-a2">Part A2: Full 15-z-score geometry isolation table</a></li>
+    <li><a href="#part-b">Part B: Sequencing+ v1 diagnostic model</a></li>
+    <li><a href="#verdict">Verdict &amp; production status</a></li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════ BACKGROUND -->
+<div class="section" id="background">
+<h2>Background &amp; Methodology</h2>
+
+<p>Tunneling+ v2 uses a decomposed 5-classifier architecture: <strong>xSwing%, xCS%, xWhiff%, xFoul%, BIP type×EV</strong>
+→ fixed run-value table → per-pitch expected run value → pitcher-season plus scale.
+Each classifier is trained on the same lag feature set: 6 lag slots × 4 features each
+= 24 total lag features, comprising:</p>
+<ul>
+  <li><strong>18 numeric geometry features</strong>: <code>lagN_{commit_distance, plate_distance, shape_break}</code> for N=1–6</li>
+  <li><strong>6 categorical sequence features</strong>: <code>lagN_pitch_type</code> for N=1–6</li>
+</ul>
+
+<p>This diagnostic tests whether the 18 numeric geometry features carry independent signal
+after controlling for pitch-type information. The prior Part 4 test produced z = 180.1 but
+was near-circular: it bucketed pitches by the model's own full blended xRV output, which
+already incorporates the geometry features being tested.</p>
+
+<h3>Corrected Methodology</h3>
+<p>For each classifier, we compute SHAP values via <code>shap.TreeExplainer</code>
+on a 200K stratified sample (30K for BIP due to 20-class multiclass cost).
+Three SHAP scores are isolated:</p>
+<ul>
+  <li><strong>lag1-geom</strong>: sum of SHAP for <code>lag1_{commit_distance, plate_distance, shape_break}</code> (3 features)</li>
+  <li><strong>alllag-geom</strong>: sum of SHAP for all 18 geometry features (6 lags × 3 metrics)</li>
+  <li><strong>pt-lag</strong>: sum of SHAP for <code>lag1..lag6_pitch_type</code> (6 categorical features)</li>
+</ul>
+<p>Each score is tercile-split; a two-proportion z-test compares the high-tercile
+vs low-tercile real outcome rates. <strong>Positive z = high SHAP → more of the outcome = correct
+direction.</strong> Sign inversion = the model uses the feature in the wrong direction.</p>
+
+<div class="callout-info">
+  The xWhiff% result was established first (Part A). The four remaining classifiers are from Part A2.
+  BIP uses an xRV-weighted sum of SHAP values across 20 classes, tested against real
+  <code>delta_run_exp</code> on BIP events.
+</div>
+</div><!-- /background -->
+
+<!-- ═══════════════════════════════════════════════════════════════ PART A2 -->
+<div class="section" id="part-a2">
+<h2>Part A2: Full 15-Z-Score SHAP Geometry Isolation Table</h2>
+
+<div class="callout-good">
+  <strong>Key finding:</strong> Geometry has real, correctly-oriented signal in xSwing% (z=+74/+153),
+  xCS% (z=+41/+58), and BIP probability (z=+9/+17). It is null in xWhiff% (z≈±1.7) and
+  <em>wrong direction</em> in xFoul% (z≈−22/−45). BIP contact quality (δRE) is near-null (t≈1.4).
+  Geometry predicts pitch-selection decisions; it does not predict contact quality.
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Classifier</th>
+      <th>Outcome</th>
+      <th>lag1-geom z</th>
+      <th>alllag-geom z</th>
+      <th>pt-lag z</th>
+      <th>Assessment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="real-row">
+      <td>xSwing%</td>
+      <td>is_swing</td>
+      <td class="num-pos">+73.969</td>
+      <td class="num-pos">+153.024</td>
+      <td class="num-pos">+28.139</td>
+      <td class="td-text">GEOMETRY REAL — strong correct direction</td>
+    </tr>
+    <tr class="real-row">
+      <td>xCS%</td>
+      <td>is_cs</td>
+      <td class="num-pos">+40.566</td>
+      <td class="num-pos">+58.378</td>
+      <td class="num-pos">+20.694</td>
+      <td class="td-text">GEOMETRY REAL — strong correct direction</td>
+    </tr>
+    <tr class="null-row">
+      <td>xWhiff%</td>
+      <td>is_whiff</td>
+      <td class="num-neg">−1.706</td>
+      <td class="num-pos">+1.635</td>
+      <td class="num-pos">+18.622</td>
+      <td class="td-text">GEOMETRY NULL — pitch-type only</td>
+    </tr>
+    <tr class="wrong-row">
+      <td>xFoul%</td>
+      <td>is_foul</td>
+      <td class="num-neg">−21.760</td>
+      <td class="num-neg">−44.573</td>
+      <td class="num-neg">−2.055</td>
+      <td class="td-text">GEOMETRY WRONG DIRECTION</td>
+    </tr>
+    <tr>
+      <td>BIP type×EV</td>
+      <td>is_bip / δRE</td>
+      <td class="num-pos">+9.361</td>
+      <td class="num-pos">+16.557</td>
+      <td class="num-pos">+4.963</td>
+      <td class="td-text">GEOMETRY WEAK-REAL (BIP prob); δRE null (t≈1.4)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><em>Note: xWhiff% z-scores from Part A (prior run, 200K sample). All others from Part A2.</em></p>
+
+<h3>Interpretation by Classifier</h3>
+
+<div class="two-col">
+<div>
+  <h3>xSwing% — Geometry is Real</h3>
+  <p>Pitches where the model assigns high geometry SHAP are swung at 71.9% of the time
+  vs 33.3% in the low tercile (alllag z = +153.0). This makes physical sense:
+  tunneling geometry — how closely the prior pitch's trajectory matched the current
+  pitch's early path — should influence whether a hitter swings. The model is
+  correctly using geometry to predict swing decisions.</p>
+</div>
+<div>
+  <h3>xCS% — Geometry is Real</h3>
+  <p>Similar story: high-geometry tercile produces 15.9% called-strike rate vs 6.1% low
+  (alllag z = +58.4). Pitches that geometrically resemble a prior strike are more likely
+  to be taken for strikes. Correct direction, strong signal.</p>
+</div>
+</div>
+
+<div class="two-col">
+<div>
+  <h3>xWhiff% — Geometry is Null</h3>
+  <p>The corrected test shows lag-1 geometry z = −1.706 (effectively zero). The prior
+  z = 180.1 was near-circular. xWhiff% is learning pitch-type sequencing patterns,
+  not geometric tunneling. High pt-lag z = +18.6 confirms pitch-type sequences are
+  the actual driver of whiff prediction.</p>
+</div>
+<div>
+  <h3>xFoul% — Wrong Direction</h3>
+  <p>High geometry SHAP predicts <em>fewer</em> fouls (alllag z = −44.6). This is
+  unexpected and suggests the model has learned a spurious inverse relationship.
+  The pt-lag z = −2.1 is also borderline negative, suggesting the entire lag structure
+  may be unhelpful for foul prediction. Fouls may be more contact-quality-driven
+  than sequence-driven.</p>
+</div>
+</div>
+
+<div class="two-col">
+<div>
+  <h3>BIP — Weak Positive (BIP Probability)</h3>
+  <p>BIP probability z-scores are real but moderate: lag1-geom z = +9.4, alllag-geom z = +16.6.
+  The model correctly predicts whether a ball is put in play (high geometry tercile: 21.5%
+  BIP rate vs 16.3% low). However, the run-value-weighted SHAP vs real <code>delta_run_exp</code>
+  t-tests are near-null (t ≈ 1.4–1.6, n=5,870 BIP events) — geometry helps predict IF contact
+  happens, not HOW HARD it's hit. Contact quality appears uncorrelated with pitch geometry.</p>
+</div>
+<div>
+  <h3>Cross-Classifier Pattern</h3>
+  <p>A clear pattern emerges by pitch-selection vs. contact category:</p>
+  <ul>
+    <li><strong>Pitch selection</strong> (swing, take): geometry strongly predicts (z ≈ +40–+153)</li>
+    <li><strong>BIP probability</strong>: geometry weakly predicts (z ≈ +9–+17)</li>
+    <li><strong>Whiff</strong>: geometry null (z ≈ ±1.7)</li>
+    <li><strong>Foul</strong>: geometry inverts (z ≈ −22 to −45)</li>
+  </ul>
+  <p>Tunneling geometry appears to capture "does this pitch confuse the hitter into the wrong
+  decision?" — real for swing/take, irrelevant once bat is committed.</p>
+</div>
+</div>
+
+<div class="callout">
+  <strong>The geometry signal is classifier-specific:</strong> it is real and meaningful for
+  pitch-selection outcomes (swing/take) but null or inverted for contact-quality outcomes
+  (whiff, foul). Geometry weakly predicts BIP probability but not contact quality.
+  This is consistent with a theory where geometric similarity
+  affects <em>whether hitters swing and miss</em> (decision-making) but not
+  <em>what happens when they make contact</em>.
+</div>
+</div><!-- /part-a2 -->
+
+<!-- ═══════════════════════════════════════════════════════════════ PART B -->
+<div class="section" id="part-b">
+<h2>Part B: Sequencing+ v1 Diagnostic Model</h2>
+
+<div class="badges" style="margin-bottom:12px">
+  <span class="badge badge-candidate">◈ CANDIDATE ONLY</span>
+  <span class="badge badge-diag">NOT WIRED TO API</span>
+  <span class="badge badge-live">✓ v2 STAYS LIVE</span>
+  <span class="badge badge-pending">⏳ RESULTS PENDING</span>
+</div>
+
+<p>Sequencing+ v1 tests whether dropping all 18 lag-geometry features and leaning
+fully into pitch-type sequencing and arsenal-composition produces a model that
+holds up vs Tunneling+ v2.</p>
+
+<h3>Feature Set</h3>
+<div class="two-col">
+<div>
+  <strong>Kept from v2:</strong>
+  <ul>
+    <li><code>lag1..lag6_pitch_type</code> (6 categoricals)</li>
+    <li><code>pitch_type, p_throws, stand, season</code></li>
+  </ul>
+  <strong>Dropped (18 numerics):</strong>
+  <ul>
+    <li><code>lagN_commit_distance</code></li>
+    <li><code>lagN_plate_distance</code></li>
+    <li><code>lagN_shape_break</code></li>
+  </ul>
+</div>
+<div>
+  <strong>Added (4 new features):</strong>
+  <ul>
+    <li><code>same_as_lag1</code> — bool: current type = prior type</li>
+    <li><code>pitch_n_in_pa</code> — position in at-bat (1–7+)</li>
+    <li><code>n_distinct_prior_types</code> — unique types seen lag1–6</li>
+    <li><code>arsenal_entropy</code> — Shannon entropy of pitcher-season mix</li>
+  </ul>
+  <strong>Excluded (construct-separation):</strong>
+  <ul>
+    <li>Count (balls/strikes) — kept in Location+</li>
+    <li>Plate location (plate_x/plate_z) — kept in Location+</li>
+  </ul>
+</div>
+</div>
+
+<h3>Validation Results</h3>
+
+<div class="callout-bad">
+  <strong>Sequencing+ v1 fails on two critical metrics:</strong>
+  YoY stability collapses to r=0.030 (essentially random), and predicted xRV correlates
+  <em>negatively</em> with real whiff% (r=−0.138). ERA/xFIP pending, but the model is not
+  a viable v3 candidate in its current form.
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Metric</th>
+      <th>Seq+ v1</th>
+      <th>Tunneling+ v2</th>
+      <th>Assessment</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="null-row">
+      <td>ERA Pearson r</td>
+      <td class="num-muted">−0.049</td>
+      <td class="num-pos">−0.214</td>
+      <td class="td-text">FAIL — near-zero vs v2's real signal</td>
+    </tr>
+    <tr class="null-row">
+      <td>xFIP Pearson r</td>
+      <td class="num-muted">−0.044</td>
+      <td class="num-pos">−0.329</td>
+      <td class="td-text">FAIL — near-zero vs v2's real signal</td>
+    </tr>
+    <tr class="null-row">
+      <td>YoY stability (pooled r)</td>
+      <td class="num-neg">+0.030</td>
+      <td class="num-pos">+0.692</td>
+      <td class="td-text">FAIL — essentially random YoY</td>
+    </tr>
+    <tr class="real-row">
+      <td>Split-half reliability</td>
+      <td class="num-pos">+0.946</td>
+      <td class="num-pos">~0.85–0.91</td>
+      <td class="td-text">PASS — high within-season</td>
+    </tr>
+    <tr class="null-row">
+      <td>xRV vs real whiff%</td>
+      <td class="num-neg">−0.138</td>
+      <td class="td-text">—</td>
+      <td class="td-text">FAIL — wrong direction</td>
+    </tr>
+    <tr class="null-row">
+      <td>xRV vs real swing%</td>
+      <td class="num-neg">−0.014</td>
+      <td class="td-text">—</td>
+      <td class="td-text">FAIL — near-zero</td>
+    </tr>
+    <tr>
+      <td>xSwing% LOSO / full-corpus AUC</td>
+      <td>0.585 / 0.592</td>
+      <td>0.711 / 0.708</td>
+      <td class="td-text">−0.116 to −0.126 vs v2</td>
+    </tr>
+    <tr>
+      <td>xCS% LOSO / full-corpus AUC</td>
+      <td>0.643 / 0.651</td>
+      <td>0.742 / 0.644</td>
+      <td class="td-text">Mixed — LOSO −0.099, full +0.007</td>
+    </tr>
+    <tr>
+      <td>xWhiff% LOSO / full-corpus AUC</td>
+      <td>0.592 / 0.608</td>
+      <td>0.649 / 0.567</td>
+      <td class="td-text">LOSO −0.057; full +0.041</td>
+    </tr>
+    <tr class="real-row">
+      <td>xFoul% LOSO / full-corpus AUC</td>
+      <td>0.582 / 0.591</td>
+      <td>0.570 / 0.499</td>
+      <td class="td-text">+0.012/+0.092 — only consistent gain<br><small>v2 xFoul% = coin-flip on full corpus (geometry inverts)</small></td>
+    </tr>
+  </tbody>
+</table>
+
+<h3>Why the YoY Collapse Happens</h3>
+<p>The sequencing features (<code>same_as_lag1</code>, <code>pitch_n_in_pa</code>,
+<code>n_distinct_prior_types</code>, <code>arsenal_entropy</code>) are all within-game or within-season
+signals. A pitcher who throws a lot of same-pitch repetitions in 2021 may deliberately vary their
+arsenal in 2022. These features don't represent stable pitcher characteristics — they represent
+game-by-game tactical choices. The high within-season split-half (0.946) confirms the model is
+consistent within a season; it's just not measuring anything that predicts next year's outcomes.</p>
+
+<p>The negative xRV-whiff correlation (r=−0.138) compounds this: the model has learned that
+high-entropy arsenals (more pitch variety) predict <em>better</em> outcomes by xRV, but variety
+and whiff rate are apparently inversely related in the real data. The model is measuring
+something real within a season but pointing in the wrong direction for the outcome that matters most.</p>
+
+<h3>What Sequencing+ v1 Tells Us</h3>
+<p>Pitch-type sequencing without geometry is insufficient as a standalone construct. The
+features capture tactical variability (how much pitchers mix pitches) but not outcome-relevant
+quality. The correct conclusion is <strong>not</strong> "geometry is useless" — it's that
+geometry contributes the outcome-relevant signal for swing/take decisions that pure sequencing
+features cannot replicate.</p>
+</div><!-- /part-b -->
+
+<!-- ═══════════════════════════════════════════════════════════════ VERDICT -->
+<div class="section" id="verdict">
+<h2>Current Verdict &amp; Production Status</h2>
+
+<div class="callout-bad">
+  <strong>No production changes this session.</strong>
+  Tunneling+ v2 remains live. Sequencing+ v1 failed the validation battery and is not a v3 candidate.
+  No production changes this session.
+</div>
+
+<p>What these diagnostics establish:</p>
+<ul>
+  <li><strong>Geometry is real for swing/take decisions</strong> (xSwing%, xCS%: z &gt; 40).
+    The model is legitimately learning that pitch trajectory similarity affects whether hitters
+    swing.</li>
+  <li><strong>Geometry is null for whiff prediction</strong> (z ≈ ±1.7). xWhiff% is sequence-driven,
+    not geometry-driven.</li>
+  <li><strong>Geometry inverts for foul prediction</strong> (z ≈ −22 to −45). This may warrant
+    removing geometry from the xFoul% classifier in a future v2.1.</li>
+  <li><strong>BIP result pending.</strong></li>
+</ul>
+
+<p>Sequencing+ v1 fails the battery: YoY r=0.030 vs Tunneling+ v2's ~0.40–0.55, and
+xRV correlates negatively with real whiff% (r=−0.138). It is NOT a viable replacement
+for Tunneling+ v2. The geometry-inversion in xFoul% is a real issue, but the fix is
+targeted (remove geometry from the xFoul% classifier specifically) rather than wholesale
+geometry removal.</p>
+
+<p><strong>Implication for v3 architecture:</strong> Keep geometry for xSwing%, xCS%, and BIP classifiers
+where it carries real signal (+41 to +153 z-scores). Remove geometry from xFoul%
+(z≈−22 to −45, wrong direction). For xWhiff%, geometry is null — but pitch-type
+sequencing IS real (z=18.6), so the current architecture is fine for whiff even without
+the geometry features contributing.</p>
+
+<div class="callout-info">
+  <strong>Stuff+/Deception+ cross-correlation (Part 0b):</strong> r = 0.396 (n=2,868, p=2.6e−108).
+  Moderate correlation — the two models share meaningful but non-redundant information.
+  Neither should be presented as a replacement for the other.
+</div>
+</div><!-- /verdict -->
+
+<footer>
+  Tunneling+ v2 Geometry Diagnostic — Part A2 &amp; Part B · Run: 2026-09-21
+  · Status: DIAGNOSTIC IN PROGRESS · v2 live models unchanged
+  · Contact: josh.scott.tay@gmail.com
+</footer>
+
+</body>
+</html>

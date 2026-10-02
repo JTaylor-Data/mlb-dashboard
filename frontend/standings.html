@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Standings - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=40" />
+  <link rel="stylesheet" href="css/theme.css?v=45" />
 </head>
 <body>
   <div id="nav"></div>
@@ -26,6 +26,11 @@
       </div>
     </div>
 
+    <div class="rs-freeze-banner" id="rs-freeze-banner" style="display:none;">
+      <span class="rs-freeze-banner-icon">&#128197;</span>
+      Regular season complete &mdash; these are the final 2026 standings.
+    </div>
+    <script>(function(){var d=new Date().toISOString().slice(0,10);if(d>='2026-10-01')document.getElementById('rs-freeze-banner').style.display='flex';})();</script>
     <div class="muted" style="font-size:12px; margin-bottom:10px;">
       Best overall record in the league highlighted in gold. Standings computed from full-season game results
       via the site's own data, not a live standings feed - refresh with the "Refresh data" button after re-running
@@ -37,8 +42,11 @@
 
   <script src="js/api.js?v=9"></script>
   <script src="js/gradient.js?v=23"></script>
-  <script src="js/nav.js?v=111"></script>
-  <script src="js/season-select.js?v=9"></script>
+  <script src="js/nav.js?v=113"></script>
+  <script src="js/season-select.js?v=18"></script>
   <script src="js/standings.js?v=11"></script>
 </body>
 </html>
+
+
+

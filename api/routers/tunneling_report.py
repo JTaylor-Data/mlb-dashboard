@@ -24,7 +24,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from api.cache import ttl_cache
 from api.db import get_conn
-from analytics.tunneling_v3_model import _raw_predictions, leaderboard as v3_leaderboard, pitcher_breakdown
+from analytics.tunneling_v2_model import _raw_predictions, leaderboard as v3_leaderboard, pitcher_breakdown
 
 router = APIRouter(prefix="/api/tunneling")
 

@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Player Page - MLB Dashboard</title>
-  <link rel="stylesheet" href="css/theme.css?v=40" />
+  <link rel="stylesheet" href="css/theme.css?v=45" />
   <style>
     /* Back to the grid default (stretch), now that the left column has a
        SECOND child (#last-5-mount) meant to absorb the leftover height -
@@ -132,6 +132,17 @@
        for pitchers and batters now. --- */
     .rt-panel-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
     @media (max-width: 900px) { .rt-panel-grid { grid-template-columns: 1fr; } }
+
+    /* Rolling xwOBA window buttons */
+    .xwoba-win-btn {
+      padding: 4px 10px; font-size: 11px; font-weight: 700;
+      border: 1.5px solid var(--border); border-radius: 4px;
+      background: var(--surface); color: var(--text-muted); cursor: pointer;
+      transition: border-color 0.12s, color 0.12s, background 0.12s;
+      white-space: nowrap; letter-spacing: 0.2px;
+    }
+    .xwoba-win-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+    .xwoba-win-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
   </style>
 </head>
 <body>
@@ -180,6 +191,22 @@
         <div id="left-panel-mount"></div>
         <h2 id="last-5-title" style="margin-top:20px;">Last 5 Outings</h2>
         <div id="last-5-mount"></div>
+        <div id="rolling-xwoba-section" style="display:none;margin-top:20px;">
+          <div class="card" style="padding:14px 18px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <h2 style="margin:0;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.4px;color:var(--text-muted);">Rolling xwOBA</h2>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <!-- Legend -->
+                <div style="display:flex;align-items:center;gap:12px;font-size:10px;font-weight:700;color:var(--text-muted);">
+                  <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:18px;height:2px;background:#c9302c;border-radius:1px;"></span>Player</span>
+                  <span style="display:flex;align-items:center;gap:4px;"><span style="display:inline-block;width:18px;height:0;border-top:2px dashed #7c5c2e;"></span>Lg Avg</span>
+                </div>
+                <div id="rolling-xwoba-toggle" style="display:flex;gap:4px;"></div>
+              </div>
+            </div>
+            <div id="rolling-xwoba-mount" style="display:flex;justify-content:center;"></div>
+          </div>
+        </div>
       </div>
       <div>
         <h2 id="right-panel-title">Movement Plot</h2>
@@ -203,10 +230,13 @@
 
   <script src="js/api.js?v=18"></script>
   <script src="js/gradient.js?v=23"></script>
-  <script src="js/nav.js?v=111"></script>
+  <script src="js/nav.js?v=113"></script>
   <script src="js/player-context.js?v=1"></script>
-  <script src="js/player-search.js?v=20"></script>
-  <script src="js/season-select.js?v=17"></script>
-  <script src="js/player.js?v=39"></script>
+  <script src="js/player-search.js?v=21"></script>
+  <script src="js/season-select.js?v=18"></script>
+  <script src="js/player.js?v=43"></script>
 </body>
 </html>
+
+
+

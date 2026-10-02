@@ -63,6 +63,54 @@ def top_performers(conn, date, n=10):
     return deduped.sort_values("wpa", ascending=False).head(n)
 
 
+def _postseason_participants(conn, date):
+    """Build participant list from schedule_games + MLB API boxscores when
+    no Statcast data exists (postseason games). WPA is 0 for all players;
+    the leaderboard uses box-score stats (HR/H/RBI/IP/K/ER) instead."""
+    from analytics.boxscore import fetch_boxscore
+    rows = conn.execute(
+        "SELECT game_pk FROM schedule_games WHERE game_date = ?", (date,)
+    ).fetchall()
+    if not rows:
+        return pd.DataFrame(columns=["player_id", "game_id", "wpa", "role", "name", "team_id"])
+
+    records = []
+    for (game_pk,) in rows:
+        try:
+            bx = fetch_boxscore(game_pk)
+        except Exception:
+            continue
+        for side in ("home", "away"):
+            team_data = bx.get("teams", {}).get(side, {})
+            team_id = team_data.get("team", {}).get("id")
+            for pid_key, pdata in team_data.get("players", {}).items():
+                pid = pdata.get("person", {}).get("id")
+                name = pdata.get("person", {}).get("fullName", "")
+                if pid is None:
+                    continue
+                bat = pdata.get("stats", {}).get("batting", {})
+                pit = pdata.get("stats", {}).get("pitching", {})
+                ab = bat.get("atBats", 0) or 0
+                ip_str = pit.get("inningsPitched", "0.0") or "0.0"
+                pitched = ip_str not in ("0.0", "0", "0.00", "")
+                if ab > 0:
+                    records.append({"player_id": pid, "game_id": game_pk, "wpa": 0.0,
+                                    "role": "batter", "name": name, "team_id": team_id})
+                if pitched:
+                    records.append({"player_id": pid, "game_id": game_pk, "wpa": 0.0,
+                                    "role": "pitcher", "name": name, "team_id": team_id})
+
+    if not records:
+        return pd.DataFrame(columns=["player_id", "game_id", "wpa", "role", "name", "team_id"])
+
+    df = pd.DataFrame(records).drop_duplicates(subset=["player_id", "game_id", "role"])
+    # One row per player: prefer pitcher over batter for two-way players
+    pitcher_ids = set(df[df["role"] == "pitcher"]["player_id"])
+    mask = (df["role"] == "pitcher") | (~df["player_id"].isin(pitcher_ids))
+    df = df[mask].drop_duplicates(subset=["player_id"])
+    return df.reset_index(drop=True)
+
+
 def all_daily_participants(conn, date):
     """Every (player, role, game) that appeared on this date - the full
     candidate pool for the box-score-weighted leaderboard, which (unlike WPA)
@@ -72,7 +120,8 @@ def all_daily_participants(conn, date):
     appear twice."""
     combined = compute_daily_wpa(conn, date)
     if combined.empty:
-        return combined
+        # No Statcast data - try postseason boxscore fallback
+        return _postseason_participants(conn, date)
     idx = combined.groupby("player_id")["wpa"].idxmax()
     return combined.loc[idx]
 

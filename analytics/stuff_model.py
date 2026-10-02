@@ -123,6 +123,16 @@ _raw_predictions_cache = {}  # season -> (dataframe, computed_at) - see docstrin
 RAW_PREDICTIONS_CACHE_TTL_SECONDS = 600
 
 
+def raw_predictions_if_cached(season):
+    """Return cached raw predictions for a season if available and fresh, else None.
+    Does NOT trigger computation — safe to call without blocking."""
+    import time as _time
+    cached = _raw_predictions_cache.get(season)
+    if cached is not None and (_time.monotonic() - cached[1]) < RAW_PREDICTIONS_CACHE_TTL_SECONDS:
+        return cached[0]
+    return None
+
+
 def _raw_predictions(conn, season):
     """Full-season per-pitch DataFrame: pitcher_id, pitch_type, stand, and
     the model's raw predicted delta_run_exp (`pred`, lower = better pitch
@@ -288,6 +298,15 @@ def compute_stuff_plus(conn, season):
     norm_std = float(raw["pred"].std())
     g["stuff_plus"] = _to_stuff_plus(g["shrunk_mean"], norm_mean, norm_std)
     return g.set_index(["pitcher_id", "pitch_type"])[["n_pitches", "stuff_plus"]]
+
+
+def compute_stuff_plus_if_cached(season):
+    """Like compute_stuff_plus but returns None immediately if raw predictions
+    aren't already in cache — never triggers model scoring. Pass None as conn."""
+    if raw_predictions_if_cached(season) is None:
+        return None
+    # Cache is warm; _raw_predictions won't touch conn, so None is safe.
+    return compute_stuff_plus(None, season)
 
 
 def compute_stuff_plus_by_stand(conn, season):

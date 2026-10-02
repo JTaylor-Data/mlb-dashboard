@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tunneling+ v2 — Sequential Same-At-Bat Test</title>
+<style>
+  :root { --orange: #92540e; --orange-light: #fef3e2; --border: #d0d5c8; --muted: #5a6450; --green: #1a5c38; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Georgia', serif; font-size: 13px; line-height: 1.6; color: #1a1a1a; background: #fff; padding: 40px 48px; max-width: 900px; margin: 0 auto; }
+  header { border-bottom: 3px solid var(--orange); padding-bottom: 16px; margin-bottom: 28px; }
+  .model-name { font-size: 28px; font-weight: bold; color: var(--orange); letter-spacing: -0.5px; }
+  .model-sub { font-size: 14px; color: var(--muted); font-family: monospace; margin-top: 4px; }
+  .badges { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-family: monospace; font-size: 11px; font-weight: bold; }
+  .badge-inprog { background: var(--orange-light); color: var(--orange); border: 1px solid var(--orange); }
+  .badge-live   { background: #e8f3ee; color: var(--green); border: 1px solid var(--green); }
+  .badge-season { background: #e8f0f8; color: #1a4070; border: 1px solid #a8c0d8; }
+  h2 { font-size: 15px; color: var(--orange); border-bottom: 1px solid var(--border); padding-bottom: 5px; margin: 24px 0 12px; text-transform: uppercase; letter-spacing: 0.04em; font-family: 'Arial', sans-serif; }
+  h3 { font-size: 13px; font-weight: bold; margin: 16px 0 6px; font-family: 'Arial', sans-serif; }
+  p { margin-bottom: 10px; }
+  ul { margin: 8px 0 12px 22px; line-height: 1.9; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 10px 0 16px; }
+  th { background: var(--orange); color: #fff; text-align: left; padding: 6px 10px; font-family: monospace; font-size: 11px; }
+  td { padding: 5px 10px; border-bottom: 1px solid var(--border); }
+  tr:nth-child(even) td { background: #faf9f7; }
+  code { font-family: monospace; font-size: 12px; background: #f0f2ed; padding: 1px 4px; border-radius: 3px; }
+  .callout      { background: #fff8e6; border-left: 4px solid #c89a00; padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-good { background: #e8f3ee; border-left: 4px solid var(--green); padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .callout-info { background: #eef3fb; border-left: 4px solid #1a4070; padding: 10px 14px; margin: 12px 0; font-size: 12px; }
+  .big-stat { font-size: 36px; font-weight: bold; color: var(--green); font-family: monospace; }
+  .big-stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .stat-row { display: flex; gap: 40px; margin: 16px 0; }
+  .stat-box { text-align: center; }
+  .section { margin-bottom: 28px; }
+  footer { margin-top: 40px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); font-family: monospace; }
+  @media print {
+    body { padding: 20px 28px; }
+    th, .badge, .callout, .callout-good, .callout-info { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    table { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="model-name">Tunneling+ v2 — Sequential Same-At-Bat Test</div>
+  <div class="model-sub">Part 4 of 2026-09-21 diagnostic session · models/tunneling_plus_v2_*.txt (live)</div>
+  <div class="badges">
+    <span class="badge badge-live">✓ LIVE MODEL</span>
+    <span class="badge badge-inprog">⧗ IN PROGRESS</span>
+    <span class="badge badge-season">Scored: 2021–2025 · 2026-09-21</span>
+  </div>
+</header>
+
+<div class="callout-good">
+  <strong>Result: z = 180.1 — stronger than v3 (z = 135.5). Model is working correctly.</strong><br>
+  The whiff rate in the "good tunneling" tercile (low xRV) is double that of the "bad tunneling" tercile (18.3% vs 9.0%).
+  This confirms the live v2 model correctly ranks pitches by their tunneling contribution to hitter difficulty.
+</div>
+
+<div class="section">
+<h2>Key Numbers</h2>
+<div class="stat-row">
+  <div class="stat-box">
+    <div class="big-stat">180.1</div>
+    <div class="big-stat-label">v2 z-score</div>
+  </div>
+  <div class="stat-box">
+    <div class="big-stat" style="color: var(--muted)">135.5</div>
+    <div class="big-stat-label">v3 z-score (prior live)</div>
+  </div>
+  <div class="stat-box">
+    <div class="big-stat">2.6M</div>
+    <div class="big-stat-label">scored rows</div>
+  </div>
+  <div class="stat-box">
+    <div class="big-stat">18.3%</div>
+    <div class="big-stat-label">good-tercile whiff rate</div>
+  </div>
+  <div class="stat-box">
+    <div class="big-stat">9.0%</div>
+    <div class="big-stat-label">bad-tercile whiff rate</div>
+  </div>
+</div>
+</div>
+
+<div class="section">
+<h2>Methodology</h2>
+<p>This test adapts the v3 validation methodology (from <code>training/validate_tunneling_plus_ext.py</code>) for the live v2 decomposed-classifier boosters.</p>
+
+<h3>Procedure</h3>
+<ol style="margin: 8px 0 12px 22px; line-height: 1.9;">
+  <li>Load all non-1st-pitch-of-PA rows for 2021–2025 using <code>sequential_lag_features()</code></li>
+  <li>Score each pitch with all 5 v2 classifiers → combine via run-value table → per-pitch xRV</li>
+  <li>Bucket by predicted xRV into terciles: <strong>low_xrv</strong> (good tunneling), mid_xrv, <strong>high_xrv</strong> (bad tunneling)</li>
+  <li>Compute real whiff rate per tercile</li>
+  <li>z-test: (low_xrv whiff rate − high_xrv whiff rate) / pooled standard error</li>
+</ol>
+
+<div class="callout">
+<strong>Sign convention:</strong> lower xRV = better for the pitcher (harder pitch to hit). So
+<em>low_xrv tercile = good tunneling = should yield higher whiff rate</em>. The z-score tests
+whether the difference is real: z = 180.1 is overwhelmingly significant (p ≈ 0).
+</div>
+
+<h3>Scope note: 2021–2025 only</h3>
+<p>The commit-point table at <code>training/tunneling_v2_artifacts/200ms/pitcher_season_commit_point.csv</code>
+covers 2021–2025 (4,854 pitcher-seasons). Seasons 2015–2020 were skipped because their pitcher-season
+commit points are absent, so <code>sequential_lag_features()</code> dropped those rows. The 2,635,868
+rows from 2021–2025 are sufficient for a definitive test.</p>
+</div>
+
+<div class="section">
+<h2>Results</h2>
+<table>
+  <tr><th>Tercile</th><th>Label</th><th>Whiff Rate</th><th>n (pitches)</th></tr>
+  <tr><td><strong>low_xrv</strong></td><td>Good tunneling — harder to hit</td><td style="color:#1a5c38"><strong>18.3%</strong></td><td>878,623</td></tr>
+  <tr><td>mid_xrv</td><td>Average tunneling</td><td>13.3%</td><td>878,622</td></tr>
+  <tr><td><strong>high_xrv</strong></td><td>Bad tunneling — easier to hit</td><td style="color:#b91c2c"><strong>9.0%</strong></td><td>878,623</td></tr>
+</table>
+
+<p><strong>xRV distribution</strong>: p10 = −0.0159, p50 = −0.0038, p90 = +0.0144. Range: [−0.063, +0.064].</p>
+
+<h3>Comparison to prior models</h3>
+<table>
+  <tr><th>Model</th><th>z-score</th><th>n (rows)</th><th>Methodology note</th></tr>
+  <tr><td>Tunneling+ v2 (live)</td><td style="color:#1a5c38"><strong>180.1</strong></td><td>2,635,868</td><td>5-classifier decomposed xRV bucketed into terciles</td></tr>
+  <tr><td>Tunneling+ v3 (prior live — sign-flipped)</td><td>135.5</td><td>5,924,132</td><td>Same methodology, full 2015–2025 corpus</td></tr>
+  <tr><td>Tunneling+ v3 (pre-backfill)</td><td>84.7</td><td>3,044,719</td><td>Same methodology, 2021–2025 only</td></tr>
+  <tr><td>Tunneling+ v1/v2 (old)</td><td>~9–10</td><td>—</td><td>Different: pair-level scores bucketed (not directly comparable)</td></tr>
+</table>
+
+<div class="callout-info">
+<strong>Why v2 z > v3 z despite a smaller corpus?</strong> The decomposed-classifier architecture produces
+xRV predictions that are better calibrated to the underlying difficulty-to-hit signal. Each pitch gets a
+probability distribution over 5 outcome events combined with a fixed run-value table — the model explicitly
+decomposes "how hard is this pitch to hit" into its constituent events. The v3 single regressor directly
+predicted delta_run_exp, which may have absorbed some noise into the regression target. The v2 signal is
+cleaner per-pitch.
+</div>
+</div>
+
+<div class="section">
+<h2>Limitations</h2>
+<ul>
+  <li><strong>2021–2025 only</strong>: the commit table doesn't cover 2015–2020, so this test omits 6 seasons of data the model was trained on. Not a concern for validity — just a scope limitation.</li>
+  <li><strong>Not comparable to v1/v2 (old) z-scores</strong>: those used pair-level scores; this uses per-pitch xRV. Different measurement structures.</li>
+  <li><strong>Whiff rate ≠ full outcome quality</strong>: whiff is one of five outcomes in the model. The test checks whether the model's ranking correlates with one outcome; ERA/xFIP correlations (in the v2 validation battery) are the fuller picture.</li>
+</ul>
+</div>
+
+<div class="section">
+<h2>Artifact Locations</h2>
+<table>
+  <tr><th>File</th><th>Purpose</th></tr>
+  <tr><td><code>training/v2_artifacts/tunneling_v2_sequential_test.json</code></td><td>Full test results including tercile whiff rates and z-score</td></tr>
+  <tr><td><code>training/part4_tunneling_v2_sequential_test.py</code></td><td>Test script</td></tr>
+  <tr><td><code>training/tunneling_plus_ext_artifacts/tunneling_v3_validation.json</code></td><td>v3 reference result (z = 135.5)</td></tr>
+</table>
+</div>
+
+<footer>
+  Tunneling+ v2 Sequential Same-At-Bat Test · MLB Dashboard · Created 2026-09-21 · STATUS: COMPLETE — z = 180.1
+</footer>
+
+</body>
+</html>

@@ -51,7 +51,7 @@ def get_playoff_teams(league: str = Query("AL", pattern="^(AL|NL)$"), season: in
     return {"season": season, "league": league, "teams": teams}
 
 
-@ttl_cache()
+@ttl_cache(ttl_seconds=600)  # 10-min TTL: postseason rosters change between rounds
 def _roster(conn, season, team_id):
     standings = _standings(conn, season)
     row = standings[standings["team_id"].astype(int) == int(team_id)]

@@ -71,6 +71,14 @@ def _build_opponent_map(conn, entries):
             f"SELECT game_id, home_team, away_team FROM games WHERE game_id IN ({placeholders})", game_ids
         )
     }
+    # Postseason games live in schedule_games (not the Statcast games table)
+    missing = [gid for gid in game_ids if gid not in games]
+    if missing:
+        mh = ",".join("?" * len(missing))
+        for row in conn.execute(
+            f"SELECT game_pk, home_team_id, away_team_id FROM schedule_games WHERE game_pk IN ({mh})", missing
+        ):
+            games[row[0]] = (int(row[1]), int(row[2]))
     all_team_ids = {tid for home, away in games.values() for tid in (home, away)}
     if not all_team_ids:
         return {}

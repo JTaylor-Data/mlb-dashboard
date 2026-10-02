@@ -1,0 +1,8 @@
+# Intentional output changes registered here.
+# Format:
+#   - field: <json path or description>
+#     reason: <why this change is intentional>
+#     commit: <short sha or message>
+#     tolerance: <float or 0>
+
+# (none yet — populated as optimizations are applied)
