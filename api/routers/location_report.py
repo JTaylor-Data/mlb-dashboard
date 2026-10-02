@@ -84,10 +84,14 @@ def get_report(season: int, conn=Depends(get_conn)):
             "training/train_location_v3.py first",
         )
 
-    scoring = json.loads(scoring_path.read_text())
-    gates = json.loads(gate_path.read_text()) if gate_path.exists() else {}
+    # Use utf-8-sig to handle optional BOM from manual file creation
+    scoring = json.loads(scoring_path.read_text(encoding="utf-8-sig"))
+    gates = (
+        json.loads(gate_path.read_text(encoding="utf-8-sig")) if gate_path.exists() else {}
+    )
     validation = (
-        json.loads(validation_path.read_text()) if validation_path.exists() else {}
+        json.loads(validation_path.read_text(encoding="utf-8-sig"))
+        if validation_path.exists() else {}
     )
 
     lb = location_leaderboard(conn, season, min_pitches=MIN_PITCHES_QUALIFY)
