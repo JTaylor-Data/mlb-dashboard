@@ -153,3 +153,22 @@ v4 as a research artifact.
 **Current status**: Promotion proceeded with `stuff_v4_status: "provisional"`. Status badge shows "v4 â€” validation in progress". Do NOT flip to "validated" until this item is reviewed.
 
 **Logged**: 2026-10-02 by automated promotion session (stuff-v4-live branch).
+
+---
+
+## ND-11: Stuff+ page rebuild — stuff-page-remake branch decisions needed (logged 2026-10-02)
+
+**Context**: The stuff-page-remake branch rebuilt stuff-model.html as a template-driven page.
+
+**Items requiring owner decision**:
+
+1. **Status badge text**: Currently "v4 — validation in progress". Will flip to "v4 — validated" only when ND-09 (next-season bar) and ND-10 (seed stability) are resolved and stuff_status is set to "validated" in rontend/content/stuff_page.json.
+
+2. **LOPO YoY not run for v4**: Pitcher-holdout (LOPO) year-over-year stability was not run for v4. Card 2 shows "Not yet run for v4" and references v3's r=0.558. Decision: run the LOPO test against v4 scored data and run 	ools/build_validation_content.py to fill it in.
+
+3. **Identifiability probe not run for v4**: Card 4 shows "Not yet run for v4" (v3 top-1 lift=0.881). Decision: run against v4 scores.
+
+4. **Counterfactual scoring at pitcher-season level**: The counterfactuals (B1/B2/B3 in COMPLETION.md) were computed at pitch level. The spec's inert thresholds apply at pitcher-season level. Decision: rerun at pitcher-season level for correctness, then re-run 	ools/build_validation_content.py.
+
+5. **Merge decision**: stuff-page-remake replaces the Stuff+ page. Do not merge to main until owner has verified the live app and signed off on all "Not yet run" items.
+

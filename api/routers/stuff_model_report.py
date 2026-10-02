@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from analytics.stuff_model import (
     STUFF_ACTIVE_VERSION, _MODEL_FILES,
-    _raw_predictions, compute_stuff_plus, pitcher_shap_breakdown,
+    _raw_predictions, compute_stuff_plus, compute_stuff_plus_if_cached, pitcher_shap_breakdown,
 )
 
 from api.cache import ttl_cache
@@ -228,6 +228,130 @@ def get_predictive_validity():
     if not PREDICTIVE_VALIDITY_PATH.exists():
         raise HTTPException(404, "No predictive-validity report found - run training/stuff_v3_predictive_validity.py first")
     return json.loads(PREDICTIVE_VALIDITY_PATH.read_text())
+
+
+@ttl_cache()
+def _stuff_pitch_types_cached(conn, season):
+    """Qualifying pitch types for a season (>= leaderboard_min_pitches_per_type)."""
+    table = compute_stuff_plus(conn, season)
+    if table.empty:
+        return []
+    g = table.reset_index()
+    counts = g.groupby("pitch_type")["n_pitches"].sum().reset_index()
+    counts = counts[counts["n_pitches"] >= LEADERBOARD_MIN_PITCHES_PER_TYPE]
+    counts = counts.sort_values("n_pitches", ascending=False)
+    return [
+        {"pitch_type": str(r.pitch_type), "n_qualifying_pitchers": int(
+            len(g[(g["pitch_type"] == r.pitch_type) & (g["n_pitches"] >= LEADERBOARD_MIN_PITCHES_PER_TYPE)])
+        ), "total_pitches": int(r.n_pitches)}
+        for r in counts.itertuples()
+    ]
+
+
+@router.get("/pitch-types")
+def get_pitch_types(
+    season: int = Query(default=2026, ge=2016, le=2026),
+    conn=Depends(get_conn),
+):
+    """Pitch types that have qualifying pitchers (>= 100 pitches of that type) in the season."""
+    return {"season": season, "pitch_types": _stuff_pitch_types_cached(conn, season)}
+
+
+@ttl_cache()
+def _stuff_pitcher_career_cached(conn, pitcher_id):
+    """Career seasons for one pitcher: all years with >= 1 pitch, with qualified flag."""
+    seasons = list(range(2016, 2027))
+    rows = []
+    for season in seasons:
+        try:
+            # Use cached-only path first; fall back to full compute only for
+            # seasons already cached from leaderboard/other calls. Computing
+            # all 11 seasons cold is expensive; new seasons load on demand.
+            table = compute_stuff_plus_if_cached(season)
+            if table is None:
+                table = compute_stuff_plus(conn, season)
+            if table.empty:
+                continue
+            g = table.reset_index()
+            sub = g[g["pitcher_id"] == pitcher_id]
+            if sub.empty:
+                continue
+            n_total = int(sub["n_pitches"].sum())
+            stuff_overall = float(np.average(sub["stuff_plus"], weights=sub["n_pitches"]))
+            qualified = n_total >= LEADERBOARD_MIN_PITCHES
+            row = {
+                "season": season,
+                "stuff_plus": round(stuff_overall, 1),
+                "n_pitches": n_total,
+                "qualified": qualified,
+            }
+            if season == 2020:
+                row["season_asterisk"] = True
+                row["season_note"] = "2020 was a 60-game season; not part of training data."
+            rows.append(row)
+        except Exception:
+            continue
+    return rows
+
+
+@router.get("/pitcher/{pitcher_id}/career")
+def get_pitcher_career(pitcher_id: int, conn=Depends(get_conn)):
+    """All scored seasons for one pitcher: overall Stuff+, pitches, qualified flag.
+    Used for the career history table and season selector in the pitcher lookup panel."""
+    career = _stuff_pitcher_career_cached(conn, pitcher_id)
+    if not career:
+        raise HTTPException(404, f"No scored seasons found for pitcher {pitcher_id}")
+    return {"pitcher_id": pitcher_id, "seasons": career}
+
+
+@router.get("/pitcher/{pitcher_id}/summary")
+def get_pitcher_summary(pitcher_id: int, season: int, conn=Depends(get_conn)):
+    """Overall Stuff+ summary for one pitcher/season: score, percentile, qualified status."""
+    table = compute_stuff_plus(conn, season)
+    if table.empty:
+        raise HTTPException(404, f"No data for season {season}")
+    g = table.reset_index()
+    sub = g[g["pitcher_id"] == pitcher_id]
+    if sub.empty:
+        raise HTTPException(404, f"No pitches for pitcher {pitcher_id} in {season}")
+    n_total = int(sub["n_pitches"].sum())
+    stuff_overall = float(np.average(sub["stuff_plus"], weights=sub["n_pitches"]))
+    qualified = n_total >= LEADERBOARD_MIN_PITCHES
+
+    # Percentile among qualified pitchers that season
+    all_pitchers = (
+        g.groupby("pitcher_id")
+         .apply(lambda d: pd.Series({
+             "stuff_plus": float(np.average(d["stuff_plus"], weights=d["n_pitches"])),
+             "n_pitches": int(d["n_pitches"].sum()),
+         }), include_groups=False)
+         .reset_index()
+    )
+    qualified_pool = all_pitchers[all_pitchers["n_pitches"] >= LEADERBOARD_MIN_PITCHES]
+    if len(qualified_pool) > 0 and qualified:
+        pct_rank = float((qualified_pool["stuff_plus"] < stuff_overall).sum()) / len(qualified_pool) * 100
+    else:
+        pct_rank = None
+
+    result = {
+        "pitcher_id": pitcher_id,
+        "season": season,
+        "stuff_plus": round(stuff_overall, 1),
+        "n_pitches": n_total,
+        "qualified": qualified,
+        "min_pitches": LEADERBOARD_MIN_PITCHES,
+        "percentile": round(pct_rank, 1) if pct_rank is not None else None,
+        "n_qualified_in_pool": int(len(qualified_pool)),
+    }
+    if not qualified:
+        result["qualification_note"] = (
+            f"Below minimum ({LEADERBOARD_MIN_PITCHES} pitches required; "
+            f"this pitcher threw {n_total} in {season})."
+        )
+    if season == 2020:
+        result["season_asterisk"] = True
+        result["season_note"] = "2020 was a 60-game season; not part of training data."
+    return result
 
 
 @router.get("/pitcher/{pitcher_id}")

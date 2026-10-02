@@ -1,0 +1,78 @@
+{
+  "_meta": {
+    "description": "Config and prose for the Stuff+ model page. Prose is marked draft. Numbers must come from validation_results.json or live API — never typed here.",
+    "status": "draft"
+  },
+  "title": "Stuff+",
+  "active_version": "v4",
+  "stuff_status": "provisional",
+  "version_badge": "v4 — validation in progress",
+  "version_badge_validated": "v4 — validated",
+  "status_badge_note": "Provisional: next-season xFIP bar not met (r=−0.225 vs threshold −0.30) and seed stability not formally run. See Methodology/STUFF_V4_COMPLETION.md.",
+  "opening_blurb": "Stuff+ grades the physical shape of a pitch. It uses velocity, horizontal and induced vertical break, spin rate, spin axis, how a pitch’s shape separates from the pitcher’s own primary fastball, and — added in v4 — the horizontal approach angle residual, which captures how much the pitch bends toward or away from the batter relative to what its release geometry predicts. One LightGBM model is trained to predict per-pitch run value from those inputs across all pitch types. No plate location, count, or pitcher identity enters the model. Scores are usage-weighted averages of the pitcher’s per-pitch-type grades.",
+  "scale_statement": "100 = league average for that season. 10 points = one standard deviation of the qualified pitcher population (200+ pitches) for that season.",
+  "scale_note_common_mistake": "Stuff+ is not percentage-based. A score of 120 does not mean “20% better than average” — it means 2 standard deviations above the season mean. The same score in two different years means the same relative standing, not the same underlying raw output.",
+  "available_seasons": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+  "default_season": 2026,
+  "season_2020_asterisk": true,
+  "season_2020_note": "2020 was a 60-game season. The model was not trained on 2020 data; treat 2020 scores with extra caution.",
+  "leaderboard_min_pitches": 200,
+  "leaderboard_min_pitches_per_type": 100,
+  "leaderboard_caption": "Minimum 200 pitches to qualify for the overall leaderboard.",
+  "leaderboard_caption_per_type": "Minimum 100 pitches of that type to qualify.",
+  "footnote_kn": "Knuckleball pitchers score below average by construction — limited movement and lower velocity reduce raw predicted run value.",
+  "footnote_excluded": "Pitchouts, eephus pitches, unclassified (FA/AB) and rare codes (CS, FO, SC) are excluded from leaderboard ranking and should be read with caution in pitcher breakdowns.",
+  "under_the_hood_title": "Under the hood: ablation and testing",
+  "card_definitions": [
+    {
+      "id": "card_ablation",
+      "title": "What I tried adding and removing",
+      "summary": "Three ablation variants (drop season, drop effective_speed, drop both) tested against a noise baseline. Horizontal approach angle (haa_residual) tested for leakage before adoption.",
+      "data_key": "stuff_plus_v4.card_ablation"
+    },
+    {
+      "id": "card_repeatability",
+      "title": "Does it repeat?",
+      "summary": "Year-over-year stability at three levels: in-sample (live model), season-holdout CV, and pitcher-holdout (the honest figure). Plus split-half reliability curves.",
+      "data_key": "stuff_plus_v4.card_repeatability"
+    },
+    {
+      "id": "card_predictive",
+      "title": "Does it predict results?",
+      "summary": "Same-season correlations with ERA and xFIP, and next-season prediction. Pre-registered bar: next-season xFIP r ≤ −0.30.",
+      "data_key": "stuff_plus_v4.card_predictive"
+    },
+    {
+      "id": "card_learning",
+      "title": "Is it learning pitches?",
+      "summary": "Forbidden-feature check, leakage probes, seed stability, 2020 sensitivity, and pitch-type calibration.",
+      "data_key": "stuff_plus_v4.card_learning"
+    }
+  ],
+  "version_history": {
+    "status": "draft",
+    "items": [
+      {
+        "version": "v1",
+        "label": "Original",
+        "change": "Single LightGBM regressor on raw velo/movement/spin. Included release_extension, release_pos_x, release_pos_z, arm_angle — later moved to Deception+."
+      },
+      {
+        "version": "v2",
+        "label": "Spin axis + arm angle",
+        "change": "Same architecture. Arm angle added explicitly. Spin axis added. Minor feature changes."
+      },
+      {
+        "version": "v3",
+        "label": "Fastball separation + SSW proxy",
+        "change": "Arm angle, release_extension, release_pos_x_as, release_pos_z removed and made Deception+-exclusive. Added fastball-separation features and axis_differential (seam-shifted-wake proxy). Full ablation in Methodology/STUFF_V3_REPORT.md."
+      },
+      {
+        "version": "v4",
+        "label": "Horizontal approach angle (current)",
+        "change": "Added haa_residual (horizontal approach angle residual). Season and effective_speed retained (ablation underpowered). Trained once 2016–2026 excl. 2020; all 11 seasons scored. v3→v4 pitcher-season correlation r=0.97 (2021–2025, ≥300 pitches). Promoted 2026-10-02.",
+        "is_current": true
+      }
+    ]
+  }
+}

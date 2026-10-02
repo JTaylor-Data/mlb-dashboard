@@ -1,194 +1,250 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stuff+ Model - MLB Dashboard</title>
+  <title>Stuff+ — MLB Dashboard</title>
   <link rel="stylesheet" href="css/theme.css?v=45" />
   <style>
-    .sm-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
-    @media (max-width: 1000px) { .sm-layout { grid-template-columns: 1fr; } }
-    .sm-blurb { font-size: 13.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 14px; }
-    .sm-cv-table td, .sm-cv-table th { text-align: right; }
-    .sm-cv-table td:first-child, .sm-cv-table th:first-child { text-align: left; }
+    /* ── Page-level layout ── */
+    .sp-content  { max-width: 1000px; }
+    .sp-wide     { max-width: 1200px; }
 
-    .sm-imp-row { display: grid; grid-template-columns: 150px 1fr 56px; align-items: center; gap: 10px; margin-bottom: 9px; }
-    .sm-imp-label { font-size: 13px; font-weight: 600; color: var(--text); }
-    .sm-imp-track { position: relative; background: #e9e7df; border-radius: 6px; height: 12px; }
-    .sm-imp-fill { position: absolute; top: 0; left: 0; height: 12px; border-radius: 6px; background: var(--forest); }
-    .sm-imp-val { font-size: 12px; color: var(--text-muted); text-align: right; }
+    /* ── Header band ── */
+    .sp-header   { margin: 20px 0 6px; }
+    .sp-title    { font-size: 24px; font-weight: 800; color: var(--forest-dark); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .sp-badge    { font-size: 11.5px; font-weight: 700; letter-spacing: 0.3px; padding: 3px 9px; border-radius: 12px; background: var(--bark-tint); color: var(--bark-dark); white-space: nowrap; }
+    .sp-badge.validated { background: #d1fae5; color: #065f46; }
+    .sp-blurb    { font-size: 13.5px; color: var(--text-muted); line-height: 1.6; margin: 10px 0 4px; max-width: 860px; }
+    .sp-scale    { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 4px; }
+    .sp-footer   { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
 
-    .sm-pitch-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; background: var(--surface); }
-    .sm-pitch-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
-    .sm-pitch-name { font-size: 15px; font-weight: 800; color: var(--forest-dark); }
-    .sm-pitch-meta { font-size: 12px; color: var(--text-muted); }
-    .sm-pitch-stuff { font-size: 20px; font-weight: 800; }
+    /* ── Scale explainer box ── */
+    .sp-scale-box { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--text); line-height: 1.55; margin: 12px 0 0; max-width: 860px; }
+    .sp-scale-box b { color: var(--forest-dark); }
 
-    .shap-row { display: grid; grid-template-columns: 168px 1fr 60px; align-items: center; gap: 10px; margin-bottom: 7px; }
+    /* ── Season row ── */
+    .sp-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 20px 0 12px; }
+    .sp-controls .control-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 3px; }
+
+    /* ── Two-column leaderboard ── */
+    .sp-lb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 680px) { .sp-lb-grid { grid-template-columns: 1fr; } }
+
+    .sp-lb-row { display: grid; grid-template-columns: 22px 1fr auto 52px; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; border-radius: 4px; }
+    .sp-lb-row:last-child { border-bottom: none; }
+    .sp-lb-row:hover { background: var(--surface-alt); }
+    .sp-lb-rank  { font-size: 12px; color: var(--text-muted); font-weight: 700; text-align: center; }
+    .sp-lb-name  { font-size: 13.5px; font-weight: 600; }
+    .sp-lb-n     { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
+    .sp-lb-val   { font-size: 14px; font-weight: 800; text-align: right; }
+    .sp-lb-caption { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+
+    /* ── Pitcher lookup ── */
+    .sp-lookup-controls { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+    .sp-lookup-status   { font-size: 13px; color: var(--text-muted); min-height: 18px; margin-bottom: 8px; }
+
+    /* Summary row */
+    .sp-summary { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+    .sp-summary-score  { font-size: 42px; font-weight: 800; line-height: 1; }
+    .sp-summary-meta   { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+    .sp-summary-pct    { font-size: 13.5px; font-weight: 700; color: var(--forest); }
+    .sp-unqualified    { font-size: 12.5px; color: var(--bark); font-weight: 600; margin-top: 4px; }
+
+    /* Per-pitch-type table */
+    .sp-pt-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+    .sp-pt-table th { text-align: right; font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; padding: 4px 8px 6px; border-bottom: 2px solid var(--border); }
+    .sp-pt-table th:first-child { text-align: left; }
+    .sp-pt-table td { text-align: right; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .sp-pt-table td:first-child { text-align: left; }
+    .sp-pt-table tr:last-child td { border-bottom: none; }
+    .sp-pt-grade { font-weight: 800; font-size: 14px; }
+
+    /* Pitch type swatch */
+    .sp-pt-swatch { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
+
+    /* Career table */
+    .sp-career-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .sp-career-table th { text-align: right; font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; padding: 4px 8px 6px; border-bottom: 2px solid var(--border); }
+    .sp-career-table th:first-child { text-align: left; }
+    .sp-career-table td { text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--border); }
+    .sp-career-table td:first-child { text-align: left; }
+    .sp-career-table tr:last-child td { border-bottom: none; }
+    .sp-career-table tr.sp-career-current { background: var(--surface-alt); font-weight: 700; }
+    .sp-career-table tr.sp-unqualified-row td { color: var(--text-muted); font-style: italic; }
+
+    /* SHAP contributions */
+    .shap-row  { display: grid; grid-template-columns: 160px 1fr 60px; align-items: center; gap: 8px; margin-bottom: 6px; }
     .shap-label { font-size: 12.5px; color: var(--text); }
-    .shap-track { position: relative; background: #e9e7df; border-radius: 6px; height: 13px; }
-    .shap-zero { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--border); }
-    .shap-bar { position: absolute; top: 0; height: 13px; border-radius: 6px; }
-    .shap-val { font-size: 12px; font-weight: 700; text-align: right; }
+    .shap-track { position: relative; background: #e9e7df; border-radius: 6px; height: 12px; }
+    .shap-zero  { position: absolute; top: -2px; bottom: -2px; width: 1px; background: var(--border); }
+    .shap-bar   { position: absolute; top: 0; height: 12px; border-radius: 6px; }
+    .shap-val   { font-size: 12px; font-weight: 700; text-align: right; }
     .shap-val.pos { color: #1a7f37; }
     .shap-val.neg { color: #c9302c; }
+    .shap-note  { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; font-style: italic; }
 
-    #sm-status { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+    /* Pitch type leaderboard selector row */
+    .sp-pt-lb-controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
 
-    .sm-shrink-row { display: grid; grid-template-columns: 60px 1fr 50px; align-items: center; gap: 10px; margin-bottom: 7px; }
-    .sm-shrink-label { font-size: 12.5px; font-weight: 700; color: var(--text); }
-    .sm-shrink-track { position: relative; background: #e9e7df; border-radius: 6px; height: 11px; }
-    .sm-shrink-fill { position: absolute; top: 0; left: 0; height: 11px; border-radius: 6px; background: var(--bark); }
-    .sm-shrink-val { font-size: 12px; color: var(--text-muted); text-align: right; }
-    .sm-shrink-fallback { font-size: 11.5px; color: var(--text-muted); font-style: italic; }
+    /* ── Under the hood ── */
+    .sp-hood { margin-top: 28px; }
+    .sp-hood-toggle { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; color: var(--forest-dark); cursor: pointer; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
+    .sp-hood-toggle:hover { background: var(--surface-alt); }
+    .sp-hood-toggle[aria-expanded="true"] { background: var(--surface-alt); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+    .sp-hood-toggle:focus-visible { outline: 2px solid var(--forest-light); outline-offset: 2px; }
+    .sp-hood-chevron { transition: transform 0.2s; font-size: 12px; }
+    .sp-hood-toggle[aria-expanded="true"] .sp-hood-chevron { transform: rotate(180deg); }
+    .sp-hood-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 16px; display: none; }
+    .sp-hood-body.open { display: block; }
 
-    .sm-pv-table th, .sm-pv-table td { text-align: right; }
-    .sm-pv-table td:first-child, .sm-pv-table th:first-child { text-align: left; }
-    .sm-pv-table td.best { font-weight: 800; color: var(--forest-dark); }
+    /* Cards grid */
+    .sp-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    @media (max-width: 700px) { .sp-cards { grid-template-columns: 1fr; } }
 
-    .sm-lb-row { display: grid; grid-template-columns: 22px 1fr auto 48px; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--border); }
-    .sm-lb-row:last-child { border-bottom: none; }
-    .sm-lb-rank { font-size: 12px; color: var(--text-muted); font-weight: 700; }
-    .sm-lb-name { font-size: 13.5px; font-weight: 600; color: var(--text); }
-    .sm-lb-n { font-size: 11.5px; white-space: nowrap; }
-    .sm-lb-val { font-size: 14px; font-weight: 800; text-align: right; }
+    .sp-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--surface); }
+    .sp-card-title  { font-size: 14px; font-weight: 700; color: var(--forest-dark); margin-bottom: 4px; }
+    .sp-card-summary { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
+    .sp-card-numbers { font-size: 12.5px; line-height: 1.8; margin-bottom: 10px; }
+    .sp-card-numbers .kv-label { color: var(--text-muted); }
+    .sp-card-numbers .kv-val   { font-weight: 700; color: var(--text); }
+    .sp-card-verdict { font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .sp-card-verdict-note { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
+
+    .verdict-pass    { color: #1a7f37; }
+    .verdict-mixed   { color: #b45309; }
+    .verdict-fail    { color: #c9302c; }
+    .verdict-pending { color: var(--text-muted); }
+
+    /* Card details expander */
+    .sp-details-toggle { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--text-muted); cursor: pointer; margin-top: 8px; }
+    .sp-details-toggle:focus-visible { outline: 2px solid var(--forest-light); outline-offset: 2px; }
+    .sp-details-body  { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: 8px; display: none; }
+    .sp-details-body.open { display: block; }
+
+    /* Version history */
+    .sp-version-list { padding-left: 0; list-style: none; margin: 0; }
+    .sp-version-list li { margin-bottom: 10px; font-size: 13px; line-height: 1.6; color: var(--text); }
+    .sp-version-list li .vv { font-weight: 800; color: var(--forest-dark); }
+    .sp-version-list li .vl { font-weight: 600; color: var(--bark); font-size: 12px; margin-left: 6px; }
+    .sp-version-list li .vc { color: var(--text-muted); }
+
+    /* Asterisk tooltip */
+    .sp-asterisk { cursor: help; color: var(--bark); border-bottom: 1px dotted var(--bark); }
+    .sp-footnotes { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; line-height: 1.6; }
   </style>
 </head>
 <body>
   <div id="nav"></div>
   <div id="subnav"></div>
   <div class="page">
-    <h1>Stuff+ Model</h1>
-    <p class="sm-blurb">
-      One gradient-boosted (LightGBM) model across every pitch type, trained on
-      <code>delta_run_exp</code> (linear-weights run value per pitch, not just batted balls) using only the pitch's
-      own physical characteristics - velo, movement, spin, an approach-angle residual with plate height's effect
-      subtracted out, how a pitch's velo/movement separates from the pitcher's own primary fastball, and an
-      empirically-calibrated seam-shifted-wake proxy (axis differential). No location, count, or pitcher identity is
-      fed in - see the model report below for exactly what is. Full methodology and architecture history:
-      <code>Methodology/STUFF_V3_REPORT.md</code>.
-    </p>
 
-    <div class="plus-explainer">
-      <div class="plus-explainer-icon">&#8505;&#65039;</div>
-      <div>
-        <div class="plus-explainer-title">How to read this number</div>
-        <div class="plus-explainer-body">
-          <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b> from that
-          season's league-wide average - a score of 120 means a pitch graded roughly 2 standard deviations better
-          than average that season, <b>not "20% better."</b> That percentage-style reading is a common mistake
-          (closer to how a stat like wRC+ happens to work, but Stuff+ isn't scaled that way). Scores are also
-          z-scored fresh within each season, so the same score in two different years means the same relative
-          standing, not necessarily the same underlying raw value.
+    <!-- ═══════════════════════════════════════════════════════ HEADER -->
+    <div class="sp-header sp-content">
+      <div class="sp-title">
+        <span id="sp-title-text">Stuff+</span>
+        <span class="sp-badge" id="sp-version-badge">v4 — loading…</span>
+      </div>
+      <p class="sp-blurb" id="sp-opening-blurb"></p>
+      <p class="sp-scale" id="sp-scale-statement"></p>
+      <div class="sp-scale-box" id="sp-scale-box">
+        <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b>.
+        A score of 120 means the pitcher's stuff graded roughly 2 standard deviations above average — not "20% better."
+        Scores are z-scored fresh within each season so the same score in two different years means the same relative standing.
+      </div>
+      <div class="sp-footer" id="sp-meta-footer">Loading model info…</div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ LEADERBOARD -->
+    <div class="card section sp-wide">
+      <div class="sp-controls">
+        <div>
+          <span class="control-label">Season</span>
+          <select id="sp-lb-season"></select>
         </div>
       </div>
+      <div class="sp-lb-grid">
+        <div>
+          <h3 style="margin:0 0 10px;">Top 10 Stuff+</h3>
+          <div id="sp-lb-top"></div>
+          <div class="sp-footnotes" id="sp-lb-footnotes-top"></div>
+        </div>
+        <div>
+          <h3 style="margin:0 0 10px;">Bottom 10 Stuff+</h3>
+          <div id="sp-lb-bottom"></div>
+        </div>
+      </div>
+      <div class="sp-lb-caption" id="sp-lb-caption"></div>
     </div>
 
-    <div class="sm-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Top 10 Stuff+</h3>
-        <div id="sm-lb-top-mount"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Bottom 10 Stuff+</h3>
-        <div id="sm-lb-bottom-mount"></div>
-      </div>
-    </div>
-
-    <div class="sm-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Cross-Validation (leave-one-season-out, 2021-2025)</h3>
-        <table class="data-table sm-cv-table" id="sm-cv-table"></table>
-        <div id="sm-cv-summary" style="margin-top:10px; font-size:13px; color:var(--text-muted);"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Global Feature Importance (mean |SHAP|)</h3>
-        <div id="sm-importance-mount"></div>
-      </div>
-    </div>
-
-    <div class="sm-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Small-Sample Shrinkage</h3>
-        <p class="sm-blurb">
-          A pitcher's raw sample mean gets pulled toward the pitch type's league average when the sample is small -
-          less so for a type where pitch-to-pitch variation is naturally tiny (a small K below), more so where it
-          isn't. Reliability at n pitches = n / (n + K).
-        </p>
-        <div id="sm-shrinkage-mount"></div>
-        <div class="sm-shrink-fallback" id="sm-shrinkage-fallback"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Predictive Validity: v1 vs. v2</h3>
-        <p class="sm-blurb" id="sm-pv-blurb"></p>
-        <div id="sm-pv-mount"></div>
-      </div>
-    </div>
-
-    <div class="card section">
-      <h3 style="margin-top:0;">Inspect a Pitcher</h3>
-      <div class="controls-row">
-        <div style="min-width:320px; flex:1; max-width:420px;">
+    <!-- ═══════════════════════════════════════════════════════ PITCHER LOOKUP -->
+    <div class="card section sp-wide" id="sp-lookup-card">
+      <h3 style="margin:0 0 12px;">Pitcher lookup</h3>
+      <div class="sp-lookup-controls">
+        <div style="min-width:300px; flex:1; max-width:400px;">
           <span class="control-label">Pitcher</span>
           <div class="player-search">
-            <input type="text" class="player-search-input" id="player-search-input" placeholder="Search any pitcher..." autocomplete="off" />
-            <div class="player-search-dropdown" id="player-search-dropdown"></div>
+            <input type="text" class="player-search-input" id="sp-player-input" placeholder="Search any pitcher…" autocomplete="off" />
+            <div class="player-search-dropdown" id="sp-player-dropdown"></div>
           </div>
+        </div>
+        <div id="sp-lookup-season-wrap" style="display:none;">
+          <span class="control-label">Season</span>
+          <select id="sp-lookup-season"></select>
+        </div>
+      </div>
+      <div class="sp-lookup-status" id="sp-lookup-status"></div>
+      <div id="sp-lookup-panel"></div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════ PITCH-TYPE LEADERBOARD -->
+    <div class="card section sp-wide">
+      <h3 style="margin:0 0 10px;">Leaderboard by pitch type</h3>
+      <div class="sp-pt-lb-controls">
+        <div>
+          <span class="control-label">Pitch type</span>
+          <select id="sp-pt-select">
+            <option value="FF">FF — Four-seam</option>
+          </select>
         </div>
         <div>
           <span class="control-label">Season</span>
-          <select id="season-select"></select>
+          <select id="sp-pt-season"></select>
         </div>
       </div>
-      <div id="sm-status"></div>
-      <div id="sm-pitcher-mount" style="margin-top:16px;"></div>
+      <div class="sp-lb-grid">
+        <div>
+          <h3 style="margin:0 0 10px;" id="sp-pt-lb-top-title">Top 10</h3>
+          <div id="sp-pt-lb-top"></div>
+        </div>
+        <div>
+          <h3 style="margin:0 0 10px;" id="sp-pt-lb-bottom-title">Bottom 10</h3>
+          <div id="sp-pt-lb-bottom"></div>
+        </div>
+      </div>
+      <div class="sp-lb-caption" id="sp-pt-caption"></div>
     </div>
 
-    <!-- Validation cards ("guts") -->
-    <h2 style="font-size:17px;font-weight:800;color:var(--forest-dark);margin:32px 0 14px;">What's behind it</h2>
-    <div id="guts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;"></div>
+    <!-- ═══════════════════════════════════════════════════════ UNDER THE HOOD -->
+    <div class="sp-hood section sp-wide">
+      <button class="sp-hood-toggle" id="sp-hood-toggle" aria-expanded="false" aria-controls="sp-hood-body">
+        Under the hood: ablation and testing
+        <span class="sp-hood-chevron" aria-hidden="true">▼</span>
+      </button>
+      <div class="sp-hood-body" id="sp-hood-body">
+        <div class="sp-cards" id="sp-cards-mount"></div>
+        <h3 style="margin:16px 0 8px; font-size:14px;">Version history</h3>
+        <ul class="sp-version-list" id="sp-version-list" style="opacity:0.7;font-style:italic;">Loading…</ul>
+      </div>
+    </div>
 
-    <!-- How it evolved -->
-    <h2 style="font-size:17px;font-weight:800;color:var(--forest-dark);margin:32px 0 14px;">How it evolved</h2>
-    <ol id="evolution-list" style="padding-left:20px;margin:0 0 28px;font-size:13px;line-height:1.7;color:var(--text);"></ol>
-  </div>
+  </div><!-- /.page -->
 
   <script src="js/api.js?v=17"></script>
   <script src="js/nav.js?v=113"></script>
   <script src="js/player-context.js?v=1"></script>
   <script src="js/player-search.js?v=21"></script>
   <script src="js/season-select.js?v=18"></script>
-  <script src="js/stuff-model.js?v=21"></script>
-  <script>
-  (async function () {
-    try {
-      const [vr, mp] = await Promise.all([
-        getJSON("content/validation_results.json"),
-        getJSON("content/model_pages.json"),
-      ]);
-      const m = vr["stuff_plus"];
-      if (m) {
-        const cards = [m.card_repeatability, m.card_predictive, m.card_independence, m.card_stress];
-        const VERDICT_COLOR = { "Passes": "#1a7f37", "Mixed": "#b45309", "Fails": "#c9302c" };
-        document.getElementById("guts-grid").innerHTML = cards.map(c => {
-          const col = VERDICT_COLOR[c.verdict] || "var(--text-muted)";
-          return `<div class="card" style="font-size:13px;">
-            <div style="font-weight:700;font-size:14px;color:var(--forest-dark);margin-bottom:6px;">${c.title}</div>
-            <div style="color:var(--text-muted);margin-bottom:8px;line-height:1.55;">${c.what_it_tests}</div>
-            <div style="font-weight:700;color:${col};">${c.verdict}</div>
-            <div style="color:var(--text-muted);font-size:12px;margin-top:4px;line-height:1.5;">${c.verdict_note}</div>
-          </div>`;
-        }).join("");
-      }
-      const ev = mp["stuff_plus"] && mp["stuff_plus"].evolution;
-      if (ev && ev.items) {
-        document.getElementById("evolution-list").innerHTML = ev.items.map(i => `<li style="margin-bottom:8px;">${i}</li>`).join("");
-      }
-    } catch(e) { console.error("guts load error:", e); }
-  })();
-  </script>
+  <script src="js/stuff-model.js?v=30"></script>
 </body>
 </html>
-
-
-
