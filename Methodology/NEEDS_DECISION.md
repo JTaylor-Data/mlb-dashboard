@@ -172,3 +172,40 @@ v4 as a research artifact.
 
 5. **Merge decision**: stuff-page-remake replaces the Stuff+ page. Do not merge to main until owner has verified the live app and signed off on all "Not yet run" items.
 
+
+## Morning Summary — stuff-page-remake (2026-10-02)
+
+### What was removed
+- Old static Stuff+ page markup that had numbers typed directly into HTML
+- Hardcoded leaderboard entries and any inline commentary
+
+### What was reused
+- All existing CSS (theme.css), design tokens, sp-* component classes
+- Existing /api/stuff-model/meta and /api/stuff-model/leaderboard endpoints
+- player-search.js, season-select.js, nav.js, api.js, player-context.js components
+- diagnostics/stuff_v4/ artifact files as the sole source of numbers
+
+### New files
+- frontend/content/stuff_page.json — prose and config (status: draft)
+- frontend/content/validation_results.json — updated for v4 via tools/build_validation_content.py
+- tools/verify_stuff_page.py — verification script (all checks pass)
+- New API endpoints: /api/stuff-model/pitch-types, /pitcher/{id}/career, /pitcher/{id}/summary
+
+### Numbers showing "Not yet run"
+- card_repeatability.yoy_season_holdout_cv — season-holdout CV not run for v4
+- card_repeatability.yoy_pitcher_holdout_lopo — pitcher-holdout LOPO not run for v4
+- card_learning.seed_stability_status — seed stability check not yet run
+- card_learning.identifiability_lopo — pitcher-holdout identifiability probe not run for v4
+
+### Status badge
+"v4 — validation in progress" (provisional). Reason: next-season xFIP correlation
+r=-0.225 did not reach pre-registered threshold of r<=-0.30 (ND-09). Seed stability
+not formally run (ND-10). Badge will flip to "v4 — validated" when ND-09 and ND-10
+are resolved and stuff_status in stuff_page.json is set to "validated".
+
+### Decisions still needed
+- ND-09: Whether to accept r=-0.225 as sufficient for validated status
+- ND-10: Seed stability (run train_stuff_v4.py with 2 different seeds)
+- ND-11: Owner sign-off before merging stuff-page-remake to main
+
+Branch: stuff-page-remake. Tags: pre-stuff-page-remake, post-stuff-page-remake. NOT merged.
