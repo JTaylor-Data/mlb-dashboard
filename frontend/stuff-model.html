@@ -143,6 +143,14 @@
       <div id="sm-status"></div>
       <div id="sm-pitcher-mount" style="margin-top:16px;"></div>
     </div>
+
+    <!-- Validation cards ("guts") -->
+    <h2 style="font-size:17px;font-weight:800;color:var(--forest-dark);margin:32px 0 14px;">What's behind it</h2>
+    <div id="guts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;"></div>
+
+    <!-- How it evolved -->
+    <h2 style="font-size:17px;font-weight:800;color:var(--forest-dark);margin:32px 0 14px;">How it evolved</h2>
+    <ol id="evolution-list" style="padding-left:20px;margin:0 0 28px;font-size:13px;line-height:1.7;color:var(--text);"></ol>
   </div>
 
   <script src="js/api.js?v=17"></script>
@@ -151,6 +159,34 @@
   <script src="js/player-search.js?v=21"></script>
   <script src="js/season-select.js?v=18"></script>
   <script src="js/stuff-model.js?v=21"></script>
+  <script>
+  (async function () {
+    try {
+      const [vr, mp] = await Promise.all([
+        getJSON("content/validation_results.json"),
+        getJSON("content/model_pages.json"),
+      ]);
+      const m = vr["stuff_plus"];
+      if (m) {
+        const cards = [m.card_repeatability, m.card_predictive, m.card_independence, m.card_stress];
+        const VERDICT_COLOR = { "Passes": "#1a7f37", "Mixed": "#b45309", "Fails": "#c9302c" };
+        document.getElementById("guts-grid").innerHTML = cards.map(c => {
+          const col = VERDICT_COLOR[c.verdict] || "var(--text-muted)";
+          return `<div class="card" style="font-size:13px;">
+            <div style="font-weight:700;font-size:14px;color:var(--forest-dark);margin-bottom:6px;">${c.title}</div>
+            <div style="color:var(--text-muted);margin-bottom:8px;line-height:1.55;">${c.what_it_tests}</div>
+            <div style="font-weight:700;color:${col};">${c.verdict}</div>
+            <div style="color:var(--text-muted);font-size:12px;margin-top:4px;line-height:1.5;">${c.verdict_note}</div>
+          </div>`;
+        }).join("");
+      }
+      const ev = mp["stuff_plus"] && mp["stuff_plus"].evolution;
+      if (ev && ev.items) {
+        document.getElementById("evolution-list").innerHTML = ev.items.map(i => `<li style="margin-bottom:8px;">${i}</li>`).join("");
+      }
+    } catch(e) { console.error("guts load error:", e); }
+  })();
+  </script>
 </body>
 </html>
 

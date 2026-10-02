@@ -1,0 +1,83 @@
+{
+  "_meta": {
+    "description": "Per-model page content: opening blurbs, scale statements, evolution history. All draft. Numbers come from scoring_policy.json and validation_results.json.",
+    "status": "draft"
+  },
+  "stuff_plus": {
+    "status": "draft",
+    "slug": "stuff-model.html",
+    "title": "Stuff+",
+    "badge_code": "STF+",
+    "badge_class": "badge-stuff",
+    "opening_blurb": "Stuff+ grades the physical shape of a pitch: velocity, movement (horizontal and induced vertical break), spin rate, spin axis, and how that shape separates from the pitcher's own primary fastball. It does not know where the pitch was thrown, what the count was, or who threw it. A 100 is league average for that season; 10 points is one standard deviation. The model uses a single LightGBM regressor trained to predict per-pitch delta run expectancy. Separating fastball-relative features (velocity separation, horizontal-break separation, induced-vertical-break separation) was added in v3 to reward pitchers whose secondary pitches play off their fastball rather than standing alone.",
+    "scale_statement": "100 = league average that season. 10 points = 1 standard deviation of the qualified pitcher population.",
+    "available_seasons": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+    "min_pitches_caption": "Leaderboard shows pitchers with 200 or more pitches that season.",
+    "evolution": {
+      "status": "draft",
+      "items": [
+        "v1 (original): single LightGBM regressor on raw velo/movement/spin. Included release_extension, release_pos_x, release_pos_z, arm_angle — shared with what became Deception+.",
+        "v2: same architecture; arm_angle added explicitly as a feature. Spin axis added. Minor feature changes.",
+        "v3 (current): arm_angle, release_extension, release_pos_x_as, release_pos_z removed entirely and moved to Deception+-exclusive. Added fastball-separation features (velo_sep_vs_primary_fb, hb_sep_vs_primary_fb, ivb_sep_vs_primary_fb) and axis_differential (seam-shifted-wake proxy). Full ablation study in Methodology/STUFF_V3_REPORT.md. Trained 2016-2026; 2015 excluded because spin_axis is missing that year."
+      ]
+    }
+  },
+  "location_plus": {
+    "status": "draft",
+    "slug": "location-model.html",
+    "title": "Location+",
+    "badge_code": "LOC+",
+    "badge_class": "badge-loc",
+    "opening_blurb": "Location+ grades where a pitch was thrown relative to the strike zone and the count, independent of what the pitch is. It fills the deliberate gap left by Stuff+ and Tunneling+, which both exclude plate location by design. The model uses five LightGBM classifiers — predicting swing probability, called-strike probability, whiff probability, foul probability, and batted-ball type distribution — combined through a fixed run-value table to produce a per-pitch expected run value. A pitcher who consistently hits favorable counts and locations scores above 100 regardless of what their pitches do in the air.",
+    "scale_statement": "100 = league average among qualified pitchers that season. 10 points = 1 standard deviation. Minimum 100 pitches to receive a score.",
+    "available_seasons": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+    "min_pitches_caption": "Leaderboard and scores require 100 or more pitches that season.",
+    "evolution": {
+      "status": "draft",
+      "items": [
+        "v1 (original): single LightGBM regressor on plate_x, plate_z, count, pitch_type, stand. Developed a sign flip (ERA r = -0.257, xFIP r = -0.507) — higher score was predicting worse pitchers — and by 2024→2025 YoY stability collapsed to r = 0.009.",
+        "v2 (current, promoted 2026-09-21): five-classifier decomposed-event architecture. Each outcome (swing, called strike, whiff, foul, BIP type) is predicted separately and combined via a fixed run-value table. Sign flip resolved (ERA r = +0.208, xFIP r = +0.349). Stability restored (std = 9.99). Trained 2015-2026."
+      ]
+    }
+  },
+  "tunneling_plus": {
+    "status": "draft",
+    "slug": "tunneling-model.html",
+    "title": "Tunneling+",
+    "badge_code": "TUN+",
+    "badge_class": "badge-tunnel",
+    "opening_blurb": "Tunneling+ grades how indistinguishable a pitcher's pitches look from each other at the hitter's commit point. It uses lag-context features over the previous six pitches in a plate appearance — commit-point distance, plate-arrival distance, and shape-break between consecutive pitches — as inputs to a five-classifier model. The model was not designed to capture pitch-type sequencing, but a 2026 diagnostic found that its predictive power comes from pitch-type patterns rather than the geometric distances themselves. This is documented as an unresolved finding. A 3D tunneling viewer was developed; a working prototype exists and is not yet integrated into the site.",
+    "scale_statement": "100 = league average among qualifying pitchers that season. 10 points = 1 standard deviation. Minimum 100 pitches (before lag exclusion) and a qualifying commit point required.",
+    "available_seasons": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+    "min_pitches_caption": "Leaderboard and scores require 100 or more pitches and a qualifying commit point (FF/SI/FC pitch) that season.",
+    "evolution": {
+      "status": "draft",
+      "items": [
+        "v1 (original): pair-level geometry model. For each pitcher-season, computed real pairwise mean distances at release, commit point, and plate for every qualifying pitch-type pair. decision_similarity_plus and plate_separation_plus combined into tunneling_plus per pair, then usage-weighted. Still powers the Tunneling+ 3D viewer.",
+        "v2 (original v2 attempt): single LightGBM regressor on lag-context geometry features. Trained on same architecture. Developed a sign flip (ERA r = -0.218, xFIP r = -0.348).",
+        "v3 (renamed from v2 during development): single LightGBM regressor with corrected lag features. Corrected sequential same-at-bat test: z = 84.7. A 2026 geometry-isolation diagnostic found the geometry SHAP (z = -1.7) adds nothing beyond pitch-type SHAP (z = 18.6).",
+        "Current live model (v2, promoted 2026-09-21): five-classifier decomposed-event architecture applied to the same lag features. Sign flip resolved (ERA r = +0.182, xFIP r = +0.337). Trained 2015-2026. Router still uses /v3/ paths for backward compatibility."
+      ]
+    }
+  },
+  "deception_plus": {
+    "status": "draft",
+    "slug": "deception-model.html",
+    "title": "Deception+",
+    "badge_code": "DEC+",
+    "badge_class": "badge-dec",
+    "opening_blurb": "Deception+ grades a pitcher's body and release mechanics as predictors of outcomes independent of pitch shape. Features include arm angle, extension, release position, season-level variability in those measures, and pitcher height and weight. It does not know pitch velocity, movement, or spin (those are Stuff+'s job). The model covers 2021–2026, limited by arm_angle availability in Statcast data. Year-over-year stability is the weakest of the four models (r² = 0.17–0.34), likely because arm angle and release position are highly correlated (r = 0.79 leaguewide) and the model partially captures pitcher identity rather than delivery mechanics. A computer-vision pipeline using broadcast video is in R&D to recover features not in Statcast.",
+    "scale_statement": "100 = league average that season (2026 only currently scored). 10 points = 1 standard deviation.",
+    "available_seasons": [2021, 2022, 2023, 2024, 2025, 2026],
+    "available_seasons_note": "arm_angle was not available in Statcast before mid-2020. 2026 is the only season currently served (no season selector wired).",
+    "min_pitches_caption": "No explicit pitch-count minimum. Requires arm_angle data and a pitcher bio record (height, weight).",
+    "evolution": {
+      "status": "draft",
+      "items": [
+        "v1 (current): LightGBM regressor on arm_angle, release_extension, release_pos_x_as, release_pos_z, plus season-level std features and height/weight. These four mechanics features were moved from Stuff+ to Deception+-exclusive in Stuff+ v3. LOSO CV on 2021–2025; retrained on 2021–2026 in September 2026.",
+        "v2 / v3 (R&D, not live): exploratory decomposed-event architecture applied to Deception+ features. Diagnostic showed no improvement over v1 in YoY stability or predictive validity.",
+        "v4 (planned, not built): computer-vision pipeline using pose tracking from broadcast video to recover leg-lift timing, delivery length, and ball concealment — the features that probably drive delivery deception but that Statcast does not provide."
+      ]
+    }
+  }
+}

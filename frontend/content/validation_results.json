@@ -1,0 +1,233 @@
+{
+  "stuff_plus": {
+    "model": "Stuff+ v3",
+    "status": "draft",
+    "card_repeatability": {
+      "title": "Does it repeat?",
+      "what_it_tests": "Whether a pitcher's score is stable year-to-year (not just noise).",
+      "yoy_lopo_r": 0.558,
+      "yoy_lopo_r_source": "diagnostics/stuff_memorization/memorization_report.json section_A.yoy_mean_r",
+      "yoy_lopo_r_note": "Leave-one-pitcher-out: model never trained on the scored pitcher's own data",
+      "yoy_lopo_ci_lo": 0.538,
+      "yoy_lopo_ci_hi": 0.587,
+      "yoy_loso_mean_r": 0.831,
+      "yoy_loso_mean_r_source": "diagnostics/stuff_memorization/memorization_report.json section_A.loso_yoy_mean",
+      "yoy_loso_mean_r_note": "Leave-one-season-out: model sees pitcher in other seasons but not target season",
+      "yoy_insample_r": 0.907,
+      "yoy_insample_r_source": "Methodology/HANDOFF.md line 97",
+      "yoy_insample_r_note": "In-sample: live model trained on all seasons including the scored ones",
+      "split_half_note": "Not stored as a named artifact. Docstring in analytics/stuff_model.py line 218 reports r=0.98+ even at n=20 (computed during development).",
+      "verdict": "Passes",
+      "verdict_note": "Physical pitch characteristics repeat reliably. LOPO r=0.558 is the honest out-of-sample figure."
+    },
+    "card_predictive": {
+      "title": "Does it predict results?",
+      "what_it_tests": "Does 2024 Stuff+ v3 predict real 2025 outcomes (strict out-of-sample)?",
+      "score_season": 2024,
+      "outcome_season": 2025,
+      "model_note": "Does each pitcher's 2024 Stuff+ v3 predict their real 2025 results? Scored by a model trained on every season EXCEPT 2024 (honest out-of-sample - the live site's model, unlike this one, is trained on all seasons including this one).",
+      "source": "models/stuff_plus_v3_predictive_validity.json",
+      "correlations_min200": {
+        "xwoba": -0.365,
+        "whiff_pct": 0.42,
+        "swstr_pct": 0.434,
+        "k_minus_bb_pct": 0.356,
+        "chase_pct": 0.26
+      },
+      "n_qualified_min200": 290,
+      "direction_note": "Negative xwoba correlation is correct: lower xwoba (fewer runs allowed) goes with higher Stuff+.",
+      "verdict": "Passes",
+      "verdict_note": "xwoba r=-0.365, whiff% r=0.420, SwStr% r=0.434 at min 200 pitches (out-of-sample)."
+    },
+    "card_independence": {
+      "title": "Is it its own thing?",
+      "what_it_tests": "Correlation with the other three models \u2014 are they measuring different things?",
+      "r_deception": 0.396,
+      "r_deception_source": "Methodology/HANDOFF.md line 211 (training/v2_artifacts/part0b_stuff_deception_correlation.json)",
+      "r_deception_note": "Pearson r across 2868 pitcher-seasons 2021-2025. Moderate \u2014 some shared signal (good pitchers score well on all dimensions) but not redundant.",
+      "r_tunneling_note": "Not yet computed for v2 tunneling vs v3 stuff in a stored artifact.",
+      "r_location_note": "Not yet computed in a stored artifact.",
+      "verdict": "Mixed",
+      "verdict_note": "Deception+ correlation r=0.396 is moderate and expected. Tunneling+ and Location+ cross-correlations not yet stored as artifacts."
+    },
+    "card_stress": {
+      "title": "Stress test",
+      "what_it_tests": "Pitcher-holdout identifiability: can the model's feature vector identify which pitcher it scored?",
+      "top1_lift": 0.881,
+      "top1_lift_source": "diagnostics/stuff_memorization/memorization_report.json section_C.lift_top1",
+      "top1_lift_note": "Lift over naive baseline at 1 pitcher. Below 1x = model cannot identify pitchers above chance. 0.88x here.",
+      "interpretation": "MIXED \u2014 LEAN GENUINE",
+      "interpretation_source": "diagnostics/stuff_memorization/memorization_report.json interpretation.verdict",
+      "lopo_vs_loso_drop": 0.287,
+      "verdict": "Mixed",
+      "verdict_note": "Feature vector is only weakly identifiable (top-1 lift 0.88x). LOPO YoY r drops 0.287 below LOSO, consistent with some memorization but not strong. Weight of evidence: genuine generalization with minor memorization."
+    }
+  },
+  "location_plus": {
+    "model": "Location+ v2",
+    "status": "draft",
+    "card_repeatability": {
+      "title": "Does it repeat?",
+      "what_it_tests": "Whether a pitcher's command score is stable year-to-year.",
+      "yoy_v1_collapse": "YoY r collapsed to 0.009 for 2024\u21922025 in v1 (sign-flip bug). v2 fixes both sign and stability.",
+      "yoy_v1_source": "Methodology/HANDOFF.md line 194-195",
+      "v2_std": 9.99,
+      "v2_std_source": "Methodology/HANDOFF.md line 195",
+      "split_half_note": "Not stored as a named artifact for v2. Run tools/build_validation_content.py again after generating split-half curves.",
+      "verdict": "Not yet run",
+      "verdict_note": "v1 had a stability collapse; v2 fixes it. Full YoY battery for v2 pending more seasons."
+    },
+    "card_predictive": {
+      "title": "Does it predict results?",
+      "what_it_tests": "Does Location+ predict ERA and xFIP in the same or next season?",
+      "era_r_concurrent": 0.208,
+      "era_r_source": "Methodology/HANDOFF.md line 195",
+      "xfip_r_concurrent": 0.349,
+      "xfip_r_source": "Methodology/HANDOFF.md line 195",
+      "direction_note": "Positive correlation with ERA is correct: higher Location+ = better command = lower ERA.",
+      "out_of_sample_note": "Strict 2024\u21922025 out-of-sample test not yet run for Location+ v2. See NEEDS_DECISION.md.",
+      "verdict": "Passes",
+      "verdict_note": "ERA r=0.208, xFIP r=0.349 (concurrent). Direction correct. Out-of-sample not yet stored."
+    },
+    "card_independence": {
+      "title": "Is it its own thing?",
+      "what_it_tests": "Does Location+ measure something distinct from pitch shape and mechanics?",
+      "design_note": "Features are plate_x, plate_z, count \u2014 explicitly no pitch type, no movement, no release point. By construction it cannot re-derive Stuff+ or Deception+.",
+      "location_leakage_test": "Not yet computed. See NEEDS_DECISION.md ND-06.",
+      "verdict": "Passes (by construction)",
+      "verdict_note": "Feature set deliberately excludes all pitch-quality inputs. Cross-model correlation not yet stored as an artifact."
+    },
+    "card_stress": {
+      "title": "Stress test",
+      "what_it_tests": "Classifier AUCs (LOSO CV) per event type.",
+      "classifier_aucs": {
+        "xSwing": 0.848,
+        "xCS": 0.981,
+        "xWhiff": 0.754,
+        "xFoul": 0.621,
+        "source": "Methodology/HANDOFF.md line 191 (LOSO CV from training)"
+      },
+      "pitcher_holdout_note": "Pitcher-holdout test not yet run for Location+ v2.",
+      "verdict": "Not yet run",
+      "verdict_note": "Classifier AUCs show the model learns real event probabilities. Full pitcher-holdout identifiability test pending."
+    }
+  },
+  "tunneling_plus": {
+    "model": "Tunneling+ v2",
+    "status": "draft",
+    "card_repeatability": {
+      "title": "Does it repeat?",
+      "what_it_tests": "Whether pitch-sequence scores are stable year-to-year.",
+      "yoy_r2_range": "0.31-0.53",
+      "yoy_r2_source": "Methodology/HANDOFF.md line 170 (v2 validation)",
+      "split_half_range": "0.85-0.91",
+      "split_half_source": "Methodology/HANDOFF.md line 169",
+      "lower_than_stuff_note": "Lower YoY stability than Stuff+ is expected \u2014 sequencing is partly a strategic choice, not purely a fixed physical trait.",
+      "verdict": "Passes",
+      "verdict_note": "YoY r\u00b2=0.31\u20130.53, split-half reliability 0.85\u20130.91. Stable enough to meaningfully rank pitchers."
+    },
+    "card_predictive": {
+      "title": "Does it predict results?",
+      "what_it_tests": "Does Tunneling+ (old v3 model) predict 2025 outcomes from 2024 scores?",
+      "note": "These figures are from the old v3 single-regressor, not the current live v2. v2 predictive validity not yet stored as a separate artifact.",
+      "score_season": 2024,
+      "outcome_season": 2025,
+      "correlations_min100": {
+        "xwoba": -0.051,
+        "whiff_pct": -0.1,
+        "swstr_pct": -0.026,
+        "k_minus_bb_pct": 0.148,
+        "chase_pct": 0.158
+      },
+      "n_qualified": 302,
+      "era_r_v2_concurrent": 0.182,
+      "era_r_v2_source": "Methodology/HANDOFF.md line 163",
+      "xfip_r_v2_concurrent": 0.337,
+      "xfip_r_v2_source": "Methodology/HANDOFF.md line 163",
+      "direction_note": "Positive ERA correlation is correct: higher Tunneling+ = better = lower ERA.",
+      "verdict": "Mixed",
+      "verdict_note": "v2 ERA r=0.182, xFIP r=0.337 (concurrent, sign-flip fixed). v3 out-of-sample figures small and mixed. Geometry adds little beyond pitch-type sequencing per 2026-09-21 test."
+    },
+    "card_independence": {
+      "title": "Is it its own thing?",
+      "what_it_tests": "Correlation with other models; geometry-leakage test.",
+      "r_stuff": 0.074,
+      "r_deception": 0.154,
+      "r_stuff_source": "training/tunneling_v3_artifacts/tunneling_v3_validation.json (old v3 model)",
+      "geometry_leakage_test": {
+        "lag1_geometry_shap_z": -1.706,
+        "all_lag_geometry_shap_z": 1.635,
+        "pitch_type_lag_shap_z": 18.622,
+        "source": "Methodology/HANDOFF.md lines 229-233",
+        "finding": "Geometry features (commit/plate/shape distances) show no independent predictive signal for real whiff rates. Model power comes from pitch-type sequencing, not geometric measurement."
+      },
+      "verdict": "Mixed",
+      "verdict_note": "Low cross-model correlations (r\u22480.07\u20130.15) confirm genuine distinctness. But the geometry features that motivated the model add no independent signal beyond pitch-type sequencing."
+    },
+    "card_stress": {
+      "title": "Stress test",
+      "what_it_tests": "Sequential same-at-bat test (old v3 model): do predicted-bad pitches actually produce fewer whiffs?",
+      "z_score": 84.68216157895434,
+      "z_score_source": "training/tunneling_v3_artifacts/tunneling_v3_validation.json",
+      "z_score_note": "NOT directly comparable to v1 (z=9.06) or v2 (z=9.3-10.0) at face value - see sequential_same_at_bat_test()'s own docstring for exactly what changed and why.",
+      "corrected_z_geometry": -1.706,
+      "corrected_z_pitch_type": 18.622,
+      "corrected_source": "Methodology/HANDOFF.md line 232",
+      "verdict": "Unresolved",
+      "verdict_note": "The z=84.7 result (old v3 model) was not circular but the corrected test shows geometry features add nothing; sequencing matters but not via the geometry the model was designed around."
+    }
+  },
+  "deception_plus": {
+    "model": "Deception+ v1",
+    "status": "draft",
+    "card_repeatability": {
+      "title": "Does it repeat?",
+      "what_it_tests": "Whether delivery-mechanics scores are stable year-to-year.",
+      "yoy_r2_range": "0.17-0.34",
+      "yoy_r2_source": "Methodology/HANDOFF.md line 123",
+      "split_half_at_100": 0.8460363065850911,
+      "split_half_at_100_source": "models/deception_plus_v1_report_2026.json split_half_reliability['100']",
+      "split_half_n": 546,
+      "verdict": "Mixed",
+      "verdict_note": "Split-half reliability 0.846 (within-season). YoY r\u00b2=0.17\u20130.34 is the weakest of the four models. Likely cause: arm_angle and release_pos_z (r=0.79 leaguewide) partially capture pitcher identity, not deception mechanics."
+    },
+    "card_predictive": {
+      "title": "Does it predict results?",
+      "what_it_tests": "Concurrent correlation between Deception+ 2026 and same-season outcomes.",
+      "whiff_pct_raw_r": 0.3029065607353741,
+      "whiff_pct_partial_r": 0.06680878820861982,
+      "xwoba_raw_r": -0.5359765460334376,
+      "xwoba_partial_r": -0.3573340691083076,
+      "swstr_raw_r": 0.3630028289097513,
+      "swstr_partial_r": 0.14049745651933354,
+      "source": "models/deception_plus_v1_report_2026.json outcome_validity",
+      "n_qualified": 343,
+      "min_pitches": 300,
+      "direction_note": "Negative xwoba correlation is correct. Positive whiff/SwStr/K-BB% correlations are correct.",
+      "out_of_sample_note": "Strict 2024\u21922025 out-of-sample test for Deception+ v2 shows small and inconsistent correlations (xwoba r=-0.057, whiff% r=-0.106 \u2014 note sign flip on whiff vs concurrent). This gap is unresolved.",
+      "out_of_sample_source": "models/deception_plus_v1_report_2025.json (separate file for 2025 season scoring; Methodology/HANDOFF.md notes the model)",
+      "verdict": "Mixed",
+      "verdict_note": "Concurrent correlations real (xwoba r=-0.536 including Stuff+ overlap). After removing Stuff+ overlap: xwoba partial r=-0.357 still meaningful. But out-of-sample figures are small and mixed."
+    },
+    "card_independence": {
+      "title": "Is it its own thing?",
+      "what_it_tests": "Correlation with Stuff+ after mechanics features were moved off Stuff+.",
+      "r_stuff": 0.396,
+      "r_stuff_source": "Methodology/HANDOFF.md line 211",
+      "correlation_with_stuff": 0.4703683249107282,
+      "correlation_with_stuff_source": "models/deception_plus_v1_report_2026.json outcome_validity.correlation_with_overall_stuff",
+      "mechanics_separation_note": "Stuff+ v3 removed release_extension, release_pos_x_as, release_pos_z, arm_angle (confirmed 2026-09-21). These four are now Deception+-exclusive.",
+      "verdict": "Mixed",
+      "verdict_note": "Stuff+ correlation 0.396\u20130.470 is moderate and expected. The four mechanics features are separated. But arm_angle \u00d7 release_pos_z collinearity (r=0.79) means the model may partially proxy pitcher identity or body size."
+    },
+    "card_stress": {
+      "title": "Stress test",
+      "what_it_tests": "Height/weight ablation: does removing body-size features change the score?",
+      "height_weight_ablation_note": "Not yet run as a stored artifact. The current model includes height_in and weight_lb; whether removing them degrades or improves out-of-sample performance is unresolved.",
+      "arm_angle_pos_z_r": 0.79,
+      "arm_angle_pos_z_r_source": "Methodology/HANDOFF.md line 126",
+      "verdict": "Unresolved",
+      "verdict_note": "height/weight ablation not yet run. arm_angle \u00d7 release_pos_z collinearity (r=0.79) unresolved. A computer-vision pipeline is in R&D to replace these proxy features with timing and concealment measures."
+    }
+  }
+}

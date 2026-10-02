@@ -18,7 +18,8 @@ const MODELS_GROUP = [
   { href: "about.html", label: "About" },
   { href: "stuff-model.html", label: "Stuff+" },
   { href: "tunneling-model.html", label: "Tunneling+" },
-  { href: "tunnel3d.html", label: "Tunneling+ 3D" },
+  // Tunneling+ 3D viewer: a working prototype exists but is not yet integrated.
+  // The code lives in tunnel3d.html and api/routers/tunneling_3d.py (untouched).
   { href: "deception-model.html", label: "Deception+" },
   { href: "location-model.html", label: "Location+" },
 ];
