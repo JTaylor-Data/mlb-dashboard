@@ -151,28 +151,40 @@ def _pitcher_scores_live(pitcher_id, season):
     return {"stuff_plus": stuff_plus, "tunneling_plus": tunneling_plus, "location_plus": location_plus}
 
 
+@ttl_cache()
+def _season_pitcher_k_counts(conn, season):
+    """Sorted list of per-pitcher K counts for a season — cached to avoid
+    per-season full-scan N+1 inside the career loop."""
+    rows = conn.execute(
+        "SELECT pitcher_id, COUNT(*) AS v FROM pitches WHERE season = ? "
+        "AND events IN ('strikeout','strikeout_double_play') GROUP BY pitcher_id",
+        (season,),
+    ).fetchall()
+    return sorted((r[1] for r in rows), reverse=True)
+
+
+@ttl_cache()
+def _season_batter_hr_counts(conn, season):
+    """Sorted list of per-batter HR counts for a season — cached."""
+    rows = conn.execute(
+        "SELECT batter_id, COUNT(*) AS v FROM pitches WHERE season = ? "
+        "AND events = 'home_run' GROUP BY batter_id",
+        (season,),
+    ).fetchall()
+    return sorted((r[1] for r in rows), reverse=True)
+
+
 def _top10_rank_pitcher(conn, season, metric_val, metric):
     """Return rank (1-based) of pitcher for a counting stat in the league that season."""
     if metric_val is None:
         return None
     try:
         if metric == "k":
-            events_in = "('strikeout','strikeout_double_play')"
-            r = conn.execute(f"""
-                SELECT COUNT(DISTINCT pitcher_id) + 1 FROM (
-                    SELECT pitcher_id, COUNT(*) as v FROM pitches
-                    WHERE season = ? AND events IN {events_in}
-                    GROUP BY pitcher_id HAVING v > ?
-                )
-            """, (season, int(metric_val))).fetchone()
-        elif metric == "era":
-            # Lower is better for ERA — rank ascending
-            r = None
-        else:
-            return None
-        return int(r[0]) if r else None
+            counts = _season_pitcher_k_counts(conn, season)
+            return sum(1 for c in counts if c > int(metric_val)) + 1
     except Exception:
-        return None
+        pass
+    return None
 
 
 def _top10_rank_batter(conn, season, metric_val, metric):
@@ -180,14 +192,8 @@ def _top10_rank_batter(conn, season, metric_val, metric):
         return None
     try:
         if metric == "hr":
-            r = conn.execute("""
-                SELECT COUNT(DISTINCT batter_id) + 1 FROM (
-                    SELECT batter_id, COUNT(*) as v FROM pitches
-                    WHERE season = ? AND events = 'home_run'
-                    GROUP BY batter_id HAVING v > ?
-                )
-            """, (season, int(metric_val))).fetchone()
-            return int(r[0]) if r else None
+            counts = _season_batter_hr_counts(conn, season)
+            return sum(1 for c in counts if c > int(metric_val)) + 1
     except Exception:
         pass
     return None
