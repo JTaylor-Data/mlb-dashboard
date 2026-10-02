@@ -710,7 +710,8 @@ def batter_rolling_xwoba(conn, season, batter_id, windows=(50, 100, 250)):
         pt = {"pa_index": i + 1, "date": str(dates[i])}
         for w in windows:
             if i + 1 >= w:
-                pt[str(w)] = float(np.mean(xw_vals[i + 1 - w: i + 1]))
+                val = np.nanmean(xw_vals[i + 1 - w: i + 1])
+                pt[str(w)] = None if np.isnan(val) else float(val)
             else:
                 pt[str(w)] = None
         points.append(pt)
