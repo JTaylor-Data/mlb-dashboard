@@ -269,10 +269,13 @@ def main():
             print("No scores available at all. Cannot generate heatmap.")
             return
     else:
-        merged = v4_scores.rename(columns={"stuff_plus_v4": "stuff_plus_v4"})
+        merged = v4_scores.copy()
+        merged["season"] = merged["season"].astype(str)
         if not db_scores.empty:
+            db_m = db_scores.copy()
+            db_m["season"] = db_m["season"].astype(str)
             merged = merged.merge(
-                db_scores[["pitcher_id", "season", "tunneling_plus", "location_plus"]],
+                db_m[["pitcher_id", "season", "tunneling_plus", "location_plus"]],
                 on=["pitcher_id", "season"], how="inner"
             )
 
@@ -333,7 +336,8 @@ def main():
     outcome_names = ["ERA (neg=good)", "xFIP (neg=good)"]
     for mc, mn in zip(present_cols, model_names):
         outcomes_corrs[mn] = {}
-        sub = merged.dropna(subset=[mc]).merge(outcomes, on=["pitcher_id", "season"], how="inner")
+        outcomes_cast = outcomes.copy(); outcomes_cast["season"] = outcomes_cast["season"].astype(str)
+        sub = merged.dropna(subset=[mc]).merge(outcomes_cast, on=["pitcher_id", "season"], how="inner")
         for ocol, oname in [("era", "ERA (neg=good)"), ("xfip", "xFIP (neg=good)")]:
             s2 = sub.dropna(subset=[ocol])
             if len(s2) < 20:
