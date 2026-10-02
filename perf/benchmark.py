@@ -84,13 +84,13 @@ ENDPOINTS = [
     # Model endpoints
     ("stuff_s1_2026",      "GET", f"/api/stuff-model/pitcher/{STARTER_1}?season=2026"),
     ("stuff_s1_2025",      "GET", f"/api/stuff-model/pitcher/{STARTER_1}?season=2025"),
-    ("stuff_leader",       "GET", "/api/stuff-model/leaderboard"),
+    ("stuff_leader",       "GET", "/api/stuff-model/leaderboard?season=2026"),
     ("tunnel_s1",          "GET", f"/api/tunneling/pitcher/{STARTER_1}?season=2026"),
     ("tunnel_v3_s1",       "GET", f"/api/tunneling/v3/pitcher/{STARTER_1}?season=2026"),
     ("deception_s1",       "GET", f"/api/deception/pitcher/{STARTER_1}?season=2026"),
     # League / standings / schedule
     ("standings",          "GET", "/api/standings"),
-    ("top_performers",     "GET", "/api/top-performers"),
+    ("top_performers",     "GET", "/api/top-performers?date=2026-09-28"),
     ("probable_pitchers",  "GET", "/api/probable-pitchers"),
     ("league_avgs",        "GET", "/api/trends/league-averages"),
     # Playoffs
