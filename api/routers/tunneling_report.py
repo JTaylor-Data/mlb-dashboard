@@ -62,6 +62,15 @@ def _v3_raw_predictions_table(conn, season):
     return _raw_predictions(conn, season)
 
 
+@ttl_cache()
+def _v3_pitcher_breakdown_cached(conn, season, pitcher_id):
+    """Per-pitcher Tunneling+ v3 SHAP breakdown — cached."""
+    league = _v3_raw_predictions_table(conn, season)
+    if league.empty:
+        return None
+    return pitcher_breakdown(conn, season, pitcher_id, league)
+
+
 @router.get("/v3/report")
 def get_v3_report(season: int, conn=Depends(get_conn)):
     """Tunneling+ v3: model architecture (28 lag-derived features, CV,
@@ -104,10 +113,7 @@ def get_v3_pitcher_breakdown(pitcher_id: int, season: int, conn=Depends(get_conn
     """One pitcher's Tunneling+ v3 score plus a live SHAP breakdown grouped
     by lag slot - v3's real per-pitch architecture has no pair-level
     concept, so this is a lag-slot table rather than v1's pair table."""
-    league = _v3_raw_predictions_table(conn, season)
-    if league.empty:
-        raise HTTPException(404, f"No Tunneling+ v3 scored pitches for season {season}")
-    breakdown = pitcher_breakdown(conn, season, pitcher_id, league)
+    breakdown = _v3_pitcher_breakdown_cached(conn, season, pitcher_id)
     if not breakdown:
         raise HTTPException(404, f"No Tunneling+ v3 data for pitcher {pitcher_id} in {season} (needs {season}'s own 100+ pitches and a qualifying commit point)")
     return breakdown

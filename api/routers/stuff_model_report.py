@@ -38,6 +38,16 @@ def _raw_predictions_table(conn, season):
     return _raw_predictions(conn, season)
 
 
+@ttl_cache()
+def _pitcher_shap_cached(conn, season, pitcher_id):
+    """Per-pitcher SHAP breakdown — cached so repeated player-page loads
+    don't re-run SHAP scoring each time."""
+    league = _raw_predictions_table(conn, season)
+    if league.empty:
+        return None
+    return pitcher_shap_breakdown(conn, season, pitcher_id, league)
+
+
 @router.get("/report")
 def get_report():
     """The static offline training report: cross-validation metrics per
@@ -123,10 +133,9 @@ def get_pitcher_breakdown(pitcher_id: int, season: int, conn=Depends(get_conn)):
     inputs are driving each of their pitch types' Stuff+ rating, in
     Stuff+-point units so it reads on the same scale as the rest of the
     site."""
-    league = _raw_predictions_table(conn, season)
-    if league.empty:
+    breakdown = _pitcher_shap_cached(conn, season, pitcher_id)
+    if breakdown is None:
         raise HTTPException(404, f"No scored pitches for season {season}")
-    breakdown = pitcher_shap_breakdown(conn, season, pitcher_id, league)
     if not breakdown:
         raise HTTPException(404, f"No pitches found for pitcher {pitcher_id} in {season}")
     return breakdown
