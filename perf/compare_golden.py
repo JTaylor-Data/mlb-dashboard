@@ -152,7 +152,7 @@ def main() -> None:
         else:
             print(f"  {s:12s} {name}")
 
-    print("\n── Summary ────────────────────────────────────────────────")
+    print("\n-- Summary -------------------------------------------------")
     for k, v in summary.items():
         if v:
             print(f"  {k}: {v}")
@@ -171,7 +171,7 @@ def main() -> None:
         print(f"Report: {report_path}")
         sys.exit(1)
     else:
-        print("All responses identical (within tolerance + registered intentional changes). ✓")
+        print("All responses identical (within tolerance + registered intentional changes). OK")
         sys.exit(0)
 
 
