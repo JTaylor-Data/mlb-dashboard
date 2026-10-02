@@ -129,7 +129,7 @@ function worldSeriesHtml(ws) {
   const winnerTeam = winnerId ? (nlTeam && nlTeam.team_id === winnerId ? nlTeam : alTeam) : null;
 
   const nlSlotCol = `
-    <div class="bracket-col-standalone">
+    <div class="bracket-col-standalone bracket-ws-col">
       <div class="bracket-col-label">NL Champion</div>
       <div class="bracket-col-standalone-body">
         ${slotHtml("nl-ws-slot", nlTeam, !!(winnerId && nlTeam && nlTeam.team_id === winnerId), 60)}
@@ -137,7 +137,7 @@ function worldSeriesHtml(ws) {
     </div>
   `;
   const alSlotCol = `
-    <div class="bracket-col-standalone">
+    <div class="bracket-col-standalone bracket-ws-col">
       <div class="bracket-col-label">AL Champion</div>
       <div class="bracket-col-standalone-body">
         ${slotHtml("al-ws-slot", alTeam, !!(winnerId && alTeam && alTeam.team_id === winnerId), 60)}
