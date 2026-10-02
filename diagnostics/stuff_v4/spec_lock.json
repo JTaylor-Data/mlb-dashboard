@@ -70,5 +70,6 @@
   "no_early_stopping": true,
   "no_2026_holdout_retrain": true,
   "no_5fold_full_data_cv": true,
-  "validation_type": "descriptive (in-sample) for final model; out-of-sample evidence only from pitcher-holdout in ablation subsample (Part 2, labeled conservative)"
+  "validation_type": "descriptive (in-sample) for final model; out-of-sample evidence only from pitcher-holdout in ablation subsample (Part 2, labeled conservative)",
+  "spec_lock_commit": "1ea4116ae4544ab359d982bdbbe2d40db6777236"
 }

@@ -104,3 +104,25 @@ averages for a given pitcher-season? This requires a modest code addition but no
 (2026-09-28) notes: "a 3D tunneling viewer was developed and a working prototype exists."
 Part G removes it from navigation links without deleting code. Decision: integrate it as a
 separate tool page later, or archive it permanently?
+
+---
+
+## ND-08: Stuff+ v4 — Promotion approval required
+
+**Found during**: Stuff+ v4 training run (2026-10-02).
+
+**Context**: The complete Stuff+ v4 training has been run on branch `stuff-v4`. All candidate
+artifacts are at `models/stuff_plus_v4_lgbm.*` and `diagnostics/stuff_v4/`. Nothing has been
+wired to the live API, leaderboards, or DB.
+
+**Decision needed**: Review `Methodology/STUFF_V4_REPORT.md` and `PROMOTION_CHECKLIST.md`,
+then decide: promote v4 to production (execute the checklist), or keep v3 as live and archive
+v4 as a research artifact.
+
+**Key decisions within the report**:
+1. Were the feature drops (season and/or effective_speed) adopted per the ablation rules?
+2. Was haa_residual adopted? (requires leakage check pass AND predictive improvement)
+3. Is the v3→v4 correlation at the expected level (>0.97)?
+4. Are the 2020 flagging and qualification threshold scaling satisfactory?
+
+**Logged**: 2026-10-02 by automated training run.

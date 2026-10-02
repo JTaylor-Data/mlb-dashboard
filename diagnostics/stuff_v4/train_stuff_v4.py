@@ -534,26 +534,22 @@ def pitcher_clustered_bootstrap_corr_diff(scores_v, scores_v0, outcomes, pitcher
 
 
 def load_outcomes(seasons=None):
-    """Load pitcher-season ERA, xFIP from DB."""
+    """Load pitcher-season ERA, xFIP from player_advanced_stats."""
     import sqlite3
     conn = sqlite3.connect(DB_PATH)
-    # Try to find outcome data
-    tables = pd.read_sql("SELECT name FROM sqlite_master WHERE type='table'", conn)
-    table_names = set(tables["name"].tolist())
-    log(f"Available tables: {sorted(table_names)}")
-
-    outcomes = None
-    for tbl in ["pitcher_season_stats", "pitcher_stats", "fip_stats", "pitching_stats"]:
-        if tbl in table_names:
-            try:
-                outcomes = pd.read_sql(f"SELECT * FROM {tbl} LIMIT 5", conn)
-                log(f"Found outcomes table: {tbl}, columns: {list(outcomes.columns)}")
-                outcomes = pd.read_sql(f"SELECT * FROM {tbl}", conn)
-                break
-            except Exception as e:
-                log(f"  Error reading {tbl}: {e}")
-
+    query = """
+        SELECT player_id AS pitcher_id, season, xfip, era
+        FROM player_advanced_stats
+        WHERE (xfip IS NOT NULL OR era IS NOT NULL)
+    """
+    if seasons:
+        ph = ",".join("?" * len(seasons))
+        query += f" AND season IN ({ph})"
+        outcomes = pd.read_sql(query, conn, params=seasons)
+    else:
+        outcomes = pd.read_sql(query, conn)
     conn.close()
+    log(f"Loaded {len(outcomes):,} pitcher-season outcomes (xfip available: {outcomes['xfip'].notna().sum():,})")
     return outcomes
 
 
@@ -717,6 +713,9 @@ def part2_ablation(haa_coefs):
         out_sub = out_sub[[c for c in keep if c in out_sub.columns]]
         return scores_df.merge(out_sub, on=merge_on, how="left")
 
+    # Load outcomes
+    outcomes_df = load_outcomes()
+
     # Build merged datasets
     v0a_scores = variant_scores.get("V0a", pd.DataFrame())
     if v0a_scores.empty:
@@ -732,12 +731,46 @@ def part2_ablation(haa_coefs):
 
         # (a) correlation with V0a
         if not v0a_scores.empty and vname != "V0a":
-            merged = vs.merge(v0a_scores[["pitcher_id", "season", "stuff_plus_v4"]].rename(
+            merged_v0a = vs.merge(v0a_scores[["pitcher_id", "season", "stuff_plus_v4"]].rename(
                 columns={"stuff_plus_v4": "v0a_score"}), on=["pitcher_id", "season"], how="inner")
-            r_v0a, _ = safe_pearsonr(merged["stuff_plus_v4"].to_numpy(), merged["v0a_score"].to_numpy())
+            r_v0a, _ = safe_pearsonr(merged_v0a["stuff_plus_v4"].to_numpy(), merged_v0a["v0a_score"].to_numpy())
             result["corr_with_v0a"] = r_v0a
         else:
             result["corr_with_v0a"] = 1.0 if vname == "V0a" else None
+
+        # (b) same-season outcome correlations
+        if outcomes_df is not None and not outcomes_df.empty:
+            merged_out = vs.merge(outcomes_df, on=["pitcher_id", "season"], how="inner")
+            if "xfip" in merged_out.columns and merged_out["xfip"].notna().sum() >= 20:
+                r_xfip, _ = safe_pearsonr(merged_out["stuff_plus_v4"].to_numpy(),
+                                           merged_out["xfip"].fillna(np.nan).to_numpy())
+                result["same_season_xfip_corr"] = r_xfip
+            if "era" in merged_out.columns and merged_out["era"].notna().sum() >= 20:
+                r_era, _ = safe_pearsonr(merged_out["stuff_plus_v4"].to_numpy(),
+                                          merged_out["era"].fillna(np.nan).to_numpy())
+                result["same_season_era_corr"] = r_era
+
+        # (c) next-season correlations (primary metric)
+        if outcomes_df is not None and not outcomes_df.empty:
+            next_season_pairs = []
+            for s1, s2 in zip(TRAINING_SEASONS[:-1], TRAINING_SEASONS[1:]):
+                if s1 == 2020 or s2 == 2020:
+                    continue
+                ps1 = vs[vs["season"] == s1][["pitcher_id", "stuff_plus_v4"]]
+                out_s2 = outcomes_df[outcomes_df["season"] == s2]
+                pair = ps1.merge(out_s2, on="pitcher_id", how="inner")
+                if not pair.empty:
+                    next_season_pairs.append(pair)
+            if next_season_pairs:
+                all_pairs = pd.concat(next_season_pairs, ignore_index=True)
+                if "xfip" in all_pairs.columns and all_pairs["xfip"].notna().sum() >= 20:
+                    r_ns_xfip, _ = safe_pearsonr(all_pairs["stuff_plus_v4"].to_numpy(),
+                                                   all_pairs["xfip"].fillna(np.nan).to_numpy())
+                    result["next_season_xfip_corr"] = r_ns_xfip
+                if "era" in all_pairs.columns and all_pairs["era"].notna().sum() >= 20:
+                    r_ns_era, _ = safe_pearsonr(all_pairs["stuff_plus_v4"].to_numpy(),
+                                                 all_pairs["era"].fillna(np.nan).to_numpy())
+                    result["next_season_era_corr"] = r_ns_era
 
         ablation_table[vname] = result
 
