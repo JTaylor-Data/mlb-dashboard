@@ -461,11 +461,18 @@ def _all_players(conn, season):
 
 
 @router.get("/players/all")
-def list_all_players(season: int = Query(2026), conn=Depends(get_conn)):
+def list_all_players(
+    season: int = Query(2026),
+    q: str = Query(default=""),
+    conn=Depends(get_conn),
+):
     records = _all_players(conn, season).to_dict(orient="records")
     for r in records:
         if "pitcher_role" in r:
             r["pitcher_role"] = _clean(r["pitcher_role"])
+    if q:
+        q_lower = q.lower()
+        records = [r for r in records if q_lower in str(r.get("name", "")).lower()]
     return records
 
 

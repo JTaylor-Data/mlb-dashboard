@@ -1,8 +1,23 @@
-# Intentional output changes registered here.
-# Format:
-#   - field: <json path or description>
-#     reason: <why this change is intentional>
-#     commit: <short sha or message>
-#     tolerance: <float or 0>
+# Intentional output changes registered for compare_golden.py
+# Each entry must have: endpoint, field, reason
+# compare_golden.py skips diffs whose path matches `field` for the endpoint.
 
-# (none yet — populated as optimizations are applied)
+- endpoint: search_kersh
+  field: root
+  reason: >
+    Server-side q filtering added to /api/players/all. search_kersh uses
+    q=kersh; response now contains only matching records instead of all 14K.
+    This is the correct behavior (no functional regression).
+
+- endpoint: search_judg
+  field: root
+  reason: >
+    Same as search_kersh — server-side q filtering. search_judg uses q=judg;
+    returns only matching records.
+
+- endpoint: rolling_xwoba_2026
+  field: root
+  reason: >
+    Baseline recorded a 500 error (NaN serialization bug in batter_rolling_xwoba).
+    After np.nanmean fix, endpoint returns 200 with valid data.
+    The golden snapshot from the baseline was not saved (status 500).
