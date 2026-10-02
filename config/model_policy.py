@@ -38,20 +38,28 @@ STUFF_PLUS = {
 }
 
 LOCATION_PLUS = {
-    # MIN_PITCHES = 100 in analytics/location_v2_model.py:28
-    "min_pitches_scoring": 100,
-    "min_pitches_leaderboard": 100,
+    # v3: raised to 300 (split-half r_SB=0.815 at 300+ pitches per half)
+    # 2020 minimum is 111 (~300 × 0.37 for 60-game season)
+    # Enforced in analytics/location_v3_model.py leaderboard() and pitcher_score()
+    "min_pitches_scoring": 300,
+    "min_pitches_leaderboard": 300,
+    "min_pitches_2020": 111,
     "available_seasons": list(range(2015, 2027)),
     "default_season": 2026,
+    "active_version": "v3",
     "reason": (
-        "Grades where pitches land relative to the zone; 100-pitch minimum "
-        "ensures the average plate position is stable before a score is reported."
+        "Grades where pitches land relative to the zone given count, pitch type, "
+        "and batter handedness. v3 uses a count-specific run-value table (7.8x "
+        "variation in called-strike value across counts). 300-pitch minimum "
+        "for split-half r_SB ≥ 0.81."
     ),
     "notes": (
-        "Threshold enforced in analytics/location_v2_model.py leaderboard() and "
+        "Threshold enforced in analytics/location_v3_model.py leaderboard() and "
         "pitcher_score(). Excludes PO/UN/EP pitch types; maps KC→CU. "
+        "2020 excluded from training; scored by averaging 2019/2021 predictions. "
         "Season categorical capped at 2015–2026 by _cat_levels() query; "
-        "2027 season value coerced to NaN."
+        "2027 season value coerced to NaN. "
+        "Fallback to v2 if models/location_plus_v3_meta.json is missing."
     ),
 }
 
