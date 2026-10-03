@@ -1,0 +1,91 @@
+{
+  "deception_status": "limited_evidence",
+  "label": "limited_evidence",
+  "all_gates_pass": true,
+  "gate_failures": [],
+  "gates": {
+    "a_same_season_negative": {
+      "pass": true,
+      "xfip_r": -0.0883014875043419,
+      "era_r": -0.06286028821149628,
+      "threshold": "both < 0"
+    },
+    "b_yoy_stability": {
+      "pass": true,
+      "pooled_yoy": 0.7019028071399604,
+      "min_consecutive_pair": 0.6711978452092295,
+      "thresholds": {
+        "pooled": 0.3,
+        "min_pair": 0.25
+      }
+    },
+    "c_hygiene": {
+      "pass": true,
+      "features": [
+        "release_pos_x_as",
+        "release_pos_z",
+        "release_extension",
+        "arm_angle",
+        "season"
+      ],
+      "violations": []
+    },
+    "d_repeat_correlation": {
+      "pass": true,
+      "note": "averaged_across_repeats_cannot_verify_from_parquet",
+      "threshold": 0.98
+    },
+    "e_all_seasons_scored": {
+      "pass": true,
+      "intended": [
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "scored": [
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "missing": []
+    },
+    "f_no_per_request_scoring": {
+      "pass": true,
+      "note": "pre-promotion check; will be re-verified after router update",
+      "has_raw_predictions_in_router": false
+    }
+  },
+  "evidence_bar": {
+    "i_next_season_xfip": {
+      "pass": "False",
+      "avg_r": -0.08467307177199031,
+      "per_pair": {
+        "2021->2022": -0.11917167689921004,
+        "2022->2023": -0.06713547738853588,
+        "2023->2024": -0.07998633178533193,
+        "2024->2025": -0.07952063700872469,
+        "2025->2026": -0.07755123577814901
+      },
+      "threshold": -0.2
+    },
+    "ii_incremental_delta_r2": {
+      "pass": true,
+      "avg_delta_r2": 0.0022467699661095964,
+      "all_positive": true,
+      "per_pair": {
+        "2021->2022": 0.004964224409924778,
+        "2022->2023": 0.00042727008688669965,
+        "2023->2024": 0.0018867589295570725,
+        "2024->2025": 0.0023871646595704787,
+        "2025->2026": 0.001568431744608953
+      },
+      "note": "CI approximated: all_positive used as proxy for CI_lower > 0"
+    }
+  }
+}
