@@ -949,10 +949,10 @@ tr.wc-in-spot:first-child td { border-top: none; }
 }
 
 /* --- Playoffs: Bracket page --- */
-/* Drawn directly on the page's own off-white background (--bg) - no card
-   wrapper - per direction. */
-.bracket-title-row { display: flex; align-items: center; gap: 12px; }
-.bracket-title { font-size: 24px; font-weight: 800; color: var(--forest-dark); }
+.bracket-real-badge {
+  font-size: 10.5px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
+  background: var(--forest); color: #fff; border-radius: 5px; padding: 3px 9px;
+}
 .rs-freeze-banner {
   background: var(--bark-tint); border: 1px solid var(--bark-light);
   border-radius: var(--radius); padding: 10px 16px; margin-bottom: 16px;
@@ -961,114 +961,92 @@ tr.wc-in-spot:first-child td { border-top: none; }
 }
 .rs-freeze-banner-icon { font-size: 14px; }
 
-.bracket-real-badge {
-  font-size: 10.5px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
-  background: var(--forest); color: #fff; border-radius: 5px; padding: 3px 9px;
+/* Outer wrapper: flex row, children aligned to their bottom edges so the
+   "National League / American League" labels above the WC+DS groups sit
+   above the row without pushing the standalone middle columns down. */
+.bk-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  padding: 34px 0 32px;
 }
-/* justify-content:space-between + flex-grow on every direct child (see
-   .bracket-half/.bracket-col-standalone below) - the whole row stretches
-   to fill whatever width the page gives it instead of sitting as a
-   fixed-width block in the middle, spreading out toward the screen edges
-   on a wide window. Each child's own min-width still caps how far it can
-   shrink, so a narrower window just falls back to the compact layout with
-   no overflow risk.
-   align-items:stretch (the default - not center, not flex-start, both
-   tried and rejected): every direct child gets the SAME height, matching
-   the tallest one (.bracket-half, with its two stacked WC/DS pairs). That
-   shared height is what makes "meet in the middle" actually work: CS,
-   the champion slots, and the trophy are each built as [[fixed-height
-   header spacer], [flex:1 body that centers its own content within
-   whatever's left]] (see .bracket-col-standalone-body) - so once every
-   column is the same total height, centering each one's content within
-   it lands them all at the SAME true vertical middle, spanning BOTH WC/DS
-   rows, not just even with the top one. (Two earlier attempts got this
-   wrong: align-items:center broke the header-row alignment because a
-   taller box's center doesn't land its top edge where a shorter box's
-   margin-nudged one does; align-items:flex-start fixed the headers but
-   left CS/Champion/trophy sitting up near the top row only, with the
-   bottom WC/DS row's connectors having nothing to visibly reach.) */
-.bracket-wrap { position: relative; display: flex; align-items: stretch; justify-content: space-between; gap: 0; padding: 8px 8px 28px; }
-.bracket-svg { position: absolute; top: 0; left: 0; pointer-events: none; overflow: visible; z-index: 0; }
-/* Each league's own title sits directly above just ITS wild-card+division
-   columns (not the full-width banner this used to be) - a plain wrapper
-   div around those two columns, so the label naturally sits above only
-   them with no manual width-matching needed. Frees the vertical space a
-   separate full-width title row used to cost, spent on bigger logos
-   instead. */
-/* Wild Card + Division Series get MORE of the row's extra width than the
-   CS/champion-slot/trophy columns toward the middle - per direction
-   ("condense the middle... spread out the WC and DS rounds, it's a bit
-   cramped there"). */
-.bracket-half { display: flex; flex-direction: column; flex: 1.7 1 0; }
-.bracket-half-cols { display: flex; flex-direction: row; flex: 1 1 auto; min-height: 520px; }
-.bracket-league-title { font-size: 13px; font-weight: 800; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 8px; padding-left: 2px; height: 16px; line-height: 16px; }
-.bracket-col { display: flex; flex-direction: column; justify-content: flex-start; gap: 0; min-width: 116px; padding: 0 8px; position: relative; z-index: 1; flex: 1 1 0; }
-.bracket-col-body { display: flex; flex-direction: column; justify-content: space-around; flex: 1 1 auto; gap: 20px; padding-top: 47px; }
-/* CS / NL Champion / AL Champion / the center trophy column - each is
-   [header label, then a flex:1 body that centers its real content within
-   whatever height is left]. Stretched (see .bracket-wrap) to match
-   .bracket-half's full two-row height, so the header sits at the same Y
-   as WILD CARD/DIVISION SERIES AND the body's centered content lands at
-   the true middle of both WC/DS rows - not just the top one. */
-/* margin-top matches .bracket-league-title's full height (16px line-height
-   + 8px margin-bottom = 24px) - .bracket-half's label sits ABOVE its
-   half-cols pushing them down that much; these standalone columns have no
-   such title of their own, so without this margin their label sits 24px
-   higher than WC/DS's. With align-items:stretch a margin-top shrinks the
-   stretched height by the same amount rather than re-centering it, so the
-   column's bottom edge (and thus the body's centered range) is unaffected. */
-.bracket-col-standalone { display: flex; flex-direction: column; min-width: 116px; padding: 0 8px; margin-top: 24px; position: relative; z-index: 1; flex: 0.75 1 0; }
-.bracket-col-standalone-body { display: flex; flex-direction: column; justify-content: center; flex: 1 1 auto; }
-.bracket-col-label-spacer { height: 47px; } /* 39px box + 8px margin-bottom = total space all labels take (including two-line "DIVISION SERIES") */
-.bracket-col-label {
-  font-size: 12px; font-weight: 800; letter-spacing: 0.9px; color: var(--bark);
-  text-align: center; text-transform: uppercase; margin-bottom: 0;
-  border-bottom: 2px solid var(--bark-light); padding-bottom: 5px;
-  min-height: 39px; display: flex; align-items: flex-end; justify-content: center;
-  position: absolute; top: 0; left: 8px; right: 8px;
+.bk-svg {
+  position: absolute; top: 0; left: 0;
+  pointer-events: none; overflow: visible; z-index: 0;
 }
-.bracket-slot {
-  background: var(--surface-alt); border: 2px solid var(--bark-light); border-radius: 11px;
-  padding: 13px; display: flex; flex-direction: column; align-items: center; gap: 5px;
-  min-height: 94px; min-width: 94px; justify-content: center;
+
+/* NL/AL outer group: league title above two side-by-side columns */
+.bk-half { position: relative; display: flex; flex-direction: column; flex: 2 1 0; min-width: 240px; }
+.bk-league-lbl {
+  position: absolute; top: -26px;
+  font-size: 13px; font-weight: 800; letter-spacing: 1.5px;
+  color: var(--text-muted);
 }
-.bracket-slot.empty { border-style: dashed; }
-.bracket-slot.winner { border-color: var(--bark); background: var(--bark-tint); box-shadow: 0 0 0 2px var(--bark) inset; }
-.bracket-slot-tbd { color: var(--text-muted); font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; }
-.bracket-slot img.team-logo { width: 64px; height: 64px; }
-/* Generous gap (not just enough for the record badge to squeeze in, but
-   enough to sit clearly between the two boxes without crowding either) -
-   per direction: shrinking the boxes was fine, shrinking THIS wasn't. */
-.bracket-pair { display: flex; flex-direction: column; align-items: center; gap: 18px; position: relative; }
-.bracket-record {
-  font-size: 9.5px; font-weight: 800; color: var(--bark); background: var(--bg);
-  border: 1px solid var(--bark-light); border-radius: 8px; padding: 1px 6px;
+.bk-half-row { display: flex; flex: 1 1 auto; min-height: 520px; }
+
+/* Every column: label at top (fixed height), body fills the rest */
+.bk-col {
+  display: flex; flex-direction: column;
+  flex: 1 1 0; min-width: 110px; padding: 0 8px; z-index: 1;
 }
-/* The center column gets a bit more width than CS/Champion (it has more
-   to fit: winner slot, trophy, label, record). */
-.bracket-ws-center-outer { min-width: 140px; padding: 0 12px; flex: 0.85 1 0; }
-.bracket-ws-center-col { align-items: center; gap: 5px; }
-/* Trophy + label + record only (NOT the winner slot) - this tight block is
-   what .bracket-ws-center-col actually centers. .bracket-ws-winner-slot
-   below is absolutely positioned against THIS block specifically (not the
-   much taller stretched outer column - that was the earlier bug: bottom:100%
-   resolved against the whole stretched column's top edge, leaving the
-   winner slot floating far above everything else on the row). Removed from
-   flow, so it doesn't affect this block's own (and therefore the centered
-   cluster's) height. */
-.bracket-ws-trophy-block { position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-/* Absolutely positioned (not just first-in-flow) so it sits a fixed,
-   guaranteed gap above the trophy regardless of how the column's own
-   height happens to center against the side slots next to it - centering
-   the column as a whole put the winner box nearly level with the NL/AL
-   slots instead of clearly above them, confirmed via real measured
-   coordinates before this fix (bottom edge landing within 2px of the side
-   slots' top edge). */
-.bracket-ws-winner-slot { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); margin-bottom: 28px; }
-.bracket-ws-winner-slot .bracket-slot { min-width: 126px; }
-.bracket-ws-winner-placeholder { color: var(--text-muted); font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; }
-.bracket-trophy { filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25)); }
-.bracket-ws-label { font-size: 13px; font-weight: 800; letter-spacing: 1px; color: var(--forest-dark); text-align: center; }
+.bk-col-wc { flex: 1.1 1 0; }
+.bk-col-mid { flex: 0.75 1 0; min-height: 520px; }
+.bk-col-ws { flex: 0.85 1 0; min-width: 130px; padding: 0 12px; min-height: 520px; z-index: 1; }
+
+/* Column label: same height across all columns so bodies align */
+.bk-lbl {
+  height: 44px;
+  display: flex; align-items: flex-end; justify-content: center;
+  font-size: 12px; font-weight: 800; letter-spacing: 0.9px;
+  text-transform: uppercase; color: var(--bark);
+  border-bottom: 2px solid var(--bark-light);
+  padding-bottom: 5px; text-align: center;
+}
+
+/* Column body: distribute pairs evenly in available height */
+.bk-body {
+  flex: 1 1 auto;
+  display: flex; flex-direction: column;
+  justify-content: space-around;
+  padding: 16px 0;
+  gap: 28px;
+}
+.bk-ws-body { justify-content: center; align-items: center; }
+
+/* Slots */
+.bk-slot {
+  background: var(--surface-alt); border: 2px solid var(--bark-light);
+  border-radius: 11px; padding: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 5px; min-height: 92px; min-width: 92px;
+}
+.bk-slot.empty { border-style: dashed; }
+.bk-slot.winner { border-color: var(--bark); background: var(--bark-tint); box-shadow: 0 0 0 2px var(--bark) inset; }
+.bk-slot img { width: 62px; height: 62px; }
+.bk-tbd { color: var(--text-muted); font-size: 10.5px; font-weight: 700; letter-spacing: 0.4px; }
+
+/* Pair: two slots stacked with a record badge between */
+.bk-pair { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.bk-record {
+  font-size: 9.5px; font-weight: 800; color: var(--bark);
+  background: var(--bg); border: 1px solid var(--bark-light);
+  border-radius: 8px; padding: 1px 6px;
+}
+
+/* World Series center column */
+.bk-ws-block { position: relative; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.bk-ws-winner {
+  position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  margin-bottom: 24px;
+}
+.bk-ws-winner .bk-slot { min-width: 120px; }
+.bk-champ-placeholder { color: var(--text-muted); font-size: 10px; font-weight: 700; letter-spacing: 0.4px; }
+.bk-ws-label { font-size: 13px; font-weight: 800; letter-spacing: 1px; color: var(--forest-dark); text-align: center; }
+.bk-vs-chip { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.bk-vs { font-size: 9px; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px; }
+.bk-champ-ph { font-size: 9.5px; color: var(--text-muted); font-weight: 700; }
+.bk-trophy { filter: drop-shadow(0 2px 3px rgba(0,0,0,0.25)); }
 
 /* --- Playoffs: Rosters page --- */
 .roster-team-picker { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 18px; }

@@ -441,6 +441,59 @@ def _projected_unified_bracket(conn, season, standings_df):
     return {"al": convert("AL"), "nl": convert("NL"), "world_series": _empty_matchup()}
 
 
+def _fill_ds_from_wc(conn, season, standings_df, real):
+    """When WC is complete but DS hasn't started yet, pre-populate DS with
+    the known bye seeds (1 & 2 from current standings) paired against the
+    real WC winners. This handles the gap between WC ending and DS starting
+    so the bracket shows actual teams rather than all-TBD."""
+    for league in ("al", "nl"):
+        wc = real[league]["wildcard"]
+        ds = real[league]["division"]
+        if len(ds) >= 2:
+            continue  # Both DS matchups have real data
+        if len(wc) != 2 or not all(m.get("winner_team_id") is not None for m in wc):
+            continue  # WC not yet complete
+        proj = _projected_unified_bracket(conn, season, standings_df)
+        proj_div = proj[league]["division"]
+        proj_b = playoff_bracket(conn, season, standings_df, league.upper())
+        by_seed_id = {s["team_id"]: s["seed"] for s in proj_b["seeds"]}
+
+        def wc_winner_ref(m):
+            wid = m["winner_team_id"]
+            for t in (m.get("team_a"), m.get("team_b")):
+                if t and t["team_id"] == wid:
+                    return {"team_id": t["team_id"], "name": t["name"]}
+            return {"team_id": wid, "name": "Unknown"}
+
+        if len(ds) == 1:
+            # One series started; find the WC winner not yet in DS and the matching bye seed
+            existing_wc_ids = {ds[0]["team_b"]["team_id"]} if ds[0].get("team_b") else set()
+            existing_bye_ids = {ds[0]["team_a"]["team_id"]} if ds[0].get("team_a") else set()
+            missing_wc = next((m for m in wc if m["winner_team_id"] not in existing_wc_ids), None)
+            missing_bye = next((pd for pd in proj_div if pd["team_a"] and pd["team_a"]["team_id"] not in existing_bye_ids), None)
+            if missing_wc and missing_bye:
+                ds.append({"team_a": missing_bye["team_a"], "team_b": wc_winner_ref(missing_wc), "winner_team_id": None, "record": None})
+            continue
+
+        # Both DS slots are empty — fill both using seeding rules.
+        # A div-winner (seed 3) who survives the WC plays seed 1, and that matchup goes
+        # on top (ds[0]). When no div winner survived (both WC winners were wild card teams),
+        # the higher-seeded survivor faces seed 2 and goes on top.
+        div_winner_wc = next((m for m in wc if by_seed_id.get(m["winner_team_id"], 99) <= 3), None)
+        pure_wc = next((m for m in wc if by_seed_id.get(m["winner_team_id"], 99) > 3), None)
+        if div_winner_wc and pure_wc:
+            real[league]["division"] = [
+                {"team_a": proj_div[0]["team_a"], "team_b": wc_winner_ref(div_winner_wc), "winner_team_id": None, "record": None},
+                {"team_a": proj_div[1]["team_a"], "team_b": wc_winner_ref(pure_wc), "winner_team_id": None, "record": None},
+            ]
+        else:
+            wc_sorted = sorted(wc, key=lambda m: by_seed_id.get(m["winner_team_id"], 99), reverse=True)
+            real[league]["division"] = [
+                {"team_a": proj_div[1]["team_a"], "team_b": wc_winner_ref(wc_sorted[0]), "winner_team_id": None, "record": None},
+                {"team_a": proj_div[0]["team_a"], "team_b": wc_winner_ref(wc_sorted[1]), "winner_team_id": None, "record": None},
+            ]
+
+
 def unified_bracket(conn, standings_df, season):
     """The single entry point the API layer calls: real results when any
     exist for `season`, else the live standings projection. See this
@@ -448,6 +501,7 @@ def unified_bracket(conn, standings_df, season):
     not one path pretending to cover both."""
     real = real_postseason_bracket(season)
     if real is not None:
+        _fill_ds_from_wc(conn, season, standings_df, real)
         return {"season": season, "is_real": True, "postseason_started": True, **real}
     projected = _projected_unified_bracket(conn, season, standings_df)
     return {"season": season, "is_real": False, "postseason_started": postseason_started(standings_df), **projected}
