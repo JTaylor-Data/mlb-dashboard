@@ -1,0 +1,2 @@
+# Treat LightGBM model files as binary so git never mangles line endings
+models/*.txt binary
