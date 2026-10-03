@@ -1,5 +1,5 @@
 """
-Deception+ v2 Part 2 (fast bootstrap variant) — same as train_part2.py
+Deception+ v2 Part 2 (fast bootstrap variant) -- same as train_part2.py
 but with vectorized bootstrap and 500 resamples.
 
 Use this if train_part2.py times out.
@@ -348,7 +348,7 @@ def main():
     # Test 1
     diff_A1_A2, cilo_diff, cihi_diff = fast_paired_diff(oof_A1, oof_A2, xfip_df)
     decision_t1 = apply_equiv(diff_A1_A2, cilo_diff)
-    log(f"Test 1 (A2 vs A1): diff={diff_A1_A2:.4f} CI=[{cilo_diff:.4f},{cihi_diff:.4f}] → {decision_t1}")
+    log(f"Test 1 (A2 vs A1): diff={diff_A1_A2:.4f} CI=[{cilo_diff:.4f},{cihi_diff:.4f}] -> {decision_t1}")
 
     if decision_t1 == "A1_significantly_better_choose_A1":
         log("--- A3 ---")
@@ -378,7 +378,7 @@ def main():
     else:
         decision_t2 = "B_chosen_form_rule"
         chosen_config = "B"
-    log(f"Test 2: diff={diff_PP_B:.4f} CI=[{cilo_ppb:.4f},{cihi_ppb:.4f}] → {decision_t2}")
+    log(f"Test 2: diff={diff_PP_B:.4f} CI=[{cilo_ppb:.4f},{cihi_ppb:.4f}] -> {decision_t2}")
 
     # Screening
     log("--- Screening ---")
@@ -394,7 +394,7 @@ def main():
     ext_drop = f"KEEP release_extension: diff={ext_diff:.4f}" if abs(ext_diff) > EQUIVALENCE_MARGIN else f"KEEP in F2 (diff={ext_diff:.4f})"
     sea_diff = (r_B or 0) - (r_B_no_season or 0)
     if abs(sea_diff) <= EQUIVALENCE_MARGIN:
-        season_drop = f"DECISION: inconclusive (diff={sea_diff:.4f}) → DROP per pre-registered rule"
+        season_drop = f"DECISION: inconclusive (diff={sea_diff:.4f}) -> DROP per pre-registered rule"
     else:
         season_drop = f"KEEP season: diff={sea_diff:.4f}"
 
@@ -431,7 +431,7 @@ def main():
     chosen_cfg_doc['ci'] = [all_results[chosen_config]['ci_lo'], all_results[chosen_config]['ci_hi']]
     chosen_cfg_doc['season_drop_note'] = season_drop
     save_json(chosen_cfg_doc, DIAG_DIR / "chosen_config.json")
-    log(f"Wrote chosen_config.json → chosen: {chosen_config}")
+    log(f"Wrote chosen_config.json -> chosen: {chosen_config}")
     log(f"=== PART 2 (FAST) COMPLETE: chosen={chosen_config} ===")
 
 

@@ -1,5 +1,5 @@
 """
-Deception+ v2 Part 7 — Completion table and final deliverables.
+Deception+ v2 Part 7 -- Completion table and final deliverables.
 
 Outputs:
   Methodology/DECEPTION_COMPLETION.md
@@ -105,13 +105,13 @@ def main():
     rows.append("## 1. Audit Findings")
     rows.append("| Finding | Value | Note |")
     rows.append("|---------|-------|------|")
-    rows.append("| v1 per-request scoring | yes | removed in v2 — all scores pre-computed |")
+    rows.append("| v1 per-request scoring | yes | removed in v2 -- all scores pre-computed |")
     rows.append("| v1 split-half r | 0.998 | artifact: consistency features computed pre-split |")
-    rows.append("| arm_angle R² from mechanics | 0.789 | < 0.90 threshold → KEEP |")
+    rows.append("| arm_angle R² from mechanics | 0.789 | < 0.90 threshold -> KEEP |")
     rows.append("| Identifiability (top-1/chance) | 146× | very high; identity-prone features dropped |")
-    rows.append("| arm_angle coverage | 2021–2026 | 0% before 2020, partial 2026 (75.9%) |")
+    rows.append("| arm_angle coverage | 2021-2026 | 0% before 2020, partial 2026 (75.9%) |")
     rows.append("| bio coverage (height/weight) | 98.6% | good coverage for 2021+ pitchers |")
-    rows.append(f"| qualified pitcher-seasons/yr | 812–905 | season range 2021–2026, min 300 pitches |")
+    rows.append(f"| qualified pitcher-seasons/yr | 812-905 | season range 2021-2026, min 300 pitches |")
     rows.append("")
 
     rows.append("## 2. Configuration Tests")
@@ -128,10 +128,10 @@ def main():
         sc_aa = t.get("screening_arm_angle", {}).get("decision", "?")
         sc_ext = t.get("screening_extension", {}).get("decision", "?")
         sc_sea = t.get("screening_season", {}).get("decision", "?")
-        rows.append(f"| Screening: arm_angle | — | {sc_aa} | R2<0.90 keep |")
-        rows.append(f"| Screening: extension | — | {sc_ext} | equivalence |")
-        rows.append(f"| Screening: season | — | {sc_sea} | inconclusive_means_drop |")
-    rows.append(f"| Chosen config | {cfg_key} | features={', '.join(feat_list[:5])}... | — |")
+        rows.append(f"| Screening: arm_angle | -- | {sc_aa} | R2<0.90 keep |")
+        rows.append(f"| Screening: extension | -- | {sc_ext} | equivalence |")
+        rows.append(f"| Screening: season | -- | {sc_sea} | inconclusive_means_drop |")
+    rows.append(f"| Chosen config | {cfg_key} | features={', '.join(feat_list[:5])}... | -- |")
     rows.append("")
 
     rows.append("## 3. Correctness Gates")
@@ -171,7 +171,7 @@ def main():
         rows.append(f"| Independence from Location+ v3 | r={fmt(indep['v2_vs_location_plus_v3']['r'])} | should be low |")
     mem = val.get("memorization_check", {})
     rows.append(f"| Score within-pitcher std | {fmt(mem.get('score_within_pitcher_std'))} | nonzero confirms no pure memorization |")
-    rows.append(f"| Score between-pitcher std | {fmt(mem.get('score_between_pitcher_std'))} | — |")
+    rows.append(f"| Score between-pitcher std | {fmt(mem.get('score_between_pitcher_std'))} | -- |")
     rows.append("")
 
     rows.append("## 6. Deliverables")

@@ -1,5 +1,5 @@
 """
-Deception+ v2 Part 2 — Two core tests (A0, A1, A2, B) with pitcher-grouped CV.
+Deception+ v2 Part 2 -- Two core tests (A0, A1, A2, B) with pitcher-grouped CV.
 
 Outputs:
   diagnostics/deception_v2/chosen_config.json
@@ -164,7 +164,7 @@ def lgb_params(cfg, seed):
 # ---- CROSS-VALIDATED TRAINING (per-pitch form) ----
 
 def train_cv_per_pitch(df, features, cfg_key, cfg, seed=SEED, sample_frac=SAMPLE_FRAC):
-    log(f"Training {cfg_key} (per-pitch) — {N_FOLDS}-fold pitcher-grouped CV")
+    log(f"Training {cfg_key} (per-pitch) -- {N_FOLDS}-fold pitcher-grouped CV")
     feat_cols = FEATURE_SETS[cfg['features']]
     params = lgb_params(cfg, seed)
 
@@ -211,7 +211,7 @@ def train_cv_per_pitch(df, features, cfg_key, cfg, seed=SEED, sample_frac=SAMPLE
 # ---- CROSS-VALIDATED TRAINING (pitcher-season form) ----
 
 def train_cv_pitcher_season(df, cfg_key, cfg, qualified_ps, seed=SEED):
-    log(f"Training {cfg_key} (pitcher-season) — {N_FOLDS}-fold pitcher-grouped CV")
+    log(f"Training {cfg_key} (pitcher-season) -- {N_FOLDS}-fold pitcher-grouped CV")
     feat_cols = FEATURE_SETS[cfg['features']]
     numeric_feats = [f for f in feat_cols if f != 'season']
     params = lgb_params(cfg, seed)
@@ -448,7 +448,7 @@ def main():
     log("--- Test 1: A2 vs A1 equivalence ---")
     diff_A1_A2, ci_lo_diff, ci_hi_diff = paired_bootstrap_diff(oof_A1, oof_A2, xfip_df.copy())
     decision_A2_A1 = apply_equivalence_rule(diff_A1_A2, ci_lo_diff, ci_hi_diff)
-    log(f"Test 1: diff(A1-A2)={diff_A1_A2:.4f} CI=[{ci_lo_diff:.4f},{ci_hi_diff:.4f}] → {decision_A2_A1}")
+    log(f"Test 1: diff(A1-A2)={diff_A1_A2:.4f} CI=[{ci_lo_diff:.4f},{ci_hi_diff:.4f}] -> {decision_A2_A1}")
 
     # Run A3 only if A2 significantly worse
     run_A3 = decision_A2_A1 == "A1_significantly_better_choose_A1"
@@ -491,7 +491,7 @@ def main():
     else:
         decision_form = "B_chosen_form_rule"
         chosen_config = "B"
-    log(f"Test 2: diff({per_pitch_winner}-B)={diff_PP_B:.4f} CI=[{ci_lo_ppb:.4f},{ci_hi_ppb:.4f}] → {decision_form}")
+    log(f"Test 2: diff({per_pitch_winner}-B)={diff_PP_B:.4f} CI=[{ci_lo_ppb:.4f},{ci_hi_ppb:.4f}] -> {decision_form}")
 
     # ---- Screening with B: drop tests ----
     log("--- Screening: B minus arm_angle ---")
@@ -508,7 +508,7 @@ def main():
     log(f"B minus season: xFIP r={r_B_no_season:.4f} (vs B={r_B_xfip:.4f})")
 
     # Apply drop rules
-    # arm_angle: drop if R²>=0.90 AND equivalent (from Part 1: R²=0.789 < 0.90 → keep)
+    # arm_angle: drop if R²>=0.90 AND equivalent (from Part 1: R²=0.789 < 0.90 -> keep)
     aa_drop_decision = "KEEP: arm_angle R2=0.789 < 0.90 threshold from Part 1"
 
     # extension: drop if removal_shown_equivalent
@@ -521,9 +521,9 @@ def main():
     # season: drop if inconclusive
     season_diff = (r_B_xfip or 0) - (r_B_no_season or 0)
     if r_B_no_season is not None and abs(season_diff) <= EQUIVALENCE_MARGIN:
-        season_drop_decision = f"DECISION: inconclusive (diff={season_diff:.4f} <= margin) → DROP per pre-registered rule"
+        season_drop_decision = f"DECISION: inconclusive (diff={season_diff:.4f} <= margin) -> DROP per pre-registered rule"
         if chosen_config == 'B':
-            log("DECISION: season inconclusive → applying drop rule, season removed from chosen config B")
+            log("DECISION: season inconclusive -> applying drop rule, season removed from chosen config B")
     else:
         season_drop_decision = f"KEEP season: diff={season_diff:.4f} (meaningful contribution)"
 
@@ -595,7 +595,7 @@ def main():
     chosen_cfg_doc['season_drop_note'] = season_drop_decision
 
     save_json(chosen_cfg_doc, DIAG_DIR / "chosen_config.json")
-    log(f"Wrote chosen_config.json → chosen: {chosen_config}")
+    log(f"Wrote chosen_config.json -> chosen: {chosen_config}")
     log(f"=== PART 2 COMPLETE: chosen config = {chosen_config} ===")
 
 

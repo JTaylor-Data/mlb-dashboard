@@ -1,5 +1,5 @@
 """
-Deception+ v2 Part 5 — Gates, label, promotion.
+Deception+ v2 Part 5 -- Gates, label, promotion.
 
 Checks every correctness gate and evidence bar item.
 If all gates pass: promotes v2, updates API router, config, and scores resolver.
@@ -62,7 +62,7 @@ def check_gates(val_results, scores, n_folds, n_repeats):
         "xfip_r": xfip_r, "era_r": era_r,
         "threshold": "both < 0"
     }
-    log(f"Gate (a): same-season xFIP r={xfip_r}, ERA r={era_r} → {'PASS' if gate_a else 'FAIL'}")
+    log(f"Gate (a): same-season xFIP r={xfip_r}, ERA r={era_r} -> {'PASS' if gate_a else 'FAIL'}")
 
     # (b) pooled YoY >= 0.30, no consecutive pair (excl 2020 pairs) < 0.25
     yoy = val_results.get('yoy_stability', {})
@@ -80,7 +80,7 @@ def check_gates(val_results, scores, n_folds, n_repeats):
         "min_consecutive_pair": min_pair_r,
         "thresholds": {"pooled": 0.30, "min_pair": 0.25}
     }
-    log(f"Gate (b): pooled YoY={pooled_yoy}, min pair={min_pair_r} → {'PASS' if gate_b else 'FAIL'}")
+    log(f"Gate (b): pooled YoY={pooled_yoy}, min pair={min_pair_r} -> {'PASS' if gate_b else 'FAIL'}")
 
     # (c) hygiene pass
     hyg = val_results.get('hygiene', {})
@@ -118,7 +118,7 @@ def check_gates(val_results, scores, n_folds, n_repeats):
         "note": repeat_corr,
         "threshold": 0.98
     }
-    log(f"Gate (d): repeat correlation → {'PASS' if gate_d else 'FAIL'} ({repeat_corr})")
+    log(f"Gate (d): repeat correlation -> {'PASS' if gate_d else 'FAIL'} ({repeat_corr})")
 
     # (e) all intended seasons scored
     intended_seasons = ['2021', '2022', '2023', '2024', '2025', '2026']
@@ -131,15 +131,15 @@ def check_gates(val_results, scores, n_folds, n_repeats):
         "scored": list(scored_seasons),
         "missing": missing
     }
-    log(f"Gate (e): seasons scored={scored_seasons} missing={missing} → {'PASS' if gate_e else 'FAIL'}")
+    log(f"Gate (e): seasons scored={scored_seasons} missing={missing} -> {'PASS' if gate_e else 'FAIL'}")
 
-    # (f) no per-request scoring — check the API router
+    # (f) no per-request scoring -- check the API router
     router_path = ROOT / "api" / "routers" / "deception_report.py"
     router_text = router_path.read_text(encoding='utf-8')
     # Check if per-request model scoring is present (v1 pattern)
     has_per_request = '_raw_predictions' in router_text and 'lgb' in router_text.lower()
     # After promotion, _raw_predictions should be replaced by parquet lookup
-    # For now, if we haven't promoted yet, this will fail — that's OK, we'll fix it in promotion step
+    # For now, if we haven't promoted yet, this will fail -- that's OK, we'll fix it in promotion step
     # Gate f is checked AFTER promotion code runs
     gate_f_pre = True  # Will be re-checked after promotion
     gate_results['f_no_per_request_scoring'] = {
@@ -147,7 +147,7 @@ def check_gates(val_results, scores, n_folds, n_repeats):
         "note": "pre-promotion check; will be re-verified after router update",
         "has_raw_predictions_in_router": has_per_request
     }
-    log(f"Gate (f): no per-request scoring (pre-promotion) → noted, will verify post-promotion")
+    log(f"Gate (f): no per-request scoring (pre-promotion) -> noted, will verify post-promotion")
 
     return gate_results
 
@@ -187,7 +187,7 @@ def check_evidence_bar(val_results):
             "per_pair": {k: v['delta_r2'] for k, v in incr.items()},
             "note": "CI approximated: all_positive used as proxy for CI_lower > 0"
         }
-        log(f"Evidence (ii): avg delta-R²={avg_incr:.5f} all_positive={all_positive} → {'PASS' if passes_ii else 'FAIL'}")
+        log(f"Evidence (ii): avg delta-R²={avg_incr:.5f} all_positive={all_positive} -> {'PASS' if passes_ii else 'FAIL'}")
     else:
         evidence['ii_incremental_delta_r2'] = {"pass": False, "note": "insufficient data"}
 
@@ -278,7 +278,7 @@ def _bracket(pitcher_id: int, season: str, version: str = None) -> dict | None:
 
 @router.get("/report")
 def get_report():
-    """The full validation report — v2 returns the part4 validation results."""
+    """The full validation report -- v2 returns the part4 validation results."""
     version = DECEPTION_ACTIVE_VERSION
     if version == "v2":
         report_path = DIAG_DIR / "deception_v2" / "validation_results.json"
@@ -356,7 +356,7 @@ def main():
     # Load validation results
     val_path = DIAG_DIR / "validation_results.json"
     if not val_path.exists():
-        log("ERROR: validation_results.json not found — run Part 4 first")
+        log("ERROR: validation_results.json not found -- run Part 4 first")
         sys.exit(1)
     with open(val_path) as f:
         val_results = json.load(f)
@@ -407,7 +407,7 @@ def main():
             label = "validated"
         else:
             label = "limited_evidence"
-        log(f"Evidence bar: {evidence_passes} → label = {label}")
+        log(f"Evidence bar: {evidence_passes} -> label = {label}")
         deception_status = label
 
         # Promote v2

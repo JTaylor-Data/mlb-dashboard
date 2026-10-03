@@ -1,5 +1,5 @@
 """
-Deception+ v2 Part 4 — Validation.
+Deception+ v2 Part 4 -- Validation.
 
 Outputs:
   diagnostics/deception_v2/validation_results.json
@@ -93,7 +93,7 @@ def main():
     # Load scores
     scores_path = DIAG_DIR / "deception_v2_scores.parquet"
     if not scores_path.exists():
-        log("ERROR: deception_v2_scores.parquet not found — run Part 3 first")
+        log("ERROR: deception_v2_scores.parquet not found -- run Part 3 first")
         sys.exit(1)
 
     scores = pd.read_parquet(scores_path)
@@ -207,10 +207,10 @@ def main():
 
         r_xfip, _, ci_lo, ci_hi = corr_with_ci(curr_adv['deception_plus_v2'].values, curr_adv['xfip'].values)
         r_era, _, _, _ = corr_with_ci(curr_adv['deception_plus_v2'].values, curr_adv['era'].values)
-        next_season_results[f"{s}→{s_next}"] = {
+        next_season_results[f"{s}->{s_next}"] = {
             "xfip_r": r_xfip, "era_r": r_era, "ci_xfip": [ci_lo, ci_hi], "n": len(curr_adv)
         }
-        log(f"  {s}→{s_next}: xFIP r={r_xfip:.4f} CI=[{ci_lo:.4f},{ci_hi:.4f}] n={len(curr_adv)}")
+        log(f"  {s}->{s_next}: xFIP r={r_xfip:.4f} CI=[{ci_lo:.4f},{ci_hi:.4f}] n={len(curr_adv)}")
 
     results['next_season_validity'] = next_season_results
 
@@ -218,7 +218,7 @@ def main():
     log("2b. Incremental delta-R² over last-season xFIP")
     incr_results = {}
     for pair, pair_data in next_season_results.items():
-        s, s_next = pair.split('→')
+        s, s_next = pair.split('->')
         curr_scores = qualified[qualified['season'] == s][['pitcher_id', 'deception_plus_v2']].copy()
         curr_adv_s = adv[adv['season'] == s][['pitcher_id', 'xfip']].copy().rename(columns={'xfip': 'xfip_curr'})
         next_adv = adv[adv['season'] == s_next][['pitcher_id', 'xfip']].copy().rename(columns={'xfip': 'xfip_next'})
@@ -248,8 +248,8 @@ def main():
         if len(merged_yoy) < 20:
             continue
         r, _, ci_lo, ci_hi = corr_with_ci(merged_yoy['deception_plus_v2_s1'].values, merged_yoy['deception_plus_v2_s2'].values)
-        yoy_pairs[f"{s}→{s_next}"] = {"r": r, "ci": [ci_lo, ci_hi], "n": len(merged_yoy)}
-        log(f"  YoY {s}→{s_next}: r={r:.4f} n={len(merged_yoy)}")
+        yoy_pairs[f"{s}->{s_next}"] = {"r": r, "ci": [ci_lo, ci_hi], "n": len(merged_yoy)}
+        log(f"  YoY {s}->{s_next}: r={r:.4f} n={len(merged_yoy)}")
 
     if yoy_pairs:
         pooled_yoy_r = np.mean([v['r'] for v in yoy_pairs.values() if v['r'] is not None])
@@ -260,7 +260,7 @@ def main():
     results['yoy_stability'] = {"pairs": yoy_pairs, "pooled": float(pooled_yoy_r) if pooled_yoy_r else None}
 
     # Split-half reliability (approximate using OOF fold pairs)
-    # Use the saved scores from Part 3 — compute split-half by using odd vs even folds within each rep
+    # Use the saved scores from Part 3 -- compute split-half by using odd vs even folds within each rep
     log("3b. Split-half reliability by pitch count")
     # Load the raw OOF data if available; otherwise skip
     # For now we compute reliability using the score variance method

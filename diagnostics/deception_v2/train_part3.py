@@ -1,5 +1,5 @@
 """
-Deception+ v2 Part 3 — Cross-fitted scoring.
+Deception+ v2 Part 3 -- Cross-fitted scoring.
 
 Trains the final ensemble using chosen_config.json from Part 2.
 Scores every pitcher-season, applies reliability rule, to_plus_scale.
@@ -191,7 +191,7 @@ def main():
     # Load chosen config
     chosen_path = DIAG_DIR / "chosen_config.json"
     if not chosen_path.exists():
-        log("ERROR: chosen_config.json not found — run Part 2 first")
+        log("ERROR: chosen_config.json not found -- run Part 2 first")
         sys.exit(1)
 
     with open(chosen_path) as f:
@@ -227,7 +227,7 @@ def main():
             model_path = MODELS_DIR / f"deception_plus_v2_fold{fold}_rep{rep}.txt"
             model.booster_.save_model(str(model_path))
             fold_models[(rep, fold)] = str(model_path)
-            log(f"  rep={rep} fold={fold}: {elapsed:.1f}s → {model_path.name}")
+            log(f"  rep={rep} fold={fold}: {elapsed:.1f}s -> {model_path.name}")
 
             oof['rep'] = rep
             oof['fold'] = fold
@@ -273,7 +273,7 @@ def main():
     ps_preds.loc[ps_preds['n_pitches'] < MIN_PITCHES, 'flags'] = 'below_min_pitches'
 
     # Apply empirical Bayes shrinkage for below-threshold samples
-    # Reliability threshold = 0.70 → at 300 pitches per spec
+    # Reliability threshold = 0.70 -> at 300 pitches per spec
     # Simple EB: shrink towards seasonal mean by 1 - (n / (n + K)) where K is a shrinkage constant
     EB_K = 300  # pitches to half-shrink (rough estimate; proper EB would estimate K from data)
     # For qualified pitchers, no shrinkage; for unqualified, shrink towards 0 (raw score)
