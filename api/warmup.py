@@ -40,7 +40,7 @@ def _warm(conn, full):
     from api.routers.similar_players import _similarity_pool_hitters, _similarity_pool_pitchers
     from api.routers.probable_pitchers import _stuff_dict, _tunneling_dict, _location_dict, _deception_dict
     from api.routers.standings import _standings
-    from api.routers.stuff_model_report import _stuff_leaderboard
+    from api.routers.stuff_model_report import _stuff_leaderboard_overall as _stuff_leaderboard
     from api.routers.team_card import _cached_rows_and_ranks, _cached_sos
     from api.routers.top_performers import _leaderboard
 

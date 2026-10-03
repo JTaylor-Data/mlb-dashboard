@@ -40,7 +40,7 @@ from api.routers.deception_report import REPORT_SEASON as DECEPTION_REPORT_SEASO
 from api.routers.tunneling_report import _v3_raw_predictions_table
 from analytics.tunneling_v3_model import pitcher_score as tunneling_v3_pitcher_score
 from api.routers.location_report import _raw_predictions_table as _location_raw_predictions_table
-from analytics.location_model import pitcher_score as location_v1_pitcher_score
+from analytics.location_v3_model import pitcher_score as location_v3_pitcher_score
 from api.routers.top_performers import _leaderboard
 
 router = APIRouter(prefix="/api")
@@ -345,17 +345,13 @@ def _tunneling_plus_badge(conn, season, player_id):
 
 @ttl_cache()
 def _location_plus_badge(conn, season, player_id):
-    """Location+ v1, same live-scoring/season-selector/try-except pattern
-    as Tunneling+ v3's own badge above - real data from
-    analytics.location_model, min-100-pitches qualifying threshold applied
-    the same way that model's own leaderboard does (pitcher_score returns
-    None below it, same as the other three badges' own "not enough of a
-    sample" behavior)."""
+    """Location+ v3 badge scorer - real data from analytics.location_v3_model,
+    min-300-pitches qualifying threshold applied (same as the v3 leaderboard)."""
     try:
         league = _location_raw_predictions_table(conn, season)
         if league.empty:
             return None
-        return location_v1_pitcher_score(conn, season, player_id, league)
+        return location_v3_pitcher_score(conn, season, player_id, league)
     except Exception:
         return None
 
