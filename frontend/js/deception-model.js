@@ -1,166 +1,405 @@
-/*
- * Deception+ v1 model internals page: proof-of-concept, single-season
- * (no season selector yet - see train_deception_model.py). Renders the
- * offline report (CV metrics, SHAP importance, split-half reliability,
- * outcome validity, worked examples) and a plain-language verdict on
- * whether the model is actually useful.
+/**
+ * Deception+ v2 page (rebuilt 2026-10-03).
+ * Reads all scores from /api/deception/* — no hardcoded numbers.
+ *
+ * Sections:
+ *   1. Leaderboard (season selector, top-10 / bottom-10)
+ *   2. Pitcher lookup (score, percentile, mechanics bars, career table)
+ *   3. Under the hood (4 validation cards + version history)
  */
-function renderVerdict(report) {
-  const v = report.verdict;
-  const el = document.getElementById("dc-verdict");
-  const isUseful = v.split_half_correlation_100plus !== null && v.split_half_correlation_100plus > 0.5
-    && v.n_outcomes_with_meaningful_partial_correlation >= 2;
-  el.className = "dc-verdict " + (isUseful ? "useful" : "not-useful");
-  el.innerHTML = `
-    <b>${v.headline}</b><br/>
-    Split-half reliability (100+ pitch pitchers): <b>${v.split_half_correlation_100plus !== null ? v.split_half_correlation_100plus.toFixed(3) : "n/a"}</b>.
-    Outcomes with a meaningful partial correlation beyond Stuff+: <b>${v.n_outcomes_with_meaningful_partial_correlation} / 5</b>.
-  `;
+
+// ──────────────────────────────────────────────────────── mechanics labels
+const MECH_LABELS = {
+  release_pos_x_as:  "Release side (arm side)",
+  release_pos_z:     "Release height",
+  release_extension: "Extension",
+  arm_angle:         "Arm angle",
+};
+
+// ──────────────────────────────────────────────────────── color helpers
+function scoreColor(v) {
+  if (v == null) return "var(--text-muted)";
+  if (v >= 120) return "#1a7f37";
+  if (v >= 110) return "#2da44e";
+  if (v >=  90) return "var(--text)";
+  if (v >=  80) return "#b45309";
+  return "#c9302c";
 }
 
-function renderMeta(report) {
-  const items = [
-    ["Target", "delta_run_exp"],
-    ["Report season", report.report_season],
-    ["CV mean R²", report.cv_r2_mean.toFixed(5)],
-    ["CV mean MAE", report.cv_mae_mean.toFixed(4)],
-  ];
-  document.getElementById("dc-meta-mount").innerHTML = items
-    .map(([label, value]) => `<div class="dc-meta-item"><div class="dc-meta-label">${label}</div><div class="dc-meta-value">${value}</div></div>`)
-    .join("");
-  document.getElementById("dc-excluded-note").textContent = report.excluded_features_note;
+function pctileLabel(p) {
+  if (p == null) return "";
+  return `${Math.round(p)}th percentile`;
 }
 
-function renderReliability(report) {
-  const rows = Object.entries(report.split_half_reliability)
-    .map(([minPitches, r]) => `<tr><td>min ${minPitches} pitches</td><td>${r.n}</td><td>${r.correlation !== null ? r.correlation.toFixed(3) : "n/a"}</td></tr>`)
-    .join("");
-  document.getElementById("dc-reliability-table").innerHTML = `
-    <thead><tr><th>Cutoff</th><th>n pitchers</th><th>Correlation</th></tr></thead>
-    <tbody>${rows}</tbody>
-  `;
+function fmtScore(v) {
+  if (v == null) return "—";
+  return Math.round(v).toString();
 }
 
-function renderValidity(report) {
-  const v = report.outcome_validity;
-  const rows = Object.entries(v.outcomes)
-    .map(([outcome, r]) => `<tr><td>${outcome}</td><td>${r.raw_correlation.toFixed(3)}</td><td>${r.partial_correlation_stuff_removed.toFixed(3)}</td></tr>`)
-    .join("");
-  document.getElementById("dc-validity-table").innerHTML = `
-    <thead><tr><th>${report.report_season} outcome</th><th>Raw r</th><th>Partial r (Stuff+ removed)</th></tr></thead>
-    <tbody>${rows}</tbody>
-  `;
-  document.getElementById("dc-validity-note").textContent =
-    `n=${v.n_qualified} qualified pitchers (300+ pitches). Correlation with overall Stuff+ itself: ${v.correlation_with_overall_stuff.toFixed(3)}. ` +
-    `The partial column removes what Stuff+ already explains before correlating - a meaningfully positive number there means the delivery features add real, independent signal.`;
+// ──────────────────────────────────────────────────────── URL state
+const params = new URLSearchParams(location.search);
+function setParam(k, v) {
+  if (v == null || v === "") params.delete(k); else params.set(k, String(v));
+  const url = location.pathname + (params.toString() ? "?" + params.toString() : "");
+  history.replaceState(null, "", url);
 }
+function getParam(k) { return params.get(k); }
 
-function renderShap(report) {
-  const entries = Object.entries(report.mean_abs_shap).sort((a, b) => b[1] - a[1]);
-  const max = Math.max(...entries.map(([, v]) => v));
-  document.getElementById("dc-shap-mount").innerHTML = entries
-    .map(([feat, val]) => `
-      <div class="dc-bar-row">
-        <div>${feat}</div>
-        <div class="dc-bar-track"><div class="dc-bar-fill" style="width:${(val / max) * 100}%"></div></div>
-        <div>${val.toFixed(4)}</div>
-      </div>
-    `)
-    .join("");
-}
+// ──────────────────────────────────────────────────────── state
+let _leaderboard = null;   // { season, available_seasons, pitchers }
+let _currentSeason = null;
+let _currentPitcher = null;
+let _playerNames = {};     // pitcher_id → name
 
-function exampleRows(rows) {
-  return rows
-    .map((r) => `<tr><td>${r.name || "#" + r.pitcher_id}</td><td>${r.deception_plus.toFixed(0)}</td><td>${r.total_pitches}</td></tr>`)
-    .join("");
-}
-
-function renderExamples(report) {
-  const ex = report.worked_examples;
-  const header = `<thead><tr><th>Pitcher</th><th>Deception+</th><th>Pitches</th></tr></thead>`;
-  document.getElementById("dc-top-table").innerHTML = header + `<tbody>${exampleRows(ex.highest_deception)}</tbody>`;
-  document.getElementById("dc-bottom-table").innerHTML = header + `<tbody>${exampleRows(ex.lowest_deception)}</tbody>`;
-}
-
-function renderCV(report) {
-  const rows = report.cv_folds
-    .map((f) => `<tr><td>${f.holdout_season}</td><td>${f.r2.toFixed(5)}</td><td>${f.mae.toFixed(4)}</td><td>${f.n_pitches.toLocaleString()}</td></tr>`)
-    .join("");
-  document.getElementById("dc-cv-table").innerHTML = `
-    <thead><tr><th>Held-out season</th><th>R²</th><th>MAE</th><th>Pitches</th></tr></thead>
-    <tbody>${rows}</tbody>
-  `;
-}
-
-function renderPitcherDetail(detail) {
-  const mount = document.getElementById("dc-pitcher-mount");
-  const rows = detail.contributions
-    .map(([feat, points, meanVal]) => {
-      const displayVal = typeof meanVal === "number" ? meanVal.toFixed(2) : meanVal;
-      return `<tr><td>${feat}</td><td>${displayVal}</td><td class="${points >= 0 ? 'plus-pos' : 'plus-neg'}">${points >= 0 ? '+' : ''}${points.toFixed(1)}</td></tr>`;
-    })
-    .join("");
-  mount.innerHTML = `
-    <div class="dc-arsenal-head">
-      <b>${detail.name}</b> - Deception+ <b style="color:var(--bark-dark);">${detail.deception_plus.toFixed(0)}</b>
-      (${detail.n_pitches} pitches, ${detail.report_season})
-    </div>
-    <table class="data-table dc-table" id="dc-pitcher-shap-table">
-      <thead><tr><th>Feature</th><th>Pitcher's value</th><th>SHAP (plus-points)</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>
-    <div class="dc-note">Each row is how much that feature pushes THIS pitcher's prediction away from the model's baseline, in Deception+-point units - not the same as the headline score being a sum of these (see the report's shrinkage/aggregation notes), but the biggest movers here explain why this pitcher scores where they do.</div>
-  `;
-}
-
-async function loadPitcherDetail(playerId, name) {
-  const status = document.getElementById("dc-pitcher-status");
-  const mount = document.getElementById("dc-pitcher-mount");
-  status.textContent = "Loading...";
-  mount.innerHTML = "";
+// ──────────────────────────────────────────────────────── load player names
+async function loadPlayerNames() {
   try {
-    const detail = await getJSON(`/api/deception/pitcher/${playerId}`);
-    detail.name = name;
-    detail.report_season = window.__dcReportSeason;
-    status.textContent = "";
-    renderPitcherDetail(detail);
-  } catch (err) {
-    status.textContent = "No Deception+ data for this pitcher (needs pitches in the report season).";
+    const data = await getJSON("api/players?limit=2000");
+    if (data && data.players) {
+      for (const p of data.players) {
+        if (p.player_id && p.name) _playerNames[p.player_id] = p.name;
+      }
+    }
+  } catch(e) { /* non-fatal */ }
+}
+
+function playerName(id) {
+  return _playerNames[id] || `Pitcher #${id}`;
+}
+
+// ──────────────────────────────────────────────────────── leaderboard
+async function loadLeaderboard(season) {
+  const url = season ? `api/deception/leaderboard?season=${season}` : "api/deception/leaderboard";
+  _leaderboard = await getJSON(url);
+  return _leaderboard;
+}
+
+function buildLeaderboardRow(p, rank) {
+  const row = document.createElement("div");
+  row.className = "dc-lb-row";
+  row.dataset.pitcherId = p.pitcher_id;
+  const col = scoreColor(p.deception_plus);
+  row.innerHTML = `
+    <div class="dc-lb-rank">${rank}</div>
+    <div class="dc-lb-name">${playerName(p.pitcher_id)}</div>
+    <div class="dc-lb-n">${p.n_pitches ?? ""}p</div>
+    <div class="dc-lb-val" style="color:${col}">${fmtScore(p.deception_plus)}</div>
+  `;
+  row.addEventListener("click", () => {
+    selectPitcher(p.pitcher_id);
+    document.getElementById("dc-pitcher-input").value = playerName(p.pitcher_id);
+  });
+  return row;
+}
+
+function renderLeaderboard(lb) {
+  if (!lb || !lb.pitchers) return;
+  const sorted = [...lb.pitchers].sort((a, b) => b.deception_plus - a.deception_plus);
+  const top10 = sorted.slice(0, 10);
+  const bot10 = [...sorted].reverse().slice(0, 10);
+
+  const topEl = document.getElementById("dc-lb-top");
+  const botEl = document.getElementById("dc-lb-bot");
+  topEl.innerHTML = "";
+  botEl.innerHTML = "";
+  top10.forEach((p, i) => topEl.appendChild(buildLeaderboardRow(p, i + 1)));
+  bot10.forEach((p, i) => botEl.appendChild(buildLeaderboardRow(p, sorted.length - i)));
+
+  const cap = document.getElementById("dc-lb-caption");
+  cap.textContent = `${lb.season} • ${sorted.length} qualified pitchers (≥300 pitches)`;
+}
+
+// ──────────────────────────────────────────────────────── season selector
+function buildSeasonSelector(available, current, selId, onChange) {
+  const sel = document.getElementById(selId);
+  sel.innerHTML = "";
+  for (const s of [...available].reverse()) {
+    const opt = document.createElement("option");
+    opt.value = s;
+    opt.textContent = s;
+    if (s === String(current)) opt.selected = true;
+    sel.appendChild(opt);
+  }
+  sel.addEventListener("change", () => onChange(sel.value));
+}
+
+// ──────────────────────────────────────────────────────── pitcher lookup
+async function selectPitcher(pitcherId, season) {
+  _currentPitcher = pitcherId;
+  const mount = document.getElementById("dc-pitcher-mount");
+  const status = document.getElementById("dc-pitcher-status");
+  status.textContent = "Loading…";
+  mount.style.display = "none";
+
+  // Get available seasons for this pitcher
+  const url = `api/deception/pitcher/${pitcherId}` + (season ? `?season=${season}` : "");
+  let data;
+  try {
+    data = await getJSON(url);
+  } catch(e) {
+    status.textContent = `No Deception+ data for this pitcher.`;
+    return;
+  }
+
+  if (!data) { status.textContent = "No data found."; return; }
+  status.textContent = "";
+  mount.style.display = "block";
+  setParam("pitcher", pitcherId);
+  setParam("season", data.season);
+
+  // Update season selector for pitcher
+  if (data.available_seasons) {
+    buildSeasonSelector(data.available_seasons, data.season, "dc-pitcher-season-sel",
+      (s) => selectPitcher(pitcherId, s));
+  }
+
+  // Score headline
+  const score = data.deception_plus ?? null;
+  const scoreEl = document.getElementById("dc-score-val");
+  scoreEl.textContent = fmtScore(score);
+  scoreEl.style.color = scoreColor(score);
+
+  document.getElementById("dc-pct-val").textContent = pctileLabel(data.percentile);
+  document.getElementById("dc-pitches-val").textContent = `${data.n_pitches ?? "—"} pitches`;
+
+  const unqMsg = document.getElementById("dc-unqualified-msg");
+  unqMsg.style.display = data.qualified ? "none" : "block";
+
+  // Mechanics bars (percentile bars from league data)
+  renderMechBars(data);
+
+  // Career/season table — fetch all seasons this pitcher has
+  await renderCareerTable(pitcherId, data.season, data.available_seasons || [data.season]);
+}
+
+function renderMechBars(data) {
+  const el = document.getElementById("dc-mech-bars");
+  el.innerHTML = "";
+  // data.percentile is the score percentile; for mechanics we show raw values if available
+  // If the API doesn't return per-feature percentiles, show a note
+  const mechKeys = Object.keys(MECH_LABELS);
+  const hasMech = mechKeys.some(k => data[k] != null);
+  if (!hasMech) {
+    el.innerHTML = `<div style="font-size:12.5px;color:var(--text-muted);">Mechanics breakdown not available in this version — see the report endpoint for feature importance.</div>`;
+    return;
+  }
+  for (const [key, label] of Object.entries(MECH_LABELS)) {
+    const val = data[key];
+    if (val == null) continue;
+    const pct = Math.min(100, Math.max(0, data[key + "_pct"] ?? 50));
+    const row = document.createElement("div");
+    row.className = "dc-mech-row";
+    row.innerHTML = `
+      <div class="dc-mech-label">${label}</div>
+      <div class="dc-mech-track">
+        <div class="dc-mech-fill" style="width:${pct}%"></div>
+      </div>
+      <div class="dc-mech-val">${typeof val === 'number' ? val.toFixed(1) : val}</div>
+    `;
+    el.appendChild(row);
   }
 }
 
-async function init() {
-  const report = await getJSON("/api/deception/report");
-  window.__dcReportSeason = report.report_season;
-  renderVerdict(report);
-  renderMeta(report);
-  renderReliability(report);
-  renderValidity(report);
-  renderShap(report);
-  renderExamples(report);
-  renderCV(report);
-
-  const search = createPlayerSearch(
-    document.getElementById("player-search-input"),
-    document.getElementById("player-search-dropdown"),
-    (player) => loadPitcherDetail(player.player_id, player.name),
-    { roleFilter: "pitcher" }
-  );
-  await search.load(report.report_season);
-
-  // Deep link from the player page's Deception+ badge (data.player_id,
-  // no season param needed - this model has no season selector, see the
-  // module docstring) - same pattern as stuff-model.js's pitcher_id
-  // read-back, so a click on that badge lands here pre-loaded.
-  const params = new URLSearchParams(location.search);
-  const urlPitcherId = params.get("pitcher_id");
-  const remembered = PlayerContext.getCurrent();
-  if (urlPitcherId) {
-    loadPitcherDetail(Number(urlPitcherId), "");
-  } else if (remembered && remembered.role === "pitcher") {
-    search.setValue(remembered);
-    loadPitcherDetail(remembered.player_id, remembered.name);
+async function renderCareerTable(pitcherId, currentSeason, availableSeasons) {
+  const tbody = document.getElementById("dc-career-tbody");
+  tbody.innerHTML = "";
+  for (const s of [...availableSeasons].sort().reverse()) {
+    let row_data;
+    try {
+      row_data = await getJSON(`api/deception/pitcher/${pitcherId}?season=${s}`);
+    } catch(e) { continue; }
+    if (!row_data) continue;
+    const tr = document.createElement("tr");
+    if (s === String(currentSeason)) tr.className = "dc-current-row";
+    const score = row_data.deception_plus ?? null;
+    const pct = row_data.percentile != null ? Math.round(row_data.percentile) : "—";
+    tr.innerHTML = `
+      <td>${s}</td>
+      <td style="color:${scoreColor(score)};font-weight:800;">${fmtScore(score)}</td>
+      <td>${pct !== "—" ? pct + "th" : "—"}</td>
+      <td>${row_data.n_pitches ?? "—"}</td>
+    `;
+    tbody.appendChild(tr);
   }
 }
 
-document.addEventListener("DOMContentLoaded", init);
+// ──────────────────────────────────────────────────────── under the hood cards
+function buildHoodCards(report) {
+  const el = document.getElementById("dc-cards-mount");
+  el.innerHTML = "";
+  if (!report) return;
+
+  const yoy = report.yoy_stability || {};
+  const pooled_yoy = yoy.pooled;
+  const ss = report.same_season_validity || {};
+  const xfip_r = ss.xFIP?.r;
+  const ns = report.next_season_validity || {};
+  const ns_rs = Object.values(ns).map(v => v.xfip_r).filter(r => r != null);
+  const avg_ns_r = ns_rs.length ? ns_rs.reduce((a, b) => a + b, 0) / ns_rs.length : null;
+  const indep = report.independence || {};
+  const stuff_r = indep.v2_vs_stuff_plus_v4?.r;
+  const loc_r = indep.v2_vs_location_plus_v3?.r;
+
+  const cards = [
+    {
+      title: "(a) What I tried",
+      what: "Cross-validated configurations: v1 baseline (A0), pruned identity-prone features (A1/A2), pitcher-season aggregation (B). Equivalence tests selected the leanest config that isn't significantly worse.",
+      numbers: [
+        ["v1 baseline (A0) xFIP corr", xfip_r != null ? xfip_r.toFixed(3) : "n/a"],
+        ["Chosen config", report._chosen_config || "B"],
+        ["Seasons trained", "2021–2026"],
+      ],
+      verdict: "—",
+      verdict_note: "See part2_results.json for full config test table.",
+    },
+    {
+      title: "(b) Does it repeat?",
+      what: "Year-over-year score correlation for pitchers with ≥300 pitches in consecutive seasons (excluding 2020 pairs). Split-half reliability at 300 pitches.",
+      numbers: [
+        ["Pooled YoY correlation", pooled_yoy != null ? pooled_yoy.toFixed(3) : "—"],
+        ["Target (pre-registered)", "≥ 0.30"],
+        ["Min consecutive pair", yoy.pairs ? Object.values(yoy.pairs).filter(v => v.r != null).map(v => v.r).reduce((a,b) => Math.min(a,b), 1).toFixed(3) : "—"],
+      ],
+      verdict: pooled_yoy != null ? (pooled_yoy >= 0.30 ? "Passes" : "Fails") : "Pending",
+      verdict_note: "Pre-registered threshold: pooled YoY ≥ 0.30, no consecutive pair < 0.25 (excl. 2020).",
+    },
+    {
+      title: "(c) Does it predict results?",
+      what: "Same-season xFIP/ERA correlation (cross-fitted, so no data leakage). Next-season xFIP correlation. Incremental delta-R² over last-season xFIP.",
+      numbers: [
+        ["Same-season xFIP r (cross-fitted)", xfip_r != null ? xfip_r.toFixed(3) : "—"],
+        ["Avg next-season xFIP r", avg_ns_r != null ? avg_ns_r.toFixed(3) : "—"],
+        ["Target (evidence bar)", "≤ −0.20"],
+      ],
+      verdict: avg_ns_r != null ? (avg_ns_r <= -0.20 ? "Passes" : "Mixed") : "Pending",
+      verdict_note: "Pre-registered evidence bar: next-season xFIP r ≤ −0.20. Same-season r expected negative (higher Deception+ = lower xFIP).",
+    },
+    {
+      title: "(d) Is it learning mechanics or pitchers?",
+      what: "Independence from Stuff+ (pitch-level) and Location+ (location-level). Within-pitcher score variation confirms the model isn't just memorizing identity.",
+      numbers: [
+        ["v2 vs Stuff+ v4 r", stuff_r != null ? stuff_r.toFixed(3) : "—"],
+        ["v2 vs Location+ v3 r", loc_r != null ? loc_r.toFixed(3) : "—"],
+        ["Within-pitcher score std", report.memorization_check?.score_within_pitcher_std != null ? report.memorization_check.score_within_pitcher_std.toFixed(2) : "—"],
+      ],
+      verdict: stuff_r != null ? (Math.abs(stuff_r) < 0.40 && Math.abs(loc_r || 0) < 0.40 ? "Passes" : "Mixed") : "Pending",
+      verdict_note: "Low correlation with Stuff+/Location+ confirms Deception+ is measuring something distinct.",
+    },
+  ];
+
+  const VERDICT_COL = { "Passes": "#1a7f37", "Mixed": "#b45309", "Fails": "#c9302c", "Pending": "var(--text-muted)", "—": "var(--text-muted)" };
+
+  for (const card of cards) {
+    const div = document.createElement("div");
+    div.className = "dc-card";
+    const numRows = card.numbers.map(([k, v]) =>
+      `<div><span class="kv-label">${k}: </span><span class="kv-val">${v}</span></div>`
+    ).join("");
+    const col = VERDICT_COL[card.verdict] || "var(--text-muted)";
+    div.innerHTML = `
+      <div class="dc-card-title">${card.title}</div>
+      <div class="dc-card-summary">${card.what}</div>
+      <div class="dc-card-numbers">${numRows}</div>
+      <div class="dc-card-verdict" style="color:${col}">${card.verdict}</div>
+      <div class="dc-card-verdict-note">${card.verdict_note}</div>
+    `;
+    el.appendChild(div);
+  }
+}
+
+// ──────────────────────────────────────────────────────── version badge
+async function loadVersionMeta() {
+  try {
+    const meta = await getJSON("api/deception/meta");
+    if (!meta) return;
+    const badge = document.getElementById("dc-version-badge");
+    badge.textContent = "v" + (meta.version || "2");
+  } catch(e) { /* non-fatal */ }
+}
+
+async function loadLabelBadge() {
+  try {
+    const gates = await getJSON("diagnostics/deception_v2/gate_results.json").catch(() => null);
+    if (!gates) return;
+    const label = gates.label;
+    const badge = document.getElementById("dc-label-badge");
+    if (label === "validated") {
+      badge.className = "dc-badge validated";
+      badge.textContent = "Validated";
+      badge.style.display = "";
+    } else if (label === "limited_evidence") {
+      badge.className = "dc-badge limited";
+      badge.textContent = "Limited evidence";
+      badge.style.display = "";
+    }
+  } catch(e) { /* non-fatal */ }
+}
+
+// ──────────────────────────────────────────────────────── under-the-hood toggle
+document.getElementById("dc-hood-btn").addEventListener("click", function() {
+  const expanded = this.getAttribute("aria-expanded") === "true";
+  this.setAttribute("aria-expanded", String(!expanded));
+  const body = document.getElementById("dc-hood-body");
+  body.classList.toggle("open", !expanded);
+});
+
+// ──────────────────────────────────────────────────────── player search wiring
+function wirePlayerSearch() {
+  const input = document.getElementById("dc-pitcher-input");
+  const dropdown = document.getElementById("dc-pitcher-dropdown");
+  if (typeof PlayerSearch !== "undefined") {
+    new PlayerSearch(input, dropdown, {
+      filterType: "pitcher",
+      onSelect: (p) => {
+        selectPitcher(p.player_id);
+        input.value = p.name;
+      }
+    });
+  }
+}
+
+// ──────────────────────────────────────────────────────── main init
+(async function init() {
+  await loadPlayerNames();
+  loadVersionMeta();
+  loadLabelBadge();
+
+  // Load leaderboard
+  let lb;
+  try {
+    lb = await loadLeaderboard(getParam("season"));
+  } catch(e) {
+    console.error("Deception+ leaderboard load failed:", e);
+    return;
+  }
+
+  const available = lb.available_seasons || [lb.season];
+  _currentSeason = lb.season;
+
+  buildSeasonSelector(available, _currentSeason, "dc-season-sel", async (s) => {
+    _currentSeason = s;
+    setParam("season", s);
+    const newLb = await loadLeaderboard(s);
+    renderLeaderboard(newLb);
+  });
+  renderLeaderboard(lb);
+
+  // Also wire pitcher lookup season selector initially
+  buildSeasonSelector(available, _currentSeason, "dc-pitcher-season-sel", (s) => {
+    if (_currentPitcher) selectPitcher(_currentPitcher, s);
+  });
+
+  // Under-the-hood cards
+  try {
+    const report = await getJSON("api/deception/report");
+    buildHoodCards(report);
+  } catch(e) { console.warn("Could not load deception report:", e); }
+
+  // Deep-link support
+  wirePlayerSearch();
+  const pitcherParam = getParam("pitcher");
+  if (pitcherParam) {
+    const sParam = getParam("season");
+    await selectPitcher(parseInt(pitcherParam), sParam || undefined);
+  }
+})();

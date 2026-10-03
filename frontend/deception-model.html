@@ -1,170 +1,220 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Deception+ Model - MLB Dashboard</title>
+  <title>Deception+ — MLB Dashboard</title>
   <link rel="stylesheet" href="css/theme.css?v=45" />
   <style>
-    .dc-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: start; }
-    @media (max-width: 1000px) { .dc-layout { grid-template-columns: 1fr; } }
-    .dc-blurb { font-size: 13.5px; color: var(--text-muted); line-height: 1.55; margin-bottom: 14px; }
-    .dc-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    .dc-meta-item { background: var(--surface-alt); border-radius: 8px; padding: 8px 10px; }
-    .dc-meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); }
-    .dc-meta-value { font-size: 17px; font-weight: 800; color: var(--forest-dark); }
+    /* ── Page-level layout ── */
+    .dc-content  { max-width: 1000px; }
+    .dc-wide     { max-width: 1200px; }
 
-    .dc-verdict { border-radius: 10px; padding: 14px 18px; font-size: 14px; line-height: 1.5; }
-    .dc-verdict.useful { background: #e6f2ea; border: 1px solid #1a7f37; color: #123023; }
-    .dc-verdict.not-useful { background: var(--bark-tint); border: 1px solid var(--bark); color: var(--bark-dark); }
+    /* ── Header band ── */
+    .dc-header   { margin: 20px 0 6px; }
+    .dc-title    { font-size: 24px; font-weight: 800; color: var(--forest-dark); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .dc-badge    { font-size: 11.5px; font-weight: 700; letter-spacing: 0.3px; padding: 3px 9px; border-radius: 12px; background: var(--bark-tint); color: var(--bark-dark); white-space: nowrap; }
+    .dc-badge.validated { background: #d1fae5; color: #065f46; }
+    .dc-badge.limited   { background: #fef3c7; color: #92400e; }
+    .dc-blurb    { font-size: 13.5px; color: var(--text-muted); line-height: 1.6; margin: 10px 0 4px; max-width: 860px; }
+    .dc-scale-box { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--text); line-height: 1.55; margin: 12px 0 0; max-width: 860px; }
+    .dc-scale-box b { color: var(--forest-dark); }
 
-    .dc-table th, .dc-table td { text-align: right; }
-    .dc-table td:first-child, .dc-table th:first-child { text-align: left; }
+    /* ── Season row ── */
+    .dc-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 20px 0 12px; }
+    .dc-controls .control-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 3px; }
 
-    .dc-bar-row { display: grid; grid-template-columns: 140px 1fr 60px; align-items: center; gap: 10px; margin-bottom: 6px; }
-    .dc-bar-track { position: relative; background: #e9e7df; border-radius: 6px; height: 12px; }
-    .dc-bar-fill { position: absolute; top: 0; left: 0; height: 12px; border-radius: 6px; background: var(--forest); }
-    .dc-note { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
-    .dc-excluded { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; background: var(--surface-alt); border-radius: 8px; padding: 10px 14px; margin-top: 10px; }
-    .dc-arsenal-head { margin-bottom: 10px; font-size: 14px; }
-    #dc-pitcher-shap-table td.plus-pos { color: #1a7f37; font-weight: 700; }
-    #dc-pitcher-shap-table td.plus-neg { color: #c9302c; font-weight: 700; }
-    #dc-pitcher-status { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+    /* ── Leaderboard ── */
+    .dc-lb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 680px) { .dc-lb-grid { grid-template-columns: 1fr; } }
+    .dc-lb-row { display: grid; grid-template-columns: 22px 1fr auto 52px; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.1s; border-radius: 4px; }
+    .dc-lb-row:last-child { border-bottom: none; }
+    .dc-lb-row:hover { background: var(--surface-alt); }
+    .dc-lb-rank  { font-size: 12px; color: var(--text-muted); font-weight: 700; text-align: center; }
+    .dc-lb-name  { font-size: 13.5px; font-weight: 600; }
+    .dc-lb-n     { font-size: 11.5px; color: var(--text-muted); white-space: nowrap; }
+    .dc-lb-val   { font-size: 14px; font-weight: 800; text-align: right; }
+    .dc-lb-caption { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+
+    /* ── Pitcher lookup ── */
+    .dc-lookup-controls { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+    .dc-lookup-status   { font-size: 13px; color: var(--text-muted); min-height: 18px; margin-bottom: 8px; }
+    .dc-summary { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 16px; }
+    .dc-summary-score  { font-size: 42px; font-weight: 800; line-height: 1; }
+    .dc-summary-meta   { font-size: 13px; color: var(--text-muted); line-height: 1.7; }
+    .dc-summary-pct    { font-size: 13.5px; font-weight: 700; color: var(--forest); }
+    .dc-unqualified    { font-size: 12.5px; color: var(--bark); font-weight: 600; margin-top: 4px; }
+
+    /* Mechanics bars */
+    .dc-mech-row { display: grid; grid-template-columns: 160px 1fr 60px; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .dc-mech-label { font-size: 12.5px; color: var(--text); }
+    .dc-mech-track { position: relative; background: #e9e7df; border-radius: 6px; height: 12px; }
+    .dc-mech-fill  { position: absolute; top: 0; left: 0; height: 12px; border-radius: 6px; background: var(--forest); }
+    .dc-mech-val   { font-size: 12px; font-weight: 700; text-align: right; }
+
+    /* Career season table */
+    .dc-career-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .dc-career-table th { text-align: right; font-size: 11.5px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; padding: 4px 8px 6px; border-bottom: 2px solid var(--border); }
+    .dc-career-table th:first-child { text-align: left; }
+    .dc-career-table td { text-align: right; padding: 5px 8px; border-bottom: 1px solid var(--border); }
+    .dc-career-table td:first-child { text-align: left; }
+    .dc-career-table tr:last-child td { border-bottom: none; }
+    .dc-career-table tr.dc-current-row { background: var(--surface-alt); font-weight: 700; }
+
+    /* ── Under the hood ── */
+    .dc-hood { margin-top: 28px; }
+    .dc-hood-toggle { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; color: var(--forest-dark); cursor: pointer; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
+    .dc-hood-toggle:hover { background: var(--surface-alt); }
+    .dc-hood-toggle[aria-expanded="true"] { background: var(--surface-alt); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+    .dc-hood-toggle:focus-visible { outline: 2px solid var(--forest-light); outline-offset: 2px; }
+    .dc-hood-chevron { transition: transform 0.2s; font-size: 12px; }
+    .dc-hood-toggle[aria-expanded="true"] .dc-hood-chevron { transform: rotate(180deg); }
+    .dc-hood-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 16px; display: none; }
+    .dc-hood-body.open { display: block; }
+
+    /* Cards grid */
+    .dc-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+    @media (max-width: 700px) { .dc-cards { grid-template-columns: 1fr; } }
+    .dc-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--surface); }
+    .dc-card-title   { font-size: 14px; font-weight: 700; color: var(--forest-dark); margin-bottom: 4px; }
+    .dc-card-summary { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
+    .dc-card-numbers { font-size: 12.5px; line-height: 1.8; margin-bottom: 10px; }
+    .dc-card-numbers .kv-label { color: var(--text-muted); }
+    .dc-card-numbers .kv-val   { font-weight: 700; color: var(--text); }
+    .dc-card-verdict { font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+    .dc-card-verdict-note { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
+    .verdict-pass    { color: #1a7f37; }
+    .verdict-mixed   { color: #b45309; }
+    .verdict-fail    { color: #c9302c; }
+    .verdict-pending { color: var(--text-muted); }
   </style>
 </head>
 <body>
   <div id="nav"></div>
   <div id="subnav"></div>
-  <div class="page">
-    <h1>Deception+ Model</h1>
-    <p class="dc-blurb">
-      v1, proof-of-concept. Measures how much a pitcher's <b>body and release consistency</b> - arm angle, extension,
-      release point, height/weight, and the pitch-to-pitch variability of each - predict outcomes, gradient-boosted
-      (LightGBM) and deliberately excluding pitch type, velocity, movement, and pitcher identity, so it can't just
-      re-derive Stuff+ under a new name. This was originally meant to also cover windup timing, leg lift, and time
-      held in the set position - see the excluded-features note below and the full methodology PDF for why those
-      aren't included yet, and what was actually tried to get them.
-    </p>
+  <div class="page dc-content">
 
-    <div class="plus-explainer">
-      <div class="plus-explainer-icon">&#8505;&#65039;</div>
-      <div>
-        <div class="plus-explainer-title">How to read this number</div>
-        <div class="plus-explainer-body">
-          <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b> from that
-          season's league-wide average - a score of 120 means a pitcher graded roughly 2 standard deviations more
-          deceptive than average that season, <b>not "20% more deceptive."</b> That percentage-style reading is a
-          common mistake (closer to how a stat like wRC+ happens to work, but Deception+ - same scale as Stuff+ -
-          isn't scaled that way). Scores are also z-scored fresh within each season, so the same score in two
-          different years means the same relative standing, not necessarily the same underlying raw value.
+    <!-- HEADER -->
+    <div class="dc-header">
+      <div class="dc-title">
+        Deception+
+        <span class="dc-badge" id="dc-version-badge">v2</span>
+        <span class="dc-badge" id="dc-label-badge" style="display:none"></span>
+      </div>
+      <p class="dc-blurb">
+        Measures how much a pitcher's <b>arm slot, release point, extension, and delivery consistency</b>
+        predict outcomes — independent of pitch velocity, movement, and spin. This is the "mechanics as
+        deception" question: does the way a pitcher's body moves, rather than what the pitch does, make
+        hitters worse off? The model uses only measurable body and release data from Statcast; it cannot
+        see pitch type, velocity, or anything that describes the pitch itself, so it can't re-derive Stuff+
+        under a different name. Scores are <b>cross-fitted</b>: every pitcher's score comes from models
+        that never trained on their own pitches, so there is no data leakage.
+      </p>
+      <div class="dc-scale-box">
+        <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b>
+        above or below league average — a score of 120 means a pitcher's mechanics graded roughly 2 SD
+        more deceptive than the league that year. Scores are standardized within each season, so the
+        same score in different years means the same relative standing. Minimum <b>300 pitches</b>
+        to qualify; below-threshold pitchers are shrunk toward average and marked unqualified.
+      </div>
+    </div>
+
+    <!-- LEADERBOARD -->
+    <div class="card section">
+      <div class="dc-controls">
+        <div>
+          <span class="control-label">Season</span>
+          <select id="dc-season-sel" class="control-select"></select>
+        </div>
+        <div id="dc-lb-caption" class="dc-lb-caption" style="margin-top:18px;"></div>
+      </div>
+      <div class="dc-lb-grid">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Most Deceptive</div>
+          <div id="dc-lb-top"></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Least Deceptive</div>
+          <div id="dc-lb-bot"></div>
         </div>
       </div>
     </div>
 
-    <div class="card section" id="dc-verdict-card">
-      <h3 style="margin-top:0;">Is This Actually Useful?</h3>
-      <div class="dc-verdict" id="dc-verdict"></div>
-    </div>
-
-    <div class="dc-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Model</h3>
-        <div class="dc-meta-grid" id="dc-meta-mount"></div>
-        <div class="dc-excluded" id="dc-excluded-note"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Split-Half Reliability</h3>
-        <table class="data-table dc-table" id="dc-reliability-table"></table>
-        <div class="dc-note">Correlation between the score computed on two independent random halves of each pitcher's pitches - is this measuring something stable, or noise?</div>
-      </div>
-    </div>
-
-    <div class="dc-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Does It Predict Real Outcomes?</h3>
-        <table class="data-table dc-table" id="dc-validity-table"></table>
-        <div class="dc-note" id="dc-validity-note"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Feature Importance (SHAP)</h3>
-        <div id="dc-shap-mount"></div>
-        <div class="dc-note">Mean absolute SHAP value per feature - how much each one actually moves a prediction, on average.</div>
-      </div>
-    </div>
-
-    <div class="dc-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Highest Deception+</h3>
-        <table class="data-table dc-table" id="dc-top-table"></table>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Lowest Deception+</h3>
-        <table class="data-table dc-table" id="dc-bottom-table"></table>
-      </div>
-    </div>
-
+    <!-- PITCHER LOOKUP -->
     <div class="card section">
-      <h3 style="margin-top:0;">Cross-Validation (leave-one-season-out, 2021-2025)</h3>
-      <table class="data-table dc-table" id="dc-cv-table"></table>
-    </div>
-
-    <div class="card section">
-      <h3 style="margin-top:0;">Inspect a Pitcher</h3>
-      <div class="controls-row">
-        <div style="min-width:320px; flex:1; max-width:420px;">
+      <h3 style="margin-top:0;">Pitcher Lookup</h3>
+      <div class="dc-lookup-controls">
+        <div style="min-width:320px;flex:1;max-width:420px;">
           <span class="control-label">Pitcher</span>
           <div class="player-search">
-            <input type="text" class="player-search-input" id="player-search-input" placeholder="Search any pitcher..." autocomplete="off" />
-            <div class="player-search-dropdown" id="player-search-dropdown"></div>
+            <input type="text" class="player-search-input" id="dc-pitcher-input" placeholder="Search any pitcher…" autocomplete="off" />
+            <div class="player-search-dropdown" id="dc-pitcher-dropdown"></div>
           </div>
         </div>
+        <div>
+          <span class="control-label">Season</span>
+          <select id="dc-pitcher-season-sel" class="control-select"></select>
+        </div>
       </div>
-      <div id="dc-pitcher-status"></div>
-      <div id="dc-pitcher-mount" style="margin-top:16px;"></div>
+      <div class="dc-lookup-status" id="dc-pitcher-status"></div>
+      <div id="dc-pitcher-mount" style="margin-top:12px;display:none;">
+        <div class="dc-summary">
+          <div>
+            <div class="dc-summary-score" id="dc-score-val">—</div>
+            <div class="dc-summary-meta">
+              <span id="dc-pct-val" class="dc-summary-pct"></span><br>
+              <span id="dc-pitches-val"></span>
+            </div>
+          </div>
+          <div id="dc-unqualified-msg" class="dc-unqualified" style="display:none;">
+            Below 300-pitch minimum — score is shrunk toward average and less reliable.
+          </div>
+        </div>
+
+        <!-- Mechanics inputs vs league percentiles -->
+        <div style="margin-bottom:16px;">
+          <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Mechanics vs League</div>
+          <div id="dc-mech-bars"></div>
+        </div>
+
+        <!-- Season history -->
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Season History</div>
+          <table class="dc-career-table" id="dc-career-table">
+            <thead><tr>
+              <th style="text-align:left;">Season</th>
+              <th>Deception+</th>
+              <th>Pctile</th>
+              <th>Pitches</th>
+            </tr></thead>
+            <tbody id="dc-career-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
-    <h2 style="font-size:17px;font-weight:800;color:var(--forest-dark);margin:32px 0 14px;">What's behind it</h2>
-    <div id="guts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;"></div>
+    <!-- UNDER THE HOOD -->
+    <div class="dc-hood section">
+      <button class="dc-hood-toggle" aria-expanded="false" id="dc-hood-btn">
+        <span>Under the hood</span>
+        <span class="dc-hood-chevron">▼</span>
+      </button>
+      <div class="dc-hood-body" id="dc-hood-body">
+        <div class="dc-cards" id="dc-cards-mount"></div>
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Version history</div>
+        <ul id="dc-version-list" style="padding-left:20px;margin:0;font-size:13px;line-height:1.7;color:var(--text);">
+          <li><b>v1</b> — proof-of-concept single-season model. Per-request scoring. Split-half r=0.998 was artifact (consistency features computed on full season before splitting). Body features (height, weight) could memorize pitcher identity.</li>
+          <li><b>v2</b> — cross-fitted ensemble (pitcher-grouped folds). Removed body identity features (height, weight, arm_angle_std, release_extension_std, release_consistency) per pre-registered identifiability rules. No per-request scoring — all scores pre-computed. Season selector enabled (2021–2026). Gates and evidence bar checked.</li>
+        </ul>
+      </div>
+    </div>
 
-    <h2 style="font-size:17px;font-weight:800;color:var(--forest-dark);margin:32px 0 14px;">How it evolved</h2>
-    <ol id="evolution-list" style="padding-left:20px;margin:0 0 28px;font-size:13px;line-height:1.7;color:var(--text);"></ol>
-  </div>
+  </div><!-- /page -->
 
   <script src="js/api.js?v=17"></script>
   <script src="js/nav.js?v=113"></script>
   <script src="js/player-context.js?v=1"></script>
   <script src="js/player-search.js?v=21"></script>
-  <script src="js/deception-model.js?v=3"></script>
-  <script>
-  (async function () {
-    try {
-      const [vr, mp] = await Promise.all([
-        getJSON("content/validation_results.json"),
-        getJSON("content/model_pages.json"),
-      ]);
-      const m = vr["deception_plus"];
-      if (m) {
-        const cards = [m.card_repeatability, m.card_predictive, m.card_independence, m.card_stress];
-        const VERDICT_COLOR = { "Passes": "#1a7f37", "Mixed": "#b45309", "Fails": "#c9302c" };
-        document.getElementById("guts-grid").innerHTML = cards.map(c => {
-          const col = VERDICT_COLOR[c.verdict] || "var(--text-muted)";
-          return `<div class="card" style="font-size:13px;">
-            <div style="font-weight:700;font-size:14px;color:var(--forest-dark);margin-bottom:6px;">${c.title}</div>
-            <div style="color:var(--text-muted);margin-bottom:8px;line-height:1.55;">${c.what_it_tests}</div>
-            <div style="font-weight:700;color:${col};">${c.verdict}</div>
-            <div style="color:var(--text-muted);font-size:12px;margin-top:4px;line-height:1.5;">${c.verdict_note}</div>
-          </div>`;
-        }).join("");
-      }
-      const ev = mp["deception_plus"] && mp["deception_plus"].evolution;
-      if (ev && ev.items) {
-        document.getElementById("evolution-list").innerHTML = ev.items.map(i => `<li style="margin-bottom:8px;">${i}</li>`).join("");
-      }
-    } catch(e) { console.error("guts load error:", e); }
-  })();
-  </script>
+  <script src="js/deception-model.js?v=4"></script>
 </body>
 </html>
-
-
-

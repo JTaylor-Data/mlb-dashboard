@@ -65,3 +65,7 @@ diagnostics/stuff_v4/*.parquet
 diagnostics/location_v3/*.parquet
 diagnostics/location_v3/v2_outputs/*.parquet
 training/location_v3_checkpoints/
+
+# Deception v2 large diagnostic artifacts (regenerable)
+diagnostics/deception_v2/*.parquet
+# Note: *.log is already covered by the *.log rule above
