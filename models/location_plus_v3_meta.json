@@ -1,0 +1,137 @@
+{
+  "feat_cols": [
+    "plate_x",
+    "plate_z",
+    "balls",
+    "strikes",
+    "pitch_type",
+    "stand",
+    "season"
+  ],
+  "cat_cols": [
+    "pitch_type",
+    "stand",
+    "season"
+  ],
+  "bip_classes": [
+    "fly_ball__ev_100_105",
+    "fly_ball__ev_105plus",
+    "fly_ball__ev_90_95",
+    "fly_ball__ev_95_100",
+    "fly_ball__ev_lt90",
+    "ground_ball__ev_100_105",
+    "ground_ball__ev_105plus",
+    "ground_ball__ev_90_95",
+    "ground_ball__ev_95_100",
+    "ground_ball__ev_lt90",
+    "line_drive__ev_100_105",
+    "line_drive__ev_105plus",
+    "line_drive__ev_90_95",
+    "line_drive__ev_95_100",
+    "line_drive__ev_lt90",
+    "popup__ev_100_105",
+    "popup__ev_105plus",
+    "popup__ev_90_95",
+    "popup__ev_95_100",
+    "popup__ev_lt90"
+  ],
+  "all_cats": {
+    "pitch_type": [
+      "AB",
+      "CH",
+      "CS",
+      "CU",
+      "FA",
+      "FC",
+      "FF",
+      "FO",
+      "FS",
+      "IN",
+      "KN",
+      "SC",
+      "SI",
+      "SL",
+      "ST",
+      "SV"
+    ],
+    "stand": [
+      "L",
+      "R"
+    ],
+    "season": [
+      "2015",
+      "2016",
+      "2017",
+      "2018",
+      "2019",
+      "2021",
+      "2022",
+      "2023",
+      "2024",
+      "2025",
+      "2026"
+    ]
+  },
+  "hbp_rate_no_swing": 0.00514414520147176,
+  "seeds": {
+    "seed_A": 42,
+    "seed_B": 123
+  },
+  "row_counts": {
+    "xswing": 7843295,
+    "xcs": 4127786,
+    "xwhiff": 3715509,
+    "xfoul": 2787759,
+    "bip": 1365006
+  },
+  "scoring_config": {
+    "chosen_variant": "S1",
+    "use_shrinkage": false,
+    "yoy_s1_pooled": 0.659,
+    "leaderboard_min_pitches": 100,
+    "r2_mix": 0.3378,
+    "yoy_s0_pooled": 0.6818,
+    "split_half_300": 0.8145
+  },
+  "rv_table_version": "count_specific_v3",
+  "rv_table_path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\diagnostics\\location_v3\\count_rv_table.json",
+  "model_hashes": {
+    "xswing": "3e069dff8b52a427",
+    "xcs": "9330c188a3160f47",
+    "xwhiff": "8b378e239eb1022e",
+    "xfoul": "ce244743d31f0e08",
+    "bip": "1f35273d94f6e6c8"
+  },
+  "train_seasons": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "scored_seasons": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "trained_at": "2026-10-02T20:11:27.296274",
+  "era_check": {
+    "ks_x": 0.0069,
+    "ks_z": 0.0053,
+    "result": "2015 included"
+  }
+}

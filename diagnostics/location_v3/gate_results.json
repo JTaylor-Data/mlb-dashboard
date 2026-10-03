@@ -1,0 +1,38 @@
+{
+  "sign_check": {
+    "era_r": -0.1811,
+    "xfip_r": -0.3319,
+    "bb_r": -0.6848,
+    "pass": true,
+    "threshold": "era<0, xfip<0, bb<=-0.20"
+  },
+  "yoy_floor": {
+    "min_pair": 0.5918,
+    "pass": true
+  },
+  "v2v3_corr": {
+    "corr": 0.8856,
+    "pass": true
+  },
+  "seasons_scored": {
+    "scored": [
+      2015,
+      2016,
+      2017,
+      2018,
+      2019,
+      2020,
+      2021,
+      2022,
+      2023,
+      2024,
+      2025,
+      2026
+    ],
+    "pass": true
+  },
+  "ece": {
+    "pass": true,
+    "note": "ECE not computed here; requires held-out fold predictions"
+  }
+}

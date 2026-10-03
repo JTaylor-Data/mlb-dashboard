@@ -124,9 +124,23 @@ def checkpoint_done(name):
     return (CHECKPOINT_DIR / f"{name}.done").exists()
 
 
+class _NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        import numpy as np
+        if isinstance(obj, (np.integer,)):
+            return int(obj)
+        if isinstance(obj, (np.floating,)):
+            return float(obj)
+        if isinstance(obj, (np.bool_,)):
+            return bool(obj)
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super().default(obj)
+
+
 def mark_checkpoint(name, data=None):
     p = CHECKPOINT_DIR / f"{name}.done"
-    p.write_text(json.dumps(data or {}, indent=2))
+    p.write_text(json.dumps(data or {}, indent=2, cls=_NumpyEncoder))
     log(f"[DONE] Checkpoint: {name}")
 
 
@@ -1236,8 +1250,8 @@ def run_part3(conn, scoring_config):
 
     part3_result = {
         "ablation_results": ablation_results,
-        "drop_season": drop_season,
-        "add_p_throws": add_p_throws,
+        "drop_season": bool(drop_season),
+        "add_p_throws": bool(add_p_throws),
         "chosen_feat_cols": chosen_feat_cols,
     }
     mark_checkpoint("part3_done", part3_result)
@@ -1460,11 +1474,12 @@ def run_part4(conn, scoring_config, feat_cols, rv_table_data):
     log(f"  2020 pitchers: {len(s2020)}")
 
     # Compare v3 vs v2 pitcher-season correlation
+    # v3 column: "score"; v2 column: "plus_score" — different names, no suffix collision
     v2_scores = pd.read_parquet(V2_DIR / "location_plus_v2_scores.parquet")
     v2_scores["season"] = v2_scores["season"].astype(int)
     merged_v = v3_scores.merge(v2_scores, on=["pitcher_id", "season"],
                                 suffixes=("_v3", "_v2"))
-    v2v3_corr = merged_v["score_v3"].corr(merged_v["score_v2"])
+    v2v3_corr = merged_v["score"].corr(merged_v["plus_score"])
     log(f"  v3 vs v2 pitcher-season correlation: {v2v3_corr:.4f}")
 
     part4_result = {
@@ -1538,11 +1553,12 @@ def run_part5(conn):
     log(f"    Min pair YoY: {min(p['r'] for p in yoy_pairs) if yoy_pairs else 'n/a'}")
 
     # 4. v3 vs v2 correlation
+    # v3 column: "score"; v2 column: "plus_score" — different names, no suffix collision
     v2_scores = pd.read_parquet(V2_DIR / "location_plus_v2_scores.parquet")
     v2_scores["season"] = v2_scores["season"].astype(int)
     merged_v = v3_scores.merge(v2_scores, on=["pitcher_id", "season"],
                                 suffixes=("_v3", "_v2"))
-    v2v3_corr = merged_v["score_v3"].corr(merged_v["score_v2"])
+    v2v3_corr = merged_v["score"].corr(merged_v["plus_score"])
     validation["v2v3_corr"] = round(v2v3_corr, 4)
     log(f"    v3 vs v2 pitcher-season corr: {v2v3_corr:.4f}")
 
@@ -1584,18 +1600,18 @@ def run_part6_gates(validation):
     bb_r = corrs.get("bb_rate", {}).get("r", 0)
     gates["sign_check"] = {
         "era_r": era_r, "xfip_r": xfip_r, "bb_r": bb_r,
-        "pass": era_r < 0 and xfip_r < 0 and bb_r <= -0.20,
+        "pass": bool(era_r < 0 and xfip_r < 0 and bb_r <= -0.20),
         "threshold": "era<0, xfip<0, bb<=-0.20",
     }
 
     # Gate 2: No YoY pair < 0.30
     pairs = validation.get("yoy_pairs", [])
     min_yoy = min((p["r"] for p in pairs), default=1.0)
-    gates["yoy_floor"] = {"min_pair": round(min_yoy, 4), "pass": min_yoy >= 0.30}
+    gates["yoy_floor"] = {"min_pair": round(min_yoy, 4), "pass": bool(min_yoy >= 0.30)}
 
     # Gate 3: v3 vs v2 >= 0.70
     v2v3 = validation.get("v2v3_corr", 0)
-    gates["v2v3_corr"] = {"corr": v2v3, "pass": v2v3 >= 0.70}
+    gates["v2v3_corr"] = {"corr": v2v3, "pass": bool(v2v3 >= 0.70)}
 
     # Gate 4: seasons scored
     v3_scores = pd.read_parquet(DIAG_DIR / "location_v3_scores.parquet")
@@ -1603,7 +1619,7 @@ def run_part6_gates(validation):
     expected = set(range(2015, 2027))
     gates["seasons_scored"] = {
         "scored": sorted(scored_seasons),
-        "pass": expected.issubset(scored_seasons),
+        "pass": bool(expected.issubset(scored_seasons)),
     }
 
     # Gate 5: ECE — not computed in this script (needs calibration curves)
@@ -1622,7 +1638,7 @@ def run_part6_gates(validation):
             f"Failed gates: {failed}"
         )
 
-    (DIAG_DIR / "gate_results.json").write_text(json.dumps(gates, indent=2))
+    (DIAG_DIR / "gate_results.json").write_text(json.dumps(gates, indent=2, cls=_NumpyEncoder))
     return gates, all_pass
 
 

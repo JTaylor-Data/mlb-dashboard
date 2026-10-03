@@ -215,3 +215,14 @@ Branch: stuff-page-remake. Tags: pre-stuff-page-remake, post-stuff-page-remake. 
 ## [2026-10-02] Location v3 BIP class ordering in v2 re-scoring
 - Default applied: fixed to use v2 meta bip_classes for v2 model predictions; sorted-alphabetical for v3 model predictions
 - Reason: v2 model predict_proba columns must map to training class encoding order (frequency-ordered from v2 meta), not alphabetical. Fixed in rescore_with_v2(); v3 models use sorted() consistently. Mismatch would silently corrupt xRV values.
+
+---
+
+## LOC-V3-BUG-01: KeyError 'score_v3' in v2v3 comparison (Part 4)
+
+**Timestamp**: 2026-10-02 20:24 (crash), 20:26 (fixed)
+**Context**: Part 4 final fit completed all training and scoring successfully (6744 pitcher-seasons saved). Crash occurred in diagnostic comparison block trying to correlate v3 vs v2 scores.
+**Root cause**: v3_scores column is named 'score'; v2_scores column is named 'plus_score'. When merging with suffixes=("_v3","_v2"), pandas only applies suffixes to columns that collide — since 'score' and 'plus_score' don't collide, neither gets a suffix. Code referenced non-existent 'score_v3'.
+**Fix applied**: Changed both occurrences (Part 4 line ~1481, Part 5 line ~1560) to use merged_v["score"].corr(merged_v["plus_score"]).
+**Result**: v2v3_corr = 0.8856 (computed from saved parquets; exceeds 0.70 gate threshold).
+**Default applied**: Computed correlation manually, wrote part4_done checkpoint, relaunched for Part 5.
