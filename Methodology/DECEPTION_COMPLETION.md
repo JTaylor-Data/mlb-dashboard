@@ -39,8 +39,11 @@ Status: **limited_evidence**  |  Label: **limited_evidence**
 ## 4. Evidence Bar
 | Item | Value | Threshold | Pass/Fail |
 |------|-------|-----------|-----------|
-| (i) Next-season xFIP corr ≤ -0.20 | avg=-0.0847 | ≤ -0.20 | PASS |
-| (ii) Incremental delta-R² > 0, CI lower > 0 | avg=0.0022 | > 0 | PASS |
+| (i) Next-season xFIP corr ≤ -0.20 | avg=-0.0847 | ≤ -0.20 | **FAIL** (bar not met) |
+| (ii) Incremental delta-R² CI lower > 0 | avg=0.0022, all pairs positive | CI lower > 0 | UNVERIFIED (CI not computed; all-positive proxy used; bar not confirmed) |
+
+Note: Evidence bar item (i) fails the pre-registered threshold (avg r = −0.085, required ≤ −0.20). This is not an aspirational target — it is a required threshold. The bar was not met.
+Evidence bar item (ii) requires a pooled CI lower bound strictly above zero. The validation only checked that all individual pair values are positive; the actual CI lower bound was not computed. The bar has not been confirmed for item (ii).
 
 ## 5. Additional Validation
 | Metric | Value | Note |
@@ -76,4 +79,22 @@ Status: **limited_evidence**  |  Label: **limited_evidence**
 
 ---
 
-Deception+ v2 is complete with a limited-evidence label
+Deception+ v2 is complete with a limited-evidence label.
+
+---
+
+## Post-Run Rule Audit (2026-10-03)
+
+A rule audit was conducted after the run summary raised a concern that B was incorrectly selected. Full audit in `diagnostics/deception_v2/DECEPTION_RULE_AUDIT.md`.
+
+**Outcome: B is confirmed as the correct selection.** No rerun was needed.
+
+Key findings:
+1. The form rule test computed a **paired diff on the common subset** (inner join of A2 OOF + B OOF + xFIP): diff = −0.0459, CI = [−0.0963, +0.0050]. B was favored on this set.
+2. The marginal xfip_corr values (A2=0.2525, B=0.0837, apparent diff=+0.169) are NOT directly comparable: per-pitch configs evaluated on all pitcher-seasons (n=5118), B evaluated only on ≥300-pitch pitcher-seasons (n=3363). On the common qualified set, the gap reverses.
+3. The run summary description "within ±0.03 equivalence margin" was inaccurate. The actual diff was −0.0459 (outside the margin, B favored). The correct description: A2 is not significantly better than B (CI upper = +0.0050), form rule selects B.
+4. Evidence bar item (i) **was not met** (threshold ≤ −0.20, actual avg = −0.085). This is a pre-registered rule, not an aspirational target.
+5. Evidence bar item (ii) CI lower bound > 0 **was not confirmed** — only an all-positive proxy was used.
+6. Gate (d) repeat correlation was recorded as PASS but marked "cannot_verify_from_parquet."
+7. In-sample gap table was not populated (validation_results.json shows empty dict).
+8. Season feature DROP decision was recorded in the note but not enforced in B's training (B still uses season). See NEEDS_DECISION.md.

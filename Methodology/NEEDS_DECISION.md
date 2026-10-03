@@ -249,3 +249,38 @@ Branch: stuff-page-remake. Tags: pre-stuff-page-remake, post-stuff-page-remake. 
 - Season feature dropped if inconclusive per pre-registered rule
 
 **Logged**: 2026-10-03 by automated training run (deception-v2 branch).
+
+---
+
+## DEC-V2-02: Season feature — DROP recorded but not enforced in B training (2026-10-03)
+
+**Found during**: Post-run rule audit (deception-v2 branch).
+
+**Context**: The Part 2 screening rule `inconclusive_means_drop` triggered for the `season` feature (diff = −0.0012, below the 0.03 margin). The decision was recorded in `chosen_config.json` as `season_drop_note: "DECISION: inconclusive (diff=-0.0012) -> DROP per pre-registered rule"`. However, config B's feature list (`F2 = release_pos_x_as, release_pos_z, release_extension, arm_angle, season`) still includes `season`, and the model was trained with `season` present. The drop was noted but not implemented.
+
+**Current state**: The live model includes `season`. Gate (c) hygiene check did not flag `season` as a violation (it is classified as a mechanics/context feature, not an identity-prone feature). The gate passed.
+
+**Decision needed**: Should B be retrained with `season` removed from F2, or is `season` acceptable as a context feature (era-adjustment) in the pitcher-season model?
+
+**Implications**:
+- Removing `season`: slight loss per the screening result (diff = −0.0012, essentially zero), but honors the pre-registered inconclusive-means-drop rule
+- Keeping `season`: small era-adjustment benefit; contradicts the recorded drop decision
+- If removed, the feature set becomes F2_no_season = [release_pos_x_as, release_pos_z, release_extension, arm_angle]; a retrain of B under Part B of the next audit cycle would be needed
+
+**Recommendation**: Retrain with `season` removed if strict pre-registered rule adherence is required. Accept current model if the era-adjustment benefit is judged worth the inconsistency.
+
+---
+
+## DEC-V2-03: Evidence bar item (ii) CI lower bound not computed (2026-10-03)
+
+**Found during**: Post-run rule audit (deception-v2 branch).
+
+**Context**: Spec_lock requires `"(ii) incremental_deltaR2_over_last_season_xFIP_positive_with_CI_lower_above_0"`. The validation only checked that all five individual year-pair delta-R² values are positive (range: 0.00043 to 0.00496). A pooled CI was not computed; `gate_results.json` notes "CI approximated: all_positive used as proxy for CI_lower > 0."
+
+The 2022→2023 pair has delta-R² = 0.00043 — very close to zero. A proper pooled CI could plausibly include zero as the lower bound.
+
+**Decision needed**: Run the proper pooled incremental delta-R² test with a Fisher z or bootstrap pooled CI to confirm whether the lower bound is truly > 0. Until then, item (ii) cannot be marked as meeting the pre-registered threshold.
+
+**Impact**: Evidence bar item (i) already fails, so the `limited_evidence` label is correct regardless of item (ii) outcome. This is a documentation/correctness concern, not a promotion-blocking issue.
+
+**Logged**: 2026-10-03 by post-run rule audit.
