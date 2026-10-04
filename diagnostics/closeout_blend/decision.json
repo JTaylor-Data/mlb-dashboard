@@ -1,0 +1,29 @@
+{
+  "primary_outcome": "xFIP",
+  "decision": "A",
+  "tunneling_verdict": "descriptive",
+  "deception_verdict": "descriptive",
+  "timestamp": "2026-10-04T16:52:18Z",
+  "pre_registered_rules": {
+    "decision_A": "Both conditions met: blended Pitching+ earns a score",
+    "decision_B": "Only Condition 2 met: axes add beyond last season; headline is quadrant view",
+    "decision_C": "Neither condition met: both axes are descriptive"
+  },
+  "per_outcome": {
+    "xFIP": {
+      "decision": "A",
+      "cond1": true,
+      "cond2": true
+    },
+    "ERA": {
+      "decision": "A",
+      "cond1": true,
+      "cond2": true
+    },
+    "K-BB%": {
+      "decision": "B",
+      "cond1": false,
+      "cond2": true
+    }
+  }
+}

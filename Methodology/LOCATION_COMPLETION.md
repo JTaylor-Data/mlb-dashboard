@@ -101,7 +101,7 @@ One row per criterion from the Location+ v3 spec. Status: ✓ = met, ~ = partial
 | yoy_floor (min pair ≥ 0.30) | ✓ PASS | min pair YoY r=0.5918 | ≥ 0.30 |
 | v2v3_corr (≥ 0.70) | ✓ PASS | r=0.8856 | ≥ 0.70 |
 | seasons_scored (2015–2026) | ✓ PASS | All 12 seasons present | All present |
-| ece | ✓ ASSUMED PASS | Not formally computed | Flagged for future audit |
+| ece | ~ UNVERIFIED | Pitch-level ECE requires pitch IDs in OOF parquets (not stored). Pitcher-level proxy: xWhiff ECE=0.013 (pass equivalent), xSwing=0.176 (suspect), xCS/xFoul inflated (methodological mismatch). Formal gate cannot be confirmed or denied. | See B1 in CLOSEOUT_AND_BLEND_REPORT.md |
 
 All 5 gates evaluated on 2026-10-02 20:28. Full values in `diagnostics/location_v3/gate_results.json`.
 
@@ -131,7 +131,8 @@ All 5 gates evaluated on 2026-10-02 20:28. Full values in `diagnostics/location_
 | Split-half reliability table | ✓ | |
 | Outcome correlations table | ✓ | BB%, K%, ERA, xFIP |
 | YoY stability display | ✓ | Pooled + per-pair (from validation) |
-| Next-season BB% predictive validity | ✓ | |
+| Next-season BB% predictive validity | ✓ PASS | r=−0.4335 (n=3,527), pre-reg bar ≤ −0.20. Incremental delta-R²=+0.0188 CI[0.0117,0.0278]. Closeout run 2026-10-04. |
+| Pitcher-holdout YoY (OOF ablation) | ~ | r=0.5859 (n=987 pairs, OOF V0a subsample). Pitcher-holdout analog for next-season tests: unverified. |
 | Leaderboard (top/bottom) | ✓ | Min 300 pitches |
 | Pitcher lookup (score + percentile) | ✓ | |
 | "What's behind it" cards | ✓ | From `content/validation_results.json` |
@@ -143,7 +144,7 @@ All 5 gates evaluated on 2026-10-02 20:28. Full values in `diagnostics/location_
 ## Known deviations from spec
 
 1. **Pitch-type leaderboard** (Part 7): v3 scores at pitcher-season level, not per pitch-type. Pitch-type-level leaderboard not implemented. Deferred to a future iteration.
-2. **ECE gate**: Expected calibration error not formally computed. Assumed-pass, flagged for future audit. Reason: full calibration curve requires held-out fold predictions across all 5 classifiers, which was not computed in this run.
+2. **ECE gate**: Expected calibration error not formally computed (UNVERIFIED, not "assumed pass"). Pitch-level ECE requires pitch IDs alongside OOF predictions; these were not stored. Pitcher-level proxy: xWhiff ECE=0.013, but xSwing/xCS/xFoul proxies are methodologically contaminated. To verify formally: re-run OOF scoring with pitch IDs stored. See CLOSEOUT_AND_BLEND_REPORT.md B1.
 3. **Real-time event decomposition**: The "Inspect a Pitcher" panel shows overall score and percentile only. Per-event (swing/CS/whiff/foul/BIP) decomposition is available in the v3_per_pitch.parquet but not served real-time (5 classifiers × SHAP = impractical per-request).
 4. **2020 model scores**: Averaged from season=2019 and season=2021 predictions per spec. Scores are approximate and flagged with "60-game season" note.
 

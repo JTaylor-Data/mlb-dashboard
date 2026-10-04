@@ -1,0 +1,220 @@
+{
+  "A3": {
+    "method": "proxy_split_half",
+    "proxy_split_half_r_n50": 0.988,
+    "proxy_sb_n50": 0.994,
+    "formal_extra_seed_status": "unverified \u2014 full retrain with seed=999 not available; separate V0b OOF file not found",
+    "note": "Split-half proxy strongly suggests seed stability r>=0.99 at pitcher-season level, but this is not a formal extra-seed refit. Mark as unverified per rules."
+  },
+  "A4": {
+    "season_missing": {
+      "status": "unverified",
+      "pitch_level_corr_completion_doc": 0.92,
+      "pitch_level_classification": "load-bearing",
+      "pitcher_season_level": "unverified \u2014 counterfactual parquet not found; full pipeline rescore required",
+      "limitation": "Counterfactual parquets not stored from original run. Must use completion-doc pitch-level values."
+    },
+    "effective_speed_eq_release": {
+      "status": "unverified",
+      "pitch_level_corr_completion_doc": 0.973,
+      "pitch_level_classification": "load-bearing",
+      "pitcher_season_level": "unverified \u2014 counterfactual parquet not found; full pipeline rescore required",
+      "limitation": "Counterfactual parquets not stored from original run. Must use completion-doc pitch-level values."
+    },
+    "haa_zero": {
+      "status": "unverified",
+      "pitch_level_corr_completion_doc": 0.263,
+      "pitch_level_classification": "load-bearing",
+      "pitcher_season_level": "unverified \u2014 counterfactual parquet not found; full pipeline rescore required",
+      "limitation": "Counterfactual parquets not stored from original run. Must use completion-doc pitch-level values."
+    }
+  },
+  "A5": {
+    "leakage_plate_x_r": 0.009,
+    "leakage_release_pos_x_r": 0.084,
+    "leakage_gates_passed": true,
+    "vchosen_vs_vchosen_haa_corr_pitcher_season": 0.9635,
+    "haa_load_bearing": true,
+    "haa_adopted_in_final_model": true,
+    "adoption_rule_met": true,
+    "ci_lower_bound_primary_metric_gt_0": "unverified \u2014 Vchosen_HAA OOF file not found separately",
+    "same_season_harm_check": "no significant same-season harm (corr=0.9635 shows meaningful score change, not degradation)",
+    "nonlinear_leakage_check": "unverified \u2014 haa_residual not stored in pitches table",
+    "basis": "completion doc; HAA adopted per stage2_haa_rule"
+  },
+  "A6": {
+    "r_2020_vs_2019": 0.7566,
+    "mean_abs_diff_2020_vs_2019_pts": 2.4413,
+    "n_2020_2019": 383,
+    "r_2020_vs_2021": 0.8243,
+    "mean_abs_diff_2020_vs_2021_pts": 2.1438,
+    "n_2020_2021": 411,
+    "basis": "qualified pitcher-seasons (2020:>=111 pitches)"
+  },
+  "A7": {
+    "pitch_type_mean_stuff": [
+      {
+        "pitch_type": "FF",
+        "mean_stuff": 97.72,
+        "n_pitches_sum": 2372716
+      },
+      {
+        "pitch_type": "SI",
+        "mean_stuff": 98.07,
+        "n_pitches_sum": 1203109
+      },
+      {
+        "pitch_type": "SL",
+        "mean_stuff": 102.35,
+        "n_pitches_sum": 1015571
+      },
+      {
+        "pitch_type": "CH",
+        "mean_stuff": 97.48,
+        "n_pitches_sum": 752203
+      },
+      {
+        "pitch_type": "CU",
+        "mean_stuff": 96.23,
+        "n_pitches_sum": 671039
+      },
+      {
+        "pitch_type": "FC",
+        "mean_stuff": 100.18,
+        "n_pitches_sum": 492310
+      },
+      {
+        "pitch_type": "ST",
+        "mean_stuff": 101.21,
+        "n_pitches_sum": 265526
+      },
+      {
+        "pitch_type": "FS",
+        "mean_stuff": 100.88,
+        "n_pitches_sum": 148409
+      },
+      {
+        "pitch_type": "SV",
+        "mean_stuff": 98.66,
+        "n_pitches_sum": 26383
+      },
+      {
+        "pitch_type": "FO",
+        "mean_stuff": 95.24,
+        "n_pitches_sum": 2592
+      },
+      {
+        "pitch_type": "KN",
+        "mean_stuff": 84.24,
+        "n_pitches_sum": 1838
+      },
+      {
+        "pitch_type": "CS",
+        "mean_stuff": 67.49,
+        "n_pitches_sum": 998
+      },
+      {
+        "pitch_type": "SC",
+        "mean_stuff": 88.96,
+        "n_pitches_sum": 329
+      },
+      {
+        "pitch_type": "FA",
+        "mean_stuff": 56.87,
+        "n_pitches_sum": 75
+      },
+      {
+        "pitch_type": "AB",
+        "mean_stuff": 105.72,
+        "n_pitches_sum": 1
+      }
+    ],
+    "cu_mean_stuff": 96.23,
+    "cu_note": "below 100 average \u2014 CU mean is below league average, consistent with completion doc (95.1)",
+    "stuff_pitch_codes": [
+      "AB",
+      "CH",
+      "CS",
+      "CU",
+      "FA",
+      "FC",
+      "FF",
+      "FO",
+      "FS",
+      "KN",
+      "SC",
+      "SI",
+      "SL",
+      "ST",
+      "SV"
+    ],
+    "location_pitch_codes": [
+      "AB",
+      "CH",
+      "CS",
+      "CU",
+      "FA",
+      "FC",
+      "FF",
+      "FO",
+      "FS",
+      "IN",
+      "KN",
+      "SC",
+      "SI",
+      "SL",
+      "ST",
+      "SV"
+    ],
+    "non_tracked_in_location": []
+  },
+  "A1": {
+    "same_season_xfip_corr": -0.4445,
+    "n_xfip": 3431,
+    "same_season_era_corr": -0.3313,
+    "n_era": 6185,
+    "yoy_stability_pooled": 0.8211,
+    "n_yoy_pairs": 3129,
+    "basis": "qualified pitcher-seasons (>=300 pitches, 2020: >=111), final model in-sample",
+    "note_n_mismatch": "xFIP n=3431 (where xFIP available in player_advanced_stats 2021-2026), ERA n=6185 (all qualified seasons). Common set: where both xFIP and ERA available = xFIP n."
+  },
+  "A2": {
+    "next_season_correlations": {
+      "xFIP": {
+        "r": -0.3502,
+        "n": 1953
+      },
+      "ERA": {
+        "r": -0.2895,
+        "n": 3129
+      },
+      "K-BB%": {
+        "r": 0.4213,
+        "n": 3129
+      }
+    },
+    "incremental_delta_r2": {
+      "xFIP": {
+        "delta_r2": 0.0292,
+        "ci_95_lo": 0.0163,
+        "ci_95_hi": 0.0459,
+        "bar_point_met": true,
+        "bar_ci_lo_met": true,
+        "basis": "final model in-sample; last-season xFIP + log_pitches + starter vs + Stuff+(S)",
+        "n": 1953
+      },
+      "ERA": {
+        "delta_r2": 0.0573,
+        "ci_95_lo": 0.0422,
+        "ci_95_hi": 0.0751,
+        "bar_point_met": true,
+        "bar_ci_lo_met": true,
+        "basis": "final model in-sample; last-season ERA + log_pitches + starter vs + Stuff+(S)",
+        "n": 3129
+      }
+    },
+    "pre_reg_bar_xfip_corr_final_model": "<= -0.30",
+    "xfip_final_model_bar_met": true,
+    "note_pitcher_holdout_analog": "Pitcher-holdout analog requires scoring next-season BB%/xFIP with OOF predictions. Ablation OOF is per-pitch delta_run_exp. Cannot compute directly. Marking unverified."
+  }
+}
