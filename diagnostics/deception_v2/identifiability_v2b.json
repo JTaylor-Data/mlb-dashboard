@@ -1,0 +1,13 @@
+{
+  "icc_between_within": 0.5553830255280481,
+  "between_pitcher_std": 0.003607477533909078,
+  "within_pitcher_std": 0.0032277534474586533,
+  "yoy_stability_per_pair": {
+    "2021->2022": 0.5357811943405909,
+    "2022->2023": 0.49365112092628094,
+    "2023->2024": 0.40343966215763866,
+    "2024->2025": 0.41327353752545487,
+    "2025->2026": 0.3166005648318209
+  },
+  "note": "high ICC expected for mechanics model; within-pitcher variation nonzero confirms no pure memorization"
+}

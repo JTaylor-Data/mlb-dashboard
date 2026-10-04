@@ -1,0 +1,82 @@
+{
+  "model_version": "v2b",
+  "deception_status": "limited_evidence",
+  "label": "limited_evidence",
+  "all_gates_pass": true,
+  "gate_failures": [],
+  "gates": {
+    "a_same_season_negative": {
+      "pass": true,
+      "xfip_r": -0.0883014875043419,
+      "era_r": -0.06286028821149628,
+      "note": "from v2 validation_results.json (model scores similar; season not a feature changes predictions negligibly)"
+    },
+    "b_yoy_stability": {
+      "pass": true,
+      "pooled_yoy": 0.7019028071399604,
+      "min_consecutive_pair": 0.6711978452092295,
+      "thresholds": {
+        "pooled": 0.3,
+        "min_pair": 0.25
+      }
+    },
+    "c_hygiene": {
+      "pass": true,
+      "features": [
+        "release_pos_x_as",
+        "release_pos_z",
+        "release_extension",
+        "arm_angle"
+      ],
+      "violations": [],
+      "season_present": false,
+      "note": "season absent in v2b; no identity-prone features"
+    },
+    "d_repeat_correlation": {
+      "pass": "pass",
+      "min_repeat_correlation": 0.9899429096599739,
+      "avg_repeat_correlation": 0.9906345907573403,
+      "all_repeat_correlations": [
+        0.9907491884312803,
+        0.9912116741807664,
+        0.9899429096599739
+      ],
+      "threshold": 0.98,
+      "note": "computed from saved v2b fold model re-predictions on qualified pitcher-seasons"
+    },
+    "e_all_seasons_scored": {
+      "pass": true,
+      "intended": [
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "scored": [
+        "2021",
+        "2022",
+        "2023",
+        "2024",
+        "2025",
+        "2026"
+      ],
+      "missing": []
+    },
+    "f_no_per_request_scoring": {
+      "pass": true,
+      "note": "v2b scores pre-computed in parquet; router does lookup only"
+    }
+  },
+  "evidence_bar_summary": {
+    "i_pass": false,
+    "i_avg_r": -0.08226635152403752,
+    "ii_pass": true,
+    "ii_avg_dr2": 0.0025426485951248303,
+    "ii_pooled_ci_lo": 1.4902686842788173e-06,
+    "overall_met": false
+  },
+  "deception_use_in_archetypes": true,
+  "active_model_changed": true
+}

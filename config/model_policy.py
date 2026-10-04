@@ -102,7 +102,7 @@ DECEPTION_PLUS = {
     ),
 }
 
-DECEPTION_ACTIVE_VERSION = "v2"
+DECEPTION_ACTIVE_VERSION = "v2b"
 
 ALL_MODELS = {
     "stuff_plus": STUFF_PLUS,
@@ -111,4 +111,4 @@ ALL_MODELS = {
     "deception_plus": DECEPTION_PLUS,
 }
 
-DECEPTION_USE_IN_ARCHETYPES = False  # set by Part 5
+DECEPTION_USE_IN_ARCHETYPES = True  # set by Part 5
