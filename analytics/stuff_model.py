@@ -177,7 +177,7 @@ def _raw_predictions(conn, season):
     from analytics.stuff_features import RAW_QUERY_COLUMNS
     df = pd.read_sql(f"""
         SELECT {', '.join(RAW_QUERY_COLUMNS)} FROM pitches
-        WHERE season = ? AND delta_run_exp IS NOT NULL
+        WHERE season = ? AND delta_run_exp IS NOT NULL AND game_type = 'R'
     """, conn, params=(season,))
     if df.empty:
         out = pd.DataFrame(columns=["pitcher_id", "pitch_type", "stand", "pred"])
@@ -281,7 +281,8 @@ def _shrunk_group_means(raw, group_cols, k_by_type, fallback_k, type_means):
 
 
 def _to_stuff_plus(values, norm_mean, norm_std):
-    return 100 - 10 * (values - norm_mean) / norm_std
+    from analytics.location_features import to_plus_scale
+    return to_plus_scale(values, norm_mean, norm_std)
 
 
 def _type_norm_params(raw):
@@ -399,7 +400,7 @@ def pitcher_shap_breakdown(conn, season, pitcher_id, league_raw):
 
     df = pd.read_sql(f"""
         SELECT {', '.join(RAW_QUERY_COLUMNS)} FROM pitches
-        WHERE season = ? AND pitcher_id = ? AND delta_run_exp IS NOT NULL
+        WHERE season = ? AND pitcher_id = ? AND delta_run_exp IS NOT NULL AND game_type = 'R'
     """, conn, params=(season, pitcher_id))
     if df.empty:
         return {}

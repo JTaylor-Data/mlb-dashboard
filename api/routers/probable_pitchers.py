@@ -19,6 +19,7 @@ from fastapi import APIRouter, Depends, Query
 from analytics.stuff_model import compute_stuff_plus, overall_stuff_plus
 from analytics.tunneling_v2_model import _raw_predictions as _tun_raw
 from analytics.location_v3_model import _raw_predictions as _loc_raw
+from analytics.location_features import to_plus_scale
 from api.routers.deception_report import _raw_predictions_table as _dec_scores_table
 
 from api.cache import ttl_cache
@@ -51,7 +52,7 @@ def _tunneling_dict(conn, season):
         return {}
     mean, std = raw["xrv"].mean(), raw["xrv"].std()
     g = raw.groupby("pitcher_id")["xrv"].mean().reset_index()
-    g["score"] = 100 - 10 * (g["xrv"] - mean) / std
+    g["score"] = to_plus_scale(g["xrv"], mean, std)
     return {int(r.pitcher_id): round(float(r.score), 1) for r in g.itertuples()}
 
 
@@ -69,7 +70,7 @@ def _location_dict(conn, season):
         return {}
     mean, std = q["mean_xrv"].mean(), q["mean_xrv"].std()
     q = q.copy()
-    q["score"] = 100 - 10 * (q["mean_xrv"] - mean) / std
+    q["score"] = to_plus_scale(q["mean_xrv"], mean, std)
     return {int(r.pitcher_id): round(float(r.score), 1) for r in q.itertuples()}
 
 

@@ -22,6 +22,7 @@ from analytics.stuff_model import compute_stuff_plus, overall_stuff_plus
 from analytics.tunneling_v3_model import _raw_predictions as _tun_raw
 from analytics.location_model import _raw_predictions as _loc_raw, official_location_plus
 from analytics.deception_model import _raw_predictions as _dec_raw
+from analytics.location_features import to_plus_scale
 
 from api.cache import ttl_cache
 from api.db import get_conn
@@ -54,7 +55,7 @@ def _all_tunneling_plus(conn, season):
     mean, std = raw["pred"].mean(), raw["pred"].std()
     g = (raw.groupby("pitcher_id")["pred"].mean()
            .reset_index().rename(columns={"pred": "mean_pred"}))
-    g["score"] = 100 - 10 * (g["mean_pred"] - mean) / std
+    g["score"] = to_plus_scale(g["mean_pred"], mean, std)
     return {int(r.pitcher_id): round(float(r.score), 1) for r in g.itertuples()}
 
 
@@ -85,7 +86,7 @@ def _all_deception_plus(conn, season):
     mean, std = raw["pred"].mean(), raw["pred"].std()
     g = (raw.groupby("pitcher_id")["pred"].mean()
            .reset_index().rename(columns={"pred": "mean_pred"}))
-    g["score"] = 100 - 10 * (g["mean_pred"] - mean) / std
+    g["score"] = to_plus_scale(g["mean_pred"], mean, std)
     return {int(r.pitcher_id): round(float(r.score), 1) for r in g.itertuples()}
 
 

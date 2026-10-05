@@ -25,6 +25,7 @@ from api.db import get_conn
 from analytics.stuff_model import compute_stuff_plus_if_cached, overall_stuff_plus
 from analytics.tunneling_v2_model import raw_predictions_if_cached as _tun_raw_if_cached
 from analytics.location_v3_model import raw_predictions_if_cached as _loc_raw_if_cached
+from analytics.location_features import to_plus_scale
 from api.routers.deception_report import (
     REPORT_SEASON as DEC_SEASON,
     _pitcher_breakdown_cached as _dec_breakdown_cached,
@@ -101,7 +102,10 @@ def _player_awards(conn, player_id):
 
 def _pitcher_scores_from_db(conn, pitcher_id):
     """Read all pre-computed model scores for a pitcher from pitcher_model_scores.
-    Returns {season: {stuff_plus, tunneling_plus, location_plus}} — instant, no LightGBM."""
+    Returns {season: {stuff_plus, tunneling_plus, location_plus}} — instant, no LightGBM.
+
+    NOTE: This table may be populated from an older model version. Prefer
+    _pitcher_scores_from_parquets() which reads from the active score parquets."""
     try:
         rows = conn.execute("""
             SELECT season, stuff_plus, tunneling_plus, location_plus
@@ -111,6 +115,83 @@ def _pitcher_scores_from_db(conn, pitcher_id):
                 for r in rows}
     except Exception:
         return {}
+
+
+def _pitcher_scores_from_parquets(pitcher_id, season):
+    """Read Stuff+ and Location+ for a past season directly from the active score parquets.
+    Returns {stuff_plus, tunneling_plus, location_plus} or None if parquets not available.
+
+    This is preferred over _pitcher_scores_from_db for past seasons because the DB table
+    (pitcher_model_scores) may have been populated by an older model version, while the
+    parquets in scores/ always reflect the active model versions (v4, v3, v3)."""
+    from pathlib import Path
+    import pandas as pd
+    SCORES_DIR = Path(__file__).resolve().parent.parent.parent / "scores"
+
+    result = {}
+
+    # Stuff+ v4
+    try:
+        from analytics.stuff_model import STUFF_ACTIVE_VERSION
+        sp_path = SCORES_DIR / f"stuff_plus_{STUFF_ACTIVE_VERSION}_{season}.parquet"
+        if sp_path.exists():
+            raw = pd.read_parquet(sp_path)
+            sub = raw[raw["pitcher_id"] == pitcher_id]
+            if not sub.empty:
+                # plus-scale: global mean/std from all pitches, then per-pitcher weighted mean
+                norm_mean = float(raw["pred"].mean())
+                norm_std = float(raw["pred"].std())
+                if norm_std > 0:
+                    from analytics.stuff_model import _shrinkage_params, _shrunk_group_means
+                    k_by_type, fallback_k, type_means = _shrinkage_params(raw)
+                    g = _shrunk_group_means(raw, ["pitcher_id", "pitch_type"], k_by_type, fallback_k, type_means)
+                    pitcher_g = g[g["pitcher_id"] == pitcher_id]
+                    if not pitcher_g.empty:
+                        import numpy as np
+                        stuff_plus = float(np.average(
+                            to_plus_scale(pitcher_g["shrunk_mean"], norm_mean, norm_std),
+                            weights=pitcher_g["n_pitches"],
+                        ))
+                        result["stuff_plus"] = round(stuff_plus, 1)
+    except Exception:
+        pass
+
+    # Tunneling+ v3 parquet
+    try:
+        tun_path = SCORES_DIR / f"tunneling_plus_v3_{season}.parquet"
+        if tun_path.exists():
+            raw = pd.read_parquet(tun_path)
+            sub = raw[raw["pitcher_id"] == pitcher_id]["xrv"]
+            if len(sub) > 0:
+                m, s = raw["xrv"].mean(), raw["xrv"].std()
+                if s > 0:
+                    result["tunneling_plus"] = round(float(to_plus_scale(sub.mean(), m, s)), 1)
+    except Exception:
+        pass
+
+    # Location+ v3 parquet
+    try:
+        loc_path = SCORES_DIR / f"location_plus_v3_{season}.parquet"
+        if loc_path.exists():
+            raw = pd.read_parquet(loc_path)
+            sub = raw[raw["pitcher_id"] == pitcher_id]["xrv"]
+            if len(sub) > 0:
+                from analytics.location_v3_model import _min_pitches
+                if len(sub) >= _min_pitches(season):
+                    g = raw.groupby("pitcher_id").agg(mean_xrv=("xrv", "mean"), n=("xrv", "size"))
+                    qual = g[g["n"] >= _min_pitches(season)]
+                    if not qual.empty and qual["mean_xrv"].std() > 0:
+                        m, s = qual["mean_xrv"].mean(), qual["mean_xrv"].std()
+                        result["location_plus"] = round(float(to_plus_scale(sub.mean(), m, s)), 1)
+    except Exception:
+        pass
+
+    if not result:
+        return None
+    result.setdefault("stuff_plus", None)
+    result.setdefault("tunneling_plus", None)
+    result.setdefault("location_plus", None)
+    return result
 
 
 def _pitcher_scores_live(pitcher_id, season):
@@ -133,7 +214,7 @@ def _pitcher_scores_live(pitcher_id, season):
             if len(pp) > 0:
                 m, s = raw["xrv"].mean(), raw["xrv"].std()
                 if s > 0:
-                    tunneling_plus = _cf(100 - 10 * (pp.mean() - m) / s, 1)
+                    tunneling_plus = _cf(to_plus_scale(pp.mean(), m, s), 1)
     except Exception:
         pass
 
@@ -146,7 +227,7 @@ def _pitcher_scores_live(pitcher_id, season):
             if len(pp) > 0:
                 m, s = raw["xrv"].mean(), raw["xrv"].std()
                 if s > 0:
-                    location_plus = _cf(100 - 10 * (pp.mean() - m) / s, 1)
+                    location_plus = _cf(to_plus_scale(pp.mean(), m, s), 1)
     except Exception:
         pass
 
@@ -238,6 +319,7 @@ def _pitcher_career(conn, player_id):
     df = _add_flags(df)
 
     season_teams = _per_season_teams_bulk(conn, player_id, True)
+    # db_scores kept as fallback only; parquets are the primary source (active model versions)
     db_scores = _pitcher_scores_from_db(conn, player_id)
     awards_by_season = _player_awards(conn, player_id)
 
@@ -288,7 +370,13 @@ def _pitcher_career(conn, player_id):
         # Top-10 rank flags
         k_rank  = _top10_rank_pitcher(conn, int(season), k, "k")
 
-        scores = db_scores.get(int(season)) or _pitcher_scores_live(player_id, int(season))
+        # Priority: (1) active score parquets, (2) live model cache, (3) DB table (stale fallback)
+        scores = (
+            _pitcher_scores_from_parquets(player_id, int(season))
+            or _pitcher_scores_live(player_id, int(season))
+            or db_scores.get(int(season))
+            or {"stuff_plus": None, "tunneling_plus": None, "location_plus": None}
+        )
 
         # Deception+ for current season only
         dec_plus = None
