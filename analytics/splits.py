@@ -7,7 +7,10 @@ import numpy as np
 import pandas as pd
 
 from analytics.metrics import compute_barrel, classify_pitcher_archetype
-from config.qualifiers import EXCLUDED_PITCH_TYPES, MIN_PITCH_TYPE_USAGE_FRACTION
+from config.qualifiers import DISPLAY_EXCLUDED, MIN_PITCH_TYPE_USAGE_FRACTION
+
+# Keep the old alias name so any future import of EXCLUDED_PITCH_TYPES still works
+EXCLUDED_PITCH_TYPES = DISPLAY_EXCLUDED
 
 # Actual All-Star Game date per season (the 1st/2nd-half boundary) - each
 # season's own break, not just 2026's, now that multiple seasons are loaded.

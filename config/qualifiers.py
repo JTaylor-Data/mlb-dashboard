@@ -72,14 +72,43 @@ def regular_season_filter(alias: str = "") -> str:
 
 
 # ---------------------------------------------------------------------------
-# Pitch-type exclusions (not tracked / not scored)
+# Pitch-type exclusions (not tracked / not scored / not displayed)
 # ---------------------------------------------------------------------------
-EXCLUDED_PITCH_TYPES: frozenset = frozenset({
-    "PO",   # pickoff
-    "UN",   # unknown
-    "EP",   # eephus (rare)
-    "FA",   # generic fastball alias (maps to FF in pipeline)
+
+# MODEL_EXCLUDED: pitch types the LightGBM models (Stuff+ v4, Location+ v3)
+# do NOT score.  Matches the EXCLUDED_PITCH_TYPES set inside
+# analytics/stuff_features.py::exclude_junk_pitch_types(), plus FA which is
+# a generic fastball alias that the PITCH_TYPE_MAP normalises away before
+# features are computed (so it never reaches the model but should be excluded
+# from any raw-pitch iteration too).
+#
+# AB (auto-batted ball, 3 rows total) and AS (auto-strike, 0 rows) are not in
+# this set because they do not appear in the live DB in any significant count.
+# If they did appear, they would belong here.
+#
+# Verified counts in live DB (2026-10-05):
+#   PO: 977   UN: 58   EP: 4,568   FA: 6,332   AB: 3   AS: 0
+MODEL_EXCLUDED: frozenset = frozenset({
+    "PO",   # pickoff — not a pitch to the batter
+    "UN",   # unclassified — Statcast classifier failure, not a real pitch type
+    "EP",   # eephus — excluded by design (position-player mop-up innings etc.)
 })
+
+# DISPLAY_EXCLUDED: superset of MODEL_EXCLUDED.
+# These types appear in the DB (may even be model-scored) but should NEVER
+# be shown to users in splits, tables, heatmaps, or leaderboards.
+# Additions beyond MODEL_EXCLUDED:
+#   FA — generic fastball alias; maps to FF in the pipeline. Displaying it
+#        as a separate row would confuse users who expect FF/SI/etc.
+DISPLAY_EXCLUDED: frozenset = frozenset(MODEL_EXCLUDED | {
+    "FA",   # generic fastball alias — normalised to FF in PITCH_TYPE_MAP
+})
+
+# Legacy alias kept for backward compatibility with callers that import
+# EXCLUDED_PITCH_TYPES by name (analytics/splits.py, etc.).  Points to the
+# display-excluded set (superset of model-excluded), which is what UI
+# callers need.
+EXCLUDED_PITCH_TYPES: frozenset = DISPLAY_EXCLUDED
 
 # Pitch-type mapping applied before scoring
 PITCH_TYPE_MAP: dict = {

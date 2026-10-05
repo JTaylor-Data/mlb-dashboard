@@ -33,6 +33,7 @@ import pandas as pd
 
 from analytics.location_features import to_plus_scale
 from analytics.stuff_features import merge_pitch_type, exclude_junk_pitch_types
+from config.qualifiers import MODEL_EXCLUDED
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 DIAG_DIR = Path(__file__).resolve().parent.parent / "diagnostics" / "location_v3"
@@ -135,7 +136,7 @@ def _cat_levels(conn):
                 WHERE season BETWEEN 2015 AND 2026
             """, conn)
             raw["pitch_type"] = raw["pitch_type"].replace({"KC": "CU"})
-            raw = raw[~raw["pitch_type"].isin({"PO", "UN", "EP"})]
+            raw = raw[~raw["pitch_type"].isin(MODEL_EXCLUDED)]
             raw["season"] = raw["season"].astype(str)
             _cache["cat_levels"] = {
                 "pitch_type": sorted(raw["pitch_type"].dropna().unique().tolist()),
