@@ -128,13 +128,38 @@ None. All findings are explainable. Server starts, all routes verified.
 
 ---
 
+## Stage Status Table (Stages 0–6)
+
+| Stage | Description | Status | Evidence |
+|-------|-------------|--------|---------|
+| Stage 0 | Safety baseline — snapshots, inventory, tests skeleton | Done | `perf/`, `Methodology/golden_snapshots/`, `tests/` created |
+| Stage 1 | Audit report, live manifest | Done | `Methodology/AUDIT_REPORT.md`, `Methodology/LIVE_MANIFEST.md` |
+| Stage 2 | Season-phase module, shared qualifiers, REPORT_SEASON fix | Done | `config/season_phase.py`, `config/qualifiers.py`, DEF-01 fixed |
+| Stage 3 | Cache audit — replace @lru_cache with ttl_cache | Done | `api/routers/deception_report.py` CACHE-02 fixed |
+| Stage 4 | Performance — vectorize iterrows() | Partial | PERF-01/PERF-05 fixed; PERF-02/03/04 outstanding |
+| Stage 5 | Reorganization — archive non-live dirs, fix model version imports | Partial | Non-live dirs archived; DEF-03/04 fixed 2026-10-05; tunneling_v3 still imported by tunneling_report.py (router URLs) |
+| Stage 6 | Verification — HANDOFF.md, benchmarks | Done | `Methodology/benchmark_stage6.txt`, `Methodology/HANDOFF.md` updated |
+
+### Follow-up Actions (2026-10-05)
+
+| Defect | Status | Notes |
+|--------|--------|-------|
+| DEF-03 | **Fixed** | probable_pitchers.py now uses tunneling_v2_model + location_v3_model |
+| DEF-04 | **Fixed** | career.py now uses tunneling_v2_model + location_v3_model |
+| ND-AUDIT-03 / DEF-09 | **Fixed** | splits.py: added pitch_type split, 422 for invalid values |
+| ND-DEC-01 | **Fixed** | deception v2b path added; leaderboard/meta/pitcher endpoints serve scores |
+| ND-07 | Unverified | tunneling_v3_model.py still loaded by tunneling_report.py; v3 not truly removed from runtime |
+| RED-08 | Partial | tunneling_v3_model no longer imported by career/probable_pitchers; still loaded by tunneling_report |
+
+---
+
 ## Priority Actions
 
 1. **Stage 2** — `config/season_phase.py`: eliminate `POSTSEASON_MODE` boolean, fix `REPORT_SEASON=2025` (DEF-01), unify `CURRENT_SEASON`
 2. **Stage 3** — Replace `@lru_cache` on deception `_raw_predictions_table` with `ttl_cache` (CACHE-02, DEF-02)
 3. **Stage 4** — Vectorize `iterrows()` calls (PERF-05)
-4. **Stage 5** — Fix import version mismatches (DEF-03, DEF-04), archive dead code
-5. **Investigate** — DEF-09: splits 500 error for Cole 2026
+4. **Stage 5** — Fix import version mismatches (DEF-03, DEF-04), archive dead code — **DONE 2026-10-05**
+5. ~~**Investigate** — DEF-09: splits 500 error for Cole 2026~~ — **FIXED 2026-10-05**
 
 ---
 
