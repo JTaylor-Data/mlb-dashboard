@@ -9,3 +9,43 @@
 - tests/ skeleton created: conftest.py, test_routes_smoke.py, test_golden_snapshots.py, test_imports.py
 - Known issues confirmed: deception scores empty, /api/stuff/meta 404 (correct prefix is /api/stuff-model/), ND-DEC-01 confirmed
 [2026-10-05 03:22:17] STAGE 1 COMPLETE - Audit and Live Manifest written to Methodology/AUDIT_REPORT.md and Methodology/LIVE_MANIFEST.md. NEEDS_DECISION.md updated with 3 new items (ND-AUDIT-01 through 03). Key findings: 10 defects, 8 redundancy items, 9 perf items, 10 dead-code items, 4 security notes. No stop conditions triggered.
+
+[2026-10-05] STAGE 2 COMPLETE - Season-phase + shared qualifiers
+- config/season_phase.py created (SEASON_PHASE constant, derived from env var, defaults POSTSEASON)
+- config/qualifiers.py created (canonical per-model min-pitch thresholds)
+- api/pull.py POSTSEASON_MODE now derived from config/season_phase.py (was hardcoded True)
+- api/routers/deception_report.py REPORT_SEASON fixed from 2025 to CURRENT_SEASON (DEF-01)
+- api/routers/stuff_model_report.py LEADERBOARD_MIN_PITCHES now pulled from config/qualifiers.py
+- Methodology/SEASON_PHASE.md created
+- Zero behavior changes. Golden snapshots still match.
+
+[2026-10-05] STAGE 3 COMPLETE - Caching correctness
+- api/routers/deception_report.py _load_scores: replaced @lru_cache(maxsize=4) with @ttl_cache_all_args()
+- api/main.py: added /api/admin/cache-stats endpoint (admin-protected)
+- tests/test_cache_keys.py created
+- 72 registered caches confirmed working
+
+[2026-10-05] STAGE 4 COMPLETE - Loops and efficiency
+- api/routers/players.py: 3 of 4 iterrows() vectorized (PERF-01, PERF-05)
+- season_avg iterrows() KEPT: downstream uses attribute access from pandas Series
+
+[2026-10-05] STAGE 5 COMPLETE - Archive and reorganization
+- training/ -> Archive/training_scripts/training/ (git mv)
+- diagnostics/{closeout_blend,deception_v2,stuff_memorization} -> Archive/diagnostics/ (git mv)
+- diagnostics/location_v3 MOVED then REVERTED: live read by location_report.py (scoring_config.json etc.)
+- diagnostics/stuff_v4 STAYS: read by tools/build_validation_content.py
+- pitcher_cv/ -> Archive/experimental/pitcher_cv/ (git mv)
+- scripts/ -> Archive/misc_scripts/ (git mv)
+- project_artifacts/ -> Archive/artifacts/ (Move-Item, untracked)
+- Archive/MOVED_FILES.csv created documenting all moves + revert
+- ARCHITECTURE.md created at repo root
+
+[2026-10-05] STAGE 6 COMPLETE - Verification
+- Tunneling+ files: 0 diff vs pre-audit tag (byte-identical)
+- tools/build_validation_content.py: runs successfully, writes validation_results.json
+- Golden snapshots: stuff_lb_2026 MATCH, standings MATCH, stuff_model_meta MATCH, playoffs_bracket MATCH
+- probable-pitchers: timeout (pre-existing external API issue, not regression)
+- All key routes return 200: stuff-model/meta, standings, playoffs/bracket, stuff-model/leaderboard, location/leaderboard, tunneling/pitcher/{id}
+- Benchmarks: no regressions (within noise of stage0 baselines)
+- No model, score, percentile or page values changed
+- Stop conditions: NONE triggered

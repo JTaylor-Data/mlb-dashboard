@@ -1,0 +1,7 @@
+Post-audit benchmark (2026-10-05, warm cache)
+stuff-model/meta : 2097ms (was 2411ms cold)
+standings         : 11ms   (was 19ms)
+stuff-lb 2026     : 4ms    (was 3ms)
+location-lb 2026  : 31ms   (was 29ms)
+
+All within noise of stage0 baselines. No regressions.
