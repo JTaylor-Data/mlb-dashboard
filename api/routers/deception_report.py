@@ -7,12 +7,12 @@ and are resolved via _bracket() which reads from that file.
 Use DECEPTION_ACTIVE_VERSION from config/model_policy.py to switch versions.
 """
 import json
-from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
 from fastapi import APIRouter, HTTPException
 
+from api.cache import ttl_cache_all_args
 from config.model_policy import CURRENT_SEASON, DECEPTION_ACTIVE_VERSION, DECEPTION_PLUS
 
 router = APIRouter(prefix="/api/deception")
@@ -28,7 +28,7 @@ _SCORES_PATHS = {
 _V1_REPORT_PATH = MODELS_DIR / "deception_plus_v1_report_2026.json"
 
 
-@lru_cache(maxsize=4)
+@ttl_cache_all_args()  # 12h TTL; cleared on /api/admin/refresh-cache (replaces @lru_cache which had no TTL)
 def _load_scores(version: str) -> pd.DataFrame:
     """Load pre-computed scores for a given version. Cached per version."""
     path = _SCORES_PATHS.get(version)

@@ -91,6 +91,27 @@ def pull_status():
     return pull.get_status()
 
 
+@admin_router.get("/admin/cache-stats")
+def cache_stats(_=Depends(_require_admin)):
+    """Internal: report cache entry counts per registered function.
+    Disabled externally by ADMIN_TOKEN when set (same as other admin endpoints)."""
+    import time as _time
+    stats = []
+    for fn in cache._registry:
+        store = fn.__closure__[0].cell_contents if fn.__closure__ else {}
+        if not isinstance(store, dict):
+            store = {}
+        now = _time.monotonic()
+        live = sum(1 for _, exp in store.values() if now < exp)
+        stats.append({
+            "function": fn.__name__,
+            "total_entries": len(store),
+            "live_entries": live,
+            "expired_entries": len(store) - live,
+        })
+    return {"caches": stats, "total_registered": len(cache._registry)}
+
+
 app.include_router(admin_router)
 app.include_router(players.router)
 app.include_router(standings.router)
