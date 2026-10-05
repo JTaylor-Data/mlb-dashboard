@@ -284,3 +284,27 @@ The 2022→2023 pair has delta-R² = 0.00043 — very close to zero. A proper po
 **Impact**: Evidence bar item (i) already fails, so the `limited_evidence` label is correct regardless of item (ii) outcome. This is a documentation/correctness concern, not a promotion-blocking issue.
 
 **Logged**: 2026-10-03 by post-run rule audit.
+
+---
+
+## ND-DEC-01: /api/deception/meta returns 404 for v2b (2026-10-04)
+
+**Found during**: Part 3 verification of integration-merge.
+
+**Context**: `/api/deception/meta` returns `{"detail":"No meta for version v2b"}`. The endpoint
+in `api/routers/deception_report.py` looks for a specific JSON payload format that v2b doesn't
+provide. The canonical data endpoint `/api/deception/report` works correctly and exposes all
+relevant metadata (trained_at, seasons_trained_on, features, cv_seasons, target, etc.).
+
+**Impact**: Minor — the /meta endpoint is not used by any frontend page. The /report endpoint
+is used instead. Not a new regression.
+
+**Options**:
+1. Add a `get_meta()` function to deception_report.py that reads from deception_plus_v2b_meta.json
+   and returns the same shape as /report-level metadata. Low effort.
+2. Leave as-is and document that /report is the canonical endpoint.
+
+**Recommendation**: Option 1 — implement the /meta endpoint properly for consistency with
+Stuff+ and Location+.
+
+**Logged**: 2026-10-04 integration-merge verification.

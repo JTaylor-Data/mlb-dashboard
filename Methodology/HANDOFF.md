@@ -1,6 +1,36 @@
 # MLB Dashboard — Project Handoff
 
-Last updated: 2026-09-28. Describes what is actually live today.
+Last updated: 2026-10-04 (merge of deception-v2 + closeout-blend + percentile cache).
+
+## WHAT CHANGED IN THIS SESSION (2026-10-04 merge)
+
+### Active model versions (updated)
+- **Stuff+**: v4 (was v3). Hash 0addb8e9. Training seasons 2016-2026. See models/deception_plus_v2b_meta.json.
+- **Location+**: v3 (was v2). Training seasons 2015-2019, 2021-2025. Models: location_plus_v3_*.txt.
+- **Deception+**: v2b (was v1). Features: release_pos_x_as, release_pos_z, release_extension, arm_angle. Status: limited_evidence. Parquet-based scoring. `DECEPTION_ACTIVE_VERSION = "v2b"` in config/model_policy.py.
+- **Tunneling+**: unchanged (out of scope). Byte-identity verified.
+
+### New infrastructure
+- **Score cache parquets**: Stuff+/Loc+/Tunneling+ pre-scored for all seasons, injected at warmup (api/warmup.py). Scripts: scripts/rescore_models.py. Weekly rescore: api/scheduler.py.
+- **Percentile pool cache**: analytics/percentile_cache.py persists complete-season (< 2026) pools to scores/percentile_pools/. Reduces past-season first-request cost from ~7s to ~360ms. Build tool: tools/build_percentile_pools.py.
+- **CURRENT_SEASON = 2026** added to config/model_policy.py as single source of truth.
+
+### Open items from this merge
+See Methodology/NEEDS_DECISION.md — specifically:
+- ND-DEC-01: /api/deception/meta returns 404 for v2b (needs meta endpoint fix)
+- ND-01: annual model retrain reminder (season feature)
+- ND-02/03: Deception+ arm_angle coverage 2021+ only
+
+### Percentile cache: how to freeze a season
+When season 2026 ends (after World Series), bump `CURRENT_SEASON` to 2027 in `config/model_policy.py`, then run:
+```bash
+python tools/freeze_season.py 2026
+```
+This builds all 6 pool files for 2026 and saves to scores/percentile_pools/2026/.
+
+---
+
+Last updated (original): 2026-09-28. Describes what is actually live today.
 
 ---
 
