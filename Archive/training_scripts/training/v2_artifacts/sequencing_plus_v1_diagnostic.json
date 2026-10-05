@@ -1,0 +1,104 @@
+{
+  "model_name": "sequencing_plus_v1",
+  "note": "DIAGNOSTIC ONLY \u2014 provisional name; not promoted to production",
+  "feature_set": {
+    "kept_from_v2": [
+      "lag1_pitch_type",
+      "lag2_pitch_type",
+      "lag3_pitch_type",
+      "lag4_pitch_type",
+      "lag5_pitch_type",
+      "lag6_pitch_type",
+      "pitch_type",
+      "p_throws",
+      "stand",
+      "season"
+    ],
+    "dropped_from_v2": [
+      "lagN_commit_distance",
+      "lagN_plate_distance",
+      "lagN_shape_break (all 6 lags)"
+    ],
+    "added": [
+      "same_as_lag1",
+      "pitch_n_in_pa",
+      "n_distinct_prior_types",
+      "arsenal_entropy"
+    ],
+    "excluded": [
+      "count (balls/strikes)",
+      "plate location"
+    ]
+  },
+  "cv_seasons": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "n_pitcher_seasons": 2608,
+  "score_spread": {
+    "mean": 100.0,
+    "std": 10.0,
+    "p10": 88.6,
+    "p90": 109.9
+  },
+  "loso_mean_aucs": {
+    "xswing": 0.585,
+    "xcs": 0.6426,
+    "xwhiff": 0.5923,
+    "xfoul": 0.5822
+  },
+  "v2_reference_full_corpus_aucs": {
+    "xswing": 0.7078933477129415,
+    "xcs": 0.6441271859382556,
+    "xwhiff": 0.5670550904372536,
+    "xfoul": 0.49913137388127604
+  },
+  "seq_full_corpus_aucs": {
+    "xswing": 0.5915562027657888,
+    "xcs": 0.6514262469669083,
+    "xwhiff": 0.6074553209050426,
+    "xfoul": 0.5913029938218307
+  },
+  "yoy_stability": {
+    "pooled_r": 0.03,
+    "per_pair": [
+      {
+        "season_t": "2021",
+        "season_t1": "2022",
+        "r": -0.041
+      },
+      {
+        "season_t": "2022",
+        "season_t1": "2023",
+        "r": 0.099
+      },
+      {
+        "season_t": "2023",
+        "season_t1": "2024",
+        "r": -0.019
+      },
+      {
+        "season_t": "2024",
+        "season_t1": "2025",
+        "r": 0.08
+      }
+    ]
+  },
+  "v2_yoy_stability": {
+    "pooled_r": 0.6918
+  },
+  "split_half_r": 0.946,
+  "era_correlation": -0.0487,
+  "xfip_correlation": -0.0442,
+  "era_n": 2608,
+  "v2_era_correlation": -0.2135,
+  "v2_xfip_correlation": -0.3288,
+  "pitch_level_validity": {
+    "xrv_vs_whiff_r": -0.1376,
+    "xrv_vs_swing_r": -0.0138
+  },
+  "run_date": "2026-09-21"
+}

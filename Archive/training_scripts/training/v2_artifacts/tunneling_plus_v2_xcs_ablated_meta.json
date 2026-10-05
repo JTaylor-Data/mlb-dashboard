@@ -1,0 +1,7 @@
+{
+  "created_at": "2026-09-21T01:28:02.305769",
+  "xcs_orig_auc": 0.7408014350003217,
+  "xcs_abl_auc": 0.712683571603112,
+  "delta": -0.028117863397209675,
+  "note": "Part B ablation: xCS% without any pitch_type column (current + lag1-6)"
+}

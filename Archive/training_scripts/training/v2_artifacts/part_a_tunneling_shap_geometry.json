@@ -1,0 +1,72 @@
+{
+  "description": "Corrected Tunneling+ v2 sequential test. SHAP values from xWhiff% classifier only. Scores = sum of specific feature groups' SHAP contributions. Higher SHAP = model says features are pushing xWhiff% up = should see more real whiffs.",
+  "sample_n": 200000,
+  "overall_whiff_rate": 0.13550944129220432,
+  "lag1_geometry_primary": {
+    "label": "Lag-1 geometry SHAP (primary)",
+    "low_tercile_whiff": 0.13373933130334348,
+    "mid_tercile_whiff": 0.14220142201422015,
+    "high_tercile_whiff": 0.13057434712826435,
+    "low_n": 66667,
+    "mid_n": 66666,
+    "high_n": 66667,
+    "z_high_minus_low": -1.706283922002346
+  },
+  "alllag_geometry_secondary": {
+    "label": "All-lag geometry SHAP",
+    "low_tercile_whiff": 0.13192434037829812,
+    "mid_tercile_whiff": 0.13962139621396213,
+    "high_tercile_whiff": 0.13496932515337423,
+    "low_n": 66667,
+    "mid_n": 66666,
+    "high_n": 66667,
+    "z_high_minus_low": 1.6348510641801905
+  },
+  "pitchtype_lag_confound_control": {
+    "label": "Pitch-type lag SHAP (confound control)",
+    "low_tercile_whiff": 0.12173939130304348,
+    "mid_tercile_whiff": 0.12775627756277563,
+    "high_tercile_whiff": 0.15701921490392548,
+    "low_n": 66667,
+    "mid_n": 66666,
+    "high_n": 66667,
+    "z_high_minus_low": 18.621979933634545
+  },
+  "prior_part4_full_xrv_z": 180.1,
+  "feature_groups": {
+    "lag1_geom": [
+      "lag1_commit_distance",
+      "lag1_plate_distance",
+      "lag1_shape_break"
+    ],
+    "alllag_geom": [
+      "lag1_commit_distance",
+      "lag1_plate_distance",
+      "lag1_shape_break",
+      "lag2_commit_distance",
+      "lag2_plate_distance",
+      "lag2_shape_break",
+      "lag3_commit_distance",
+      "lag3_plate_distance",
+      "lag3_shape_break",
+      "lag4_commit_distance",
+      "lag4_plate_distance",
+      "lag4_shape_break",
+      "lag5_commit_distance",
+      "lag5_plate_distance",
+      "lag5_shape_break",
+      "lag6_commit_distance",
+      "lag6_plate_distance",
+      "lag6_shape_break"
+    ],
+    "pt_lag": [
+      "lag1_pitch_type",
+      "lag2_pitch_type",
+      "lag3_pitch_type",
+      "lag4_pitch_type",
+      "lag5_pitch_type",
+      "lag6_pitch_type"
+    ]
+  },
+  "run_date": "2026-09-21"
+}
