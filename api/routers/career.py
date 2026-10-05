@@ -23,8 +23,8 @@ from analytics.splits import STRIKEOUT_EVENTS, WALK_EVENTS, IN_ZONE_CODES
 from api.cache import ttl_cache
 from api.db import get_conn
 from analytics.stuff_model import compute_stuff_plus_if_cached, overall_stuff_plus
-from analytics.tunneling_v3_model import raw_predictions_if_cached as _tun_raw_if_cached
-from analytics.location_model import raw_predictions_if_cached as _loc_raw_if_cached
+from analytics.tunneling_v2_model import raw_predictions_if_cached as _tun_raw_if_cached
+from analytics.location_v3_model import raw_predictions_if_cached as _loc_raw_if_cached
 from api.routers.deception_report import (
     REPORT_SEASON as DEC_SEASON,
     _pitcher_breakdown_cached as _dec_breakdown_cached,
@@ -128,11 +128,12 @@ def _pitcher_scores_live(pitcher_id, season):
     try:
         raw = _tun_raw_if_cached(season)
         if raw is not None and not raw.empty:
-            pp = raw[raw["pitcher_id"] == pitcher_id]["pred"]
+            # tunneling_v2_model uses "xrv" column; plus-scale: 100 - 10*(v-mu)/sigma
+            pp = raw[raw["pitcher_id"] == pitcher_id]["xrv"]
             if len(pp) > 0:
-                m, s = raw["pred"].mean(), raw["pred"].std()
+                m, s = raw["xrv"].mean(), raw["xrv"].std()
                 if s > 0:
-                    tunneling_plus = _cf((pp.mean() - m) / s * 15 + 100, 1)
+                    tunneling_plus = _cf(100 - 10 * (pp.mean() - m) / s, 1)
     except Exception:
         pass
 
@@ -140,11 +141,12 @@ def _pitcher_scores_live(pitcher_id, season):
     try:
         raw = _loc_raw_if_cached(season)
         if raw is not None and not raw.empty:
-            pp = raw[raw["pitcher_id"] == pitcher_id]["pred"]
+            # location_v3_model uses "xrv" column; plus-scale: 100 - 10*(v-mu)/sigma
+            pp = raw[raw["pitcher_id"] == pitcher_id]["xrv"]
             if len(pp) > 0:
-                m, s = raw["pred"].mean(), raw["pred"].std()
+                m, s = raw["xrv"].mean(), raw["xrv"].std()
                 if s > 0:
-                    location_plus = _cf((pp.mean() - m) / s * 15 + 100, 1)
+                    location_plus = _cf(100 - 10 * (pp.mean() - m) / s, 1)
     except Exception:
         pass
 

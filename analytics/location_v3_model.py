@@ -250,6 +250,16 @@ def _raw_predictions(conn, season):
     return out
 
 
+def raw_predictions_if_cached(season):
+    """Return cached raw predictions if available and fresh, else None. Non-blocking.
+    Mirrors the same helper in location_model.py used by career.py."""
+    key = f"raw_v3_{season}"
+    entry = _cache.get(key)
+    if entry is not None and (time.monotonic() - entry[1]) < _TTL:
+        return entry[0]
+    return None
+
+
 def clear_cache():
     _cache.clear()
 
