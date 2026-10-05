@@ -1,0 +1,114 @@
+﻿{
+    "date":  "2026-10-05",
+    "pulled_at":  "2026-10-05T03:28:11.840174",
+    "games":  [
+                  {
+                      "game_pk":  849834,
+                      "game_date":  "2026-10-05",
+                      "venue":  "Progressive Field",
+                      "venue_id":  5,
+                      "game_time_et":  "5:00 PM ET",
+                      "status":  "Scheduled",
+                      "home_team":  {
+                                        "team_id":  114,
+                                        "name":  "Cleveland Guardians",
+                                        "abbreviation":  "CLE"
+                                    },
+                      "away_team":  {
+                                        "team_id":  145,
+                                        "name":  "Chicago White Sox",
+                                        "abbreviation":  "CWS"
+                                    },
+                      "home_probable":  {
+                                            "player_id":  668909,
+                                            "name":  "Gavin Williams",
+                                            "scores":  {
+                                                           "stuff_plus":  103.0,
+                                                           "tunneling_plus":  101.2,
+                                                           "location_plus":  100.2,
+                                                           "deception_plus":  107.4
+                                                       },
+                                            "recent_starts":  {
+                                                                  "games":  5,
+                                                                  "ip":  27.0,
+                                                                  "era":  2.0,
+                                                                  "k":  44,
+                                                                  "bb":  12,
+                                                                  "hr":  1
+                                                              }
+                                        },
+                      "away_probable":  {
+                                            "player_id":  641743,
+                                            "name":  "Anthony Kay",
+                                            "scores":  {
+                                                           "stuff_plus":  100.0,
+                                                           "tunneling_plus":  99.1,
+                                                           "location_plus":  99.7,
+                                                           "deception_plus":  null
+                                                       },
+                                            "recent_starts":  {
+                                                                  "games":  5,
+                                                                  "ip":  20.3,
+                                                                  "era":  6.2,
+                                                                  "k":  16,
+                                                                  "bb":  7,
+                                                                  "hr":  2
+                                                              }
+                                        }
+                  },
+                  {
+                      "game_pk":  849839,
+                      "game_date":  "2026-10-05",
+                      "venue":  "Tropicana Field",
+                      "venue_id":  12,
+                      "game_time_et":  "8:00 PM ET",
+                      "status":  "Scheduled",
+                      "home_team":  {
+                                        "team_id":  139,
+                                        "name":  "Tampa Bay Rays",
+                                        "abbreviation":  "TB"
+                                    },
+                      "away_team":  {
+                                        "team_id":  147,
+                                        "name":  "New York Yankees",
+                                        "abbreviation":  "NYY"
+                                    },
+                      "home_probable":  {
+                                            "player_id":  642547,
+                                            "name":  "Freddy Peralta",
+                                            "scores":  {
+                                                           "stuff_plus":  97.0,
+                                                           "tunneling_plus":  99.5,
+                                                           "location_plus":  99.6,
+                                                           "deception_plus":  108.8
+                                                       },
+                                            "recent_starts":  {
+                                                                  "games":  5,
+                                                                  "ip":  27.7,
+                                                                  "era":  0.98,
+                                                                  "k":  23,
+                                                                  "bb":  9,
+                                                                  "hr":  1
+                                                              }
+                                        },
+                      "away_probable":  {
+                                            "player_id":  693645,
+                                            "name":  "Cam Schlittler",
+                                            "scores":  {
+                                                           "stuff_plus":  110.0,
+                                                           "tunneling_plus":  100.8,
+                                                           "location_plus":  100.2,
+                                                           "deception_plus":  100.5
+                                                       },
+                                            "recent_starts":  {
+                                                                  "games":  5,
+                                                                  "ip":  30.3,
+                                                                  "era":  2.08,
+                                                                  "k":  38,
+                                                                  "bb":  7,
+                                                                  "hr":  2
+                                                              }
+                                        }
+                  }
+              ]
+}

@@ -1,0 +1,498 @@
+﻿{
+    "trained_at":  "2026-09-14 01:53:22",
+    "target":  "delta_run_exp (same as v2)",
+    "cv_folds":  [
+                     {
+                         "holdout_season":  2016,
+                         "r2":  0.00017849141794490375,
+                         "mae":  0.12011635692644046,
+                         "n_pitches":  655018,
+                         "best_iteration":  469,
+                         "feature_importance_gain":  {
+                                                         "release_speed":  854.4616571068764,
+                                                         "effective_speed":  1165.231439396739,
+                                                         "release_spin_rate":  1005.5797621235251,
+                                                         "spin_axis":  864.8268032297492,
+                                                         "hb":  1146.379599235952,
+                                                         "ivb":  1340.2882923185825,
+                                                         "vaa_residual":  1198.316418223083,
+                                                         "velo_sep_vs_primary_fb":  771.7407206073403,
+                                                         "hb_sep_vs_primary_fb":  644.7117082998157,
+                                                         "ivb_sep_vs_primary_fb":  742.802183367312,
+                                                         "axis_differential":  839.4576064869761,
+                                                         "pitch_type":  581.870331287384,
+                                                         "p_throws":  89.68158096075058,
+                                                         "stand":  183.5343292951584,
+                                                         "season":  965.3479381278157
+                                                     }
+                     },
+                     {
+                         "holdout_season":  2017,
+                         "r2":  0.00020888152861819886,
+                         "mae":  0.12404704207695631,
+                         "n_pitches":  703369,
+                         "best_iteration":  321,
+                         "feature_importance_gain":  {
+                                                         "release_speed":  663.8834254294634,
+                                                         "effective_speed":  1015.1570243984461,
+                                                         "release_spin_rate":  767.2167467772961,
+                                                         "spin_axis":  654.8042963594198,
+                                                         "hb":  907.4868534952402,
+                                                         "ivb":  1103.7384421229362,
+                                                         "vaa_residual":  919.6894909068942,
+                                                         "velo_sep_vs_primary_fb":  571.4646833837032,
+                                                         "hb_sep_vs_primary_fb":  439.5991263240576,
+                                                         "ivb_sep_vs_primary_fb":  536.8957197517157,
+                                                         "axis_differential":  648.6889635920525,
+                                                         "pitch_type":  542.0355567187071,
+                                                         "p_throws":  71.7190110385418,
+                                                         "stand":  150.4671311378479,
+                                                         "season":  750.934303611517
+                                                     }
+                     },
+                     {
+                         "holdout_season":  2018,
+                         "r2":  0.0006542786451040339,
+                         "mae":  0.1203962245609473,
+                         "n_pitches":  706634,
+                         "best_iteration":  501,
+                         "feature_importance_gain":  {
+                                                         "release_speed":  888.7505614683032,
+                                                         "effective_speed":  1184.2017621472478,
+                                                         "release_spin_rate":  1071.615768454969,
+                                                         "spin_axis":  877.6804460808635,
+                                                         "hb":  1120.301119454205,
+                                                         "ivb":  1356.5297845080495,
+                                                         "vaa_residual":  1211.8830267861485,
+                                                         "velo_sep_vs_primary_fb":  855.5947235375643,
+                                                         "hb_sep_vs_primary_fb":  658.295376650989,
+                                                         "ivb_sep_vs_primary_fb":  776.749799117446,
+                                                         "axis_differential":  914.9671989008784,
+                                                         "pitch_type":  579.315419562161,
+                                                         "p_throws":  97.72594732046127,
+                                                         "stand":  179.1815020442009,
+                                                         "season":  1062.2349514216185
+                                                     }
+                     },
+                     {
+                         "holdout_season":  2019,
+                         "r2":  0.0007959586120188655,
+                         "mae":  0.12843240947847298,
+                         "n_pitches":  714939,
+                         "best_iteration":  506,
+                         "feature_importance_gain":  {
+                                                         "release_speed":  921.7123608514667,
+                                                         "effective_speed":  1143.574807830155,
+                                                         "release_spin_rate":  1067.9486124813557,
+                                                         "spin_axis":  912.4719231277704,
+                                                         "hb":  1127.176182858646,
+                                                         "ivb":  1303.1473785862327,
+                                                         "vaa_residual":  1165.858449973166,
+                                                         "velo_sep_vs_primary_fb":  825.3509809300303,
+                                                         "hb_sep_vs_primary_fb":  667.7375631853938,
+                                                         "ivb_sep_vs_primary_fb":  767.066449560225,
+                                                         "axis_differential":  887.3030841499567,
+                                                         "pitch_type":  603.2798189371824,
+                                                         "p_throws":  88.43176551163197,
+                                                         "stand":  187.44487883895636,
+                                                         "season":  1052.534740254283
+                                                     }
+                     },
+                     {
+                         "holdout_season":  2020,
+                         "r2":  0.0004327316715072582,
+                         "mae":  0.12552788433412929,
+                         "n_pitches":  261998,
+                         "best_iteration":  616,
+                         "feature_importance_gain":  {
+                                                         "release_speed":  1079.7946187704802,
+                                                         "effective_speed":  1368.5375826135278,
+                                                         "release_spin_rate":  1246.8379339426756,
+                                                         "spin_axis":  1052.2087250202894,
+                                                         "hb":  1346.0725477710366,
+                                                         "ivb":  1541.0741868764162,
+                                                         "vaa_residual":  1402.417564213276,
+                                                         "velo_sep_vs_primary_fb":  974.4948412105441,
+                                                         "hb_sep_vs_primary_fb":  784.3477752953768,
+                                                         "ivb_sep_vs_primary_fb":  931.4740288928151,
+                                                         "axis_differential":  1039.426128283143,
+                                                         "pitch_type":  695.9867101460695,
+                                                         "p_throws":  82.92282275855541,
+                                                         "stand":  230.4532348960638,
+                                                         "season":  1220.509825475514
+                                                     }
+                     },
+                     {
+                         "holdout_season":  2021,
+                         "r2":  0.0004911097415226662,
+                         "mae":  0.12353077183387305,
+                         "n_pitches":  706460,
+                         "best_iteration":  326,
+                         "feature_importance_gain":  {
+                                                         "release_speed":  637.5293421447277,
+                                                         "effective_speed":  950.3907420784235,
+                                                         "release_spin_rate":  771.3721679449081,
+                                                         "spin_axis":  654.1018588617444,
+                                                         "hb":  899.6448262780905,
+                                                         "ivb":  1103.2976913750172,
+                                                         "vaa_residual":  901.2354672774673,
+                                                         "velo_sep_vs_primary_fb":  579.4362732619047,
+                                                         "hb_sep_vs_primary_fb":  434.89791598916054,
+                                                         "ivb_sep_vs_primary_fb":  578.5417998284101,
+                                                         "axis_differential":  612.5858137905598,
+                                                         "pitch_type":  536.1122002899647,
+                                                         "p_throws":  64.05856619775295,
+                                                         "stand":  152.74343410134315,
+                                                         "season":  767.9968387782574
+                                                     }
+                     },
+                     {
+                         "holdout_season":  2022,
+                         "r2":  0.0001273975979206865,
+                         "mae":  0.11736930243975793,
+                         "n_pitches":  705421,
+                         "best_iteration":  387,
+                         "feature_importance_gain":  {
+                                                         "release_speed":  756.953048914671,
+                                                         "effective_speed":  1008.2726574987173,
+                                                         "release_spin_rate":  897.7197644710541,
+                                                         "spin_axis":  691.424881927669,
+                                                         "hb":  1017.8569412082434,
+                                                         "ivb":  1215.6714994460344,
+                                                         "vaa_residual":  1049.9764430075884,
+                                                         "velo_sep_vs_primary_fb":  698.5557546913624,
+                                                         "hb_sep_vs_primary_fb":  520.4683064743876,
+                                                         "ivb_sep_vs_primary_fb":  648.3650616407394,
+                                                         "axis_differential":  674.7077464163303,
+                                                         "pitch_type":  547.3663994371891,
+                                                         "p_throws":  84.6366505175829,
+                                                         "stand":  180.51268783211708,
+                                                         "season":  866.5002370923758
+                                                     }
+                     },
+                     {
+                         "holdout_season":  2023,
+                         "r2":  0.0002249957238172895,
+                         "mae":  0.12218183382880247,
+                         "n_pitches":  712541,
+                         "best_iteration":  452,
+                         "feature_importance_gain":  {
+                                                         "release_speed":  860.2433019056916,
+                                                         "effective_speed":  1085.1566178500652,
+                                                         "release_spin_rate":  962.5187037959695,
+                                                         "spin_axis":  825.8481724485755,
+                                                         "hb":  1072.863202251494,
+                                                         "ivb":  1245.2828690484166,
+                                                         "vaa_residual":  1111.501311533153,
+                                                         "velo_sep_vs_primary_fb":  790.0951470732689,
+                                                         "hb_sep_vs_primary_fb":  638.0830159336329,
+                                                         "ivb_sep_vs_primary_fb":  700.9214551821351,
+                                                         "axis_differential":  752.238438397646,
+                                                         "pitch_type":  586.9544507712126,
+                                                         "p_throws":  69.01283469796181,
+                                                         "stand":  190.6484452933073,
+                                                         "season":  978.1301980987191
+                                                     }
+                     },
+                     {
+                         "holdout_season":  2024,
+                         "r2":  -0.0003020593804345939,
+                         "mae":  0.11929987450561848,
+                         "n_pitches":  704906,
+                         "best_iteration":  755,
+                         "feature_importance_gain":  {
+                                                         "release_speed":  1222.2762870267034,
+                                                         "effective_speed":  1523.573296546936,
+                                                         "release_spin_rate":  1436.746960401535,
+                                                         "spin_axis":  1186.144863769412,
+                                                         "hb":  1549.3586568534374,
+                                                         "ivb":  1678.743911728263,
+                                                         "vaa_residual":  1607.562845826149,
+                                                         "velo_sep_vs_primary_fb":  1108.844210371375,
+                                                         "hb_sep_vs_primary_fb":  979.8236615359783,
+                                                         "ivb_sep_vs_primary_fb":  1083.5333947688341,
+                                                         "axis_differential":  1208.745195813477,
+                                                         "pitch_type":  749.6264070421457,
+                                                         "p_throws":  86.12341587245464,
+                                                         "stand":  234.4783113375306,
+                                                         "season":  1440.2287001386285
+                                                     }
+                     },
+                     {
+                         "holdout_season":  2025,
+                         "r2":  -0.00034504087059139543,
+                         "mae":  0.11993117869866707,
+                         "n_pitches":  706833,
+                         "best_iteration":  559,
+                         "feature_importance_gain":  {
+                                                         "release_speed":  992.0730699375272,
+                                                         "effective_speed":  1271.1224694773555,
+                                                         "release_spin_rate":  1194.9942311421037,
+                                                         "spin_axis":  970.1012531816959,
+                                                         "hb":  1238.1243238002062,
+                                                         "ivb":  1410.996616013348,
+                                                         "vaa_residual":  1286.514372125268,
+                                                         "velo_sep_vs_primary_fb":  897.2129375040531,
+                                                         "hb_sep_vs_primary_fb":  766.67468996346,
+                                                         "ivb_sep_vs_primary_fb":  853.413220860064,
+                                                         "axis_differential":  968.9963081479073,
+                                                         "pitch_type":  613.7790725231171,
+                                                         "p_throws":  74.28706197440624,
+                                                         "stand":  199.70281241834164,
+                                                         "season":  1109.2880009040236
+                                                     }
+                     }
+                 ],
+    "cv_r2_mean":  0.00024667446874279133,
+    "cv_mae_mean":  0.12208328786836653,
+    "mean_abs_shap":  {
+                          "release_speed":  0.0006438009645167557,
+                          "effective_speed":  0.0031310708220238363,
+                          "release_spin_rate":  0.0012979186594493982,
+                          "spin_axis":  0.0005425930684853703,
+                          "hb":  0.0017068336616119103,
+                          "ivb":  0.0018476802690189356,
+                          "vaa_residual":  0.0011677911247905256,
+                          "velo_sep_vs_primary_fb":  0.0012173412629366775,
+                          "hb_sep_vs_primary_fb":  0.0003222634543916462,
+                          "ivb_sep_vs_primary_fb":  0.0004864520274177736,
+                          "axis_differential":  0.0006501906837237145,
+                          "pitch_type":  0.0017892290288766138,
+                          "p_throws":  0.0004294398132571297,
+                          "stand":  0.0005167773208066644,
+                          "season":  0.0012944402201987718
+                      },
+    "gain_importance_final_model":  {
+                                        "release_speed":  992.4514312148094,
+                                        "effective_speed":  1323.5998783409595,
+                                        "release_spin_rate":  1156.6866755262017,
+                                        "spin_axis":  995.9225426986814,
+                                        "hb":  1314.075579635799,
+                                        "ivb":  1499.7859503999352,
+                                        "vaa_residual":  1289.0984617844224,
+                                        "velo_sep_vs_primary_fb":  914.0998048633337,
+                                        "hb_sep_vs_primary_fb":  751.0112136527896,
+                                        "ivb_sep_vs_primary_fb":  847.7478468492627,
+                                        "axis_differential":  961.7350385412574,
+                                        "pitch_type":  702.8458009883761,
+                                        "p_throws":  106.17831375449896,
+                                        "stand":  223.23105683922768,
+                                        "season":  1301.506690248847
+                                    },
+    "worked_examples":  {
+                            "best_predicted_pitches":  [
+                                                           {
+                                                               "pitcher_id":  446372,
+                                                               "pitch_type":  "CU",
+                                                               "season":  "2016",
+                                                               "release_speed":  85.0,
+                                                               "hb":  -25.68,
+                                                               "ivb":  3.24,
+                                                               "axis_differential":  0.33982113003730774,
+                                                               "pred":  -0.0577620221597249
+                                                           },
+                                                           {
+                                                               "pitcher_id":  476454,
+                                                               "pitch_type":  "SV",
+                                                               "season":  "2016",
+                                                               "release_speed":  88.4,
+                                                               "hb":  -9.0,
+                                                               "ivb":  -15.0,
+                                                               "axis_differential":  4.433023929595947,
+                                                               "pred":  -0.05303907510704596
+                                                           },
+                                                           {
+                                                               "pitcher_id":  476454,
+                                                               "pitch_type":  "SV",
+                                                               "season":  "2016",
+                                                               "release_speed":  87.0,
+                                                               "hb":  -11.76,
+                                                               "ivb":  -15.84,
+                                                               "axis_differential":  16.06035614013672,
+                                                               "pred":  -0.05284507795972259
+                                                           },
+                                                           {
+                                                               "pitcher_id":  476454,
+                                                               "pitch_type":  "SV",
+                                                               "season":  "2016",
+                                                               "release_speed":  87.1,
+                                                               "hb":  -9.72,
+                                                               "ivb":  -16.44,
+                                                               "axis_differential":  16.06258201599121,
+                                                               "pred":  -0.052527804418259
+                                                           },
+                                                           {
+                                                               "pitcher_id":  476454,
+                                                               "pitch_type":  "SV",
+                                                               "season":  "2016",
+                                                               "release_speed":  88.4,
+                                                               "hb":  -8.52,
+                                                               "ivb":  -17.04,
+                                                               "axis_differential":  9.034318923950195,
+                                                               "pred":  -0.05212418419113272
+                                                           }
+                                                       ],
+                            "worst_predicted_pitches":  [
+                                                            {
+                                                                "pitcher_id":  596117,
+                                                                "pitch_type":  "CS",
+                                                                "season":  "2026",
+                                                                "release_speed":  37.8,
+                                                                "hb":  -1.44,
+                                                                "ivb":  20.759999999999998,
+                                                                "axis_differential":  22.4986515045166,
+                                                                "pred":  0.11370865253969022
+                                                            },
+                                                            {
+                                                                "pitcher_id":  596117,
+                                                                "pitch_type":  "CS",
+                                                                "season":  "2026",
+                                                                "release_speed":  39.7,
+                                                                "hb":  -2.52,
+                                                                "ivb":  19.56,
+                                                                "axis_differential":  19.871957778930664,
+                                                                "pred":  0.10836492206463634
+                                                            },
+                                                            {
+                                                                "pitcher_id":  596117,
+                                                                "pitch_type":  "CS",
+                                                                "season":  "2026",
+                                                                "release_speed":  38.5,
+                                                                "hb":  -3.12,
+                                                                "ivb":  19.44,
+                                                                "axis_differential":  25.648595809936523,
+                                                                "pred":  0.1055682248272672
+                                                            },
+                                                            {
+                                                                "pitcher_id":  683734,
+                                                                "pitch_type":  "KN",
+                                                                "season":  "2026",
+                                                                "release_speed":  43.9,
+                                                                "hb":  -5.5200000000000005,
+                                                                "ivb":  12.96,
+                                                                "axis_differential":  31.601144790649414,
+                                                                "pred":  0.10489683452274705
+                                                            },
+                                                            {
+                                                                "pitcher_id":  678391,
+                                                                "pitch_type":  "CU",
+                                                                "season":  "2026",
+                                                                "release_speed":  44.3,
+                                                                "hb":  -2.4000000000000004,
+                                                                "ivb":  15.0,
+                                                                "axis_differential":  13.621009826660156,
+                                                                "pred":  0.10233322285909036
+                                                            }
+                                                        ]
+                        },
+    "shrinkage":  {
+                      "k_by_pitch_type":  {
+                                              "CH":  1.5789566660579588,
+                                              "CS":  0.33160760614107243,
+                                              "CU":  1.039657939679196,
+                                              "FA":  1.7934705479581166,
+                                              "FC":  0.9795672533432462,
+                                              "FF":  1.4720965286907552,
+                                              "FS":  2.4807319460078268,
+                                              "KN":  0.37747281578444636,
+                                              "SI":  2.1171581735175873,
+                                              "SL":  1.2245862201014517,
+                                              "ST":  1.9295192729143977,
+                                              "SV":  1.1451834085273913
+                                          },
+                      "fallback_k":  1.3483413743961035
+                  },
+    "collinearity":  {
+                         "axis_differential_vs_movement_spin":  {
+                                                                    "axis_differential":  {
+                                                                                              "axis_differential":  1.0,
+                                                                                              "hb":  -0.2067,
+                                                                                              "ivb":  -0.2673,
+                                                                                              "spin_axis":  -0.0716
+                                                                                          },
+                                                                    "hb":  {
+                                                                               "axis_differential":  -0.2067,
+                                                                               "hb":  1.0,
+                                                                               "ivb":  0.5085,
+                                                                               "spin_axis":  0.3728
+                                                                           },
+                                                                    "ivb":  {
+                                                                                "axis_differential":  -0.2673,
+                                                                                "hb":  0.5085,
+                                                                                "ivb":  1.0,
+                                                                                "spin_axis":  0.2898
+                                                                            },
+                                                                    "spin_axis":  {
+                                                                                      "axis_differential":  -0.0716,
+                                                                                      "hb":  0.3728,
+                                                                                      "ivb":  0.2898,
+                                                                                      "spin_axis":  1.0
+                                                                                  }
+                                                                },
+                         "separation_vs_raw_features":  {
+                                                            "velo_sep_vs_primary_fb":  {
+                                                                                           "velo_sep_vs_primary_fb":  1.0,
+                                                                                           "hb_sep_vs_primary_fb":  0.5571,
+                                                                                           "ivb_sep_vs_primary_fb":  0.7082,
+                                                                                           "hb":  0.5754,
+                                                                                           "ivb":  0.7232,
+                                                                                           "release_speed":  0.8764,
+                                                                                           "effective_speed":  0.8667
+                                                                                       },
+                                                            "hb_sep_vs_primary_fb":  {
+                                                                                         "velo_sep_vs_primary_fb":  0.5571,
+                                                                                         "hb_sep_vs_primary_fb":  1.0,
+                                                                                         "ivb_sep_vs_primary_fb":  0.3428,
+                                                                                         "hb":  0.8939,
+                                                                                         "ivb":  0.4997,
+                                                                                         "release_speed":  0.478,
+                                                                                         "effective_speed":  0.4781
+                                                                                     },
+                                                            "ivb_sep_vs_primary_fb":  {
+                                                                                          "velo_sep_vs_primary_fb":  0.7082,
+                                                                                          "hb_sep_vs_primary_fb":  0.3428,
+                                                                                          "ivb_sep_vs_primary_fb":  1.0,
+                                                                                          "hb":  0.4732,
+                                                                                          "ivb":  0.8749,
+                                                                                          "release_speed":  0.5696,
+                                                                                          "effective_speed":  0.5614
+                                                                                      },
+                                                            "hb":  {
+                                                                       "velo_sep_vs_primary_fb":  0.5754,
+                                                                       "hb_sep_vs_primary_fb":  0.8939,
+                                                                       "ivb_sep_vs_primary_fb":  0.4732,
+                                                                       "hb":  1.0,
+                                                                       "ivb":  0.5085,
+                                                                       "release_speed":  0.5605,
+                                                                       "effective_speed":  0.5461
+                                                                   },
+                                                            "ivb":  {
+                                                                        "velo_sep_vs_primary_fb":  0.7232,
+                                                                        "hb_sep_vs_primary_fb":  0.4997,
+                                                                        "ivb_sep_vs_primary_fb":  0.8749,
+                                                                        "hb":  0.5085,
+                                                                        "ivb":  1.0,
+                                                                        "release_speed":  0.713,
+                                                                        "effective_speed":  0.7049
+                                                                    },
+                                                            "release_speed":  {
+                                                                                  "velo_sep_vs_primary_fb":  0.8764,
+                                                                                  "hb_sep_vs_primary_fb":  0.478,
+                                                                                  "ivb_sep_vs_primary_fb":  0.5696,
+                                                                                  "hb":  0.5605,
+                                                                                  "ivb":  0.713,
+                                                                                  "release_speed":  1.0,
+                                                                                  "effective_speed":  0.9893
+                                                                              },
+                                                            "effective_speed":  {
+                                                                                    "velo_sep_vs_primary_fb":  0.8667,
+                                                                                    "hb_sep_vs_primary_fb":  0.4781,
+                                                                                    "ivb_sep_vs_primary_fb":  0.5614,
+                                                                                    "hb":  0.5461,
+                                                                                    "ivb":  0.7049,
+                                                                                    "release_speed":  0.9893,
+                                                                                    "effective_speed":  1.0
+                                                                                }
+                                                        }
+                     }
+}

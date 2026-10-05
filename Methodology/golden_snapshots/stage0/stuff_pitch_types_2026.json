@@ -1,0 +1,70 @@
+﻿{
+    "season":  2026,
+    "pitch_types":  [
+                        {
+                            "pitch_type":  "FF",
+                            "n_qualifying_pitchers":  494,
+                            "total_pitches":  218690
+                        },
+                        {
+                            "pitch_type":  "SI",
+                            "n_qualifying_pitchers":  322,
+                            "total_pitches":  118358
+                        },
+                        {
+                            "pitch_type":  "SL",
+                            "n_qualifying_pitchers":  293,
+                            "total_pitches":  94106
+                        },
+                        {
+                            "pitch_type":  "CH",
+                            "n_qualifying_pitchers":  246,
+                            "total_pitches":  79866
+                        },
+                        {
+                            "pitch_type":  "ST",
+                            "n_qualifying_pitchers":  183,
+                            "total_pitches":  58844
+                        },
+                        {
+                            "pitch_type":  "CU",
+                            "n_qualifying_pitchers":  185,
+                            "total_pitches":  57046
+                        },
+                        {
+                            "pitch_type":  "FC",
+                            "n_qualifying_pitchers":  188,
+                            "total_pitches":  56811
+                        },
+                        {
+                            "pitch_type":  "FS",
+                            "n_qualifying_pitchers":  59,
+                            "total_pitches":  22850
+                        },
+                        {
+                            "pitch_type":  "SV",
+                            "n_qualifying_pitchers":  9,
+                            "total_pitches":  3136
+                        },
+                        {
+                            "pitch_type":  "FA",
+                            "n_qualifying_pitchers":  0,
+                            "total_pitches":  733
+                        },
+                        {
+                            "pitch_type":  "FO",
+                            "n_qualifying_pitchers":  2,
+                            "total_pitches":  472
+                        },
+                        {
+                            "pitch_type":  "KN",
+                            "n_qualifying_pitchers":  1,
+                            "total_pitches":  276
+                        },
+                        {
+                            "pitch_type":  "CS",
+                            "n_qualifying_pitchers":  0,
+                            "total_pitches":  164
+                        }
+                    ]
+}

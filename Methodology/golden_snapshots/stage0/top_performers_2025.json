@@ -1,0 +1,425 @@
+﻿{
+    "date":  "2025-09-28",
+    "entries":  [
+                    {
+                        "player_id":  672386,
+                        "name":  "Alejandro Kirk",
+                        "role":  "batter",
+                        "wpa":  0.339,
+                        "team_id":  141,
+                        "stats":  {
+                                      "h":  3,
+                                      "ab":  5,
+                                      "hr":  2,
+                                      "sb":  0,
+                                      "rbi":  6,
+                                      "season_ops":  ".769"
+                                  },
+                        "score":  29,
+                        "game_id":  776145,
+                        "walkoff":  false,
+                        "opponent":  "vs TB"
+                    },
+                    {
+                        "player_id":  573262,
+                        "name":  "Mike Yastrzemski",
+                        "role":  "batter",
+                        "wpa":  -0.017,
+                        "team_id":  144,
+                        "stats":  {
+                                      "h":  2,
+                                      "ab":  4,
+                                      "hr":  2,
+                                      "sb":  1,
+                                      "rbi":  2,
+                                      "season_ops":  ".736"
+                                  },
+                        "score":  19,
+                        "game_id":  776138,
+                        "walkoff":  false,
+                        "opponent":  "@ ATH"
+                    },
+                    {
+                        "player_id":  543807,
+                        "name":  "George Springer",
+                        "role":  "batter",
+                        "wpa":  0.089,
+                        "team_id":  141,
+                        "stats":  {
+                                      "h":  3,
+                                      "ab":  4,
+                                      "hr":  1,
+                                      "sb":  1,
+                                      "rbi":  2,
+                                      "season_ops":  ".959"
+                                  },
+                        "score":  18,
+                        "game_id":  776145,
+                        "walkoff":  false,
+                        "opponent":  "vs TB"
+                    },
+                    {
+                        "player_id":  700250,
+                        "name":  "Ben Rice",
+                        "role":  "batter",
+                        "wpa":  0.303,
+                        "team_id":  147,
+                        "stats":  {
+                                      "h":  2,
+                                      "ab":  4,
+                                      "hr":  2,
+                                      "sb":  0,
+                                      "rbi":  2,
+                                      "season_ops":  ".836"
+                                  },
+                        "score":  18,
+                        "game_id":  776140,
+                        "walkoff":  false,
+                        "opponent":  "vs BAL"
+                    },
+                    {
+                        "player_id":  681460,
+                        "name":  "Brooks Baldwin",
+                        "role":  "batter",
+                        "wpa":  0.102,
+                        "team_id":  145,
+                        "stats":  {
+                                      "h":  2,
+                                      "ab":  4,
+                                      "hr":  1,
+                                      "sb":  0,
+                                      "rbi":  3,
+                                      "season_ops":  ".697"
+                                  },
+                        "score":  16,
+                        "game_id":  776143,
+                        "walkoff":  false,
+                        "opponent":  "@ WSH"
+                    },
+                    {
+                        "player_id":  660271,
+                        "name":  "Shohei Ohtani",
+                        "role":  "batter",
+                        "wpa":  0.113,
+                        "team_id":  119,
+                        "stats":  {
+                                      "h":  3,
+                                      "ab":  5,
+                                      "hr":  1,
+                                      "sb":  0,
+                                      "rbi":  1,
+                                      "season_ops":  "1.014"
+                                  },
+                        "score":  15,
+                        "game_id":  776139,
+                        "walkoff":  false,
+                        "opponent":  "@ SEA"
+                    },
+                    {
+                        "player_id":  677587,
+                        "name":  "Brayan Rocchio",
+                        "role":  "batter",
+                        "wpa":  0.533,
+                        "team_id":  114,
+                        "stats":  {
+                                      "h":  1,
+                                      "ab":  4,
+                                      "hr":  1,
+                                      "sb":  0,
+                                      "rbi":  4,
+                                      "season_ops":  ".630"
+                                  },
+                        "score":  15,
+                        "game_id":  776147,
+                        "walkoff":  true,
+                        "opponent":  "vs TEX"
+                    },
+                    {
+                        "player_id":  695600,
+                        "name":  "Carter Jensen",
+                        "role":  "batter",
+                        "wpa":  0.036,
+                        "team_id":  118,
+                        "stats":  {
+                                      "h":  3,
+                                      "ab":  5,
+                                      "hr":  1,
+                                      "sb":  0,
+                                      "rbi":  1,
+                                      "season_ops":  ".941"
+                                  },
+                        "score":  15,
+                        "game_id":  776138,
+                        "walkoff":  false,
+                        "opponent":  "@ ATH"
+                    },
+                    {
+                        "player_id":  592518,
+                        "name":  "Manny Machado",
+                        "role":  "batter",
+                        "wpa":  0.119,
+                        "team_id":  135,
+                        "stats":  {
+                                      "h":  2,
+                                      "ab":  2,
+                                      "hr":  1,
+                                      "sb":  0,
+                                      "rbi":  2,
+                                      "season_ops":  ".795"
+                                  },
+                        "score":  14,
+                        "game_id":  776136,
+                        "walkoff":  false,
+                        "opponent":  "vs AZ"
+                    },
+                    {
+                        "player_id":  643376,
+                        "name":  "Danny Jansen",
+                        "role":  "batter",
+                        "wpa":  0.19,
+                        "team_id":  140,
+                        "stats":  {
+                                      "h":  2,
+                                      "ab":  3,
+                                      "hr":  1,
+                                      "sb":  0,
+                                      "rbi":  2,
+                                      "season_ops":  ".720"
+                                  },
+                        "score":  14,
+                        "game_id":  776144,
+                        "walkoff":  false,
+                        "opponent":  "@ MIL"
+                    },
+                    {
+                        "player_id":  680573,
+                        "name":  "Simeon Woods Richardson",
+                        "role":  "pitcher",
+                        "wpa":  0.369,
+                        "team_id":  141,
+                        "stats":  {
+                                      "ip":  "6.0",
+                                      "k":  9,
+                                      "h":  1,
+                                      "hr":  0,
+                                      "r":  0,
+                                      "er":  0,
+                                      "season_era":  "4.04"
+                                  },
+                        "score":  35.0,
+                        "game_id":  776141,
+                        "walkoff":  false,
+                        "opponent":  "@ PHI"
+                    },
+                    {
+                        "player_id":  681343,
+                        "name":  "Shane Smith",
+                        "role":  "pitcher",
+                        "wpa":  0.209,
+                        "team_id":  145,
+                        "stats":  {
+                                      "ip":  "6.0",
+                                      "k":  8,
+                                      "h":  1,
+                                      "hr":  0,
+                                      "r":  0,
+                                      "er":  0,
+                                      "season_era":  "3.81"
+                                  },
+                        "score":  33.0,
+                        "game_id":  776143,
+                        "walkoff":  false,
+                        "opponent":  "@ WSH"
+                    },
+                    {
+                        "player_id":  650911,
+                        "name":  "Cristopher SÃ¡nchez",
+                        "role":  "pitcher",
+                        "wpa":  0.34,
+                        "team_id":  143,
+                        "stats":  {
+                                      "ip":  "5.2",
+                                      "k":  8,
+                                      "h":  2,
+                                      "hr":  0,
+                                      "r":  0,
+                                      "er":  0,
+                                      "season_era":  "2.50"
+                                  },
+                        "score":  31.0,
+                        "game_id":  776141,
+                        "walkoff":  false,
+                        "opponent":  "vs MIN"
+                    },
+                    {
+                        "player_id":  657277,
+                        "name":  "Logan Webb",
+                        "role":  "pitcher",
+                        "wpa":  0.312,
+                        "team_id":  137,
+                        "stats":  {
+                                      "ip":  "5.1",
+                                      "k":  8,
+                                      "h":  3,
+                                      "hr":  0,
+                                      "r":  0,
+                                      "er":  0,
+                                      "season_era":  "3.22"
+                                  },
+                        "score":  29.0,
+                        "game_id":  776137,
+                        "walkoff":  false,
+                        "opponent":  "vs COL"
+                    },
+                    {
+                        "player_id":  519242,
+                        "name":  "Chris Sale",
+                        "role":  "pitcher",
+                        "wpa":  0.254,
+                        "team_id":  144,
+                        "stats":  {
+                                      "ip":  "5.2",
+                                      "k":  9,
+                                      "h":  4,
+                                      "hr":  0,
+                                      "r":  1,
+                                      "er":  1,
+                                      "season_era":  "2.58"
+                                  },
+                        "score":  27.0,
+                        "game_id":  776149,
+                        "walkoff":  false,
+                        "opponent":  "vs PIT"
+                    },
+                    {
+                        "player_id":  665795,
+                        "name":  "Edward Cabrera",
+                        "role":  "pitcher",
+                        "wpa":  0.249,
+                        "team_id":  112,
+                        "stats":  {
+                                      "ip":  "5.0",
+                                      "k":  7,
+                                      "h":  2,
+                                      "hr":  0,
+                                      "r":  0,
+                                      "er":  0,
+                                      "season_era":  "3.53"
+                                  },
+                        "score":  27.0,
+                        "game_id":  776148,
+                        "walkoff":  false,
+                        "opponent":  "@ MIA"
+                    },
+                    {
+                        "player_id":  666142,
+                        "name":  "Cole Ragans",
+                        "role":  "pitcher",
+                        "wpa":  0.212,
+                        "team_id":  118,
+                        "stats":  {
+                                      "ip":  "4.1",
+                                      "k":  8,
+                                      "h":  2,
+                                      "hr":  0,
+                                      "r":  0,
+                                      "er":  0,
+                                      "season_era":  "4.67"
+                                  },
+                        "score":  27.0,
+                        "game_id":  776138,
+                        "walkoff":  false,
+                        "opponent":  "@ ATH"
+                    },
+                    {
+                        "player_id":  477132,
+                        "name":  "Clayton Kershaw",
+                        "role":  "pitcher",
+                        "wpa":  0.241,
+                        "team_id":  119,
+                        "stats":  {
+                                      "ip":  "5.1",
+                                      "k":  7,
+                                      "h":  4,
+                                      "hr":  0,
+                                      "r":  0,
+                                      "er":  0,
+                                      "season_era":  "3.36"
+                                  },
+                        "score":  26.0,
+                        "game_id":  776139,
+                        "walkoff":  false,
+                        "opponent":  "@ SEA"
+                    },
+                    {
+                        "player_id":  665871,
+                        "name":  "Javier Assad",
+                        "role":  "pitcher",
+                        "wpa":  0.317,
+                        "team_id":  112,
+                        "stats":  {
+                                      "ip":  "5.1",
+                                      "k":  6,
+                                      "h":  3,
+                                      "hr":  0,
+                                      "r":  0,
+                                      "er":  0,
+                                      "season_era":  "3.65"
+                                  },
+                        "score":  25.0,
+                        "game_id":  776142,
+                        "walkoff":  false,
+                        "opponent":  "vs STL"
+                    },
+                    {
+                        "player_id":  676467,
+                        "name":  "Colton Gordon",
+                        "role":  "pitcher",
+                        "wpa":  0.162,
+                        "team_id":  158,
+                        "stats":  {
+                                      "ip":  "5.0",
+                                      "k":  3,
+                                      "h":  0,
+                                      "hr":  0,
+                                      "r":  0,
+                                      "er":  0,
+                                      "season_era":  "5.34"
+                                  },
+                        "score":  21.0,
+                        "game_id":  776135,
+                        "walkoff":  false,
+                        "opponent":  "@ LAA"
+                    }
+                ],
+    "walkoffs":  [
+                     {
+                         "player_id":  592206,
+                         "name":  "Nick Castellanos",
+                         "team_id":  135,
+                         "stats":  {
+                                       "h":  0,
+                                       "ab":  3,
+                                       "hr":  0,
+                                       "sb":  0,
+                                       "rbi":  1,
+                                       "season_ops":  ".694"
+                                   },
+                         "opponent":  ""
+                     },
+                     {
+                         "player_id":  677587,
+                         "name":  "Brayan Rocchio",
+                         "team_id":  114,
+                         "stats":  {
+                                       "h":  1,
+                                       "ab":  4,
+                                       "hr":  1,
+                                       "sb":  0,
+                                       "rbi":  4,
+                                       "season_ops":  ".630"
+                                   },
+                         "opponent":  ""
+                     }
+                 ]
+}

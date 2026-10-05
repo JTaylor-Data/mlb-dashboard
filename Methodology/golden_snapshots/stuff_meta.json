@@ -1,0 +1,59 @@
+﻿{
+    "active_version":  "v4",
+    "model_hash_sha256":  "0addb8e96ea438ec196b3addc19fd350f1d76e241a9291d3719773f2b9766c28",
+    "model_hash_short":  "0addb8e9",
+    "display_name":  "Stuff+ v4 (hash 0addb8e9)",
+    "trained_at":  "2026-10-02 14:54:17",
+    "seasons_trained_on":  [
+                               2016,
+                               2017,
+                               2018,
+                               2019,
+                               2021,
+                               2022,
+                               2023,
+                               2024,
+                               2025,
+                               2026
+                           ],
+    "scored_seasons":  [
+                           2016,
+                           2017,
+                           2018,
+                           2019,
+                           2020,
+                           2021,
+                           2022,
+                           2023,
+                           2024,
+                           2025,
+                           2026
+                       ],
+    "features":  [
+                     "release_speed",
+                     "effective_speed",
+                     "release_spin_rate",
+                     "spin_axis",
+                     "hb",
+                     "ivb",
+                     "vaa_residual",
+                     "velo_sep_vs_primary_fb",
+                     "hb_sep_vs_primary_fb",
+                     "ivb_sep_vs_primary_fb",
+                     "axis_differential",
+                     "haa_residual",
+                     "pitch_type",
+                     "p_throws",
+                     "stand",
+                     "season"
+                 ],
+    "n_training_rows":  7023077,
+    "candidate_changes_applied":  {
+                                      "drop_season":  false,
+                                      "drop_effective_speed":  false,
+                                      "include_haa":  true
+                                  },
+    "status":  "provisional",
+    "status_label":  "v4 â validation in progress",
+    "rollback_instruction":  "Set analytics.stuff_model.STUFF_ACTIVE_VERSION = \u0027v3\u0027 and restart."
+}

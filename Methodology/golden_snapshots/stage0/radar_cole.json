@@ -1,0 +1,50 @@
+﻿{
+    "player_id":  543037,
+    "name":  "Gerrit Cole",
+    "role":  "pitcher",
+    "split":  "ALL",
+    "axes":  [
+                 {
+                     "key":  "avg_la_95plus",
+                     "label":  "Avg LA 95+",
+                     "raw":  15.32484076433121,
+                     "pct":  73.5,
+                     "value_str":  "15.3Â°"
+                 },
+                 {
+                     "key":  "ev_90th",
+                     "label":  "EV 90th",
+                     "raw":  104.27,
+                     "pct":  47.5,
+                     "value_str":  "104.3"
+                 },
+                 {
+                     "key":  "xwoba",
+                     "label":  "xwOBA",
+                     "raw":  0.297786373540856,
+                     "pct":  66.4,
+                     "value_str":  "0.298"
+                 },
+                 {
+                     "key":  "zone_whiff_pct",
+                     "label":  "ZnWhiff%",
+                     "raw":  0.1323529411764706,
+                     "pct":  45.7,
+                     "value_str":  "13.2%"
+                 },
+                 {
+                     "key":  "whiff_pct",
+                     "label":  "Whiff%",
+                     "raw":  0.19583333333333333,
+                     "pct":  20.4,
+                     "value_str":  "19.6%"
+                 },
+                 {
+                     "key":  "chase_pct",
+                     "label":  "O-Swing%",
+                     "raw":  0.2907488986784141,
+                     "pct":  33.6,
+                     "value_str":  "29.1%"
+                 }
+             ]
+}

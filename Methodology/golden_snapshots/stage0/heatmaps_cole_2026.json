@@ -1,0 +1,51 @@
+﻿{
+    "pitcher_id":  543037,
+    "season":  2026,
+    "has_data":  true,
+    "plate_width_ft":  1.4166666666666667,
+    "pitches":  [
+                    {
+                        "pitch_type":  "CU",
+                        "mean_x":  0.3518300658501013,
+                        "mean_z":  1.9696994399454995,
+                        "spread":  1.2351782943538867,
+                        "n_pitches":  93,
+                        "command_pct":  57.2
+                    },
+                    {
+                        "pitch_type":  "CH",
+                        "mean_x":  -0.16689548383882363,
+                        "mean_z":  2.494456822755508,
+                        "spread":  1.1742321083412435,
+                        "n_pitches":  23,
+                        "command_pct":  38.1
+                    },
+                    {
+                        "pitch_type":  "SL",
+                        "mean_x":  0.6023966594738005,
+                        "mean_z":  1.880656450692856,
+                        "spread":  1.0689641388604196,
+                        "n_pitches":  185,
+                        "command_pct":  71.8
+                    },
+                    {
+                        "pitch_type":  "FF",
+                        "mean_x":  0.24720153253738686,
+                        "mean_z":  2.5088419887458757,
+                        "spread":  1.0132870146328201,
+                        "n_pitches":  370,
+                        "command_pct":  71.3
+                    },
+                    {
+                        "pitch_type":  "SI",
+                        "mean_x":  -0.26964835961303457,
+                        "mean_z":  1.9706599526367248,
+                        "spread":  0.8571591649608714,
+                        "n_pitches":  41,
+                        "command_pct":  97.1
+                    }
+                ],
+    "sz_top":  3.195077668884831,
+    "sz_bot":  1.6124691038511234,
+    "n_pitches":  712
+}

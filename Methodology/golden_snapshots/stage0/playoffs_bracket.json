@@ -1,0 +1,120 @@
+﻿{
+    "season":  2026,
+    "is_real":  true,
+    "postseason_started":  true,
+    "al":  {
+               "wildcard":  [
+                                {
+                                    "team_a":  {
+                                                   "team_id":  117,
+                                                   "name":  "Houston Astros"
+                                               },
+                                    "team_b":  {
+                                                   "team_id":  145,
+                                                   "name":  "Chicago White Sox"
+                                               },
+                                    "winner_team_id":  145,
+                                    "record":  "0-2"
+                                },
+                                {
+                                    "team_a":  {
+                                                   "team_id":  147,
+                                                   "name":  "New York Yankees"
+                                               },
+                                    "team_b":  {
+                                                   "team_id":  111,
+                                                   "name":  "Boston Red Sox"
+                                               },
+                                    "winner_team_id":  147,
+                                    "record":  "2-0"
+                                }
+                            ],
+               "division":  [
+                                {
+                                    "team_a":  {
+                                                   "team_id":  114,
+                                                   "name":  "Cleveland Guardians"
+                                               },
+                                    "team_b":  {
+                                                   "team_id":  145,
+                                                   "name":  "Chicago White Sox"
+                                               },
+                                    "winner_team_id":  null,
+                                    "record":  "0-1"
+                                },
+                                {
+                                    "team_a":  {
+                                                   "team_id":  139,
+                                                   "name":  "Tampa Bay Rays"
+                                               },
+                                    "team_b":  {
+                                                   "team_id":  147,
+                                                   "name":  "New York Yankees"
+                                               },
+                                    "winner_team_id":  null,
+                                    "record":  "1-0"
+                                }
+                            ],
+               "championship":  [
+
+                                ]
+           },
+    "nl":  {
+               "wildcard":  [
+                                {
+                                    "team_a":  {
+                                                   "team_id":  144,
+                                                   "name":  "Atlanta Braves"
+                                               },
+                                    "team_b":  {
+                                                   "team_id":  143,
+                                                   "name":  "Philadelphia Phillies"
+                                               },
+                                    "winner_team_id":  144,
+                                    "record":  "2-1"
+                                },
+                                {
+                                    "team_a":  {
+                                                   "team_id":  135,
+                                                   "name":  "San Diego Padres"
+                                               },
+                                    "team_b":  {
+                                                   "team_id":  112,
+                                                   "name":  "Chicago Cubs"
+                                               },
+                                    "winner_team_id":  135,
+                                    "record":  "2-0"
+                                }
+                            ],
+               "division":  [
+                                {
+                                    "team_a":  {
+                                                   "team_id":  119,
+                                                   "name":  "Los Angeles Dodgers"
+                                               },
+                                    "team_b":  {
+                                                   "team_id":  144,
+                                                   "name":  "Atlanta Braves"
+                                               },
+                                    "winner_team_id":  null,
+                                    "record":  "1-0"
+                                },
+                                {
+                                    "team_a":  {
+                                                   "team_id":  158,
+                                                   "name":  "Milwaukee Brewers"
+                                               },
+                                    "team_b":  {
+                                                   "team_id":  135,
+                                                   "name":  "San Diego Padres"
+                                               },
+                                    "winner_team_id":  null,
+                                    "record":  "2-0"
+                                }
+                            ],
+               "championship":  [
+
+                                ]
+           },
+    "world_series":  null
+}
