@@ -25,7 +25,6 @@ from analytics.player_page import (
     pitcher_counting_stats, pitcher_league_avg_row, pitcher_pitch_table, pitcher_rubber_position,
     player_last_n_games, similar_arm_angle_movement, swing_profile,
 )
-from analytics.deception_model import pitcher_deception_breakdown
 from analytics.stuff_model import compute_stuff_plus, compute_stuff_plus_by_stand, overall_stuff_plus
 from analytics.wpa import find_walkoff_batter
 
@@ -36,7 +35,7 @@ from api.presentation import (
     PITCHER_FMT, PITCHER_GROUPS, PITCHER_LABELS, PITCHER_TABLE_COLUMNS,
     PITCHER_TABLE_FMT, format_row, format_value,
 )
-from api.routers.deception_report import REPORT_SEASON as DECEPTION_REPORT_SEASON, _raw_predictions_table
+from api.routers.deception_report import _bracket as _deception_bracket
 from api.routers.tunneling_report import _v3_raw_predictions_table
 from analytics.tunneling_v3_model import pitcher_score as tunneling_v3_pitcher_score
 from api.routers.location_report import _raw_predictions_table as _location_raw_predictions_table
@@ -316,11 +315,8 @@ def _deception_plus_badge(conn, player_id):
     and the underlying league table it reads from is already cached, so
     there's no reason the per-pitcher breakdown wasn't too."""
     try:
-        league = _raw_predictions_table(conn, DECEPTION_REPORT_SEASON)
-        if league.empty:
-            return None
-        breakdown = pitcher_deception_breakdown(conn, DECEPTION_REPORT_SEASON, player_id, league)
-        return breakdown.get("deception_plus") if breakdown else None
+        result = _deception_bracket(player_id, "2025")
+        return result.get("deception_plus") if result else None
     except Exception:
         return None
 
@@ -557,7 +553,7 @@ def _build_player_steps(conn, player_id, role, split, season):
         base["deception_badge"] = {
             "value": _clean(deception_plus),
             "value_str": format_value(deception_plus, "{:.0f}") if deception_plus is not None else "N/A",
-            "season": DECEPTION_REPORT_SEASON,
+            "season": 2025,
         }
         base["tunneling_badge"] = {
             "value": _clean(tunneling_plus),

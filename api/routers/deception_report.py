@@ -112,6 +112,37 @@ def get_leaderboard(season: str = None):
     }
 
 
+# ---------------------------------------------------------------------------
+# Compatibility shims for callers that pre-date the v2 parquet-based router.
+# These names were removed from the original v1 router and are re-exported
+# here so that career.py, players.py, probable_pitchers.py, teams.py and
+# warmup.py continue to import without changes.
+# ---------------------------------------------------------------------------
+
+REPORT_SEASON: int = 2025
+
+
+def _raw_predictions_table(conn, season) -> pd.DataFrame:
+    """Return the pre-computed scores as a DataFrame keyed by pitcher_id.
+    The `conn` parameter is ignored (scores come from parquet, not the DB).
+    Mirrors the shape expected by legacy callers: pitcher_id, deception_plus,
+    n_pitches, qualified columns."""
+    df = _load_scores(DECEPTION_ACTIVE_VERSION)
+    if df.empty:
+        return df
+    score_col = "deception_plus_v2b" if "deception_plus_v2b" in df.columns else (
+        "deception_plus_v2" if "deception_plus_v2" in df.columns else "deception_plus"
+    )
+    sub = df[df["season"] == str(season)].copy()
+    sub = sub.rename(columns={score_col: "deception_plus"})
+    return sub
+
+
+def _pitcher_breakdown_cached(conn, season, pitcher_id: int) -> dict | None:
+    """Return one pitcher's score dict for the given season, or None."""
+    return _bracket(pitcher_id, str(season))
+
+
 @router.get("/pitcher/{pitcher_id}")
 def get_pitcher_breakdown(pitcher_id: int, season: str = None):
     """One pitcher's Deception+ score for a given season (defaults to latest available)."""
