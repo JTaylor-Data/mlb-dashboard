@@ -359,3 +359,41 @@ Stuff+ and Location+.
 
 **Logged**: 2026-10-04 integration-merge verification.
 
+---
+
+## ND-CHECK-C: pitcher_model_scores.tunneling_plus contains stale v3 (single-classifier) scores (post-merge)
+
+**Found during**: CHECK (c) codebase-audit merge verification, 2026-10-05.
+
+**What was checked**: For each column in `pitcher_model_scores` (`stuff_plus`, `stuff_plus_v4`,
+`tunneling_plus`, `location_plus`), compared values to active score parquets for 5 pitcher-seasons
+in 2024 and 2025. Computed correlation and mean absolute difference.
+
+**Findings**:
+
+| Column | Parquet | Correlation | Verdict |
+|--------|---------|-------------|---------|
+| `stuff_plus` | `scores/stuff_plus_v4_*.parquet` | -0.9892 | v4 ✓ (active) |
+| `stuff_plus_v4` | `scores/stuff_plus_v4_*.parquet` | -0.9892 | v4 ✓ identical to stuff_plus |
+| `location_plus` | `scores/location_plus_v3_*.parquet` | 0.8713 | v3 ✓ (active; only v3 parquets exist) |
+| `tunneling_plus` | `scores/tunneling_plus_v3_*.parquet` | 0.7469 | **STALE** — parquet uses v2 5-classifier, table uses old v3 single-classifier |
+
+The `tunneling_plus` discrepancy: `precompute_model_scores.py` (last run 2026-09-19) imports
+`analytics.tunneling_v3_model` (the old single-classifier model). The active parquets in `scores/`
+were re-scored 2026-10-04 by `rescore_models.py` using `analytics.tunneling_v2_model._raw_predictions`
+(the NEW 5-classifier model, despite the parquet filename still reading `tunneling_plus_v3_*`).
+The lower correlation (0.75) confirms these are different algorithms.
+
+**computed_at build date**: 2026-09-19T17:46:20 to 2026-09-19T18:10:22 (pre-v2 promotion).
+
+**Readers of pitcher_model_scores** (2 readers, ≤ 3 threshold):
+1. `api/routers/career.py` — `_pitcher_scores_from_db()` is used as fallback only; the preferred
+   path is `_pitcher_scores_from_parquets()` which reads the active v2-scored parquets. Risk: LOW.
+2. `tools/model_correlation_heatmap.py` — correlation analysis tool, not a production API.
+
+**Action needed (post-merge)**: Update `pulls/precompute_model_scores.py` to import from
+`analytics.tunneling_v2_model` (not `tunneling_v3_model`) so future runs of precompute populate
+`tunneling_plus` with the active v2 5-classifier scores. Re-run precompute to refresh the table.
+
+**Logged**: 2026-10-05 codebase-audit CHECK (c).
+
