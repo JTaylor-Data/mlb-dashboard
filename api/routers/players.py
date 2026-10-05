@@ -414,14 +414,14 @@ def _percentile_groups(pct_dict, labels, fmt_map, groups, qualified=True):
 
 
 def _table_to_rows(df, columns, fmt_map, league_avg_dict=None):
-    rows = []
-    for pitch_type, row in df.iterrows():
-        raw = row.to_dict()
-        formatted = format_row(raw, fmt_map)
-        rows.append({
+    # Use index-to-dict iteration — df is indexed by pitch_type (set_index called upstream)
+    rows = [
+        {
             "pitch_type": pitch_type,
-            "cells": [{"key": k, "label": label, "value": formatted.get(k, "-")} for k, label in columns],
-        })
+            "cells": [{"key": k, "label": label, "value": format_row(row, fmt_map).get(k, "-")} for k, label in columns],
+        }
+        for pitch_type, row in df.to_dict("index").items()
+    ]
     league_row = None
     if league_avg_dict is not None:
         formatted = format_row(league_avg_dict, fmt_map)
@@ -640,7 +640,7 @@ def _build_player_steps(conn, player_id, role, split, season):
             "arm_angle": _clean(arm_angle),
             "points": [
                 {"pitch_type": r["pitch_type"], "hb": _clean(r["HB"]), "ivb": _clean(r["IVB"])}
-                for _, r in filtered.iterrows()
+                for r in filtered.to_dict("records")
             ] if not mv.empty else [],
             "summary": summary_rows,
             # Real league-wide average movement per pitch type, among OTHER
@@ -1143,15 +1143,16 @@ def get_pitcher_outing(
     sequences = []
     if "at_bat_number" in pitches_df.columns:
         for ab_num, ab_grp in pitches_df.sort_values("pitch_number").groupby("at_bat_number"):
-            ab_pitches = []
-            for _, row in ab_grp.iterrows():
-                ab_pitches.append({
+            ab_pitches = [
+                {
                     "pt": row["pitch_type"] if pd.notna(row["pitch_type"]) else "??",
                     "v": round(float(row["release_speed"]), 1) if pd.notna(row["release_speed"]) else None,
                     "d": row["description"] if pd.notna(row["description"]) else "",
                     "b": int(row["balls"]) if pd.notna(row["balls"]) else 0,
                     "s": int(row["strikes"]) if pd.notna(row["strikes"]) else 0,
-                })
+                }
+                for row in ab_grp.to_dict("records")
+            ]
             ev_series = ab_grp["events"].dropna()
             raw_result = ev_series.iloc[-1] if not ev_series.empty else None
             result_label = RESULT_LABELS.get(raw_result, raw_result.upper()[:3] if raw_result else "?")
