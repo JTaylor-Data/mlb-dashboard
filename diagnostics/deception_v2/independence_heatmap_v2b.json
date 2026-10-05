@@ -1,0 +1,24 @@
+{
+  "n": 15887,
+  "available_models": [
+    "dec_v2b",
+    "stuff_plus"
+  ],
+  "pairwise_r": {
+    "dec_v2b": {
+      "dec_v2b": 1.0,
+      "stuff_plus": 0.05177726638204176
+    },
+    "stuff_plus": {
+      "dec_v2b": 0.05177726638204176,
+      "stuff_plus": 1.0
+    }
+  },
+  "partial_correlations": {},
+  "flags_abs_r_gt_0p5": [],
+  "extension_correlations": {
+    "dec_v2b": 0.3794467439020446,
+    "stuff_plus": 0.1146427892882404
+  },
+  "basis": "inner-joined qualified pitcher-seasons 2021-2026"
+}

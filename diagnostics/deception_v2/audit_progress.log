@@ -1,0 +1,17 @@
+[2026-10-03] AUDIT START: Deception+ v2 model-form selection audit
+[2026-10-03] PART A: Reading spec_lock.json, part2_results.json, gate_results.json, validation_results.json, audit.md, DECEPTION_COMPLETION.md, DECEPTION_PROMOTION_LOG.md
+[2026-10-03] PART A: Read train_part2_fast.py to understand computation method
+[2026-10-03] PART A: Key finding: The paired diff in Test 2 uses COMMON SUBSET (inner join A2 OOF + B OOF + xFIP). This subset differs from individual marginal evaluation sets.
+[2026-10-03] PART A: Marginal n: A2=5118, B=3363. Marginal xfip_corr: A2=0.2525, B=0.0837. Apparent diff=+0.1688.
+[2026-10-03] PART A: Paired diff on common set: diff_per_pitch_minus_B=-0.0459, CI=[-0.0963, 0.0050]. B favored on common set.
+[2026-10-03] PART A: Form rule condition: diff > 0.03 AND ci_lo > 0. With diff=-0.0459, condition NOT met. B correctly selected.
+[2026-10-03] PART A: "Within ±0.03" claim in run summary is WRONG description: actual diff=-0.0459, OUTSIDE ±0.03 (B favored, not equivalent).
+[2026-10-03] PART A: DECISION: B is confirmed as correct selection by committed rules. No rerun needed.
+[2026-10-03] PART A: Evidence bar item (ii) CI approximated (all_positive proxy, not actual CI_lower > 0). Flagging but does not change label since (i) fails.
+[2026-10-03] PART A: Gate (d) repeat_correlation marked PASS with "cannot_verify_from_parquet" note. Flagging as unverified.
+[2026-10-03] PART A: In-sample gap table is empty in validation_results.json. Flagging for Part C.
+[2026-10-03] PART B: NOT TRIGGERED. Rules select B (same as pipeline selection). No rerun.
+[2026-10-03] PART C: Reporting from existing artifacts only.
+[2026-10-03] Writing DECEPTION_RULE_AUDIT.md
+[2026-10-03] Updating DECEPTION_COMPLETION.md
+[2026-10-03] Committing and tagging

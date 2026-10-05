@@ -1,0 +1,89 @@
+{
+  "process_check_items": [
+    {
+      "item": "A0 point estimate and CI",
+      "original_basis": "all pitcher-seasons n=5118",
+      "corrected_basis": "qualified set n=3363",
+      "original_value": 0.23651722310642798,
+      "corrected_value": -0.006123369280464401,
+      "decision_changed": false,
+      "recomputed": true
+    },
+    {
+      "item": "A1 point estimate and CI",
+      "original_basis": "all pitcher-seasons n=5118",
+      "corrected_basis": "qualified set n=3363",
+      "original_value": 0.27637449586528945,
+      "corrected_value": 0.022836617204706762,
+      "decision_changed": false,
+      "recomputed": true
+    },
+    {
+      "item": "A2 point estimate and CI",
+      "original_basis": "all pitcher-seasons n=5118",
+      "corrected_basis": "qualified set n=3363",
+      "original_value": 0.2525280993437854,
+      "corrected_value": 0.035205487393429664,
+      "decision_changed": false,
+      "recomputed": true
+    },
+    {
+      "item": "Test 1 (A2 vs A1) paired diff",
+      "original_basis": "A2 predictions on n=5118, B-intersection may differ",
+      "corrected_basis": "qualified common set n=3363",
+      "original_value": 0.023846396521504054,
+      "corrected_value": -0.012368870188722902,
+      "decision_changed": false,
+      "note": "Same decision (A2 chosen). Old diff=+0.0238 on mixed set; new diff=-0.0124 on qualified set \u2014 direction reversed but decision unchanged (equivalence)."
+    },
+    {
+      "item": "Form rule (A2 vs B) paired diff",
+      "original_basis": "A2 on n=5118; B on n=3363; inner join = qualified set",
+      "corrected_basis": "qualified common set n=3363",
+      "original_value": -0.04586533596231124,
+      "corrected_value": -0.048464696557476934,
+      "decision_changed": false,
+      "note": "Paired diff already used inner join in original code; decision unchanged (B chosen)."
+    },
+    {
+      "item": "Screening B vs B_no_season",
+      "original_basis": "qualified set (B-type model); diff=-0.0012",
+      "corrected_basis": "reconfirmed on qualified set; diff=-0.0012",
+      "original_value": -0.0012,
+      "corrected_value": -0.0012218443371496135,
+      "decision_changed": false,
+      "note": "DROP decision confirmed. v2 model was incorrectly trained WITH season; v2b enforces drop."
+    },
+    {
+      "item": "Evidence bar (ii) CI lower bound",
+      "original_basis": "all-positive proxy, no CI computed",
+      "corrected_basis": "pitcher-clustered bootstrap 95% CI per pair; pooled_ci_lo = min across pairs",
+      "original_value": "all_positive_proxy",
+      "corrected_value": "see evidence_bar_v2b.json ii_pooled_ci_lo",
+      "decision_changed": "see Part D",
+      "recomputed": true
+    },
+    {
+      "item": "Gate (d) repeat correlation",
+      "original_basis": "cannot_verify_from_parquet (not computed)",
+      "corrected_basis": "computed from saved v2b fold model re-predictions",
+      "original_value": "unverified",
+      "corrected_value": "verified; see gate_d_v2b.json",
+      "decision_changed": true,
+      "note": "Gate (d) now PASS at min_r=0.990"
+    },
+    {
+      "item": "Independence heatmap",
+      "original_basis": "Stuff+ v4 only",
+      "corrected_basis": "all available models (Deception+, Stuff+, Location+, Tunneling+ if available)",
+      "decision_changed": "see independence_heatmap_v2b.json",
+      "recomputed": true
+    },
+    {
+      "item": "In-sample gap table",
+      "original_basis": "empty (not computed)",
+      "corrected_basis": "computed; see in_sample_gap_v2b.json",
+      "recomputed": true
+    }
+  ]
+}

@@ -102,9 +102,13 @@ DECEPTION_PLUS = {
     ),
 }
 
+DECEPTION_ACTIVE_VERSION = "v2b"
+
 ALL_MODELS = {
     "stuff_plus": STUFF_PLUS,
     "location_plus": LOCATION_PLUS,
     "tunneling_plus": TUNNELING_PLUS,
     "deception_plus": DECEPTION_PLUS,
 }
+
+DECEPTION_USE_IN_ARCHETYPES = True  # set by Part 5

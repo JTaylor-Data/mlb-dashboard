@@ -1,0 +1,97 @@
+{
+  "version": "v2b",
+  "created": "2026-10-04T14:39:17.147610",
+  "parent_version": "v2",
+  "change_from_v2": "season feature dropped per pre-registered inconclusive_means_drop rule",
+  "features": [
+    "release_pos_x_as",
+    "release_pos_z",
+    "release_extension",
+    "arm_angle"
+  ],
+  "form": "pitcher_season",
+  "num_leaves": 4,
+  "min_child_samples": 100,
+  "n_estimators": 200,
+  "n_repeats": 3,
+  "n_folds": 5,
+  "seeds": [
+    42,
+    142,
+    242
+  ],
+  "fold_assignment": "pitcher_id_mod_5",
+  "min_pitches_qualified": 300,
+  "eb_shrinkage_K": 300,
+  "fold_models": {
+    "rep0_fold0": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold0_rep0.txt",
+      "hash": "b33be757115ef8c4cc6b51e190fcc4f2"
+    },
+    "rep0_fold1": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold1_rep0.txt",
+      "hash": "095ed7ecfbed5975dbfc0b0305fda419"
+    },
+    "rep0_fold2": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold2_rep0.txt",
+      "hash": "a921987e394b5b7c2ab92ba61c0b751e"
+    },
+    "rep0_fold3": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold3_rep0.txt",
+      "hash": "8ec980a8d227b9bb5acb008cd1601563"
+    },
+    "rep0_fold4": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold4_rep0.txt",
+      "hash": "3bc9e093d51565c91c058dfb52d4b258"
+    },
+    "rep1_fold0": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold0_rep1.txt",
+      "hash": "1574c58da46d119f0f18db618246a885"
+    },
+    "rep1_fold1": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold1_rep1.txt",
+      "hash": "3cb2c18fabd21bf30fc7dcf1dbbc0399"
+    },
+    "rep1_fold2": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold2_rep1.txt",
+      "hash": "a14b7478fec4f42d6ba1f173f1fb6328"
+    },
+    "rep1_fold3": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold3_rep1.txt",
+      "hash": "562e0ca44528f4010d20e4ed580fe685"
+    },
+    "rep1_fold4": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold4_rep1.txt",
+      "hash": "9956aadbb10f18c6a380ec1d4e8acd3c"
+    },
+    "rep2_fold0": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold0_rep2.txt",
+      "hash": "9a7121094e258d2522a4799a33ff8451"
+    },
+    "rep2_fold1": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold1_rep2.txt",
+      "hash": "0c21c17694bda849094b6f36ff64470d"
+    },
+    "rep2_fold2": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold2_rep2.txt",
+      "hash": "8e4f6ccd871e65a636bdec8f8daa221a"
+    },
+    "rep2_fold3": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold3_rep2.txt",
+      "hash": "e65e2b4df583f993615a56ff6201e61a"
+    },
+    "rep2_fold4": {
+      "path": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2b_fold4_rep2.txt",
+      "hash": "b300b80cddb2f2596f0dba4f1d8f28bf"
+    }
+  },
+  "season_note": "season dropped; no unseen-season handling needed",
+  "scored_seasons": [
+    "2021",
+    "2022",
+    "2023",
+    "2024",
+    "2025",
+    "2026"
+  ]
+}

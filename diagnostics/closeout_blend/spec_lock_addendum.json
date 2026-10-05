@@ -1,0 +1,75 @@
+{
+  "version": "closeout_blend_addendum_v1",
+  "locked_at": "2026-10-04T00:00:00Z",
+  "note": "This addendum supplements (does not replace) diagnostics/stuff_v4/spec_lock.json and diagnostics/location_v3/spec_lock.json. All existing decision rules in those files remain unchanged.",
+
+  "qualified_pitcher_season": {
+    "standard": ">=300 pitches",
+    "2020_scaled": "2020 season scaled by games played ratio (~0.37-0.40), yielding >=111 pitches as equivalent",
+    "sensitivity_run": "500 pitches (reported separately; not the primary bar)"
+  },
+
+  "materiality_floor": {
+    "description": "A difference in out-of-sample R² counts as 'adds' only if ALL of the following hold",
+    "paired_ci_lower_bound": "Paired pitcher-clustered 95% CI lower bound > 0",
+    "point_estimate_minimum": "Point estimate >= 0.005"
+  },
+
+  "ece_thresholds": {
+    "flag_above": 0.02,
+    "stop_ship_above": 0.05,
+    "applies_to": ["xSwing", "xCalledStrike", "xWhiff", "xFoul", "BIP_contact_type_classifier"]
+  },
+
+  "stuff_v4_counterfactual_inert_thresholds": {
+    "correlation_with_baseline": ">=0.995 (pitcher-season level)",
+    "mean_abs_change": "<=0.5 Stuff+ points (pitcher-season level)",
+    "p99_abs_change": "<=2.0 Stuff+ points (pitcher-season level)",
+    "effective_speed_extra": "|corr(change, mean release_extension)| < 0.15"
+  },
+
+  "existing_bars_unchanged": {
+    "stuff_v4_next_season": {
+      "i_corr_final_model": "corr(Stuff+ in S, xFIP in S+1) <= -0.30 (final model, in-sample)",
+      "i_corr_pitcher_holdout_analog": "corr(Stuff+ in S, xFIP in S+1) <= -0.25 (pitcher-holdout analog)",
+      "ii_incremental_delta_r2": "point estimate > 0 in both versions; CI lower bound > 0 for final model"
+    },
+    "location_v3_next_season": {
+      "i_corr_final_model": "corr(Location+ in S, BB% in S+1) <= -0.20 (final model)",
+      "i_corr_pitcher_holdout_analog": "corr(Location+ in S, BB% in S+1) <= -0.15 (pitcher-holdout analog)",
+      "ii_incremental_delta_r2": "point estimate > 0 in both versions; CI lower bound > 0 for final model"
+    }
+  },
+
+  "blend_decision_rules": {
+    "models": {
+      "M0": "last-season outcome only",
+      "M1": "Stuff+ (+ controls)",
+      "M2": "Location+ (+ controls)",
+      "M3": "Stuff+ + Location+ (+ controls)",
+      "M4": "M0 + Stuff+",
+      "M5": "M0 + Location+",
+      "M6": "M0 + Stuff+ + Location+",
+      "M7": "M6 + Stuff×Location+ interaction",
+      "M8": "M6 + Tunneling+",
+      "M9": "M6 + Deception+",
+      "M10": "all four axes + M0"
+    },
+    "controls": "log(pitches in S) + starter indicator (>=half appearances are starts)",
+    "evaluation": "rolling-origin out-of-sample: test pairs 2022→23, 2023→24, 2024→25, 2025→26; train on all earlier pairs; pool OOS predictions; report R² and RMSE; paired pitcher-clustered bootstrap CIs (1000 resamples)",
+    "condition_1": "M3 beats BOTH M1 and M2 under materiality rule (CI lower bound > 0 AND point estimate >= 0.005)",
+    "condition_2": "M6 beats M0 under materiality rule",
+    "outcomes": {
+      "A": "Both conditions met: blended Pitching+ earns a score (weights from M3 standardized coefficients)",
+      "B": "Only Condition 2 met: axes add beyond last season but blend adds nothing over the better axis — no blended score; headline is Stuff+ × Location+ quadrant view",
+      "C": "Neither condition met: neither axis adds beyond last season — both are descriptive"
+    },
+    "tunneling_predictive": "M8 beats M6 under materiality rule",
+    "deception_predictive": "M9 beats M6 under materiality rule"
+  },
+
+  "primary_outcome": "xFIP (S+1)",
+  "secondary_outcomes": ["ERA (S+1)", "K-BB% (S+1)"],
+  "bootstrap_resamples": 1000,
+  "bootstrap_cluster_level": "pitcher"
+}

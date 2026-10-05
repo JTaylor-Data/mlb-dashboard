@@ -1,0 +1,68 @@
+{
+  "version": "v2",
+  "created": "2026-10-03T17:59:51.224632",
+  "chosen_config_key": "B",
+  "features": [
+    "release_pos_x_as",
+    "release_pos_z",
+    "release_extension",
+    "arm_angle",
+    "season"
+  ],
+  "form": "pitcher_season",
+  "num_leaves": 4,
+  "min_child_samples": 100,
+  "n_estimators": 200,
+  "n_repeats": 3,
+  "n_folds": 5,
+  "seeds": [
+    42,
+    142,
+    242
+  ],
+  "fold_assignment": "pitcher_id_mod_5",
+  "min_pitches_qualified": 300,
+  "model_paths": {
+    "rep0_fold0": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold0_rep0.txt",
+    "rep0_fold1": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold1_rep0.txt",
+    "rep0_fold2": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold2_rep0.txt",
+    "rep0_fold3": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold3_rep0.txt",
+    "rep0_fold4": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold4_rep0.txt",
+    "rep1_fold0": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold0_rep1.txt",
+    "rep1_fold1": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold1_rep1.txt",
+    "rep1_fold2": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold2_rep1.txt",
+    "rep1_fold3": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold3_rep1.txt",
+    "rep1_fold4": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold4_rep1.txt",
+    "rep2_fold0": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold0_rep2.txt",
+    "rep2_fold1": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold1_rep2.txt",
+    "rep2_fold2": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold2_rep2.txt",
+    "rep2_fold3": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold3_rep2.txt",
+    "rep2_fold4": "C:\\Users\\joshs\\Desktop\\mlb_dashboard\\models\\deception_plus_v2_fold4_rep2.txt"
+  },
+  "model_hashes": {
+    "rep0_fold0": "ce359ecc99614c159c86bc1edb44b2bb",
+    "rep0_fold1": "786c8255b2587723fffe16342a57af81",
+    "rep0_fold2": "745708652cdd3412df0d65579bda238f",
+    "rep0_fold3": "9c9865bb39c36fd320bf332c0eb75bce",
+    "rep0_fold4": "990ab7682e6b8dbdf0a26028f61b2522",
+    "rep1_fold0": "3b92c55fa9cad8d2a750f119c99220fd",
+    "rep1_fold1": "26f646cd38bfe9a7e7e7bf93570810de",
+    "rep1_fold2": "1e5dce96673310bbe75c7a0cb1caa4fe",
+    "rep1_fold3": "67834d99f27923ce712f0930b6362acd",
+    "rep1_fold4": "955256f5651ce036ef58794bf1da986d",
+    "rep2_fold0": "069153437085d6f4d84570c6ba50959f",
+    "rep2_fold1": "82163c538a8923d57f021e8f360d2d1b",
+    "rep2_fold2": "20b93ca7fef9236fce7bb1ee685aad3f",
+    "rep2_fold3": "c2062883c483c28daaf84642818f1457",
+    "rep2_fold4": "f280601cd71ef81538f6f83332dec0ca"
+  },
+  "eb_shrinkage_K": 300,
+  "scored_seasons": [
+    "2021",
+    "2022",
+    "2023",
+    "2024",
+    "2025",
+    "2026"
+  ]
+}

@@ -156,13 +156,13 @@ v4 as a research artifact.
 
 ---
 
-## ND-11: Stuff+ page rebuild — stuff-page-remake branch decisions needed (logged 2026-10-02)
+## ND-11: Stuff+ page rebuild ï¿½ stuff-page-remake branch decisions needed (logged 2026-10-02)
 
 **Context**: The stuff-page-remake branch rebuilt stuff-model.html as a template-driven page.
 
 **Items requiring owner decision**:
 
-1. **Status badge text**: Currently "v4 — validation in progress". Will flip to "v4 — validated" only when ND-09 (next-season bar) and ND-10 (seed stability) are resolved and stuff_status is set to "validated" in rontend/content/stuff_page.json.
+1. **Status badge text**: Currently "v4 ï¿½ validation in progress". Will flip to "v4 ï¿½ validated" only when ND-09 (next-season bar) and ND-10 (seed stability) are resolved and stuff_status is set to "validated" in rontend/content/stuff_page.json.
 
 2. **LOPO YoY not run for v4**: Pitcher-holdout (LOPO) year-over-year stability was not run for v4. Card 2 shows "Not yet run for v4" and references v3's r=0.558. Decision: run the LOPO test against v4 scored data and run 	ools/build_validation_content.py to fill it in.
 
@@ -173,7 +173,7 @@ v4 as a research artifact.
 5. **Merge decision**: stuff-page-remake replaces the Stuff+ page. Do not merge to main until owner has verified the live app and signed off on all "Not yet run" items.
 
 
-## Morning Summary — stuff-page-remake (2026-10-02)
+## Morning Summary ï¿½ stuff-page-remake (2026-10-02)
 
 ### What was removed
 - Old static Stuff+ page markup that had numbers typed directly into HTML
@@ -186,21 +186,21 @@ v4 as a research artifact.
 - diagnostics/stuff_v4/ artifact files as the sole source of numbers
 
 ### New files
-- frontend/content/stuff_page.json — prose and config (status: draft)
-- frontend/content/validation_results.json — updated for v4 via tools/build_validation_content.py
-- tools/verify_stuff_page.py — verification script (all checks pass)
+- frontend/content/stuff_page.json ï¿½ prose and config (status: draft)
+- frontend/content/validation_results.json ï¿½ updated for v4 via tools/build_validation_content.py
+- tools/verify_stuff_page.py ï¿½ verification script (all checks pass)
 - New API endpoints: /api/stuff-model/pitch-types, /pitcher/{id}/career, /pitcher/{id}/summary
 
 ### Numbers showing "Not yet run"
-- card_repeatability.yoy_season_holdout_cv — season-holdout CV not run for v4
-- card_repeatability.yoy_pitcher_holdout_lopo — pitcher-holdout LOPO not run for v4
-- card_learning.seed_stability_status — seed stability check not yet run
-- card_learning.identifiability_lopo — pitcher-holdout identifiability probe not run for v4
+- card_repeatability.yoy_season_holdout_cv ï¿½ season-holdout CV not run for v4
+- card_repeatability.yoy_pitcher_holdout_lopo ï¿½ pitcher-holdout LOPO not run for v4
+- card_learning.seed_stability_status ï¿½ seed stability check not yet run
+- card_learning.identifiability_lopo ï¿½ pitcher-holdout identifiability probe not run for v4
 
 ### Status badge
-"v4 — validation in progress" (provisional). Reason: next-season xFIP correlation
+"v4 ï¿½ validation in progress" (provisional). Reason: next-season xFIP correlation
 r=-0.225 did not reach pre-registered threshold of r<=-0.30 (ND-09). Seed stability
-not formally run (ND-10). Badge will flip to "v4 — validated" when ND-09 and ND-10
+not formally run (ND-10). Badge will flip to "v4 ï¿½ validated" when ND-09 and ND-10
 are resolved and stuff_status in stuff_page.json is set to "validated".
 
 ### Decisions still needed
@@ -222,7 +222,65 @@ Branch: stuff-page-remake. Tags: pre-stuff-page-remake, post-stuff-page-remake. 
 
 **Timestamp**: 2026-10-02 20:24 (crash), 20:26 (fixed)
 **Context**: Part 4 final fit completed all training and scoring successfully (6744 pitcher-seasons saved). Crash occurred in diagnostic comparison block trying to correlate v3 vs v2 scores.
-**Root cause**: v3_scores column is named 'score'; v2_scores column is named 'plus_score'. When merging with suffixes=("_v3","_v2"), pandas only applies suffixes to columns that collide — since 'score' and 'plus_score' don't collide, neither gets a suffix. Code referenced non-existent 'score_v3'.
+**Root cause**: v3_scores column is named 'score'; v2_scores column is named 'plus_score'. When merging with suffixes=("_v3","_v2"), pandas only applies suffixes to columns that collide ï¿½ since 'score' and 'plus_score' don't collide, neither gets a suffix. Code referenced non-existent 'score_v3'.
 **Fix applied**: Changed both occurrences (Part 4 line ~1481, Part 5 line ~1560) to use merged_v["score"].corr(merged_v["plus_score"]).
 **Result**: v2v3_corr = 0.8856 (computed from saved parquets; exceeds 0.70 gate threshold).
 **Default applied**: Computed correlation manually, wrote part4_done checkpoint, relaunched for Part 5.
+
+---
+
+## DEC-V2-01: Deception+ v2 â€” promotion requires owner review of gate results
+
+**Found during**: Deception+ v2 training run (2026-10-03).
+
+**Context**: Parts 0â€“7 of the deception-v2 pipeline were executed. See `diagnostics/deception_v2/gate_results.json` for the full gate and evidence-bar check. The automated pipeline applies default decisions at each decision point but cannot make the final call on promotion-to-production.
+
+**Items requiring owner decision**:
+1. Review `Methodology/DECEPTION_COMPLETION.md` (completion table with all gate pass/fail results).
+2. Confirm the chosen configuration and feature set are acceptable.
+3. If all correctness gates pass: confirm promotion of v2 to production (`DECEPTION_ACTIVE_VERSION = "v2"` in `config/model_policy.py`).
+4. If any gate fails: review `diagnostics/deception_v2/gate_results.json` for specific failure reasons and decide whether to re-run with adjustments.
+5. Merge `deception-v2` branch to `master` after review.
+
+**Key pre-registered decisions already applied by the pipeline**:
+- arm_angle kept (RÂ²=0.789 < 0.90 threshold from Part 1)
+- Identity-prone features (height, weight, arm_angle_std, release_extension_std, release_consistency) dropped per identifiability rule (146Ã— chance accuracy)
+- Chosen config selected by form_rule (pitcher-season preferred unless per-pitch significantly better)
+- Season feature dropped if inconclusive per pre-registered rule
+
+**Logged**: 2026-10-03 by automated training run (deception-v2 branch).
+
+---
+
+## DEC-V2-02: Season feature â€” DROP recorded but not enforced in B training (2026-10-03)
+
+**Found during**: Post-run rule audit (deception-v2 branch).
+
+**Context**: The Part 2 screening rule `inconclusive_means_drop` triggered for the `season` feature (diff = âˆ’0.0012, below the 0.03 margin). The decision was recorded in `chosen_config.json` as `season_drop_note: "DECISION: inconclusive (diff=-0.0012) -> DROP per pre-registered rule"`. However, config B's feature list (`F2 = release_pos_x_as, release_pos_z, release_extension, arm_angle, season`) still includes `season`, and the model was trained with `season` present. The drop was noted but not implemented.
+
+**Current state**: The live model includes `season`. Gate (c) hygiene check did not flag `season` as a violation (it is classified as a mechanics/context feature, not an identity-prone feature). The gate passed.
+
+**Decision needed**: Should B be retrained with `season` removed from F2, or is `season` acceptable as a context feature (era-adjustment) in the pitcher-season model?
+
+**Implications**:
+- Removing `season`: slight loss per the screening result (diff = âˆ’0.0012, essentially zero), but honors the pre-registered inconclusive-means-drop rule
+- Keeping `season`: small era-adjustment benefit; contradicts the recorded drop decision
+- If removed, the feature set becomes F2_no_season = [release_pos_x_as, release_pos_z, release_extension, arm_angle]; a retrain of B under Part B of the next audit cycle would be needed
+
+**Recommendation**: Retrain with `season` removed if strict pre-registered rule adherence is required. Accept current model if the era-adjustment benefit is judged worth the inconsistency.
+
+---
+
+## DEC-V2-03: Evidence bar item (ii) CI lower bound not computed (2026-10-03)
+
+**Found during**: Post-run rule audit (deception-v2 branch).
+
+**Context**: Spec_lock requires `"(ii) incremental_deltaR2_over_last_season_xFIP_positive_with_CI_lower_above_0"`. The validation only checked that all five individual year-pair delta-RÂ² values are positive (range: 0.00043 to 0.00496). A pooled CI was not computed; `gate_results.json` notes "CI approximated: all_positive used as proxy for CI_lower > 0."
+
+The 2022â†’2023 pair has delta-RÂ² = 0.00043 â€” very close to zero. A proper pooled CI could plausibly include zero as the lower bound.
+
+**Decision needed**: Run the proper pooled incremental delta-RÂ² test with a Fisher z or bootstrap pooled CI to confirm whether the lower bound is truly > 0. Until then, item (ii) cannot be marked as meeting the pre-registered threshold.
+
+**Impact**: Evidence bar item (i) already fails, so the `limited_evidence` label is correct regardless of item (ii) outcome. This is a documentation/correctness concern, not a promotion-blocking issue.
+
+**Logged**: 2026-10-03 by post-run rule audit.

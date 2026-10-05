@@ -1,0 +1,21 @@
+{
+  "features": "F2",
+  "form": "pitcher_season",
+  "num_leaves": 4,
+  "min_child_samples": 100,
+  "n_estimators": 200,
+  "key": "B",
+  "feature_list": [
+    "release_pos_x_as",
+    "release_pos_z",
+    "release_extension",
+    "arm_angle",
+    "season"
+  ],
+  "xfip_corr": 0.0836701839509066,
+  "ci": [
+    0.03710777471499866,
+    0.12745349360544672
+  ],
+  "season_drop_note": "DECISION: inconclusive (diff=-0.0012) -> DROP per pre-registered rule"
+}
