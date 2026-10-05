@@ -1,0 +1,38 @@
+﻿{
+    "trained_at":  "2026-08-27 11:22:36",
+    "score_season":  2024,
+    "outcome_season":  2025,
+    "description":  "Does each pitcher\u0027s 2024 Stuff+ v3 predict their real 2025 results? Scored by a model trained on every season EXCEPT 2024 (honest out-of-sample - the live site\u0027s model, unlike this one, is trained on all seasons including this one).",
+    "results_by_min_pitches":  {
+                                   "100":  {
+                                               "n_qualified":  304,
+                                               "correlations":  {
+                                                                    "xwoba":  -0.344,
+                                                                    "whiff_pct":  0.398,
+                                                                    "swstr_pct":  0.42,
+                                                                    "k_minus_bb_pct":  0.348,
+                                                                    "chase_pct":  0.254
+                                                                }
+                                           },
+                                   "200":  {
+                                               "n_qualified":  290,
+                                               "correlations":  {
+                                                                    "xwoba":  -0.365,
+                                                                    "whiff_pct":  0.42,
+                                                                    "swstr_pct":  0.434,
+                                                                    "k_minus_bb_pct":  0.356,
+                                                                    "chase_pct":  0.26
+                                                                }
+                                           },
+                                   "300":  {
+                                               "n_qualified":  282,
+                                               "correlations":  {
+                                                                    "xwoba":  -0.344,
+                                                                    "whiff_pct":  0.41,
+                                                                    "swstr_pct":  0.428,
+                                                                    "k_minus_bb_pct":  0.338,
+                                                                    "chase_pct":  0.257
+                                                                }
+                                           }
+                               }
+}

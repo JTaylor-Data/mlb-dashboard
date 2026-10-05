@@ -33,6 +33,7 @@ import pandas as pd
 
 from analytics.location_features import to_plus_scale
 from analytics.stuff_features import merge_pitch_type, exclude_junk_pitch_types
+from config.qualifiers import MODEL_EXCLUDED
 
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 DIAG_DIR = Path(__file__).resolve().parent.parent / "diagnostics" / "location_v3"
@@ -135,7 +136,7 @@ def _cat_levels(conn):
                 WHERE season BETWEEN 2015 AND 2026
             """, conn)
             raw["pitch_type"] = raw["pitch_type"].replace({"KC": "CU"})
-            raw = raw[~raw["pitch_type"].isin({"PO", "UN", "EP"})]
+            raw = raw[~raw["pitch_type"].isin(MODEL_EXCLUDED)]
             raw["season"] = raw["season"].astype(str)
             _cache["cat_levels"] = {
                 "pitch_type": sorted(raw["pitch_type"].dropna().unique().tolist()),
@@ -205,9 +206,10 @@ def _raw_predictions(conn, season):
         "plate_x", "plate_z", "balls", "strikes", "pitch_type", "stand", "season"]
     hbp_rate = meta.get("hbp_rate_no_swing", 0.00514) if meta else 0.00514
 
+    from config.qualifiers import regular_season_filter
     df = pd.read_sql(
         f"SELECT {', '.join(_QUERY_COLS)} FROM pitches "
-        "WHERE season = ? AND delta_run_exp IS NOT NULL",
+        f"WHERE season = ? AND delta_run_exp IS NOT NULL {regular_season_filter()}",
         conn, params=(season,),
     )
     if df.empty:
@@ -248,6 +250,16 @@ def _raw_predictions(conn, season):
 
     _cache[key] = (out, time.monotonic())
     return out
+
+
+def raw_predictions_if_cached(season):
+    """Return cached raw predictions if available and fresh, else None. Non-blocking.
+    Mirrors the same helper in location_model.py used by career.py."""
+    key = f"raw_v3_{season}"
+    entry = _cache.get(key)
+    if entry is not None and (time.monotonic() - entry[1]) < _TTL:
+        return entry[0]
+    return None
 
 
 def clear_cache():

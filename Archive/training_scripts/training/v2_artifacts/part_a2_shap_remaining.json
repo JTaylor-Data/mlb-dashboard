@@ -1,0 +1,92 @@
+{
+  "xwhiff": {
+    "lag1_geom_z": -1.706,
+    "alllag_geom_z": 1.635,
+    "pt_lag_z": 18.622,
+    "outcome": "is_whiff",
+    "note": "from part_a_tunneling_shap_geometry.py (prior run)"
+  },
+  "xswing": {
+    "outcome": "is_swing",
+    "base_rate": 0.534,
+    "sample_n": 200000,
+    "lag1_geom_z": 73.969,
+    "alllag_geom_z": 153.024,
+    "pt_lag_z": 28.139,
+    "note": "from prior run (failed before BIP, results captured from stdout)"
+  },
+  "xcs": {
+    "outcome": "is_cs",
+    "base_rate": 0.1156,
+    "sample_n": 200000,
+    "lag1_geom_z": 40.566,
+    "alllag_geom_z": 58.378,
+    "pt_lag_z": 20.694,
+    "note": "from prior run (failed before BIP, results captured from stdout)"
+  },
+  "xfoul": {
+    "outcome": "is_foul",
+    "base_rate": 0.2028,
+    "sample_n": 200000,
+    "lag1_geom_z": -21.76,
+    "alllag_geom_z": -44.573,
+    "pt_lag_z": -2.055,
+    "note": "from prior run (failed before BIP, results captured from stdout)"
+  },
+  "bip": {
+    "outcome": "is_bip",
+    "base_rate": 0.19568506465422397,
+    "sample_n": 30000,
+    "lag1_geom_z": 9.360860438685757,
+    "alllag_geom_z": 16.556971759957136,
+    "pt_lag_z": 4.962644167120025,
+    "lag1_geom_detail": {
+      "low_rate": 0.163,
+      "mid_rate": 0.2093,
+      "high_rate": 0.2147,
+      "low_n": 10000,
+      "high_n": 10000,
+      "z_high_minus_low": 9.360860438685757
+    },
+    "alllag_geom_detail": {
+      "low_rate": 0.1467,
+      "mid_rate": 0.2019,
+      "high_rate": 0.2384,
+      "low_n": 10000,
+      "high_n": 10000,
+      "z_high_minus_low": 16.556971759957136
+    },
+    "pt_lag_detail": {
+      "low_rate": 0.1813,
+      "mid_rate": 0.1966,
+      "high_rate": 0.2091,
+      "low_n": 10000,
+      "high_n": 10000,
+      "z_high_minus_low": 4.962644167120025
+    },
+    "bip_dre_lag1": {
+      "low_mean": 0.043731221257026054,
+      "mid_mean": 0.05246216768916155,
+      "high_mean": 0.06982319877363312,
+      "low_n": 1957,
+      "high_n": 1957,
+      "t_high_minus_low": 1.6410820728040623
+    },
+    "bip_dre_alllag": {
+      "low_mean": 0.043309146653040365,
+      "mid_mean": 0.0568118609406953,
+      "high_mean": 0.0658978027593255,
+      "low_n": 1957,
+      "high_n": 1957,
+      "t_high_minus_low": 1.396434221256057
+    },
+    "bip_dre_pt": {
+      "low_mean": 0.04457077158916709,
+      "mid_mean": 0.06415746421267894,
+      "high_mean": 0.057294328053142565,
+      "low_n": 1957,
+      "high_n": 1957,
+      "t_high_minus_low": 0.8046342136505626
+    }
+  }
+}

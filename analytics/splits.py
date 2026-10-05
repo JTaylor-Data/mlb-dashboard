@@ -7,6 +7,10 @@ import numpy as np
 import pandas as pd
 
 from analytics.metrics import compute_barrel, classify_pitcher_archetype
+from config.qualifiers import DISPLAY_EXCLUDED, MIN_PITCH_TYPE_USAGE_FRACTION
+
+# Keep the old alias name so any future import of EXCLUDED_PITCH_TYPES still works
+EXCLUDED_PITCH_TYPES = DISPLAY_EXCLUDED
 
 # Actual All-Star Game date per season (the 1st/2nd-half boundary) - each
 # season's own break, not just 2026's, now that multiple seasons are loaded.
@@ -143,6 +147,15 @@ def compute_pitcher_splits(conn, season, split_by, pitcher_id=None, pitch_type=N
         df["split_value"] = df["stand"]
     elif split_by in ("month", "half"):
         df["split_value"] = df[split_by]
+    elif split_by == "pitch_type":
+        df["split_value"] = df["pitch_type"].fillna("UN")
+        # Drop excluded pitch types (UN, PO, EP, FA) and low-usage types (< 1% of pitches)
+        df = df[~df["split_value"].isin(EXCLUDED_PITCH_TYPES)]
+        total_pitches = len(df)
+        if total_pitches > 0:
+            type_counts = df["split_value"].value_counts()
+            kept = type_counts[type_counts / total_pitches >= MIN_PITCH_TYPE_USAGE_FRACTION].index
+            df = df[df["split_value"].isin(kept)]
     else:
         raise ValueError(f"Unknown split_by: {split_by}")
 
@@ -201,6 +214,15 @@ def compute_batter_splits(conn, season, split_by, batter_id=None, pitch_type=Non
         df["split_value"] = df["p_throws"]
     elif split_by in ("month", "half"):
         df["split_value"] = df[split_by]
+    elif split_by == "pitch_type":
+        df["split_value"] = df["pitch_type"].fillna("UN")
+        # Drop excluded pitch types (UN, PO, EP, FA) and low-usage types (< 1% of pitches)
+        df = df[~df["split_value"].isin(EXCLUDED_PITCH_TYPES)]
+        total_pitches = len(df)
+        if total_pitches > 0:
+            type_counts = df["split_value"].value_counts()
+            kept = type_counts[type_counts / total_pitches >= MIN_PITCH_TYPE_USAGE_FRACTION].index
+            df = df[df["split_value"].isin(kept)]
     else:
         raise ValueError(f"Unknown split_by: {split_by}")
 

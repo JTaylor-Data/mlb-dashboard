@@ -1,8 +1,47 @@
 # MLB Dashboard — Project Handoff
 
-Last updated: 2026-10-04 (merge of deception-v2 + closeout-blend + percentile cache).
+Last updated: 2026-10-05 (codebase-audit branch — all stages complete).
 
-## WHAT CHANGED IN THIS SESSION (2026-10-04 merge)
+## WHAT CHANGED IN THIS SESSION (2026-10-05 codebase-audit)
+
+### Branch: codebase-audit (not yet merged to master — owner reviews then merges)
+
+Tags: `pre-audit` = d573b90 (baseline before any changes), `post-audit` = see below.
+
+### Changes made (zero behavior change — refactors and cleanup only)
+
+1. **`config/season_phase.py`** (NEW) — single source for SEASON_PHASE constant (REGULAR_SEASON/POSTSEASON/OFFSEASON). Set via env var `SEASON_PHASE`, defaults to POSTSEASON. Helpers: `is_postseason()`, `skip_team_stat_pulls()`, `cache_ttl_live_seconds()`, etc. `api/pull.py` POSTSEASON_MODE now derived from this instead of hardcoded True.
+
+2. **`config/qualifiers.py`** (NEW) — canonical per-model min-pitch thresholds. All leaderboard/scoring qualifier constants live here.
+
+3. **`api/routers/deception_report.py`** — REPORT_SEASON fixed from hardcoded 2025 → CURRENT_SEASON (2026). `_load_scores` replaced `@lru_cache` with `@ttl_cache_all_args()` so it participates in `/api/admin/refresh-cache`.
+
+4. **`api/main.py`** — added `/api/admin/cache-stats` endpoint (admin-token protected).
+
+5. **`api/routers/players.py`** — 3 of 4 `iterrows()` calls vectorized. 4th kept (downstream uses pandas Series attribute access).
+
+6. **`Archive/`** (NEW directory) — non-live training/diagnostic/experimental code moved here with `git mv`. See `Archive/MOVED_FILES.csv` for full provenance. Notable: `diagnostics/location_v3/` was moved then REVERTED — it is live (read by `location_report.py` at runtime).
+
+7. **`ARCHITECTURE.md`** (NEW at repo root) — folder tree, data flow, active model table, router index, cache docs.
+
+### Deferred items (owner input needed — see Methodology/decisions/NEEDS_DECISION.md)
+
+- **ND-AUDIT-02/DEF-03/04**: `probable_pitchers.py` and `career.py` import `tunneling_v3_model` and the old `location_model` instead of active versions. Deferred — owner to decide if/when to fix.
+- **ND-AUDIT-03**: `/api/splits?player_id=543037&season=2026&split_by=pitch_type` 500 error. Not investigated — not caused by this audit.
+
+### Rollback instructions
+
+```bash
+git checkout master   # returns to pre-audit state immediately
+# OR to revert codebase-audit after it's merged:
+git revert <merge-commit-sha>
+# OR restore from bundle backup:
+git clone ..\pre-audit-backup.bundle mlb_dashboard_restored
+```
+
+---
+
+## WHAT CHANGED IN THE PREVIOUS SESSION (2026-10-04 merge)
 
 ### Active model versions (updated)
 - **Stuff+**: v4 (was v3). Hash 0addb8e9. Training seasons 2016-2026. See models/deception_plus_v2b_meta.json.

@@ -1,0 +1,148 @@
+﻿{
+    "player_id":  545361,
+    "name":  "Mike Trout",
+    "team_id":  "108",
+    "position":  "CF",
+    "role":  "pitcher",
+    "split":  "ALL",
+    "season":  2026,
+    "last_5_games":  [
+
+                     ],
+    "il_status":  null,
+    "handedness":  null,
+    "card":  [
+                 {
+                     "label":  "IP",
+                     "value":  "0.0"
+                 },
+                 {
+                     "label":  "K",
+                     "value":  0
+                 },
+                 {
+                     "label":  "GS",
+                     "value":  "-"
+                 },
+                 {
+                     "label":  "OPS against",
+                     "value":  "-"
+                 },
+                 {
+                     "label":  "ERA (season)",
+                     "value":  "-"
+                 },
+                 {
+                     "label":  "xFIP (approx)",
+                     "value":  "-"
+                 },
+                 {
+                     "label":  "bWAR",
+                     "value":  "-"
+                 }
+             ],
+    "badge":  {
+                  "kind":  "stuff_plus",
+                  "value":  null,
+                  "value_str":  "N/A"
+              },
+    "deception_badge":  {
+                            "value":  null,
+                            "value_str":  "N/A",
+                            "season":  2025
+                        },
+    "tunneling_badge":  {
+                            "value":  null,
+                            "value_str":  "N/A",
+                            "season":  2026
+                        },
+    "location_badge":  {
+                           "value":  null,
+                           "value_str":  "N/A",
+                           "season":  2026
+                       },
+    "percentiles":  [
+
+                    ],
+    "pitch_usage_by_stand":  [
+
+                             ],
+    "rubber_position":  {
+                            "release_pos_x":  null,
+                            "throws":  "R"
+                        },
+    "babip_against":  {
+                          "value":  null,
+                          "value_str":  "-"
+                      },
+    "movement_plot":  {
+                          "arm_angle":  null,
+                          "points":  [
+
+                                     ],
+                          "summary":  [
+
+                                      ],
+                          "peer_avg_movement":  {
+
+                                                }
+                      },
+    "stuff_breakdown":  null,
+    "pitch_table":  {
+                        "columns":  [
+                                        {
+                                            "key":  "usage_pct",
+                                            "label":  "Usage%"
+                                        },
+                                        {
+                                            "key":  "n_pitches",
+                                            "label":  "Pitches"
+                                        },
+                                        {
+                                            "key":  "ops",
+                                            "label":  "OPS"
+                                        },
+                                        {
+                                            "key":  "velo",
+                                            "label":  "Velo"
+                                        },
+                                        {
+                                            "key":  "spin",
+                                            "label":  "Spin"
+                                        },
+                                        {
+                                            "key":  "ivb",
+                                            "label":  "IVB"
+                                        },
+                                        {
+                                            "key":  "hb",
+                                            "label":  "HB"
+                                        },
+                                        {
+                                            "key":  "zone_pct",
+                                            "label":  "Zone%"
+                                        },
+                                        {
+                                            "key":  "chase_pct",
+                                            "label":  "Chase%"
+                                        },
+                                        {
+                                            "key":  "whiff_pct",
+                                            "label":  "Whiff%"
+                                        },
+                                        {
+                                            "key":  "k_pct",
+                                            "label":  "K%"
+                                        },
+                                        {
+                                            "key":  "stuff_plus",
+                                            "label":  "Stuff+"
+                                        }
+                                    ],
+                        "rows":  [
+
+                                 ],
+                        "summary_row":  null,
+                        "summary_label":  "League Avg"
+                    }
+}

@@ -1,0 +1,24 @@
+{
+  "bip_classes": [
+    "fly_ball__ev_100_105",
+    "fly_ball__ev_105plus",
+    "fly_ball__ev_90_95",
+    "fly_ball__ev_95_100",
+    "fly_ball__ev_lt90",
+    "ground_ball__ev_100_105",
+    "ground_ball__ev_105plus",
+    "ground_ball__ev_90_95",
+    "ground_ball__ev_95_100",
+    "ground_ball__ev_lt90",
+    "line_drive__ev_100_105",
+    "line_drive__ev_105plus",
+    "line_drive__ev_90_95",
+    "line_drive__ev_95_100",
+    "line_drive__ev_lt90",
+    "popup__ev_100_105",
+    "popup__ev_105plus",
+    "popup__ev_90_95",
+    "popup__ev_95_100",
+    "popup__ev_lt90"
+  ]
+}

@@ -1,0 +1,462 @@
+﻿{
+    "season":  2026,
+    "n_training_rows":  5924132,
+    "all_features":  [
+                         "lag1_commit_distance",
+                         "lag1_plate_distance",
+                         "lag1_shape_break",
+                         "lag2_commit_distance",
+                         "lag2_plate_distance",
+                         "lag2_shape_break",
+                         "lag3_commit_distance",
+                         "lag3_plate_distance",
+                         "lag3_shape_break",
+                         "lag4_commit_distance",
+                         "lag4_plate_distance",
+                         "lag4_shape_break",
+                         "lag5_commit_distance",
+                         "lag5_plate_distance",
+                         "lag5_shape_break",
+                         "lag6_commit_distance",
+                         "lag6_plate_distance",
+                         "lag6_shape_break",
+                         "lag1_pitch_type",
+                         "lag2_pitch_type",
+                         "lag3_pitch_type",
+                         "lag4_pitch_type",
+                         "lag5_pitch_type",
+                         "lag6_pitch_type",
+                         "pitch_type",
+                         "p_throws",
+                         "stand",
+                         "season"
+                     ],
+    "cv_folds":  [
+                     {
+                         "holdout_season":  2015,
+                         "r2":  0.005610264974256762,
+                         "mae":  0.12966551901993445,
+                         "n":  511430
+                     },
+                     {
+                         "holdout_season":  2016,
+                         "r2":  0.0058984045393759565,
+                         "mae":  0.13230820233469562,
+                         "n":  524148
+                     },
+                     {
+                         "holdout_season":  2017,
+                         "r2":  0.006596812609188318,
+                         "mae":  0.1369597471965546,
+                         "n":  530618
+                     },
+                     {
+                         "holdout_season":  2018,
+                         "r2":  0.006869601019155014,
+                         "mae":  0.13268547638264208,
+                         "n":  530101
+                     },
+                     {
+                         "holdout_season":  2019,
+                         "r2":  0.007156950780146554,
+                         "mae":  0.1406893014753844,
+                         "n":  538879
+                     },
+                     {
+                         "holdout_season":  2020,
+                         "r2":  0.008328640669573284,
+                         "mae":  0.13780413502028505,
+                         "n":  191367
+                     },
+                     {
+                         "holdout_season":  2021,
+                         "r2":  0.008287383400082837,
+                         "mae":  0.13541112090072824,
+                         "n":  522422
+                     },
+                     {
+                         "holdout_season":  2022,
+                         "r2":  0.006813784504238418,
+                         "mae":  0.12888045338734733,
+                         "n":  520973
+                     },
+                     {
+                         "holdout_season":  2023,
+                         "r2":  0.007180513983006898,
+                         "mae":  0.13413699138599963,
+                         "n":  528450
+                     },
+                     {
+                         "holdout_season":  2024,
+                         "r2":  0.007531255276964077,
+                         "mae":  0.13072251878641805,
+                         "n":  522153
+                     },
+                     {
+                         "holdout_season":  2025,
+                         "r2":  0.006612100655693398,
+                         "mae":  0.13150135410953503,
+                         "n":  522025
+                     }
+                 ],
+    "cv_r2_mean":  0.0069896102192437744,
+    "cv_mae_mean":  0.1337058927272295,
+    "lag_slot_shap_summary":  {
+                                  "lag1":  {
+                                               "commit_distance":  0.002304023018803685,
+                                               "plate_distance":  0.005910760650532157,
+                                               "shape_break":  0.00030609214576361173,
+                                               "distance_group_total":  0.008520875815099454,
+                                               "pitch_type":  0.0008309899867681666
+                                           },
+                                  "lag2":  {
+                                               "commit_distance":  0.0027079458037588553,
+                                               "plate_distance":  0.0030435283726352206,
+                                               "shape_break":  0.00040836890488564454,
+                                               "distance_group_total":  0.006159843081279721,
+                                               "pitch_type":  0.0004036610118954558
+                                           },
+                                  "lag3":  {
+                                               "commit_distance":  0.0023808076920216973,
+                                               "plate_distance":  0.0020163720447737895,
+                                               "shape_break":  0.000300113931066853,
+                                               "distance_group_total":  0.00469729366786234,
+                                               "pitch_type":  0.000218570996774983
+                                           },
+                                  "lag4":  {
+                                               "commit_distance":  0.0015428410729371282,
+                                               "plate_distance":  0.001388445895017148,
+                                               "shape_break":  0.00021525746505540795,
+                                               "distance_group_total":  0.003146544433009684,
+                                               "pitch_type":  0.00013536583182711527
+                                           },
+                                  "lag5":  {
+                                               "commit_distance":  0.0010318140706998453,
+                                               "plate_distance":  0.0006990965588182109,
+                                               "shape_break":  0.00022853839393270061,
+                                               "distance_group_total":  0.001959449023450757,
+                                               "pitch_type":  0.0001536338896307662
+                                           },
+                                  "lag6":  {
+                                               "commit_distance":  0.00034596567274479146,
+                                               "plate_distance":  0.0003043076511384803,
+                                               "shape_break":  8.0231552125245153E-05,
+                                               "distance_group_total":  0.0007305048760085169,
+                                               "pitch_type":  8.1731046396370938E-05
+                                           }
+                              },
+    "sequential_same_at_bat_test":  {
+                                        "n_total":  3044719,
+                                        "whiff_rate_by_predicted_tercile":  {
+                                                                                "low_pred":  {
+                                                                                                 "whiff_rate":  0.1415587832185609,
+                                                                                                 "n":  1014907
+                                                                                             },
+                                                                                "mid_pred":  {
+                                                                                                 "whiff_rate":  0.12627670915959383,
+                                                                                                 "n":  1014914
+                                                                                             },
+                                                                                "high_pred":  {
+                                                                                                  "whiff_rate":  0.10270293172318795,
+                                                                                                  "n":  1014898
+                                                                                              }
+                                                                            },
+                                        "good_minus_bad_z_score":  84.68216157895434,
+                                        "methodology_note":  "NOT directly comparable to v1 (z=9.06) or v2 (z=9.3-10.0) at face value - see sequential_same_at_bat_test()\u0027s own docstring for exactly what changed and why."
+                                    },
+    "year_over_year":  {
+                           "per_pair":  [
+                                            {
+                                                "season_t":  "2021",
+                                                "season_t1":  "2022",
+                                                "n":  492,
+                                                "r2":  0.277
+                                            },
+                                            {
+                                                "season_t":  "2022",
+                                                "season_t1":  "2023",
+                                                "n":  494,
+                                                "r2":  0.349
+                                            },
+                                            {
+                                                "season_t":  "2023",
+                                                "season_t1":  "2024",
+                                                "n":  490,
+                                                "r2":  0.292
+                                            },
+                                            {
+                                                "season_t":  "2024",
+                                                "season_t1":  "2025",
+                                                "n":  481,
+                                                "r2":  0.283
+                                            },
+                                            {
+                                                "season_t":  "2025",
+                                                "season_t1":  "2026",
+                                                "n":  479,
+                                                "r2":  0.298
+                                            }
+                                        ],
+                           "pooled_r2":  0.299,
+                           "n_pooled":  2436
+                       },
+    "cross_model_correlation":  {
+                                    "n":  688,
+                                    "r_stuff":  0.074,
+                                    "r_deception":  0.154
+                                },
+    "fastest_fb_velo_correlation":  0.085,
+    "predictive_validity":  {
+                                "score_season":  2024,
+                                "outcome_season":  2025,
+                                "results_by_min_pitches":  {
+                                                               "100":  {
+                                                                           "n_qualified":  302,
+                                                                           "correlations":  {
+                                                                                                "xwoba":  -0.051,
+                                                                                                "whiff_pct":  -0.1,
+                                                                                                "swstr_pct":  -0.026,
+                                                                                                "k_minus_bb_pct":  0.148,
+                                                                                                "chase_pct":  0.158
+                                                                                            }
+                                                                       },
+                                                               "200":  {
+                                                                           "n_qualified":  282,
+                                                                           "correlations":  {
+                                                                                                "xwoba":  -0.057,
+                                                                                                "whiff_pct":  -0.106,
+                                                                                                "swstr_pct":  -0.031,
+                                                                                                "k_minus_bb_pct":  0.162,
+                                                                                                "chase_pct":  0.149
+                                                                                            }
+                                                                       },
+                                                               "300":  {
+                                                                           "n_qualified":  276,
+                                                                           "correlations":  {
+                                                                                                "xwoba":  -0.066,
+                                                                                                "whiff_pct":  -0.092,
+                                                                                                "swstr_pct":  -0.016,
+                                                                                                "k_minus_bb_pct":  0.173,
+                                                                                                "chase_pct":  0.171
+                                                                                            }
+                                                                       }
+                                                           }
+                            },
+    "leaderboard":  {
+                        "n_qualified":  701,
+                        "top":  [
+                                    {
+                                        "pitcher_id":  547184,
+                                        "name":  "Michael Kelly",
+                                        "team_abbrev":  "ATH",
+                                        "total_pitches":  89,
+                                        "score":  134.1
+                                    },
+                                    {
+                                        "pitcher_id":  676620,
+                                        "name":  "Blake Weiman",
+                                        "team_abbrev":  "LAA",
+                                        "total_pitches":  208,
+                                        "score":  130.7
+                                    },
+                                    {
+                                        "pitcher_id":  666745,
+                                        "name":  "Jhony Brito",
+                                        "team_abbrev":  "SD",
+                                        "total_pitches":  88,
+                                        "score":  130.1
+                                    },
+                                    {
+                                        "pitcher_id":  689149,
+                                        "name":  "Chad Dallas",
+                                        "team_abbrev":  "TOR",
+                                        "total_pitches":  196,
+                                        "score":  127.3
+                                    },
+                                    {
+                                        "pitcher_id":  682274,
+                                        "name":  "Yaramil Hiraldo",
+                                        "team_abbrev":  "BAL",
+                                        "total_pitches":  145,
+                                        "score":  125.4
+                                    },
+                                    {
+                                        "pitcher_id":  595345,
+                                        "name":  "Steven Okert",
+                                        "team_abbrev":  "HOU",
+                                        "total_pitches":  788,
+                                        "score":  124.7
+                                    },
+                                    {
+                                        "pitcher_id":  641755,
+                                        "name":  "Tyler Kinley",
+                                        "team_abbrev":  "DET",
+                                        "total_pitches":  681,
+                                        "score":  124.6
+                                    },
+                                    {
+                                        "pitcher_id":  665665,
+                                        "name":  "Reiver Sanmartin",
+                                        "team_abbrev":  "SF",
+                                        "total_pitches":  253,
+                                        "score":  122.5
+                                    },
+                                    {
+                                        "pitcher_id":  669276,
+                                        "name":  "Dylan Lee",
+                                        "team_abbrev":  "ATL",
+                                        "total_pitches":  793,
+                                        "score":  122.5
+                                    },
+                                    {
+                                        "pitcher_id":  656986,
+                                        "name":  "Bennett Sousa",
+                                        "team_abbrev":  "HOU",
+                                        "total_pitches":  392,
+                                        "score":  121.5
+                                    },
+                                    {
+                                        "pitcher_id":  676680,
+                                        "name":  "Tom Cosgrove",
+                                        "team_abbrev":  "WSH",
+                                        "total_pitches":  194,
+                                        "score":  121.5
+                                    },
+                                    {
+                                        "pitcher_id":  670062,
+                                        "name":  "Julian Garcia",
+                                        "team_abbrev":  "CIN",
+                                        "total_pitches":  532,
+                                        "score":  121.2
+                                    },
+                                    {
+                                        "pitcher_id":  805326,
+                                        "name":  "Tyler Schweitzer",
+                                        "team_abbrev":  "CWS",
+                                        "total_pitches":  411,
+                                        "score":  120.5
+                                    },
+                                    {
+                                        "pitcher_id":  684007,
+                                        "name":  "Shota Imanaga",
+                                        "team_abbrev":  "CHC",
+                                        "total_pitches":  2102,
+                                        "score":  120.1
+                                    },
+                                    {
+                                        "pitcher_id":  592332,
+                                        "name":  "Kevin Gausman",
+                                        "team_abbrev":  "CHC",
+                                        "total_pitches":  2250,
+                                        "score":  119.8
+                                    }
+                                ],
+                        "bottom":  [
+                                       {
+                                           "pitcher_id":  672021,
+                                           "name":  "Eric Cerantola",
+                                           "team_abbrev":  "SF",
+                                           "total_pitches":  95,
+                                           "score":  45.0
+                                       },
+                                       {
+                                           "pitcher_id":  690829,
+                                           "name":  "Ben Joyce",
+                                           "team_abbrev":  "LAA",
+                                           "total_pitches":  198,
+                                           "score":  62.9
+                                       },
+                                       {
+                                           "pitcher_id":  666201,
+                                           "name":  "Alek Manoah",
+                                           "team_abbrev":  "LAA",
+                                           "total_pitches":  122,
+                                           "score":  64.6
+                                       },
+                                       {
+                                           "pitcher_id":  693312,
+                                           "name":  "Kyle Nicolas",
+                                           "team_abbrev":  "WSH",
+                                           "total_pitches":  156,
+                                           "score":  71.0
+                                       },
+                                       {
+                                           "pitcher_id":  647315,
+                                           "name":  "Zach Pop",
+                                           "team_abbrev":  "MIA",
+                                           "total_pitches":  99,
+                                           "score":  71.1
+                                       },
+                                       {
+                                           "pitcher_id":  670090,
+                                           "name":  "Wyatt Mills",
+                                           "team_abbrev":  "WSH",
+                                           "total_pitches":  113,
+                                           "score":  73.3
+                                       },
+                                       {
+                                           "pitcher_id":  641585,
+                                           "name":  "J.P. France",
+                                           "team_abbrev":  "SD",
+                                           "total_pitches":  86,
+                                           "score":  74.1
+                                       },
+                                       {
+                                           "pitcher_id":  690925,
+                                           "name":  "Clayton Beeter",
+                                           "team_abbrev":  "WSH",
+                                           "total_pitches":  587,
+                                           "score":  75.1
+                                       },
+                                       {
+                                           "pitcher_id":  694477,
+                                           "name":  "Chad Patrick",
+                                           "team_abbrev":  "MIL",
+                                           "total_pitches":  1291,
+                                           "score":  77.2
+                                       },
+                                       {
+                                           "pitcher_id":  801434,
+                                           "name":  "Paul Gervase",
+                                           "team_abbrev":  "LAD",
+                                           "total_pitches":  89,
+                                           "score":  77.6
+                                       },
+                                       {
+                                           "pitcher_id":  686610,
+                                           "name":  "Ken Waldichuk",
+                                           "team_abbrev":  "WSH",
+                                           "total_pitches":  108,
+                                           "score":  78.2
+                                       },
+                                       {
+                                           "pitcher_id":  608337,
+                                           "name":  "Lucas Giolito",
+                                           "team_abbrev":  "SD",
+                                           "total_pitches":  413,
+                                           "score":  78.7
+                                       },
+                                       {
+                                           "pitcher_id":  676617,
+                                           "name":  "Riley O\u0027Brien",
+                                           "team_abbrev":  "STL",
+                                           "total_pitches":  787,
+                                           "score":  79.6
+                                       },
+                                       {
+                                           "pitcher_id":  676510,
+                                           "name":  "Nolan Hoffman",
+                                           "team_abbrev":  "KC",
+                                           "total_pitches":  162,
+                                           "score":  79.6
+                                       },
+                                       {
+                                           "pitcher_id":  663432,
+                                           "name":  "Tanner Rainey",
+                                           "team_abbrev":  "DET",
+                                           "total_pitches":  95,
+                                           "score":  80.6
+                                       }
+                                   ]
+                    }
+}

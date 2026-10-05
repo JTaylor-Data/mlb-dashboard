@@ -1,0 +1,60 @@
+﻿{
+    "version":  "v3",
+    "active":  "v3",
+    "training_seasons":  [
+                             2015,
+                             2016,
+                             2017,
+                             2018,
+                             2019,
+                             2021,
+                             2022,
+                             2023,
+                             2024,
+                             2025
+                         ],
+    "scored_seasons":  [
+                           2015,
+                           2016,
+                           2017,
+                           2018,
+                           2019,
+                           2020,
+                           2021,
+                           2022,
+                           2023,
+                           2024,
+                           2025,
+                           2026
+                       ],
+    "features":  [
+                     "plate_x",
+                     "plate_z",
+                     "balls",
+                     "strikes",
+                     "pitch_type",
+                     "stand",
+                     "season"
+                 ],
+    "model_hashes":  {
+                         "xswing":  "3e069dff8b52a427",
+                         "xcs":  "9330c188a3160f47",
+                         "xwhiff":  "8b378e239eb1022e",
+                         "xfoul":  "ce244743d31f0e08",
+                         "bip":  "1f35273d94f6e6c8"
+                     },
+    "trained_at":  "2026-10-02T20:11:27.296274",
+    "scoring_config":  {
+                           "chosen_variant":  "S1",
+                           "use_shrinkage":  false,
+                           "yoy_s1_pooled":  0.659,
+                           "leaderboard_min_pitches":  100,
+                           "r2_mix":  0.3378,
+                           "yoy_s0_pooled":  0.6818,
+                           "split_half_300":  0.8145
+                       },
+    "min_pitches":  300,
+    "min_pitches_2020":  111,
+    "rv_table":  "count_specific_v3",
+    "status":  "validated"
+}

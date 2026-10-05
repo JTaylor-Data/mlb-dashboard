@@ -1,72 +1,59 @@
-# Model Version Map — 2026-10-04
+# Model Version Map
 
-## Active Models
+**Date**: 2026-10-05  
+**Branch**: codebase-audit
 
-### Stuff+ v4
-
-| Field | Value |
-|---|---|
-| Active version | v4 |
-| Model hash (SHA-256 short) | 0addb8e9 |
-| Full hash | 0addb8e96ea438ec196b3addc19fd350f1d76e241a9291d3719773f2b9766c28 |
-| Trained at | 2026-10-02 14:54:17 |
-| Training seasons | 2016-2019, 2021-2026 (10 seasons; 2020 excluded from training) |
-| Scored seasons | 2016-2026 (11 seasons; 2020 scored by model despite not trained on it) |
-| Status | provisional (2026 in-season) |
-| Branch built on | stuff-v4 → stuff-v4-live → closeout-blend |
-| Tags | post-stuff-v4, post-stuff-v4-live, post-closeout-blend |
-| Retired versions | v1, v2, v3 (not in models/ directory) |
-| Notes | LightGBM pitch-level model, empirical-Bayes shrinkage, 200-pitch leaderboard min |
-
-### Location+ v3
-
-| Field | Value |
-|---|---|
-| Active version | v3 |
-| Model hash | see models/location_plus_v3_meta.json |
-| Trained at | 2026-10-02 20:11:27 |
-| Training seasons | 2015-2019, 2021-2025 (2020 excluded; scored by 2019/2021 average) |
-| Scored seasons | 2015-2026 (12 seasons) |
-| Status | live |
-| Branch built on | location-v3 → closeout-blend |
-| Tags | post-location-v3, post-closeout-blend |
-| Retired versions | v1 (location_plus_v1_*.txt), v2 (location_plus_v2_*.txt) — model files kept per Rule 3 |
-| Notes | 5-component LightGBM ensemble (xcs/xswing/xwhiff/xfoul/bip), 300-pitch minimum |
-
-### Deception+ v2b
-
-| Field | Value |
-|---|---|
-| Active version | v2b |
-| Model files | models/deception_plus_v2b_fold[0-4]_rep[0-2].txt (15 fold files) |
-| Scores parquet | diagnostics/deception_v2/deception_v2b_scores.parquet |
-| Trained at | 2026-09-15 22:34:59 |
-| Features | release_pos_x_as, release_pos_z, release_extension, arm_angle |
-| Training seasons | 2015-2026 (but arm_angle only reliable 2021+) |
-| Scored seasons | 2021-2026 (arm_angle required; earlier seasons not scored) |
-| Status | limited_evidence |
-| Branch built on | deception-v2 → closeout-blend |
-| Tags | post-deception-v2, post-deception-v2-closeout, post-closeout-blend |
-| Retired versions | v1 (removed), v2 (interim — models/deception_plus_v2_*.txt kept per Rule 3) |
-| Config | DECEPTION_ACTIVE_VERSION = "v2b" in config/model_policy.py |
-| Notes | season dropped from v2→v2b (diff=-0.0012, below 0.03 margin = inconclusive_means_drop). |
-|       | `/api/deception/meta` returns 404 — v2b uses different meta format. `/api/deception/report` works. |
-
-### Tunneling+
-
-Left as is; needs a full rethinking; not maintained.
-
-Router URLs say `/v3/` but live scorer is `analytics/tunneling_v2_model.py` (promoted 2026-09-21).
-Model files: `models/tunneling_v3.txt`, `models/tunneling_plus_v2_*.txt`.
-Not touched during this merge. Byte-identity verified.
+Active model versions:
+- Stuff+: v4 (`analytics/stuff_model.py`)
+- Location+: v3 (`analytics/location_v3_model.py`)
+- Tunneling+: v2 (`analytics/tunneling_v2_model.py`) — router URLs still say /v3/
+- Deception+: v2b (`analytics/deception_model.py` for live scoring; pre-computed scores in `diagnostics/deception_v2/deception_v2b_scores.parquet`)
 
 ---
 
-## Retired / Superseded Versions on Disk
+## Per-Consumer Version Map
 
-| File(s) | Reason kept |
-|---|---|
-| models/deception_plus_v2_*.txt | Rule 3 (never discard model artifacts); v2 interim before season-drop |
-| models/location_plus_v1_*.txt, v2_*.txt | Rule 3; v1/v2 superseded by v3 |
-| models/tunneling_v1_pitchers_*.json | Rule 3; v1 pre-model lookup tables |
-| models/tunneling_plus_v2_*.txt | Rule 3; v2 pre-v3 model |
+### Stuff+ (active: v4 via `analytics/stuff_model.py`)
+
+| Consumer | File | Function | Version |
+|----------|------|----------|---------|
+| Player page plaque | `api/routers/players.py` | `compute_stuff_plus`, `overall_stuff_plus` | v4 |
+| Per-pitch-type table | `api/routers/players.py` | `compute_stuff_plus` | v4 |
+| Leaderboard | `api/routers/stuff_model_report.py` | `compute_stuff_plus` | v4 |
+| Probable pitchers | `api/routers/probable_pitchers.py` | `compute_stuff_plus`, `overall_stuff_plus` | v4 |
+| Career page | `api/routers/career.py` | `compute_stuff_plus_if_cached`, `overall_stuff_plus` | v4 |
+| Team cards | `api/routers/team_card.py` | `compute_stuff_plus` (if present) | v4 |
+| Top performers | `api/routers/top_performers.py` | `compute_stuff_plus` | v4 |
+| Similar players | `api/routers/similar_players.py` | `compute_stuff_plus` | v4 |
+| Trends viewer | `api/routers/trends.py` | `compute_stuff_plus` | v4 |
+| Model report / meta | `api/routers/stuff_model_report.py` | `compute_stuff_plus` | v4 |
+
+### Location+ (active: v3 via `analytics/location_v3_model.py`)
+
+| Consumer | File | Function | Version |
+|----------|------|----------|---------|
+| Location report | `api/routers/location_report.py` | `location_v3_model.pitcher_breakdown` | v3 |
+| Probable pitchers | `api/routers/probable_pitchers.py` | `location_v3_model._raw_predictions` | v3 (fixed) |
+| Career page | `api/routers/career.py` | `location_v3_model.raw_predictions_if_cached` | v3 (fixed) |
+| Player page (if applicable) | `api/routers/players.py` | — | Check separately |
+
+### Tunneling+ (version info only — no assertions)
+
+| Consumer | File | Function | Version |
+|----------|------|----------|---------|
+| Tunneling report | `api/routers/tunneling_report.py` | `tunneling_v2_model` | **v2** |
+| Tunneling 3D viewer | `api/routers/tunneling_3d.py` | `tunneling_model` (v1) | **v1** (separate; never replaced) |
+| Probable pitchers | `api/routers/probable_pitchers.py` | `tunneling_v2_model._raw_predictions` | **v2** (fixed from v3) |
+| Career page | `api/routers/career.py` | `tunneling_v2_model.raw_predictions_if_cached` | **v2** (fixed from v3) |
+
+Note: `tunneling_v3_model.py` is now unused by any live route. Can be archived.
+
+### Deception+ (active: v2b, pre-computed scores)
+
+| Consumer | File | Function | Version |
+|----------|------|----------|---------|
+| Deception report / leaderboard | `api/routers/deception_report.py` | `_load_scores("v2b")` | **v2b** (fixed) |
+| Player page plaque | `api/routers/players.py` | `deception_report._pitcher_breakdown_cached` | v2b via parquet |
+| Probable pitchers | `api/routers/probable_pitchers.py` | `deception_report._raw_predictions_table` | v2b (fixed) |
+| Career page | `api/routers/career.py` | `deception_report._pitcher_breakdown_cached` | v2b via parquet |
+| Warmup | `api/warmup.py` | — | Check separately |

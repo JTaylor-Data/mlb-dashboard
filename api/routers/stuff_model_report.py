@@ -20,6 +20,7 @@ from analytics.stuff_model import (
 
 from api.cache import ttl_cache
 from api.db import get_conn
+from config.qualifiers import STUFF_MIN_PITCHES_LEADERBOARD
 
 router = APIRouter(prefix="/api/stuff-model")
 
@@ -27,8 +28,8 @@ _MODELS_DIR = Path(__file__).resolve().parent.parent.parent / "models"
 REPORT_PATH = _MODELS_DIR / "stuff_plus_v3_lgbm_report.json"
 PREDICTIVE_VALIDITY_PATH = _MODELS_DIR / "stuff_plus_v3_predictive_validity.json"
 
-# v3 leaderboard min; v4 leaderboard uses per-type min of 100 (configurable)
-LEADERBOARD_MIN_PITCHES = 200
+# Use canonical threshold from config/qualifiers.py (STUFF_MIN_PITCHES_LEADERBOARD = 200)
+LEADERBOARD_MIN_PITCHES = STUFF_MIN_PITCHES_LEADERBOARD
 LEADERBOARD_MIN_PITCHES_PER_TYPE = 100  # spec_lock_addendum: leaderboard_min_pitches_per_type
 
 

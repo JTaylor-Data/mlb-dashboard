@@ -7,13 +7,13 @@ and are resolved via _bracket() which reads from that file.
 Use DECEPTION_ACTIVE_VERSION from config/model_policy.py to switch versions.
 """
 import json
-from functools import lru_cache
 from pathlib import Path
 
 import pandas as pd
 from fastapi import APIRouter, HTTPException
 
-from config.model_policy import DECEPTION_ACTIVE_VERSION, DECEPTION_PLUS
+from api.cache import ttl_cache_all_args
+from config.model_policy import CURRENT_SEASON, DECEPTION_ACTIVE_VERSION, DECEPTION_PLUS
 
 router = APIRouter(prefix="/api/deception")
 
@@ -23,20 +23,39 @@ DIAG_DIR = Path(__file__).resolve().parent.parent.parent / "diagnostics"
 # Scores paths by version
 _SCORES_PATHS = {
     "v2": DIAG_DIR / "deception_v2" / "deception_v2_scores.parquet",
+    "v2b": DIAG_DIR / "deception_v2" / "deception_v2b_scores.parquet",
 }
 # Fallback: v1 report JSON for legacy
 _V1_REPORT_PATH = MODELS_DIR / "deception_plus_v1_report_2026.json"
 
 
-@lru_cache(maxsize=4)
+@ttl_cache_all_args()  # 12h TTL; cleared on /api/admin/refresh-cache (replaces @lru_cache which had no TTL)
 def _load_scores(version: str) -> pd.DataFrame:
-    """Load pre-computed scores for a given version. Cached per version."""
+    """Load pre-computed scores for a given version. Cached per version.
+    Normalizes v2b column names to the same shape as v2 for downstream compatibility."""
     path = _SCORES_PATHS.get(version)
     if path is None or not path.exists():
         return pd.DataFrame()
     df = pd.read_parquet(path)
     df["pitcher_id"] = df["pitcher_id"].astype(int)
     df["season"] = df["season"].astype(str)
+
+    # Normalize v2b: add missing columns that v2 provides
+    if version == "v2b" and "deception_plus_v2b" in df.columns:
+        if "qualified" not in df.columns:
+            # All rows present are scored; mark as qualified
+            df["qualified"] = True
+        if "percentile" not in df.columns:
+            # Compute within-season percentile rank from deception_plus_v2b
+            # (percentage of same-season pitchers with score <= this pitcher)
+            import numpy as np
+            pct_vals = df.groupby("season")["deception_plus_v2b"].transform(
+                lambda s: s.rank(pct=True) * 100
+            )
+            df["percentile"] = pct_vals
+        if "flags" not in df.columns:
+            df["flags"] = ""
+
     return df
 
 
@@ -54,7 +73,7 @@ def _bracket(pitcher_id: int, season: str, version: str = None) -> dict | None:
     return {
         "pitcher_id": int(r["pitcher_id"]),
         "season": r["season"],
-        "deception_plus": float(r.get("deception_plus_v2", r.get("deception_plus", 100.0))),
+        "deception_plus": float(r.get("deception_plus_v2b", r.get("deception_plus_v2", r.get("deception_plus", 100.0)))),
         "n_pitches": int(r.get("n_pitches", 0)),
         "qualified": bool(r.get("qualified", False)),
         "percentile": float(r["percentile"]) if pd.notna(r.get("percentile")) else None,
@@ -81,10 +100,14 @@ def get_report():
 def get_meta():
     """Model meta: version, features, training config, seasons."""
     version = DECEPTION_ACTIVE_VERSION
-    if version == "v2":
-        meta_path = MODELS_DIR / "deception_plus_v2_meta.json"
-        if meta_path.exists():
-            return json.loads(meta_path.read_text())
+    meta_path = MODELS_DIR / f"deception_plus_{version}_meta.json"
+    if meta_path.exists():
+        return json.loads(meta_path.read_text())
+    # Fallback: try v2 meta if active version meta not found
+    for fallback in ("v2b", "v2"):
+        fb_path = MODELS_DIR / f"deception_plus_{fallback}_meta.json"
+        if fb_path.exists():
+            return json.loads(fb_path.read_text())
     raise HTTPException(404, f"No meta for version {version}")
 
 
@@ -101,12 +124,19 @@ def get_leaderboard(season: str = None):
     sub = df[(df["season"] == season) & (df["qualified"] == True)].copy()
     if sub.empty:
         raise HTTPException(404, f"No qualified scores for season {season}")
-    score_col = "deception_plus_v2" if "deception_plus_v2" in sub.columns else "deception_plus"
+    score_col = (
+        "deception_plus_v2b" if "deception_plus_v2b" in sub.columns else
+        "deception_plus_v2" if "deception_plus_v2" in sub.columns else
+        "deception_plus"
+    )
     sub = sub.sort_values(score_col, ascending=False)
+    keep_cols = ["pitcher_id", score_col, "n_pitches"]
+    if "percentile" in sub.columns:
+        keep_cols.append("percentile")
     return {
         "season": season,
         "available_seasons": available,
-        "pitchers": sub[["pitcher_id", score_col, "n_pitches", "percentile"]].rename(
+        "pitchers": sub[keep_cols].rename(
             columns={score_col: "deception_plus"}
         ).to_dict("records"),
     }
@@ -119,7 +149,9 @@ def get_leaderboard(season: str = None):
 # warmup.py continue to import without changes.
 # ---------------------------------------------------------------------------
 
-REPORT_SEASON: int = 2025
+# REPORT_SEASON was previously hardcoded to 2025 (audit DEF-01).
+# Now derived from config/model_policy.CURRENT_SEASON so it stays in sync.
+REPORT_SEASON: int = CURRENT_SEASON
 
 
 def _raw_predictions_table(conn, season) -> pd.DataFrame:

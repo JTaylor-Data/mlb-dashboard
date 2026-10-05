@@ -20,6 +20,14 @@ training/location_plus_ext_artifacts/*.parquet
 # All legacy/archived artifacts and model backups
 project_artifacts/
 
+# Archive large binary/parquet files (moved here for organization; too large for git)
+Archive/**/*.parquet
+Archive/**/*.pkl
+Archive/**/*.pt
+Archive/**/*.task
+Archive/**/*.npy
+Archive/**/cross_model_validation_v2_checkpoint.json
+
 # CV venv (hundreds of MB of DLLs and wheels, never belongs in git)
 pitcher_cv/bcv_venv311/
 

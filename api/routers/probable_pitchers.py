@@ -17,9 +17,10 @@ from fastapi import APIRouter, Depends, Query
 
 
 from analytics.stuff_model import compute_stuff_plus, overall_stuff_plus
-from analytics.tunneling_v3_model import _raw_predictions as _tun_raw
-from analytics.location_model import _raw_predictions as _loc_raw, official_location_plus
-from analytics.deception_model import _raw_predictions as _dec_raw
+from analytics.tunneling_v2_model import _raw_predictions as _tun_raw
+from analytics.location_v3_model import _raw_predictions as _loc_raw
+from analytics.location_features import to_plus_scale
+from api.routers.deception_report import _raw_predictions_table as _dec_scores_table
 
 from api.cache import ttl_cache
 from api.db import get_conn
@@ -45,36 +46,42 @@ def _stuff_dict(conn, season):
 
 @ttl_cache()
 def _tunneling_dict(conn, season):
+    # tunneling_v2_model uses "xrv" column; plus-scale: 100 - 10*(v-mu)/sigma
     raw = _tun_raw(conn, season)
-    if raw.empty or raw["pred"].std() == 0:
+    if raw.empty or raw["xrv"].std() == 0:
         return {}
-    mean, std = raw["pred"].mean(), raw["pred"].std()
-    g = raw.groupby("pitcher_id")["pred"].mean().reset_index()
-    g["score"] = 100 - 10 * (g["pred"] - mean) / std
+    mean, std = raw["xrv"].mean(), raw["xrv"].std()
+    g = raw.groupby("pitcher_id")["xrv"].mean().reset_index()
+    g["score"] = to_plus_scale(g["xrv"], mean, std)
     return {int(r.pitcher_id): round(float(r.score), 1) for r in g.itertuples()}
 
 
 @ttl_cache()
 def _location_dict(conn, season):
+    # location_v3_model uses "xrv" column; plus-scale: 100 - 10*(v-mu)/sigma
+    from config.model_policy import LOCATION_PLUS
+    min_pitches = LOCATION_PLUS.get("min_pitches_2020", 111) if season == 2020 else LOCATION_PLUS["min_pitches_leaderboard"]
     raw = _loc_raw(conn, season)
     if raw.empty:
         return {}
-    scores = official_location_plus(raw)
-    if scores.empty:
+    g = raw.groupby("pitcher_id").agg(mean_xrv=("xrv", "mean"), n=("xrv", "size")).reset_index()
+    q = g[g["n"] >= min_pitches]
+    if q.empty or q["mean_xrv"].std() == 0:
         return {}
-    scores = scores[scores["total_pitches"] >= 100]
-    return {int(r.pitcher_id): round(float(r.score), 1) for r in scores.itertuples()}
+    mean, std = q["mean_xrv"].mean(), q["mean_xrv"].std()
+    q = q.copy()
+    q["score"] = to_plus_scale(q["mean_xrv"], mean, std)
+    return {int(r.pitcher_id): round(float(r.score), 1) for r in q.itertuples()}
 
 
 @ttl_cache()
 def _deception_dict(conn):
-    raw = _dec_raw(conn, DECEPTION_REPORT_SEASON)
-    if raw.empty or raw["pred"].std() == 0:
+    # Uses pre-computed v2b scores from parquet (no per-request model scoring)
+    df = _dec_scores_table(conn, DECEPTION_REPORT_SEASON)
+    if df.empty or "deception_plus" not in df.columns:
         return {}
-    mean, std = raw["pred"].mean(), raw["pred"].std()
-    g = raw.groupby("pitcher_id")["pred"].mean().reset_index()
-    g["score"] = 100 - 10 * (g["pred"] - mean) / std
-    return {int(r.pitcher_id): round(float(r.score), 1) for r in g.itertuples()}
+    return {int(r.pitcher_id): round(float(r.deception_plus), 1)
+            for r in df.itertuples() if r.deception_plus is not None}
 
 
 def _pitcher_scores(conn, season, pitcher_id):

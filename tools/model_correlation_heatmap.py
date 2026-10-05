@@ -94,11 +94,12 @@ def load_roles():
     conn = sqlite3.connect(DB_PATH)
     # Approximate role by checking if pitcher started (first pitch of game inning 1)
     # Simpler: count appearances and use game-start frequency
-    roles = pd.read_sql("""
+    from config.qualifiers import regular_season_filter
+    roles = pd.read_sql(f"""
         SELECT pitcher_id, season,
                COUNT(DISTINCT game_id) as n_games
         FROM pitches
-        WHERE game_type='R'
+        WHERE 1=1 {regular_season_filter()}
         GROUP BY pitcher_id, season
     """, conn)
     conn.close()

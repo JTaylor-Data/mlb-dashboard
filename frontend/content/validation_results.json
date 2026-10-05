@@ -225,7 +225,7 @@
     "model": "Stuff+ v4",
     "model_hash_sha256": "0addb8e96ea438ec196b3addc19fd350f1d76e241a9291d3719773f2b9766c28",
     "status": "draft",
-    "generated_at": "2026-10-02T21:20:18Z",
+    "generated_at": "2026-10-05T14:50:55Z",
     "source_dir": "diagnostics/stuff_v4",
     "card_ablation": {
       "v0b_reseed_corr_with_v0a": {
@@ -322,7 +322,7 @@
       "verdict": "Mixed",
       "verdict_note": "Ablation was underpowered (30% holdout, 5 folds): no drop variant was convincingly worse. All three features retained by default. haa_residual is load-bearing (r=0.26 when zeroed), with leakage checks passing. Counterfactual scoring confirms all three candidates carry information. Counterfactual scoring is not a refit.",
       "source_file": "diagnostics/stuff_v4/part4_closeout.json",
-      "generated_at": "2026-10-02T20:48:01Z"
+      "generated_at": "2026-10-03T20:25:09Z"
     },
     "card_repeatability": {
       "yoy_insample_pooled_mean_r": {
@@ -443,7 +443,7 @@
       "verdict": "Passes",
       "verdict_note": "In-sample YoY pooled mean r=0.817 across consecutive season pairs. Split-half reliability (Spearman-Brown) exceeds 0.99 at n=50 pitches. Pitcher-holdout (LOPO) not run for v4; season-holdout YoY not run. v3 LOPO r=0.558 is the honest historical figure — see Notes.",
       "source_file": "diagnostics/stuff_v4/part4_validation.json",
-      "generated_at": "2026-10-02T19:02:02Z"
+      "generated_at": "2026-10-03T20:25:09Z"
     },
     "card_predictive": {
       "concurrent_xfip_r": {
@@ -504,7 +504,7 @@
       "verdict": "Mixed",
       "verdict_note": "Same-season: xFIP r=−0.445, ERA r=−0.361 (correct sign). Next-season: xFIP r=−0.225 vs pre-registered bar of ≤−0.30 — bar not met. Incremental delta-R² negative. Both are in-sample (model trained on all seasons). r=−0.225 is meaningful and correctly signed; bar was aspirational.",
       "source_file": "diagnostics/stuff_v4/part4_closeout.json",
-      "generated_at": "2026-10-02T20:48:01Z"
+      "generated_at": "2026-10-03T20:25:09Z"
     },
     "card_learning": {
       "forbidden_features_absent": {
@@ -615,7 +615,7 @@
       "verdict": "Passes",
       "verdict_note": "All forbidden features absent. HAA leakage checks pass (|r|=0.009 plate_x, 0.084 release_pos_x). 2020 sensitivity scores are highly stable (r>0.94 under label substitutions). Seed stability not formally run (proxy split-half r=0.988 consistent with ≥0.99). Identifiability probe not run for v4.",
       "source_file": "diagnostics/stuff_v4/part4_validation.json",
-      "generated_at": "2026-10-02T19:02:02Z"
+      "generated_at": "2026-10-03T20:25:09Z"
     }
   }
 }

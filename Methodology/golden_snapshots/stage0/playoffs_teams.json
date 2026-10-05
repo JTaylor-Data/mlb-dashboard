@@ -1,0 +1,36 @@
+﻿{
+    "season":  2026,
+    "league":  "AL",
+    "teams":  [
+                  {
+                      "team_id":  139,
+                      "name":  "Tampa Bay Rays",
+                      "abbreviation":  "TB"
+                  },
+                  {
+                      "team_id":  147,
+                      "name":  "New York Yankees",
+                      "abbreviation":  "NYY"
+                  },
+                  {
+                      "team_id":  111,
+                      "name":  "Boston Red Sox",
+                      "abbreviation":  "BOS"
+                  },
+                  {
+                      "team_id":  114,
+                      "name":  "Cleveland Guardians",
+                      "abbreviation":  "CLE"
+                  },
+                  {
+                      "team_id":  145,
+                      "name":  "Chicago White Sox",
+                      "abbreviation":  "CWS"
+                  },
+                  {
+                      "team_id":  117,
+                      "name":  "Houston Astros",
+                      "abbreviation":  "HOU"
+                  }
+              ]
+}

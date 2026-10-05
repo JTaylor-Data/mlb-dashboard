@@ -41,6 +41,10 @@ def splits_pitch_types(
     return df["pitch_type"].tolist()
 
 
+_VALID_PITCHER_SPLITS = frozenset({"home_away", "stand", "month", "half", "pitch_type"})
+_VALID_BATTER_SPLITS = frozenset({"home_away", "p_throws", "month", "half", "pitch_type", "archetype"})
+
+
 @router.get("/splits")
 def get_splits(
     role: str = Query("pitcher", pattern="^(pitcher|batter)$"),
@@ -50,6 +54,10 @@ def get_splits(
     season: int = Query(2026),
     conn=Depends(get_conn),
 ):
+    valid = _VALID_PITCHER_SPLITS if role == "pitcher" else _VALID_BATTER_SPLITS
+    if split_by not in valid:
+        from fastapi import HTTPException
+        raise HTTPException(422, f"Invalid split_by '{split_by}' for role '{role}'. Valid: {sorted(valid)}")
     pitch_type_arg = None if not pitch_type or pitch_type == "All" else pitch_type
     if role == "pitcher":
         df = compute_pitcher_splits(conn, season, split_by, pitcher_id=player_id, pitch_type=pitch_type_arg)

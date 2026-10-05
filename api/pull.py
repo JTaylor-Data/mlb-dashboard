@@ -45,6 +45,7 @@ from analytics import boxscore, deception_model, stuff_model
 from api import cache
 from api.db import DB_PATH
 from api.warmup import warm_cache_sync
+from config.season_phase import skip_team_stat_pulls as _skip_team_stats, is_postseason as _is_postseason
 
 # A few days before 2021's actual opening day (~April 1) - close enough
 # that this doesn't sweep in a needless extra month of guaranteed-empty
@@ -57,10 +58,9 @@ from api.warmup import warm_cache_sync
 EARLIEST_SEASON_START = date(2021, 3, 20)
 PLAYERS_GAMES_RECENT_WINDOW_DAYS = pull_statcast.RECENT_WINDOW_DAYS
 
-# Set True once the regular season ends. Skips team-stat pulls (W/L records
-# are frozen) and model cache clears (RS scores are final); Statcast and
-# schedule pulls still run to ingest postseason pitch data.
-POSTSEASON_MODE = True
+# POSTSEASON_MODE is now derived from config/season_phase.py (SEASON_PHASE env var
+# or the default set there). Do not change this line; change SEASON_PHASE instead.
+POSTSEASON_MODE = _is_postseason()
 
 _status = {"state": "idle", "detail": "", "started_at": None, "finished_at": None}
 _lock = threading.Lock()

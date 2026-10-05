@@ -14,7 +14,7 @@ at a button, which is what full_warmup=False (the button's default) is for.
 
 Weekly rescore
 --------------
-Every Sunday at 4:00 AM the score cache is refreshed: scripts/rescore_models.py
+Every Sunday at 4:00 AM the score cache is refreshed: tools/maintenance/rescore_models.py
 is run for the current season (past seasons are static and never need a rescore).
 The fresh parquets are picked up on the NEXT server restart or cache refresh.
 To get them into the live cache immediately after the rescore finishes, the
@@ -29,6 +29,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from api import pull
+from config.season_phase import SEASON_PHASE, REGULAR_SEASON
 
 DAILY_REFRESH_HOUR = 6  # 6:00 AM local server time - by then, essentially
                          # all of the previous day's games have finished
@@ -67,8 +68,8 @@ def _wait_for_pull_to_finish(poll_seconds=5):
 
 
 def _run_rescore(season: int):
-    """Run scripts/rescore_models.py for the current season in a subprocess."""
-    script = ROOT / "scripts" / "rescore_models.py"
+    """Run tools/maintenance/rescore_models.py for the current season in a subprocess."""
+    script = ROOT / "tools" / "maintenance" / "rescore_models.py"
     if not script.exists():
         print(f"[scheduler] rescore script not found at {script}, skipping")
         return
@@ -115,9 +116,17 @@ def _daily_loop():
 
 
 def _weekly_rescore_loop():
-    """Background thread that fires the rescore script every Sunday at 4 AM."""
+    """Background thread that fires the rescore script every Sunday at 4 AM.
+    Gated on SEASON_PHASE=REGULAR_SEASON — skipped during POSTSEASON and OFFSEASON
+    (postseason pitch data doesn't affect historical parquets; offseason has no
+    new pitches; only the current regular season accumulates pitches week-to-week)."""
     while True:
         time.sleep(_seconds_until_next_sunday_rescore())
+        if SEASON_PHASE != REGULAR_SEASON:
+            print(f"[scheduler] weekly rescore skipped: SEASON_PHASE={SEASON_PHASE} "
+                  f"(only runs during REGULAR_SEASON)")
+            time.sleep(3600)
+            continue
         from api.warmup import CURRENT_SEASON
         _run_rescore(CURRENT_SEASON)
         # After firing, sleep at least 1 hour before re-checking so we don't
