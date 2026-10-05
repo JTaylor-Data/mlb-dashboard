@@ -5,6 +5,34 @@ options, and the recommendation. Written as part of the About-rework audit (2026
 
 ---
 
+## ND-06: Deception+ scale claim vs. actual tail behavior (codebase-audit, 2026-10-05)
+
+**Audited by**: `docs(task6)` commit on `codebase-audit` branch.
+
+**What was checked**: `diagnostics/deception_v2/deception_v2b_scores.parquet`, 2026 season
+(495 pitchers, all with n_pitches >= 200).
+
+**Actual distribution (2026)**:
+- mean = 100.00, std = 10.00
+- min = 74.08, max = 143.56
+- p1 = 79.96, p5 = 85.11, p50 = 99.28, p95 = 117.48, p99 = 130.50
+
+**Finding**: The "10 points = 1 standard deviation" claim IS correct — the scale is constructed
+to have std = 10 exactly. The p99 is 130.5, matching the expected ~130 at the 99th percentile.
+However, the absolute maximum (143.56 in 2026, 145.14 all-time) implies the single best
+pitcher-season sits ~4.4 SDs above the mean. Any UI text or methodology doc that states
+"top scores are around 130" or "max is ~130" is misleading for the tails.
+
+**UI/doc locations to review**:
+- Any tooltip or description in the frontend that references a specific cap or "typical max"
+  for Deception+. The correct framing is "10 points = 1 SD above/below average; top pitchers
+  may reach 130-145 in exceptional seasons."
+
+**Recommendation**: Update any static text that implies 130 is the ceiling. The scale itself
+is correct; only the described range is understated for elite outliers.
+
+---
+
 ## ND-01: `season` as a categorical feature â€” new seasons require retraining or removal
 
 **Affects**: Stuff+ v3, Location+ v2, Tunneling+ v2, Deception+ v1. All four include `season`
