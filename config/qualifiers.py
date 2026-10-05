@@ -52,23 +52,34 @@ MIN_PA_LEADERBOARD: int = 100  # batters; used in hitzones, similar players
 
 # The pitches table is ingested with only regular-season pitches (R).
 # pull_statcast.filter_game_types() enforces this at ingest, so the DB
-# never contains postseason, spring training, or exhibition rows.
-# These constants let analytics code document its intent explicitly and
-# provide a shared SQL helper rather than inlining the literal 'R'.
+# should never contain postseason, spring training, or exhibition rows.
+# However, pull_statcast has an edge-case: when the Statcast API does not
+# return a game_type column at all, all rows are kept unfiltered and stored
+# with game_type = NULL.  Audit (2026-10-05) found 4,426 such rows all from
+# 2026-09-13 (solidly regular season) — they are legitimate RS pitches that
+# arrived without a game_type tag due to a transient API gap.
+# The filter therefore includes NULL rows to avoid silently dropping real data.
 REGULAR_SEASON_GAME_TYPES: tuple = ("R",)
 
 
 def regular_season_filter(alias: str = "") -> str:
     """Return a SQL WHERE fragment that restricts to regular-season pitches.
 
+    Includes rows where game_type IS NULL, since those are legitimate
+    regular-season pitches ingested during a transient API gap where the
+    Statcast response did not include the game_type column (see audit note
+    above).  Non-R, non-NULL rows (postseason, spring training, etc.) never
+    appear in the DB and would be excluded by the ``game_type = 'R'`` arm.
+
     Parameters
     ----------
     alias : str
         Optional table alias to prefix the column, e.g. ``alias='p'`` →
-        ``"AND p.game_type = 'R'"``.  Empty (default) → ``"AND game_type = 'R'"``.
+        ``"AND (p.game_type = 'R' OR p.game_type IS NULL)"``.
+        Empty (default) → ``"AND (game_type = 'R' OR game_type IS NULL)"``.
     """
     col = f"{alias}.game_type" if alias else "game_type"
-    return f"AND {col} = 'R'"
+    return f"AND ({col} = 'R' OR {col} IS NULL)"
 
 
 # ---------------------------------------------------------------------------
