@@ -59,6 +59,24 @@ def _save_meta(meta: dict):
     META_PATH.write_text(json.dumps(meta, indent=2))
 
 
+def _atomic_write_parquet(df: "pd.DataFrame", dest: Path):
+    """Write df to a temp file in the same directory, then rename — atomic on POSIX,
+    near-atomic on Windows (rename fails if dest is open; retried once).
+    Prevents a partial write from corrupting a parquet a concurrent reader is loading."""
+    import tempfile, os
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=dest.parent, suffix=".tmp.parquet")
+    os.close(tmp_fd)
+    try:
+        df.to_parquet(tmp_path, index=False)
+        os.replace(tmp_path, dest)  # atomic on POSIX; overwrites dest on Windows
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
+
+
 def _is_scored(meta: dict, model_key: str, season: int) -> bool:
     return str(season) in meta.get(model_key, {})
 
@@ -104,7 +122,7 @@ def rescore_stuff(conn, season: int, force: bool = False):
         print(f"  [stuff {STUFF_ACTIVE_VERSION}] {season}: no data, skipping")
         return
 
-    raw.to_parquet(path, index=False)
+    _atomic_write_parquet(raw, path)
     norm_mean = float(raw["pred"].mean())
     norm_std = float(raw["pred"].std())
     pitcher_count = raw["pitcher_id"].nunique()
@@ -143,7 +161,7 @@ def rescore_tunneling(conn, season: int, force: bool = False):
         print(f"  [tunneling v3] {season}: no data, skipping")
         return
 
-    raw.to_parquet(path, index=False)
+    _atomic_write_parquet(raw, path)
 
     g = raw.groupby("pitcher_id")["xrv"].mean()
     norm_mean = float(g.mean())
@@ -184,7 +202,7 @@ def rescore_location(conn, season: int, force: bool = False):
         print(f"  [location {LOCATION_ACTIVE_VERSION}] {season}: no data, skipping")
         return
 
-    raw.to_parquet(path, index=False)
+    _atomic_write_parquet(raw, path)
 
     g = raw.groupby("pitcher_id")["xrv"].mean()
     norm_mean = float(g.mean())

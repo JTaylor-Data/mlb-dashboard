@@ -207,7 +207,7 @@ def _raw_predictions(conn, season):
 
     df = pd.read_sql(
         f"SELECT {', '.join(_QUERY_COLS)} FROM pitches "
-        "WHERE season = ? AND delta_run_exp IS NOT NULL",
+        "WHERE season = ? AND delta_run_exp IS NOT NULL AND game_type = 'R'",
         conn, params=(season,),
     )
     if df.empty:
