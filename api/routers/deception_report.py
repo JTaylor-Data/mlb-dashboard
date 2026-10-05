@@ -13,7 +13,7 @@ from pathlib import Path
 import pandas as pd
 from fastapi import APIRouter, HTTPException
 
-from config.model_policy import DECEPTION_ACTIVE_VERSION, DECEPTION_PLUS
+from config.model_policy import CURRENT_SEASON, DECEPTION_ACTIVE_VERSION, DECEPTION_PLUS
 
 router = APIRouter(prefix="/api/deception")
 
@@ -119,7 +119,9 @@ def get_leaderboard(season: str = None):
 # warmup.py continue to import without changes.
 # ---------------------------------------------------------------------------
 
-REPORT_SEASON: int = 2025
+# REPORT_SEASON was previously hardcoded to 2025 (audit DEF-01).
+# Now derived from config/model_policy.CURRENT_SEASON so it stays in sync.
+REPORT_SEASON: int = CURRENT_SEASON
 
 
 def _raw_predictions_table(conn, season) -> pd.DataFrame:
