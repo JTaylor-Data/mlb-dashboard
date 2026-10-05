@@ -1675,71 +1675,128 @@ function _monotoneCubicPath(xs, ys) {
   return path;
 }
 
-function _buildXwobaChart(pts, windowKey) {
-  const W = 540, H = 160, PAD = { top: 14, right: 20, bottom: 20, left: 44 };
+// ── xwOBA chart constants ─────────────────────────────────────────────────
+const XWOBA_FULL_INTENSITY = 0.080; // ±0.080 from league avg = full color
+// Color encoding: above avg → dark red; below avg → saturated blue; avg → gray
+// All three are WCAG AA on white/light card backgrounds.
+function _xwobaStrokeColor(val, lgAvg) {
+  const diff = val - lgAvg;
+  const t = Math.max(-1, Math.min(1, diff / XWOBA_FULL_INTENSITY));
+  if (t >= 0) {
+    // gray(0) → dark red(1)
+    const r = Math.round(130 + 75 * t);       // 130 → 205
+    const g = Math.round(130 - 110 * t);      // 130 → 20
+    const b = Math.round(130 - 110 * t);      // 130 → 20
+    return `rgb(${r},${g},${b})`;
+  } else {
+    // gray(0) → deep blue(-1)
+    const r = Math.round(130 + 93 * t);       // 130 → 37
+    const g = Math.round(130 + 55 * t);       // 130 → 75
+    const b = Math.round(130 - 115 * t);      // 130 → 245
+    return `rgb(${r},${g},${b})`;
+  }
+}
+
+// Centered rolling mean: window of `k` centered on point i.
+// Edge points use whatever values are available.
+function _centeredRolling(vals, k) {
+  const n = vals.length, half = Math.floor(k / 2);
+  return vals.map((_, i) => {
+    const lo = Math.max(0, i - half), hi = Math.min(n, i + half + 1);
+    const slice = vals.slice(lo, hi).filter(v => v != null && !isNaN(v));
+    return slice.length ? slice.reduce((a, b) => a + b, 0) / slice.length : null;
+  });
+}
+
+function _clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+// Format a date string "YYYY-MM-DD" → "Mon D" e.g. "May 28"
+function _fmtChartDate(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+function _fmtChartDateFull(dateStr) {
+  if (!dateStr) return "";
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function _buildXwobaChart(allPts, windowKey, lgAvg) {
+  // Determine horizon slice and smooth window
+  let pts;
+  let smoothK;
+  if (windowKey === "YR") {
+    pts = allPts.slice();
+    smoothK = 25;
+  } else {
+    const N = parseInt(windowKey, 10);
+    pts = allPts.slice(-N);
+    smoothK = _clamp(Math.round(N / 10), 5, 25);
+  }
+
+  if (!pts.length) return "";
+
+  const rawVals = pts.map(p => p.xwoba);
+  const smoothed = _centeredRolling(rawVals, smoothK);
+  const validSmoothed = smoothed.filter(v => v != null);
+  if (!validSmoothed.length) return "";
+
+  const W = 540, H = 150, PAD = { top: 14, right: 20, bottom: 22, left: 44 };
   const iW = W - PAD.left - PAD.right;
   const iH = H - PAD.top - PAD.bottom;
 
-  const validPts = pts.filter(p => p[windowKey] != null);
-  if (!validPts.length) return "";
-  const allY = validPts.map(p => p[windowKey]);
+  const allY = [...validSmoothed, lgAvg];
+  const yMin = Math.max(0.150, Math.min(...allY) - 0.015);
+  const yMax = Math.min(0.540, Math.max(...allY) + 0.015);
 
-  const LG_AVG = 0.320;
-  const yMin = Math.max(0.150, Math.min(...allY, LG_AVG) - 0.015);
-  const yMax = Math.min(0.540, Math.max(...allY, LG_AVG) + 0.015);
-  const xMax = pts.length;
-
-  const xScale = v => PAD.left + (v / xMax) * iW;
+  const xScale = i => PAD.left + (i / (pts.length - 1 || 1)) * iW;
   const yScale = v => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * iH;
 
-  // Y ticks at 0.05 intervals
-  const yTicks = [];
-  for (let v = Math.ceil(yMin / 0.05) * 0.05; v <= yMax + 0.001; v += 0.05) {
-    yTicks.push(parseFloat(v.toFixed(3)));
-  }
-
+  // Y grid and ticks
   let grid = "";
-  for (const v of yTicks) {
-    const y = yScale(v).toFixed(1);
+  for (let v = Math.ceil(yMin / 0.05) * 0.05; v <= yMax + 0.001; v += 0.05) {
+    const vr = parseFloat(v.toFixed(3));
+    const y = yScale(vr).toFixed(1);
     grid += `<line x1="${PAD.left}" y1="${y}" x2="${PAD.left + iW}" y2="${y}" stroke="var(--border)" stroke-width="0.7" stroke-dasharray="2,3"/>`;
-    grid += `<text x="${PAD.left - 5}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="9.5" font-family="var(--font-data,monospace)" fill="var(--text-muted)">.${String(Math.round(v * 1000)).padStart(3, "0")}</text>`;
+    grid += `<text x="${PAD.left - 4}" y="${y}" text-anchor="end" dominant-baseline="middle" font-size="9.5" font-family="var(--font-data,monospace)" fill="var(--text-muted)">.${String(Math.round(vr * 1000)).padStart(3, "0")}</text>`;
   }
 
-  // Player line — monotone cubic smooth segments
-  const lineSegs = [];
-  let run = [];
-  for (const p of pts) {
-    if (p[windowKey] != null) {
-      run.push(p);
-    } else if (run.length) {
-      lineSegs.push(run); run = [];
-    }
+  // League-average dashed reference line
+  const lgY = yScale(lgAvg).toFixed(1);
+  const lgLine = `<line x1="${PAD.left}" y1="${lgY}" x2="${PAD.left + iW}" y2="${lgY}" stroke="#7c5c2e" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.75"/>`;
+
+  // Gradient stroke: draw colored segments between consecutive smoothed points
+  let lineSegs = "";
+  const validIdx = smoothed.map((v, i) => v != null ? i : -1).filter(i => i >= 0);
+  for (let j = 0; j < validIdx.length - 1; j++) {
+    const i0 = validIdx[j], i1 = validIdx[j + 1];
+    if (i1 - i0 > 1) continue; // gap in data — skip
+    const x0 = xScale(i0).toFixed(1), y0 = yScale(smoothed[i0]).toFixed(1);
+    const x1 = xScale(i1).toFixed(1), y1 = yScale(smoothed[i1]).toFixed(1);
+    const midVal = (smoothed[i0] + smoothed[i1]) / 2;
+    const color = _xwobaStrokeColor(midVal, lgAvg);
+    lineSegs += `<line x1="${x0}" y1="${y0}" x2="${x1}" y2="${y1}" stroke="${color}" stroke-width="3" stroke-linecap="round"/>`;
   }
-  if (run.length) lineSegs.push(run);
 
-  const line = lineSegs.map(seg => {
-    const xs = seg.map(p => xScale(p.pa_index));
-    const ys = seg.map(p => yScale(p[windowKey]));
-    const d = _monotoneCubicPath(xs, ys);
-    return d ? `<path d="${d}" fill="none" stroke="#c9302c" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>` : "";
-  }).join("");
+  // Also draw a smoother path on top (transparent — for tooltip region); keep colored segments for look
+  // X-axis date labels at first and last point
+  const firstDate = pts[0]?.date || "";
+  const lastDate = pts[pts.length - 1]?.date || "";
+  const x0Label = PAD.left.toFixed(1);
+  const x1Label = (PAD.left + iW).toFixed(1);
+  const yLbl = (H - 4).toFixed(1);
+  const dateLabels = `
+    <text x="${x0Label}" y="${yLbl}" text-anchor="start" font-size="9.5" font-family="var(--font-data,monospace)" fill="var(--text-muted)">${_fmtChartDate(firstDate)}</text>
+    <text x="${x1Label}" y="${yLbl}" text-anchor="end" font-size="9.5" font-family="var(--font-data,monospace)" fill="var(--text-muted)">${_fmtChartDate(lastDate)}</text>`;
 
-  // League avg dashed brown line
-  const lgY = yScale(LG_AVG);
-  const lgLine = `<line x1="${PAD.left}" y1="${lgY.toFixed(1)}" x2="${PAD.left + iW}" y2="${lgY.toFixed(1)}" stroke="#7c5c2e" stroke-width="1.6" stroke-dasharray="5,3" opacity="0.8"/>`;
-
-  // X-axis end labels (first valid PA and last PA)
-  const firstPt = validPts[0], lastPt = validPts[validPts.length - 1];
-  const xLabels = `
-    <text x="${xScale(firstPt.pa_index).toFixed(1)}" y="${H - 3}" text-anchor="middle" font-size="9" font-family="var(--font-data,monospace)" fill="var(--text-muted)">PA ${firstPt.pa_index}</text>
-    <text x="${xScale(lastPt.pa_index).toFixed(1)}" y="${H - 3}" text-anchor="middle" font-size="9" font-family="var(--font-data,monospace)" fill="var(--text-muted)">PA ${lastPt.pa_index}</text>`;
-
-  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;">${grid}${lgLine}${line}${xLabels}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;display:block;">${grid}${lgLine}${lineSegs}${dateLabels}</svg>`;
 }
 
 async function renderRollingXwoba(playerId, season) {
   const section = document.getElementById("rolling-xwoba-section");
   const mount = document.getElementById("rolling-xwoba-mount");
+  const captionEl = document.getElementById("rolling-xwoba-caption");
   const toggleContainer = document.getElementById("rolling-xwoba-toggle");
   if (!section || !mount) return;
 
@@ -1751,8 +1808,10 @@ async function renderRollingXwoba(playerId, season) {
     return;
   }
 
-  const pts = result.points || [];
-  if (pts.length < 50) {
+  const allPts = result.points || [];
+  const lgAvg = result.league_avg ?? 0.320;
+
+  if (allPts.length < 10) {
     section.style.display = "none";
     return;
   }
@@ -1763,26 +1822,64 @@ async function renderRollingXwoba(playerId, season) {
     { key: "50",  label: "50 PA"  },
     { key: "100", label: "100 PA" },
     { key: "250", label: "250 PA" },
+    { key: "YR",  label: "YR"     },
   ];
 
   let activeWindow = "100";
 
+  function _windowPts(key) {
+    if (key === "YR") return allPts;
+    const N = parseInt(key, 10);
+    return allPts.slice(-N);
+  }
+
+  function _horizonMean(key) {
+    const pts = _windowPts(key);
+    const vals = pts.map(p => p.xwoba).filter(v => v != null && !isNaN(v));
+    if (!vals.length) return null;
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+  }
+
   function renderToggle() {
     if (!toggleContainer) return;
-    toggleContainer.innerHTML = WINDOWS.map(w =>
-      `<button class="xwoba-win-btn${w.key === activeWindow ? " active" : ""}" data-win="${w.key}">${w.label}</button>`
-    ).join("");
+    toggleContainer.innerHTML = WINDOWS.map(w => {
+      const active = w.key === activeWindow;
+      return `<button class="xwoba-win-btn" data-win="${w.key}" aria-pressed="${active}">${w.label}</button>`;
+    }).join("");
     toggleContainer.querySelectorAll("button").forEach(btn => {
       btn.addEventListener("click", () => {
         activeWindow = btn.dataset.win;
         renderToggle();
         renderChart();
       });
+      btn.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          btn.click();
+        }
+      });
     });
   }
 
   function renderChart() {
-    mount.innerHTML = _buildXwobaChart(pts, activeWindow);
+    const pts = _windowPts(activeWindow);
+    const actualN = pts.length;
+    const requestedN = activeWindow === "YR" ? null : parseInt(activeWindow, 10);
+    mount.innerHTML = _buildXwobaChart(allPts, activeWindow, lgAvg);
+
+    // Caption: horizon mean xwOBA and league average
+    const mean = _horizonMean(activeWindow);
+    let note = "";
+    if (requestedN !== null && actualN < requestedN) {
+      note = ` &nbsp;·&nbsp; <em>only ${actualN} qualifying PA this season</em>`;
+    }
+    const firstDate = pts[0]?.date, lastDate = pts[pts.length - 1]?.date;
+    const dateRange = firstDate ? `${_fmtChartDateFull(firstDate)} – ${_fmtChartDateFull(lastDate)}` : "";
+    if (captionEl) {
+      captionEl.innerHTML = mean != null
+        ? `Horizon xwOBA: <strong>${mean.toFixed(3)}</strong> &nbsp;·&nbsp; Lg avg: <strong>${lgAvg.toFixed(3)}</strong> &nbsp;·&nbsp; ${dateRange}${note}`
+        : dateRange + note;
+    }
   }
 
   renderToggle();

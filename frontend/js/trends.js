@@ -500,8 +500,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.querySelectorAll(".pill-btn[data-horizon]").forEach(btn => {
       btn.addEventListener("click", () => {
         state.horizon = btn.dataset.horizon;
-        document.querySelectorAll(".pill-btn[data-horizon]").forEach(b =>
-          b.classList.toggle("active", b === btn && b.closest(".horizon-group").style.display !== "none"));
+        document.querySelectorAll(".pill-btn[data-horizon]").forEach(b => {
+          const inActiveGroup = !b.closest(".horizon-group") || b.closest(".horizon-group").style.display !== "none";
+          b.setAttribute("aria-pressed", String(b === btn && inActiveGroup));
+        });
         renderChart();
       });
     });
@@ -519,7 +521,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     state.horizon = isPitcher ? "days365" : "pa150";
     document.querySelectorAll(".pill-btn[data-horizon]").forEach(b => {
       const inActiveGroup = !b.closest(".horizon-group") || b.closest(".horizon-group").style.display !== "none";
-      b.classList.toggle("active", inActiveGroup && b.dataset.horizon === state.horizon);
+      b.setAttribute("aria-pressed", String(inActiveGroup && b.dataset.horizon === state.horizon));
     });
   }
 

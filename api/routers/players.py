@@ -20,7 +20,7 @@ from analytics.percentiles import (
 )
 from analytics.player_page import (
     all_pitcher_arm_angles, batter_counting_stats, batter_pitch_type_table, batter_rolling_xwoba,
-    batter_wrc_plus, field_zone_pcts, league_average_batter_row, league_average_swing_profile,
+    batter_wrc_plus, field_zone_pcts, league_avg_xwoba, league_average_batter_row, league_average_swing_profile,
     league_hr_per_fb, movement_plot_data, pitch_usage_by_stand, pitcher_arm_angle,
     pitcher_counting_stats, pitcher_league_avg_row, pitcher_pitch_table, pitcher_rubber_position,
     player_last_n_games, similar_arm_angle_movement, swing_profile,
@@ -368,7 +368,15 @@ def _location_plus_badge(conn, season, player_id):
 def _il_status(conn, player_id):
     """Current IL entry for this player, if any - see pulls/pull_injuries.py
     for how start_date/injury are real (parsed from the transactions feed)
-    and min_return_date is a real computed lower bound, not a guess."""
+    and min_return_date is a real computed lower bound, not a guess.
+
+    Returns None when SHOW_IL_PLAQUES is False (postseason / offseason) so the
+    backend never fetches injury data outside the regular season and the frontend
+    receives null, rendering no IL badge.
+    """
+    from config.season_phase import SHOW_IL_PLAQUES
+    if not SHOW_IL_PLAQUES:
+        return None
     row = conn.execute(
         "SELECT il_type, il_label, start_date, injury, min_return_date FROM il_status WHERE player_id = ?",
         (player_id,),
@@ -1191,6 +1199,7 @@ def get_rolling_xwoba(
     season: int = Query(2026),
     conn=Depends(get_conn),
 ):
-    """Rolling xwOBA for a batter over 50/100/250-PA windows."""
+    """Raw per-qualifying-PA xwOBA for a batter; client computes horizons and smoothing."""
     points = batter_rolling_xwoba(conn, season, player_id)
-    return {"points": points}
+    lg_avg = league_avg_xwoba(conn, season)
+    return {"points": points, "league_avg": lg_avg}

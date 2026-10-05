@@ -66,10 +66,10 @@
       transition: border-color 0.12s, color 0.12s, background 0.12s;
       white-space: nowrap; letter-spacing: 0.2px;
     }
-    .pill-btn:hover:not(.active) {
+    .pill-btn:hover:not([aria-pressed="true"]) {
       border-color: var(--accent); color: var(--accent);
     }
-    .pill-btn.active {
+    .pill-btn[aria-pressed="true"] {
       background: var(--accent); color: #fff;
       border-color: var(--accent);
     }
@@ -253,19 +253,19 @@
             <div class="control-label">Time Horizon</div>
             <!-- Pitcher horizons -->
             <div class="pill-row horizon-group" id="horizon-pitcher">
-              <button class="pill-btn" data-horizon="games5">Last 5</button>
-              <button class="pill-btn" data-horizon="days180">Half Yr</button>
-              <button class="pill-btn active" data-horizon="days365">Full Yr</button>
-              <button class="pill-btn" data-horizon="days1095">3 Yrs</button>
-              <button class="pill-btn" data-horizon="career">Career</button>
+              <button class="pill-btn" aria-pressed="false" data-horizon="games5">Last 5</button>
+              <button class="pill-btn" aria-pressed="false" data-horizon="days180">Half Yr</button>
+              <button class="pill-btn" aria-pressed="true" data-horizon="days365">Full Yr</button>
+              <button class="pill-btn" aria-pressed="false" data-horizon="days1095">3 Yrs</button>
+              <button class="pill-btn" aria-pressed="false" data-horizon="career">Career</button>
             </div>
             <!-- Batter horizons -->
             <div class="pill-row horizon-group" id="horizon-batter" style="display:none;">
-              <button class="pill-btn" data-horizon="pa50">50 PA</button>
-              <button class="pill-btn active" data-horizon="pa150">150 PA</button>
-              <button class="pill-btn" data-horizon="pa250">250 PA</button>
-              <button class="pill-btn" data-horizon="days1095">3 Yrs</button>
-              <button class="pill-btn" data-horizon="career">Career</button>
+              <button class="pill-btn" aria-pressed="false" data-horizon="pa50">50 PA</button>
+              <button class="pill-btn" aria-pressed="true" data-horizon="pa150">150 PA</button>
+              <button class="pill-btn" aria-pressed="false" data-horizon="pa250">250 PA</button>
+              <button class="pill-btn" aria-pressed="false" data-horizon="days1095">3 Yrs</button>
+              <button class="pill-btn" aria-pressed="false" data-horizon="career">Career</button>
             </div>
           </div>
 
