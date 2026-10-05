@@ -1,24 +1,27 @@
-# Archive
+# Archive/
 
-This directory contains files that are NOT read by the live server at runtime.
-Files were moved here by the 2026-10-05 codebase audit (Stage 5).
+Dead-code storage for the MLB Dashboard project. Files here are kept for history and reference only.
+Nothing under Archive/ is imported or read by any live server code.
 
-See `Archive/MOVED_FILES.csv` for a complete record of what moved where and why.
+## Contents
 
-## Subfolders
+- `artifacts/` — Old training run artifacts (parquets, checkpoints from model training)
+- `diagnostics/` — Superseded model diagnostics (deception_v2, closeout_blend)
+- `experimental/` — Experimental pipelines not part of the live dashboard:
+  - `pitcher_cv/` — Computer-vision rubber-position and deception pipeline (video-based; superseded by Statcast-based approach). See `pitcher_cv/README.md` to restore.
+- `methodology_old/` — Old methodology documents
+- `misc_scripts/` — Retired utility scripts
+- `models_retired/` — Retired model versions
+- `training_scripts/` — Historical training scripts and training artifacts
+- `unclassified/` — Files not yet classified
 
-| Folder | Contents |
-|--------|---------|
-| `models_retired/` | Old model versions no longer used as live scorers |
-| `training_scripts/` | Training and scoring scripts for retired/old model versions |
-| `diagnostics/` | Diagnostic outputs for models not currently in production |
-| `methodology_old/` | Old methodology documents superseded by Methodology/ |
-| `artifacts/` | Training artifacts (OOF predictions, feature parquets) not needed at runtime |
-| `experimental/` | Experimental code, R&D scripts, one-off analyses |
-| `misc_scripts/` | Utility scripts that are not part of the live pipeline |
-| `unclassified/` | Files that don't fit other categories but are not live |
+## How to Restore a File
 
-## Important Note
+All moves were done with `git mv`; history is fully preserved.
+To restore: `git mv Archive/<path> <original_path>` and commit.
+See `Archive/MOVED_FILES.csv` for the record of every move.
 
-Files in this directory are NOT deleted. They are kept for reference and rollback.
-If you need to restore a file, use `git mv Archive/<subfolder>/<file> <original_path>`.
+## Future: Gitignore Step
+
+See `Methodology/ARCHIVE_POLICY.md` — "Gitignore Step (deferred)" for the process
+to back up and stop tracking Archive/ contents.

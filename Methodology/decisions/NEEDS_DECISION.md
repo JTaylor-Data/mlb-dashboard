@@ -397,3 +397,21 @@ The lower correlation (0.75) confirms these are different algorithms.
 
 **Logged**: 2026-10-05 codebase-audit CHECK (c).
 
+
+---
+
+## ND-ARCHIVE-01: Superseded diagnostics and live_models/ documents
+
+**Found during**: archive-and-chart branch (2026-10-05).
+
+**Files marked "unproven" (kept in place, not yet moved to Archive/):**
+
+- `diagnostics/closeout_blend/` — No live code reads these. Candidate for `Archive/diagnostics/closeout_blend/`.
+- `diagnostics/deception_v2/` — Deception+ v2 scores; served from `scores/` parquets, not this folder. Candidate for `Archive/diagnostics/deception_v2/`.
+- `Methodology/live_models/DECEPTION_PLUS_V1_METHODOLOGY.html` — Superseded by v2b. Candidate for `Methodology/Archive/`.
+- `Methodology/live_models/TUNNELING_PLUS_V2_METHODOLOGY.html` — Superseded by v3. Candidate for `Methodology/Archive/`.
+- `Methodology/live_models/LOCATION_PLUS_V2_METHODOLOGY.html` — Superseded by v3. Candidate for `Methodology/Archive/`.
+
+**Action needed**: Confirm none of these are read by any live route, then move with `git mv` and update `Archive/MOVED_FILES.csv`.
+
+**Logged**: 2026-10-05 archive-and-chart branch.
