@@ -205,9 +205,10 @@ def _raw_predictions(conn, season):
         "plate_x", "plate_z", "balls", "strikes", "pitch_type", "stand", "season"]
     hbp_rate = meta.get("hbp_rate_no_swing", 0.00514) if meta else 0.00514
 
+    from config.qualifiers import regular_season_filter
     df = pd.read_sql(
         f"SELECT {', '.join(_QUERY_COLS)} FROM pitches "
-        "WHERE season = ? AND delta_run_exp IS NOT NULL AND game_type = 'R'",
+        f"WHERE season = ? AND delta_run_exp IS NOT NULL {regular_season_filter()}",
         conn, params=(season,),
     )
     if df.empty:

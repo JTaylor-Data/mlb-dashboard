@@ -47,6 +47,31 @@ def scale_min_pitches_for_year(min_pitches: int, year: int) -> int:
 MIN_PA_LEADERBOARD: int = 100  # batters; used in hitzones, similar players
 
 # ---------------------------------------------------------------------------
+# Game-type constants
+# ---------------------------------------------------------------------------
+
+# The pitches table is ingested with only regular-season pitches (R).
+# pull_statcast.filter_game_types() enforces this at ingest, so the DB
+# never contains postseason, spring training, or exhibition rows.
+# These constants let analytics code document its intent explicitly and
+# provide a shared SQL helper rather than inlining the literal 'R'.
+REGULAR_SEASON_GAME_TYPES: tuple = ("R",)
+
+
+def regular_season_filter(alias: str = "") -> str:
+    """Return a SQL WHERE fragment that restricts to regular-season pitches.
+
+    Parameters
+    ----------
+    alias : str
+        Optional table alias to prefix the column, e.g. ``alias='p'`` →
+        ``"AND p.game_type = 'R'"``.  Empty (default) → ``"AND game_type = 'R'"``.
+    """
+    col = f"{alias}.game_type" if alias else "game_type"
+    return f"AND {col} = 'R'"
+
+
+# ---------------------------------------------------------------------------
 # Pitch-type exclusions (not tracked / not scored)
 # ---------------------------------------------------------------------------
 EXCLUDED_PITCH_TYPES: frozenset = frozenset({

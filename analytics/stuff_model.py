@@ -175,9 +175,10 @@ def _raw_predictions(conn, season):
         return cached[0]
 
     from analytics.stuff_features import RAW_QUERY_COLUMNS
+    from config.qualifiers import regular_season_filter
     df = pd.read_sql(f"""
         SELECT {', '.join(RAW_QUERY_COLUMNS)} FROM pitches
-        WHERE season = ? AND delta_run_exp IS NOT NULL AND game_type = 'R'
+        WHERE season = ? AND delta_run_exp IS NOT NULL {regular_season_filter()}
     """, conn, params=(season,))
     if df.empty:
         out = pd.DataFrame(columns=["pitcher_id", "pitch_type", "stand", "pred"])
@@ -398,9 +399,10 @@ def pitcher_shap_breakdown(conn, season, pitcher_id, league_raw):
     type_norm = _type_norm_params(league_raw)
     _tn_fallback = type_norm["_global"]
 
+    from config.qualifiers import regular_season_filter
     df = pd.read_sql(f"""
         SELECT {', '.join(RAW_QUERY_COLUMNS)} FROM pitches
-        WHERE season = ? AND pitcher_id = ? AND delta_run_exp IS NOT NULL AND game_type = 'R'
+        WHERE season = ? AND pitcher_id = ? AND delta_run_exp IS NOT NULL {regular_season_filter()}
     """, conn, params=(season, pitcher_id))
     if df.empty:
         return {}

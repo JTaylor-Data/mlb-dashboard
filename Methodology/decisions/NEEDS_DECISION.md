@@ -33,6 +33,28 @@ is correct; only the described range is understated for elite outliers.
 
 ---
 
+## ND-07: game_type audit findings (codebase-audit, 2026-10-05)
+
+**Task**: Task 2 game-type audit on `codebase-audit` branch.
+
+**Finding — DB contains only R pitches**: `pull_statcast.filter_game_types()` already restricts
+ingestion to `KEEP_GAME_TYPES = ('R', 'F', 'D', 'L', 'W')`. The actual `pitches` table has
+**zero non-R rows** as of 2026-10-05 (verified by direct COUNT query). No postseason, spring
+training, or exhibition pitches exist in the DB.
+
+**Implication**: The `AND game_type = 'R'` predicates in `analytics/stuff_model.py` and
+`analytics/location_v3_model.py` are a correct but redundant safety belt. They have been
+refactored to use `config.qualifiers.regular_season_filter()` so intent is explicit.
+
+**2026 parquet cache verdict**: Both `stuff_plus_v4_2026.parquet` and
+`location_plus_v3_2026.parquet` were built by `_raw_predictions()` which already contained
+`AND game_type = 'R'`. Since the DB itself has no non-R pitches, the caches are R-only by
+construction. **No rescore needed.**
+
+**Decision needed**: None — no action required. Documented for completeness.
+
+---
+
 ## ND-01: `season` as a categorical feature â€” new seasons require retraining or removal
 
 **Affects**: Stuff+ v3, Location+ v2, Tunneling+ v2, Deception+ v1. All four include `season`
