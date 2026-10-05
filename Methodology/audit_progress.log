@@ -1,0 +1,11 @@
+﻿[2026-10-05 03:19:11] STAGE 0 COMPLETE
+- Branch codebase-audit created from master (d573b90)
+- Tag pre-audit created and pushed
+- Bundle backup created at ..\pre-audit-backup.bundle
+- Golden snapshots captured to Methodology/golden_snapshots/stage0/ (~30 routes)
+- File inventory: 2304 files -> Methodology/file_inventory.csv
+- Benchmark baseline recorded -> Methodology/benchmark_stage0.txt
+- Key benchmarks: meta=2411ms (cold), standings=19ms, probable-pitchers=5ms, stuff-lb=3ms, location-lb=29ms
+- tests/ skeleton created: conftest.py, test_routes_smoke.py, test_golden_snapshots.py, test_imports.py
+- Known issues confirmed: deception scores empty, /api/stuff/meta 404 (correct prefix is /api/stuff-model/), ND-DEC-01 confirmed
+[2026-10-05 03:22:17] STAGE 1 COMPLETE - Audit and Live Manifest written to Methodology/AUDIT_REPORT.md and Methodology/LIVE_MANIFEST.md. NEEDS_DECISION.md updated with 3 new items (ND-AUDIT-01 through 03). Key findings: 10 defects, 8 redundancy items, 9 perf items, 10 dead-code items, 4 security notes. No stop conditions triggered.
