@@ -179,3 +179,61 @@ def test_deception_v2b_score_consistency():
         assert abs(direct_score - api_score) < 1e-9, (
             f"Pitcher {row.pitcher_id} 2026: parquet={direct_score}, api={api_score}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Task 3: UN / low-usage pitch types must not appear in splits output
+# ---------------------------------------------------------------------------
+
+def test_splits_no_UN_pitch_type(session):
+    """split_by=pitch_type must never return 'UN' as a split value."""
+    r = _get(session, "/api/splits", {
+        "role": "pitcher", "player_id": 543037,
+        "split_by": "pitch_type", "season": 2026,
+    })
+    assert r.status_code == 200, f"splits returned {r.status_code}"
+    data = r.json()
+    rows = data.get("rows", [])
+    split_values = [row.get("split_value") for row in rows]
+    assert "UN" not in split_values, f"UN found in splits output: {split_values}"
+    assert "PO" not in split_values, f"PO found in splits output: {split_values}"
+    assert "FA" not in split_values, f"FA found in splits output: {split_values}"
+
+
+def test_splits_pitch_type_usage_filter(session):
+    """split_by=pitch_type must not include pitch types below 1% usage."""
+    r = _get(session, "/api/splits", {
+        "role": "pitcher", "player_id": 543037,
+        "split_by": "pitch_type", "season": 2026,
+    })
+    assert r.status_code == 200
+    data = r.json()
+    rows = data.get("rows", [])
+    if not rows:
+        pytest.skip("No rows returned")
+    total = sum(row.get("n_pitches", 0) for row in rows)
+    if total == 0:
+        pytest.skip("Zero pitches total")
+    for row in rows:
+        pct = row.get("n_pitches", 0) / total
+        assert pct >= 0.01, (
+            f"Pitch type {row.get('split_value')} has usage {pct:.3f} < 1%"
+        )
+
+
+def test_splits_no_UN_unit():
+    """Unit test: compute_pitcher_splits with pitch_type split never returns UN in index."""
+    import sqlite3
+    from api.db import DB_PATH
+    from analytics.splits import compute_pitcher_splits
+
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    try:
+        df = compute_pitcher_splits(conn, 2026, "pitch_type", pitcher_id=543037)
+    finally:
+        conn.close()
+
+    if df.empty:
+        return
+    assert "UN" not in df.index, f"UN found in pitcher splits index: {df.index.tolist()}"
+    assert "PO" not in df.index, f"PO found in pitcher splits index: {df.index.tolist()}"
