@@ -26,12 +26,13 @@ from pathlib import Path
 
 from api.db import DB_PATH
 
+from config.model_policy import CURRENT_SEASON  # single source of truth
+
 SPLITS = [None, "L", "R"]
-# Only the current season is pre-warmed - warming all 6 backfilled seasons
-# on every startup would multiply the warmup cost 6x for seasons that may
-# never get clicked. Older seasons just pay the ~15s cost on first request
-# instead, same as this app's normal cold-cache behavior everywhere else.
-CURRENT_SEASON = 2026
+# Only the current season is pre-warmed — warming all backfilled seasons on
+# every startup would multiply warmup cost. Complete seasons (< CURRENT_SEASON)
+# are now served from disk-persisted percentile pools (see analytics/percentile_cache.py)
+# so their first-request cost is near zero once built.
 
 SCORES_DIR = Path(__file__).resolve().parent.parent / "scores"
 # Parquet-injected raw predictions are given a long TTL so they stay warm
@@ -130,6 +131,12 @@ def _warm(conn, full):
     if full:
         # Startup/scheduled refresh: full warmup — all model tables, all splits,
         # similar-players pool, career tables, and last 10 leaderboard dates.
+
+        # Pre-check disk for complete-season percentile pools. This is a fast
+        # read-only scan; missing pools will be built lazily on first request
+        # and persisted so subsequent restarts don't rebuild them.
+        from analytics.percentile_cache import preload_complete_seasons
+        preload_complete_seasons(conn)
 
         # Inject parquets for current season and all career seasons up front so
         # every _raw_predictions() call below finds the module-level cache warm

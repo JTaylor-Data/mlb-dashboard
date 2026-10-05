@@ -71,11 +71,21 @@ def _clean(v):
 
 @ttl_cache()
 def _pitcher_pool(conn, season, stand_filter):
+    from analytics.percentile_cache import get_or_build_pool
+    from config.model_policy import CURRENT_SEASON
+    if season < CURRENT_SEASON:
+        # Complete season — serve from disk-persisted pool (build + persist on first miss).
+        return get_or_build_pool(conn, season, "pitcher", stand_filter)
     return pitcher_percentile_metrics(conn, season, stand_filter=stand_filter)
 
 
 @ttl_cache()
 def _batter_pool(conn, season, throws_filter):
+    from analytics.percentile_cache import get_or_build_pool
+    from config.model_policy import CURRENT_SEASON
+    if season < CURRENT_SEASON:
+        # Complete season — serve from disk-persisted pool (build + persist on first miss).
+        return get_or_build_pool(conn, season, "batter", throws_filter)
     return batter_percentile_metrics(conn, season, throws_filter=throws_filter)
 
 
@@ -86,6 +96,9 @@ def _batter_pool(conn, season, throws_filter):
 # player's own raw value without ever letting their row into the
 # population the percentile is RANKED against). Cached the same way, so a
 # second unqualified player viewed in the same session doesn't re-pay this.
+# Unqualified pools are NOT disk-persisted (they're used rarely, built fast
+# once the qualified pool is warm, and their use cases don't justify the
+# 6x disk footprint for 12 extra files per season).
 @ttl_cache()
 def _pitcher_pool_unqualified(conn, season, stand_filter):
     return pitcher_percentile_metrics(conn, season, min_bf=0, stand_filter=stand_filter)

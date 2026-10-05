@@ -112,3 +112,12 @@ ALL_MODELS = {
 }
 
 DECEPTION_USE_IN_ARCHETYPES = True  # set by Part 5
+
+# ---------------------------------------------------------------------------
+# Season constants — single source of truth used by warmup, percentile cache,
+# and the freeze_season tool.  A season is "complete" when it is < CURRENT_SEASON.
+# ---------------------------------------------------------------------------
+CURRENT_SEASON = 2026
+# First season for which any model produces scores (Stuff+ starts 2016, but
+# percentile pools use the broader pitch database which starts 2015).
+EARLIEST_SEASON = 2015
