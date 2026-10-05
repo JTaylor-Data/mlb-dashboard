@@ -1,0 +1,46 @@
+﻿2026-10-04 PART 0: Safety and inventory complete.
+  - Pre-merge uncommitted changes committed to closeout-blend (4e46e2e)
+  - Safety bundle: ../pre-merge-backup.bundle
+  - Tags pushed: pre-merge/main (d509519), pre-merge/deception-v2 (f18555c), pre-merge/closeout-blend (4e46e2e)
+  - Golden snapshots: Methodology/golden_snapshots/ (14 files)
+  - Tunneling baseline hashes: Methodology/tunneling_baseline_hashes.txt
+  - Key finding: deception-v2 IS ancestor of closeout-blend -> single merge needed
+  - Active: Stuff+ v4, Location+ v3, Deception+ v2b, DECEPTION_ACTIVE_VERSION=v2b
+
+2026-10-04 PART 1: Merge on integration branch complete.
+  - Created integration-merge from master (d509519)
+  - Merged closeout-blend with --no-ff: 93 files, 11897 insertions, 370 deletions, NO CONFLICTS
+  - Tunneling byte-identity: PASSED (26 files, all MD5 match)
+  - Import check: PASSED
+
+2026-10-04 PART 2: Percentile cache implemented.
+  - analytics/percentile_cache.py: disk-persisted pools for complete seasons
+  - tools/build_percentile_pools.py, tools/freeze_season.py
+  - config/model_policy.py: CURRENT_SEASON=2026, EARLIEST_SEASON=2015
+  - api/routers/players.py: _pitcher_pool/_batter_pool check disk for complete seasons
+  - Correctness: 47889 pitcher + 21099 batter values, max abs diff = 0
+  - Performance: ~7s -> ~360ms for past-season first request (disk hit)
+  - Committed bc42d18
+
+2026-10-04 PART 3: Verification complete. ALL PASS.
+  - Model versions: Stuff+ v4 (0addb8e9), Location+ v3, Deception+ v2b confirmed
+  - Golden comparison: 5/5 snapshots MATCH
+  - Smoke tests: 13/14 pass (similar players needs role= param, expected)
+  - Tunneling byte-identity: STILL PASSED after Part 2 changes
+  - Score cache integrity: Stuff+ 11 seasons, Location+ 12 seasons, Tunneling+ 6 seasons
+  - Percentile correctness: max abs diff = 0 across 47889+21099 values
+  - Note: /api/deception/meta returns 404 for v2b (logged in NEEDS_DECISION as ND-DEC-01)
+
+2026-10-04 PART 4: Push complete.
+  - FF merge master to integration-merge: bc42d18
+  - Tag: post-merge-2026-10-04
+  - git push origin master: bc42d18 -> 5b98614 (after Part 5 doc commit)
+  - All pre-merge/* tags on remote: CONFIRMED
+  - No divergence: remote master = local master = 5b98614
+
+2026-10-04 PART 5: Documentation complete.
+  - Methodology/MODEL_VERSION_MAP.md: all 4 models, hashes, branches, retired versions
+  - Methodology/HANDOFF.md: updated header with merge summary and freeze_season workflow
+  - Methodology/NEEDS_DECISION.md: added ND-DEC-01 (deception/meta 404)
+  - Methodology/MERGE_REPORT.md: full merge details, verification results, rollback instructions
+  - Pushed: 5b98614
