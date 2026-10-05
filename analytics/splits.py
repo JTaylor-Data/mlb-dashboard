@@ -143,6 +143,8 @@ def compute_pitcher_splits(conn, season, split_by, pitcher_id=None, pitch_type=N
         df["split_value"] = df["stand"]
     elif split_by in ("month", "half"):
         df["split_value"] = df[split_by]
+    elif split_by == "pitch_type":
+        df["split_value"] = df["pitch_type"].fillna("UN")
     else:
         raise ValueError(f"Unknown split_by: {split_by}")
 
@@ -201,6 +203,8 @@ def compute_batter_splits(conn, season, split_by, batter_id=None, pitch_type=Non
         df["split_value"] = df["p_throws"]
     elif split_by in ("month", "half"):
         df["split_value"] = df[split_by]
+    elif split_by == "pitch_type":
+        df["split_value"] = df["pitch_type"].fillna("UN")
     else:
         raise ValueError(f"Unknown split_by: {split_by}")
 
