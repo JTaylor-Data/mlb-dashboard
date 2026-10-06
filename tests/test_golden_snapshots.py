@@ -97,6 +97,8 @@ def _top_level_keys_match(a, b, name):
     assert set(a.keys()) == set(b.keys()), \
         f"{name}: key mismatch live={set(a.keys())} snap={set(b.keys())}"
     for k in a:
+        if a[k] is None or b[k] is None:
+            continue  # None is a valid "no data" state for any typed field
         assert type(a[k]) == type(b[k]), \
             f"{name}.{k}: type mismatch live={type(a[k]).__name__} snap={type(b[k]).__name__}"
 

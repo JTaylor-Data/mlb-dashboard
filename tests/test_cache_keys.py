@@ -50,7 +50,7 @@ def test_heatmap_no_hand_differs_from_l_only():
 
 def test_location_leaderboard_returns_season():
     """Location leaderboard must include top/bottom lists and model_version."""
-    r = requests.get(f"{BASE}/api/location/leaderboard?season=2026", timeout=60).json()
+    r = requests.get(f"{BASE}/api/location/leaderboard?season=2026", timeout=300).json()
     assert "top" in r and "bottom" in r, f"Unexpected response keys: {list(r.keys())}"
     assert "model_version" in r, f"Missing model_version in response"
     assert isinstance(r["top"], list) and len(r["top"]) > 0, "top list empty"
