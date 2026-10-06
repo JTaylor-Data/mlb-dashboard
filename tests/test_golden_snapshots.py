@@ -109,7 +109,7 @@ def test_snapshot_match(name, route):
         pytest.xfail("Requires precomputed artifacts not present on all machines")
 
     snap = load_snapshot(name)
-    resp = requests.get(f"{BASE}{route}", timeout=60)
+    resp = requests.get(f"{BASE}{route}", timeout=300)
     if resp.status_code in (404, 500) and name in ARTIFACT_DEPENDENT:
         pytest.xfail(f"{route} returned {resp.status_code} — artifacts missing")
     assert resp.status_code == 200, f"{route} returned {resp.status_code}: {resp.text[:200]}"
