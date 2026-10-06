@@ -1,13 +1,13 @@
-﻿{
-    "fb_avg_velo":  94.5,
-    "fb_avg_spin":  2272.0,
-    "avg_velo":  89.6,
-    "k_pct":  22.1,
-    "bb_pct":  8.9,
-    "zone_pct":  47.3,
-    "csw_pct":  27.0,
-    "whiff_pct":  22.9,
-    "chase_pct":  30.5,
-    "zone_contact_pct":  86.1,
-    "gb_pct":  42.4
+{
+    "fb_avg_velo": 94.5,
+    "fb_avg_spin": 2272.0,
+    "avg_velo": 89.6,
+    "k_pct": 22.1,
+    "bb_pct": 8.9,
+    "zone_pct": 47.3,
+    "csw_pct": 27.0,
+    "whiff_pct": 22.9,
+    "chase_pct": 30.5,
+    "zone_contact_pct": 86.1,
+    "gb_pct": 42.4
 }

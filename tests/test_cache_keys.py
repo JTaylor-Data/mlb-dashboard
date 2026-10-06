@@ -29,31 +29,31 @@ def test_stuff_leaderboard_season_varies():
 
 
 def test_heatmap_hand_varies():
-    """Heatmaps must differ by batter handedness."""
+    """Heatmaps must differ by batter handedness (split=L vs split=R)."""
     base_url = f"{BASE}/api/heatmaps/543037?season=2026"
-    r_all = requests.get(base_url, timeout=30).json()
-    r_L = requests.get(f"{base_url}&hand=L", timeout=30).json()
-    r_R = requests.get(f"{base_url}&hand=R", timeout=30).json()
+    r_L = requests.get(f"{base_url}&split=L", timeout=30).json()
+    r_R = requests.get(f"{base_url}&split=R", timeout=30).json()
     import json
-    # L vs R should not be the same (different batter populations)
     assert json.dumps(r_L, sort_keys=True) != json.dumps(r_R, sort_keys=True), \
-        "Heatmap L and R responses must differ"
+        "Heatmap split=L and split=R responses must differ"
 
 
 def test_heatmap_no_hand_differs_from_l_only():
-    """All-handed heatmap should differ from L-only."""
+    """Default split (R) must differ from split=L."""
     base_url = f"{BASE}/api/heatmaps/543037?season=2026"
-    r_all = requests.get(base_url, timeout=30).json()
-    r_L = requests.get(f"{base_url}&hand=L", timeout=30).json()
+    r_default = requests.get(base_url, timeout=30).json()
+    r_L = requests.get(f"{base_url}&split=L", timeout=30).json()
     import json
-    assert json.dumps(r_all, sort_keys=True) != json.dumps(r_L, sort_keys=True), \
-        "All-hand heatmap must differ from L-only"
+    assert json.dumps(r_default, sort_keys=True) != json.dumps(r_L, sort_keys=True), \
+        "Default split (R) must differ from split=L"
 
 
 def test_location_leaderboard_returns_season():
-    """Location leaderboard must include a season field."""
+    """Location leaderboard must include top/bottom lists and model_version."""
     r = requests.get(f"{BASE}/api/location/leaderboard?season=2026", timeout=60).json()
-    assert "season" in r or "pitchers" in r, f"Unexpected response: {r}"
+    assert "top" in r and "bottom" in r, f"Unexpected response keys: {list(r.keys())}"
+    assert "model_version" in r, f"Missing model_version in response"
+    assert isinstance(r["top"], list) and len(r["top"]) > 0, "top list empty"
 
 
 def test_cache_stats_endpoint():

@@ -1,249 +1,249 @@
-﻿{
-    "top":  [
-                {
-                    "rank":  1,
-                    "pitcher_id":  547973,
-                    "name":  "Aroldis Chapman",
-                    "team_abbrev":  "BOS",
-                    "stuff_plus":  119.9,
-                    "n_pitches":  917
-                },
-                {
-                    "rank":  2,
-                    "pitcher_id":  695243,
-                    "name":  "Mason Miller",
-                    "team_abbrev":  "SD",
-                    "stuff_plus":  117.3,
-                    "n_pitches":  971
-                },
-                {
-                    "rank":  3,
-                    "pitcher_id":  643511,
-                    "name":  "Tyler Rogers",
-                    "team_abbrev":  "TOR",
-                    "stuff_plus":  116.8,
-                    "n_pitches":  976
-                },
-                {
-                    "rank":  4,
-                    "pitcher_id":  661403,
-                    "name":  "Emmanuel Clase",
-                    "team_abbrev":  "CLE",
-                    "stuff_plus":  115.0,
-                    "n_pitches":  746
-                },
-                {
-                    "rank":  5,
-                    "pitcher_id":  656730,
-                    "name":  "Trevor Megill",
-                    "team_abbrev":  "MIL",
-                    "stuff_plus":  114.0,
-                    "n_pitches":  752
-                },
-                {
-                    "rank":  6,
-                    "pitcher_id":  695505,
-                    "name":  "Chase Burns",
-                    "team_abbrev":  "CIN",
-                    "stuff_plus":  113.7,
-                    "n_pitches":  764
-                },
-                {
-                    "rank":  7,
-                    "pitcher_id":  656629,
-                    "name":  "Michael Kopech",
-                    "team_abbrev":  "LAD",
-                    "stuff_plus":  112.4,
-                    "n_pitches":  218
-                },
-                {
-                    "rank":  8,
-                    "pitcher_id":  642585,
-                    "name":  "FÃ©lix Bautista",
-                    "team_abbrev":  "BAL",
-                    "stuff_plus":  112.3,
-                    "n_pitches":  626
-                },
-                {
-                    "rank":  9,
-                    "pitcher_id":  682254,
-                    "name":  "Mason Montgomery",
-                    "team_abbrev":  "PIT",
-                    "stuff_plus":  111.9,
-                    "n_pitches":  858
-                },
-                {
-                    "rank":  10,
-                    "pitcher_id":  691799,
-                    "name":  "Grant Taylor",
-                    "team_abbrev":  "CWS",
-                    "stuff_plus":  111.8,
-                    "n_pitches":  610
-                },
-                {
-                    "rank":  11,
-                    "pitcher_id":  683618,
-                    "name":  "Edgardo Henriquez",
-                    "team_abbrev":  "LAD",
-                    "stuff_plus":  111.5,
-                    "n_pitches":  258
-                },
-                {
-                    "rank":  12,
-                    "pitcher_id":  445276,
-                    "name":  "Kenley Jansen",
-                    "team_abbrev":  "DET",
-                    "stuff_plus":  111.4,
-                    "n_pitches":  868
-                },
-                {
-                    "rank":  13,
-                    "pitcher_id":  676879,
-                    "name":  "Aaron Ashby",
-                    "team_abbrev":  "MIL",
-                    "stuff_plus":  111.0,
-                    "n_pitches":  1033
-                },
-                {
-                    "rank":  14,
-                    "pitcher_id":  661395,
-                    "name":  "Jhoan Duran",
-                    "team_abbrev":  "PHI",
-                    "stuff_plus":  110.4,
-                    "n_pitches":  1073
-                },
-                {
-                    "rank":  15,
-                    "pitcher_id":  694819,
-                    "name":  "Jacob Misiorowski",
-                    "team_abbrev":  "MIL",
-                    "stuff_plus":  109.8,
-                    "n_pitches":  1162
-                }
-            ],
-    "bottom":  [
-                   {
-                       "rank":  1,
-                       "pitcher_id":  666120,
-                       "name":  "Ian Anderson",
-                       "team_abbrev":  "ATL",
-                       "stuff_plus":  87.6,
-                       "n_pitches":  202
-                   },
-                   {
-                       "rank":  2,
-                       "pitcher_id":  685326,
-                       "name":  "McCade Brown",
-                       "team_abbrev":  "COL",
-                       "stuff_plus":  89.7,
-                       "n_pitches":  501
-                   },
-                   {
-                       "rank":  3,
-                       "pitcher_id":  543859,
-                       "name":  "Michael Tonkin",
-                       "team_abbrev":  "MIN",
-                       "stuff_plus":  89.8,
-                       "n_pitches":  397
-                   },
-                   {
-                       "rank":  4,
-                       "pitcher_id":  685126,
-                       "name":  "Brandon Eisert",
-                       "team_abbrev":  "PIT",
-                       "stuff_plus":  90.0,
-                       "n_pitches":  1216
-                   },
-                   {
-                       "rank":  5,
-                       "pitcher_id":  682171,
-                       "name":  "Penn Murfee",
-                       "team_abbrev":  "CWS",
-                       "stuff_plus":  90.8,
-                       "n_pitches":  232
-                   },
-                   {
-                       "rank":  6,
-                       "pitcher_id":  663795,
-                       "name":  "Justin Hagenman",
-                       "team_abbrev":  "NYM",
-                       "stuff_plus":  91.0,
-                       "n_pitches":  383
-                   },
-                   {
-                       "rank":  7,
-                       "pitcher_id":  605463,
-                       "name":  "Tayler Scott",
-                       "team_abbrev":  null,
-                       "stuff_plus":  91.1,
-                       "n_pitches":  536
-                   },
-                   {
-                       "rank":  8,
-                       "pitcher_id":  622503,
-                       "name":  "Nabil Crismatt",
-                       "team_abbrev":  "TEX",
-                       "stuff_plus":  91.1,
-                       "n_pitches":  533
-                   },
-                   {
-                       "rank":  9,
-                       "pitcher_id":  681867,
-                       "name":  "Cooper Criswell",
-                       "team_abbrev":  "SEA",
-                       "stuff_plus":  91.1,
-                       "n_pitches":  276
-                   },
-                   {
-                       "rank":  10,
-                       "pitcher_id":  471911,
-                       "name":  "Carlos Carrasco",
-                       "team_abbrev":  "ATL",
-                       "stuff_plus":  91.3,
-                       "n_pitches":  777
-                   },
-                   {
-                       "rank":  11,
-                       "pitcher_id":  622608,
-                       "name":  "Antonio Senzatela",
-                       "team_abbrev":  "MIL",
-                       "stuff_plus":  91.6,
-                       "n_pitches":  2284
-                   },
-                   {
-                       "rank":  12,
-                       "pitcher_id":  608566,
-                       "name":  "GermÃ¡n MÃ¡rquez",
-                       "team_abbrev":  "MIN",
-                       "stuff_plus":  91.6,
-                       "n_pitches":  2085
-                   },
-                   {
-                       "rank":  13,
-                       "pitcher_id":  623474,
-                       "name":  "Jimmy Herget",
-                       "team_abbrev":  "COL",
-                       "stuff_plus":  91.7,
-                       "n_pitches":  1280
-                   },
-                   {
-                       "rank":  14,
-                       "pitcher_id":  594902,
-                       "name":  "Ben Lively",
-                       "team_abbrev":  "CLE",
-                       "stuff_plus":  91.8,
-                       "n_pitches":  718
-                   },
-                   {
-                       "rank":  15,
-                       "pitcher_id":  621107,
-                       "name":  "Zach Eflin",
-                       "team_abbrev":  "BAL",
-                       "stuff_plus":  91.9,
-                       "n_pitches":  1126
-                   }
-               ],
-    "season":  2025,
-    "pitch_type":  null,
-    "min_pitches":  200
+{
+    "top": [
+        {
+            "rank": 1,
+            "pitcher_id": 547973,
+            "name": "Aroldis Chapman",
+            "team_abbrev": "BOS",
+            "stuff_plus": 119.9,
+            "n_pitches": 917
+        },
+        {
+            "rank": 2,
+            "pitcher_id": 695243,
+            "name": "Mason Miller",
+            "team_abbrev": "SD",
+            "stuff_plus": 117.3,
+            "n_pitches": 971
+        },
+        {
+            "rank": 3,
+            "pitcher_id": 643511,
+            "name": "Tyler Rogers",
+            "team_abbrev": "TOR",
+            "stuff_plus": 116.8,
+            "n_pitches": 976
+        },
+        {
+            "rank": 4,
+            "pitcher_id": 661403,
+            "name": "Emmanuel Clase",
+            "team_abbrev": "CLE",
+            "stuff_plus": 115.0,
+            "n_pitches": 746
+        },
+        {
+            "rank": 5,
+            "pitcher_id": 656730,
+            "name": "Trevor Megill",
+            "team_abbrev": "MIL",
+            "stuff_plus": 114.0,
+            "n_pitches": 752
+        },
+        {
+            "rank": 6,
+            "pitcher_id": 695505,
+            "name": "Chase Burns",
+            "team_abbrev": "CIN",
+            "stuff_plus": 113.7,
+            "n_pitches": 764
+        },
+        {
+            "rank": 7,
+            "pitcher_id": 656629,
+            "name": "Michael Kopech",
+            "team_abbrev": "LAD",
+            "stuff_plus": 112.4,
+            "n_pitches": 218
+        },
+        {
+            "rank": 8,
+            "pitcher_id": 642585,
+            "name": "FÃ©lix Bautista",
+            "team_abbrev": "BAL",
+            "stuff_plus": 112.3,
+            "n_pitches": 626
+        },
+        {
+            "rank": 9,
+            "pitcher_id": 682254,
+            "name": "Mason Montgomery",
+            "team_abbrev": "PIT",
+            "stuff_plus": 111.9,
+            "n_pitches": 858
+        },
+        {
+            "rank": 10,
+            "pitcher_id": 691799,
+            "name": "Grant Taylor",
+            "team_abbrev": "CWS",
+            "stuff_plus": 111.8,
+            "n_pitches": 610
+        },
+        {
+            "rank": 11,
+            "pitcher_id": 683618,
+            "name": "Edgardo Henriquez",
+            "team_abbrev": "LAD",
+            "stuff_plus": 111.5,
+            "n_pitches": 258
+        },
+        {
+            "rank": 12,
+            "pitcher_id": 445276,
+            "name": "Kenley Jansen",
+            "team_abbrev": "DET",
+            "stuff_plus": 111.4,
+            "n_pitches": 868
+        },
+        {
+            "rank": 13,
+            "pitcher_id": 676879,
+            "name": "Aaron Ashby",
+            "team_abbrev": "MIL",
+            "stuff_plus": 111.0,
+            "n_pitches": 1033
+        },
+        {
+            "rank": 14,
+            "pitcher_id": 661395,
+            "name": "Jhoan Duran",
+            "team_abbrev": "PHI",
+            "stuff_plus": 110.4,
+            "n_pitches": 1073
+        },
+        {
+            "rank": 15,
+            "pitcher_id": 694819,
+            "name": "Jacob Misiorowski",
+            "team_abbrev": "MIL",
+            "stuff_plus": 109.8,
+            "n_pitches": 1162
+        }
+    ],
+    "bottom": [
+        {
+            "rank": 1,
+            "pitcher_id": 666120,
+            "name": "Ian Anderson",
+            "team_abbrev": "ATL",
+            "stuff_plus": 87.6,
+            "n_pitches": 202
+        },
+        {
+            "rank": 2,
+            "pitcher_id": 685326,
+            "name": "McCade Brown",
+            "team_abbrev": "COL",
+            "stuff_plus": 89.7,
+            "n_pitches": 501
+        },
+        {
+            "rank": 3,
+            "pitcher_id": 543859,
+            "name": "Michael Tonkin",
+            "team_abbrev": "MIN",
+            "stuff_plus": 89.8,
+            "n_pitches": 397
+        },
+        {
+            "rank": 4,
+            "pitcher_id": 685126,
+            "name": "Brandon Eisert",
+            "team_abbrev": "PIT",
+            "stuff_plus": 90.0,
+            "n_pitches": 1216
+        },
+        {
+            "rank": 5,
+            "pitcher_id": 682171,
+            "name": "Penn Murfee",
+            "team_abbrev": "CWS",
+            "stuff_plus": 90.8,
+            "n_pitches": 232
+        },
+        {
+            "rank": 6,
+            "pitcher_id": 663795,
+            "name": "Justin Hagenman",
+            "team_abbrev": "NYM",
+            "stuff_plus": 91.0,
+            "n_pitches": 383
+        },
+        {
+            "rank": 7,
+            "pitcher_id": 605463,
+            "name": "Tayler Scott",
+            "team_abbrev": null,
+            "stuff_plus": 91.1,
+            "n_pitches": 536
+        },
+        {
+            "rank": 8,
+            "pitcher_id": 622503,
+            "name": "Nabil Crismatt",
+            "team_abbrev": "TEX",
+            "stuff_plus": 91.1,
+            "n_pitches": 533
+        },
+        {
+            "rank": 9,
+            "pitcher_id": 681867,
+            "name": "Cooper Criswell",
+            "team_abbrev": "SEA",
+            "stuff_plus": 91.1,
+            "n_pitches": 276
+        },
+        {
+            "rank": 10,
+            "pitcher_id": 471911,
+            "name": "Carlos Carrasco",
+            "team_abbrev": "ATL",
+            "stuff_plus": 91.3,
+            "n_pitches": 777
+        },
+        {
+            "rank": 11,
+            "pitcher_id": 622608,
+            "name": "Antonio Senzatela",
+            "team_abbrev": "MIL",
+            "stuff_plus": 91.6,
+            "n_pitches": 2284
+        },
+        {
+            "rank": 12,
+            "pitcher_id": 608566,
+            "name": "GermÃ¡n MÃ¡rquez",
+            "team_abbrev": "MIN",
+            "stuff_plus": 91.6,
+            "n_pitches": 2085
+        },
+        {
+            "rank": 13,
+            "pitcher_id": 623474,
+            "name": "Jimmy Herget",
+            "team_abbrev": "COL",
+            "stuff_plus": 91.7,
+            "n_pitches": 1280
+        },
+        {
+            "rank": 14,
+            "pitcher_id": 594902,
+            "name": "Ben Lively",
+            "team_abbrev": "CLE",
+            "stuff_plus": 91.8,
+            "n_pitches": 718
+        },
+        {
+            "rank": 15,
+            "pitcher_id": 621107,
+            "name": "Zach Eflin",
+            "team_abbrev": "BAL",
+            "stuff_plus": 91.9,
+            "n_pitches": 1126
+        }
+    ],
+    "season": 2025,
+    "pitch_type": null,
+    "min_pitches": 200
 }

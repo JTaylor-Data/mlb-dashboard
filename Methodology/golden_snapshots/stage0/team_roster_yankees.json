@@ -1,371 +1,371 @@
-﻿[
+[
     {
-        "player_id":  671277,
-        "player_name":  "Luis GarcÃ­a Jr.",
-        "position":  "1B",
-        "jersey_number":  "26",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 671277,
+        "player_name": "Luis GarcÃ­a Jr.",
+        "position": "1B",
+        "jersey_number": "26",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  502671,
-        "player_name":  "Paul Goldschmidt",
-        "position":  "1B",
-        "jersey_number":  "48",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 502671,
+        "player_name": "Paul Goldschmidt",
+        "position": "1B",
+        "jersey_number": "48",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  665862,
-        "player_name":  "Jazz Chisholm Jr.",
-        "position":  "2B",
-        "jersey_number":  "13",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 665862,
+        "player_name": "Jazz Chisholm Jr.",
+        "position": "2B",
+        "jersey_number": "13",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  642708,
-        "player_name":  "Amed Rosario",
-        "position":  "3B",
-        "jersey_number":  "14",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-02T13:28:42.063367",
-        "season_stats":  null
+        "player_id": 642708,
+        "player_name": "Amed Rosario",
+        "position": "3B",
+        "jersey_number": "14",
+        "status_code": "A",
+        "pulled_at": "2026-10-02T13:28:42.063367",
+        "season_stats": null
     },
     {
-        "player_id":  641857,
-        "player_name":  "Ryan McMahon",
-        "position":  "3B",
-        "jersey_number":  "19",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 641857,
+        "player_name": "Ryan McMahon",
+        "position": "3B",
+        "jersey_number": "19",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  645305,
-        "player_name":  "Ali SÃ¡nchez",
-        "position":  "C",
-        "jersey_number":  "39",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 645305,
+        "player_name": "Ali SÃ¡nchez",
+        "position": "C",
+        "jersey_number": "39",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  669224,
-        "player_name":  "Austin Wells",
-        "position":  "C",
-        "jersey_number":  "28",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 669224,
+        "player_name": "Austin Wells",
+        "position": "C",
+        "jersey_number": "28",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  682987,
-        "player_name":  "Spencer Jones",
-        "position":  "CF",
-        "jersey_number":  "78",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 682987,
+        "player_name": "Spencer Jones",
+        "position": "CF",
+        "jersey_number": "78",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  663757,
-        "player_name":  "Trent Grisham",
-        "position":  "CF",
-        "jersey_number":  "12",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 663757,
+        "player_name": "Trent Grisham",
+        "position": "CF",
+        "jersey_number": "12",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  700250,
-        "player_name":  "Ben Rice",
-        "position":  "DH",
-        "jersey_number":  "22",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 700250,
+        "player_name": "Ben Rice",
+        "position": "DH",
+        "jersey_number": "22",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  519317,
-        "player_name":  "Giancarlo Stanton",
-        "position":  "DH",
-        "jersey_number":  "27",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 519317,
+        "player_name": "Giancarlo Stanton",
+        "position": "DH",
+        "jersey_number": "27",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  641355,
-        "player_name":  "Cody Bellinger",
-        "position":  "LF",
-        "jersey_number":  "35",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 641355,
+        "player_name": "Cody Bellinger",
+        "position": "LF",
+        "jersey_number": "35",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  671218,
-        "player_name":  "Heliot Ramos",
-        "position":  "LF",
-        "jersey_number":  "34",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 671218,
+        "player_name": "Heliot Ramos",
+        "position": "LF",
+        "jersey_number": "34",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  687396,
-        "player_name":  "Brent Headrick",
-        "position":  "P",
-        "jersey_number":  "47",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  {
-                             "g":  81,
-                             "ip":  76.7,
-                             "era":  2.93,
-                             "k":  98,
-                             "bb":  27
-                         }
+        "player_id": 687396,
+        "player_name": "Brent Headrick",
+        "position": "P",
+        "jersey_number": "47",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": {
+            "g": 81,
+            "ip": 76.7,
+            "era": 2.93,
+            "k": 98,
+            "bb": 27
+        }
     },
     {
-        "player_id":  693645,
-        "player_name":  "Cam Schlittler",
-        "position":  "P",
-        "jersey_number":  "31",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  {
-                             "g":  33,
-                             "ip":  189.7,
-                             "era":  2.42,
-                             "k":  239,
-                             "bb":  49
-                         }
+        "player_id": 693645,
+        "player_name": "Cam Schlittler",
+        "position": "P",
+        "jersey_number": "31",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": {
+            "g": 33,
+            "ip": 189.7,
+            "era": 2.42,
+            "k": 239,
+            "bb": 49
+        }
     },
     {
-        "player_id":  607074,
-        "player_name":  "Carlos RodÃ³n",
-        "position":  "P",
-        "jersey_number":  "55",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  {
-                             "g":  16,
-                             "ip":  81.7,
-                             "era":  3.2,
-                             "k":  91,
-                             "bb":  38
-                         }
+        "player_id": 607074,
+        "player_name": "Carlos RodÃ³n",
+        "position": "P",
+        "jersey_number": "55",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": {
+            "g": 16,
+            "ip": 81.7,
+            "era": 3.2,
+            "k": 91,
+            "bb": 38
+        }
     },
     {
-        "player_id":  670280,
-        "player_name":  "David Bednar",
-        "position":  "P",
-        "jersey_number":  "53",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  {
-                             "g":  64,
-                             "ip":  67.3,
-                             "era":  3.74,
-                             "k":  76,
-                             "bb":  20
-                         }
+        "player_id": 670280,
+        "player_name": "David Bednar",
+        "position": "P",
+        "jersey_number": "53",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": {
+            "g": 64,
+            "ip": 67.3,
+            "era": 3.74,
+            "k": 76,
+            "bb": 20
+        }
     },
     {
-        "player_id":  695684,
-        "player_name":  "Elmer RodrÃ­guez",
-        "position":  "P",
-        "jersey_number":  "71",
-        "status_code":  "A",
-        "pulled_at":  "2026-09-01T14:10:49.695751",
-        "season_stats":  {
-                             "g":  6,
-                             "ip":  25.7,
-                             "era":  5.26,
-                             "k":  21,
-                             "bb":  16
-                         }
+        "player_id": 695684,
+        "player_name": "Elmer RodrÃ­guez",
+        "position": "P",
+        "jersey_number": "71",
+        "status_code": "A",
+        "pulled_at": "2026-09-01T14:10:49.695751",
+        "season_stats": {
+            "g": 6,
+            "ip": 25.7,
+            "era": 5.26,
+            "k": 21,
+            "bb": 16
+        }
     },
     {
-        "player_id":  543037,
-        "player_name":  "Gerrit Cole",
-        "position":  "P",
-        "jersey_number":  "45",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  {
-                             "g":  22,
-                             "ip":  125.0,
-                             "era":  3.67,
-                             "k":  131,
-                             "bb":  25
-                         }
+        "player_id": 543037,
+        "player_name": "Gerrit Cole",
+        "position": "P",
+        "jersey_number": "45",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": {
+            "g": 22,
+            "ip": 125.0,
+            "era": 3.67,
+            "k": 131,
+            "bb": 25
+        }
     },
     {
-        "player_id":  670167,
-        "player_name":  "John Schreiber",
-        "position":  "P",
-        "jersey_number":  "56",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  {
-                             "g":  66,
-                             "ip":  54.7,
-                             "era":  5.43,
-                             "k":  40,
-                             "bb":  26
-                         }
+        "player_id": 670167,
+        "player_name": "John Schreiber",
+        "position": "P",
+        "jersey_number": "56",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": {
+            "g": 66,
+            "ip": 54.7,
+            "era": 5.43,
+            "k": 40,
+            "bb": 26
+        }
     },
     {
-        "player_id":  661563,
-        "player_name":  "Luis Gil",
-        "position":  "P",
-        "jersey_number":  "81",
-        "status_code":  "A",
-        "pulled_at":  "2026-09-01T14:10:49.695751",
-        "season_stats":  {
-                             "g":  9,
-                             "ip":  26.7,
-                             "era":  4.73,
-                             "k":  17,
-                             "bb":  18
-                         }
+        "player_id": 661563,
+        "player_name": "Luis Gil",
+        "position": "P",
+        "jersey_number": "81",
+        "status_code": "A",
+        "pulled_at": "2026-09-01T14:10:49.695751",
+        "season_stats": {
+            "g": 9,
+            "ip": 26.7,
+            "era": 4.73,
+            "k": 17,
+            "bb": 18
+        }
     },
     {
-        "player_id":  608331,
-        "player_name":  "Max Fried",
-        "position":  "P",
-        "jersey_number":  "54",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  {
-                             "g":  20,
-                             "ip":  105.7,
-                             "era":  2.64,
-                             "k":  104,
-                             "bb":  33
-                         }
+        "player_id": 608331,
+        "player_name": "Max Fried",
+        "position": "P",
+        "jersey_number": "54",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": {
+            "g": 20,
+            "ip": 105.7,
+            "era": 2.64,
+            "k": 104,
+            "bb": 33
+        }
     },
     {
-        "player_id":  605242,
-        "player_name":  "Michael Fulmer",
-        "position":  "P",
-        "jersey_number":  "43",
-        "status_code":  "A",
-        "pulled_at":  "2026-09-01T14:10:49.695751",
-        "season_stats":  {
-                             "g":  15,
-                             "ip":  13.7,
-                             "era":  5.27,
-                             "k":  18,
-                             "bb":  8
-                         }
+        "player_id": 605242,
+        "player_name": "Michael Fulmer",
+        "position": "P",
+        "jersey_number": "43",
+        "status_code": "A",
+        "pulled_at": "2026-09-01T14:10:49.695751",
+        "season_stats": {
+            "g": 15,
+            "ip": 13.7,
+            "era": 5.27,
+            "k": 18,
+            "bb": 8
+        }
     },
     {
-        "player_id":  621112,
-        "player_name":  "Paul Blackburn",
-        "position":  "P",
-        "jersey_number":  "58",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  {
-                             "g":  62,
-                             "ip":  80.0,
-                             "era":  3.26,
-                             "k":  69,
-                             "bb":  33
-                         }
+        "player_id": 621112,
+        "player_name": "Paul Blackburn",
+        "position": "P",
+        "jersey_number": "58",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": {
+            "g": 62,
+            "ip": 80.0,
+            "era": 3.26,
+            "k": 69,
+            "bb": 33
+        }
     },
     {
-        "player_id":  677960,
-        "player_name":  "Ryan Weathers",
-        "position":  "P",
-        "jersey_number":  "40",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  {
-                             "g":  25,
-                             "ip":  130.7,
-                             "era":  3.58,
-                             "k":  143,
-                             "bb":  38
-                         }
+        "player_id": 677960,
+        "player_name": "Ryan Weathers",
+        "position": "P",
+        "jersey_number": "40",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": {
+            "g": 25,
+            "ip": 130.7,
+            "era": 3.58,
+            "k": 143,
+            "bb": 38
+        }
     },
     {
-        "player_id":  642232,
-        "player_name":  "Ryan Yarbrough",
-        "position":  "P",
-        "jersey_number":  "33",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  {
-                             "g":  38,
-                             "ip":  61.0,
-                             "era":  4.57,
-                             "k":  49,
-                             "bb":  23
-                         }
+        "player_id": 642232,
+        "player_name": "Ryan Yarbrough",
+        "position": "P",
+        "jersey_number": "33",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": {
+            "g": 38,
+            "ip": 61.0,
+            "era": 4.57,
+            "k": 49,
+            "bb": 23
+        }
     },
     {
-        "player_id":  657612,
-        "player_name":  "Tim Hill",
-        "position":  "P",
-        "jersey_number":  "41",
-        "status_code":  "A",
-        "pulled_at":  "2026-09-01T14:10:49.695751",
-        "season_stats":  {
-                             "g":  67,
-                             "ip":  54.3,
-                             "era":  4.47,
-                             "k":  25,
-                             "bb":  13
-                         }
+        "player_id": 657612,
+        "player_name": "Tim Hill",
+        "position": "P",
+        "jersey_number": "41",
+        "status_code": "A",
+        "pulled_at": "2026-09-01T14:10:49.695751",
+        "season_stats": {
+            "g": 67,
+            "ip": 54.3,
+            "era": 4.47,
+            "k": 25,
+            "bb": 13
+        }
     },
     {
-        "player_id":  701542,
-        "player_name":  "Will Warren",
-        "position":  "P",
-        "jersey_number":  "29",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  {
-                             "g":  32,
-                             "ip":  149.7,
-                             "era":  4.63,
-                             "k":  158,
-                             "bb":  54
-                         }
+        "player_id": 701542,
+        "player_name": "Will Warren",
+        "position": "P",
+        "jersey_number": "29",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": {
+            "g": 32,
+            "ip": 149.7,
+            "era": 4.63,
+            "k": 158,
+            "bb": 54
+        }
     },
     {
-        "player_id":  683011,
-        "player_name":  "Anthony Volpe",
-        "position":  "SS",
-        "jersey_number":  "11",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 683011,
+        "player_name": "Anthony Volpe",
+        "position": "SS",
+        "jersey_number": "11",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  806146,
-        "player_name":  "George Lombard Jr.",
-        "position":  "SS",
-        "jersey_number":  "96",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 806146,
+        "player_name": "George Lombard Jr.",
+        "position": "SS",
+        "jersey_number": "96",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     },
     {
-        "player_id":  676609,
-        "player_name":  "JosÃ© Caballero",
-        "position":  "SS",
-        "jersey_number":  "72",
-        "status_code":  "A",
-        "pulled_at":  "2026-10-05T03:28:23.721065",
-        "season_stats":  null
+        "player_id": 676609,
+        "player_name": "JosÃ© Caballero",
+        "position": "SS",
+        "jersey_number": "72",
+        "status_code": "A",
+        "pulled_at": "2026-10-05T03:28:23.721065",
+        "season_stats": null
     }
 ]

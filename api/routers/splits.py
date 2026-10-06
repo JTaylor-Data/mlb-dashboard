@@ -80,6 +80,8 @@ def get_splits(
                 cells[c] = f"{v:.3f}"
             elif pd.isna(v):
                 cells[c] = "-"
+            elif c in ("n_pitches", "n_pa"):
+                cells[c] = int(v)
             else:
                 cells[c] = str(v)
         rows.append(cells)

@@ -1,178 +1,178 @@
-﻿[
+[
     {
-        "game_id":  823492,
-        "game_date":  "2026-09-23",
-        "home_team":  "NYY",
-        "away_team":  "TB",
-        "n_pitches":  105,
-        "label":  "2026-09-23 â TB @ NYY (105p)"
+        "game_id": 823492,
+        "game_date": "2026-09-23",
+        "home_team": "NYY",
+        "away_team": "TB",
+        "n_pitches": 105,
+        "label": "2026-09-23 â TB @ NYY (105p)"
     },
     {
-        "game_id":  825032,
-        "game_date":  "2026-09-18",
-        "home_team":  "AZ",
-        "away_team":  "NYY",
-        "n_pitches":  90,
-        "label":  "2026-09-18 â NYY @ AZ (90p)"
+        "game_id": 825032,
+        "game_date": "2026-09-18",
+        "home_team": "AZ",
+        "away_team": "NYY",
+        "n_pitches": 90,
+        "label": "2026-09-18 â NYY @ AZ (90p)"
     },
     {
-        "game_id":  823496,
-        "game_date":  "2026-09-12",
-        "home_team":  "NYY",
-        "away_team":  "NYM",
-        "n_pitches":  77,
-        "label":  "2026-09-12 â NYM @ NYY (77p)"
+        "game_id": 823496,
+        "game_date": "2026-09-12",
+        "home_team": "NYY",
+        "away_team": "NYM",
+        "n_pitches": 77,
+        "label": "2026-09-12 â NYM @ NYY (77p)"
     },
     {
-        "game_id":  823253,
-        "game_date":  "2026-09-06",
-        "home_team":  "SD",
-        "away_team":  "NYY",
-        "n_pitches":  84,
-        "label":  "2026-09-06 â NYY @ SD (84p)"
+        "game_id": 823253,
+        "game_date": "2026-09-06",
+        "home_team": "SD",
+        "away_team": "NYY",
+        "n_pitches": 84,
+        "label": "2026-09-06 â NYY @ SD (84p)"
     },
     {
-        "game_id":  823984,
-        "game_date":  "2026-09-01",
-        "home_team":  "LAA",
-        "away_team":  "NYY",
-        "n_pitches":  90,
-        "label":  "2026-09-01 â NYY @ LAA (90p)"
+        "game_id": 823984,
+        "game_date": "2026-09-01",
+        "home_team": "LAA",
+        "away_team": "NYY",
+        "n_pitches": 90,
+        "label": "2026-09-01 â NYY @ LAA (90p)"
     },
     {
-        "game_id":  823503,
-        "game_date":  "2026-08-27",
-        "home_team":  "NYY",
-        "away_team":  "HOU",
-        "n_pitches":  79,
-        "label":  "2026-08-27 â HOU @ NYY (79p)"
+        "game_id": 823503,
+        "game_date": "2026-08-27",
+        "home_team": "NYY",
+        "away_team": "HOU",
+        "n_pitches": 79,
+        "label": "2026-08-27 â HOU @ NYY (79p)"
     },
     {
-        "game_id":  824802,
-        "game_date":  "2026-08-20",
-        "home_team":  "BAL",
-        "away_team":  "NYY",
-        "n_pitches":  93,
-        "label":  "2026-08-20 â NYY @ BAL (93p)"
+        "game_id": 824802,
+        "game_date": "2026-08-20",
+        "home_team": "BAL",
+        "away_team": "NYY",
+        "n_pitches": 93,
+        "label": "2026-08-20 â NYY @ BAL (93p)"
     },
     {
-        "game_id":  822777,
-        "game_date":  "2026-08-14",
-        "home_team":  "TOR",
-        "away_team":  "NYY",
-        "n_pitches":  87,
-        "label":  "2026-08-14 â NYY @ TOR (87p)"
+        "game_id": 822777,
+        "game_date": "2026-08-14",
+        "home_team": "TOR",
+        "away_team": "NYY",
+        "n_pitches": 87,
+        "label": "2026-08-14 â NYY @ TOR (87p)"
     },
     {
-        "game_id":  823514,
-        "game_date":  "2026-08-08",
-        "home_team":  "NYY",
-        "away_team":  "ATL",
-        "n_pitches":  82,
-        "label":  "2026-08-08 â ATL @ NYY (82p)"
+        "game_id": 823514,
+        "game_date": "2026-08-08",
+        "home_team": "NYY",
+        "away_team": "ATL",
+        "n_pitches": 82,
+        "label": "2026-08-08 â ATL @ NYY (82p)"
     },
     {
-        "game_id":  824648,
-        "game_date":  "2026-08-02",
-        "home_team":  "CHC",
-        "away_team":  "NYY",
-        "n_pitches":  99,
-        "label":  "2026-08-02 â NYY @ CHC (99p)"
+        "game_id": 824648,
+        "game_date": "2026-08-02",
+        "home_team": "CHC",
+        "away_team": "NYY",
+        "n_pitches": 99,
+        "label": "2026-08-02 â NYY @ CHC (99p)"
     },
     {
-        "game_id":  824569,
-        "game_date":  "2026-07-28",
-        "home_team":  "CWS",
-        "away_team":  "NYY",
-        "n_pitches":  100,
-        "label":  "2026-07-28 â NYY @ CWS (100p)"
+        "game_id": 824569,
+        "game_date": "2026-07-28",
+        "home_team": "CWS",
+        "away_team": "NYY",
+        "n_pitches": 100,
+        "label": "2026-07-28 â NYY @ CWS (100p)"
     },
     {
-        "game_id":  823518,
-        "game_date":  "2026-07-22",
-        "home_team":  "NYY",
-        "away_team":  "PIT",
-        "n_pitches":  93,
-        "label":  "2026-07-22 â PIT @ NYY (93p)"
+        "game_id": 823518,
+        "game_date": "2026-07-22",
+        "home_team": "NYY",
+        "away_team": "PIT",
+        "n_pitches": 93,
+        "label": "2026-07-22 â PIT @ NYY (93p)"
     },
     {
-        "game_id":  823524,
-        "game_date":  "2026-07-17",
-        "home_team":  "NYY",
-        "away_team":  "LAD",
-        "n_pitches":  103,
-        "label":  "2026-07-17 â LAD @ NYY (103p)"
+        "game_id": 823524,
+        "game_date": "2026-07-17",
+        "home_team": "NYY",
+        "away_team": "LAD",
+        "n_pitches": 103,
+        "label": "2026-07-17 â LAD @ NYY (103p)"
     },
     {
-        "game_id":  822957,
-        "game_date":  "2026-07-08",
-        "home_team":  "TB",
-        "away_team":  "NYY",
-        "n_pitches":  97,
-        "label":  "2026-07-08 â NYY @ TB (97p)"
+        "game_id": 822957,
+        "game_date": "2026-07-08",
+        "home_team": "TB",
+        "away_team": "NYY",
+        "n_pitches": 97,
+        "label": "2026-07-08 â NYY @ TB (97p)"
     },
     {
-        "game_id":  823527,
-        "game_date":  "2026-07-03",
-        "home_team":  "NYY",
-        "away_team":  "MIN",
-        "n_pitches":  88,
-        "label":  "2026-07-03 â MIN @ NYY (88p)"
+        "game_id": 823527,
+        "game_date": "2026-07-03",
+        "home_team": "NYY",
+        "away_team": "MIN",
+        "n_pitches": 88,
+        "label": "2026-07-03 â MIN @ NYY (88p)"
     },
     {
-        "game_id":  824745,
-        "game_date":  "2026-06-27",
-        "home_team":  "BOS",
-        "away_team":  "NYY",
-        "n_pitches":  89,
-        "label":  "2026-06-27 â NYY @ BOS (89p)"
+        "game_id": 824745,
+        "game_date": "2026-06-27",
+        "home_team": "BOS",
+        "away_team": "NYY",
+        "n_pitches": 89,
+        "label": "2026-06-27 â NYY @ BOS (89p)"
     },
     {
-        "game_id":  824261,
-        "game_date":  "2026-06-22",
-        "home_team":  "DET",
-        "away_team":  "NYY",
-        "n_pitches":  89,
-        "label":  "2026-06-22 â NYY @ DET (89p)"
+        "game_id": 824261,
+        "game_date": "2026-06-22",
+        "home_team": "DET",
+        "away_team": "NYY",
+        "n_pitches": 89,
+        "label": "2026-06-22 â NYY @ DET (89p)"
     },
     {
-        "game_id":  823535,
-        "game_date":  "2026-06-16",
-        "home_team":  "NYY",
-        "away_team":  "CWS",
-        "n_pitches":  90,
-        "label":  "2026-06-16 â CWS @ NYY (90p)"
+        "game_id": 823535,
+        "game_date": "2026-06-16",
+        "home_team": "NYY",
+        "away_team": "CWS",
+        "n_pitches": 90,
+        "label": "2026-06-16 â CWS @ NYY (90p)"
     },
     {
-        "game_id":  824429,
-        "game_date":  "2026-06-09",
-        "home_team":  "CLE",
-        "away_team":  "NYY",
-        "n_pitches":  84,
-        "label":  "2026-06-09 â NYY @ CLE (84p)"
+        "game_id": 824429,
+        "game_date": "2026-06-09",
+        "home_team": "CLE",
+        "away_team": "NYY",
+        "n_pitches": 84,
+        "label": "2026-06-09 â NYY @ CLE (84p)"
     },
     {
-        "game_id":  823540,
-        "game_date":  "2026-06-03",
-        "home_team":  "NYY",
-        "away_team":  "CLE",
-        "n_pitches":  83,
-        "label":  "2026-06-03 â CLE @ NYY (83p)"
+        "game_id": 823540,
+        "game_date": "2026-06-03",
+        "home_team": "NYY",
+        "away_team": "CLE",
+        "n_pitches": 83,
+        "label": "2026-06-03 â CLE @ NYY (83p)"
     },
     {
-        "game_id":  824104,
-        "game_date":  "2026-05-27",
-        "home_team":  "KC",
-        "away_team":  "NYY",
-        "n_pitches":  79,
-        "label":  "2026-05-27 â NYY @ KC (79p)"
+        "game_id": 824104,
+        "game_date": "2026-05-27",
+        "home_team": "KC",
+        "away_team": "NYY",
+        "n_pitches": 79,
+        "label": "2026-05-27 â NYY @ KC (79p)"
     },
     {
-        "game_id":  823546,
-        "game_date":  "2026-05-22",
-        "home_team":  "NYY",
-        "away_team":  "TB",
-        "n_pitches":  72,
-        "label":  "2026-05-22 â TB @ NYY (72p)"
+        "game_id": 823546,
+        "game_date": "2026-05-22",
+        "home_team": "NYY",
+        "away_team": "TB",
+        "n_pitches": 72,
+        "label": "2026-05-22 â TB @ NYY (72p)"
     }
 ]

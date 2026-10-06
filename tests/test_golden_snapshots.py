@@ -34,7 +34,7 @@ def load_snapshot(name: str):
     path = os.path.join(SNAP_DIR, f"{name}.json")
     if not os.path.exists(path):
         pytest.skip(f"No snapshot file: {name}.json")
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 
