@@ -1,71 +1,71 @@
-﻿{
-    "season":  2026,
-    "leaders":  [
-                    {
-                        "division":  "AL Central",
-                        "league":  "AL",
-                        "team_id":  114,
-                        "name":  "Cleveland Guardians",
-                        "abbreviation":  "CLE",
-                        "wins":  85,
-                        "losses":  77,
-                        "win_pct":  0.525,
-                        "lead":  1.0
-                    },
-                    {
-                        "division":  "AL East",
-                        "league":  "AL",
-                        "team_id":  139,
-                        "name":  "Tampa Bay Rays",
-                        "abbreviation":  "TB",
-                        "wins":  98,
-                        "losses":  64,
-                        "win_pct":  0.605,
-                        "lead":  4.5
-                    },
-                    {
-                        "division":  "AL West",
-                        "league":  "AL",
-                        "team_id":  117,
-                        "name":  "Houston Astros",
-                        "abbreviation":  "HOU",
-                        "wins":  81,
-                        "losses":  81,
-                        "win_pct":  0.5,
-                        "lead":  1.0
-                    },
-                    {
-                        "division":  "NL Central",
-                        "league":  "NL",
-                        "team_id":  158,
-                        "name":  "Milwaukee Brewers",
-                        "abbreviation":  "MIL",
-                        "wins":  103,
-                        "losses":  59,
-                        "win_pct":  0.636,
-                        "lead":  14.0
-                    },
-                    {
-                        "division":  "NL East",
-                        "league":  "NL",
-                        "team_id":  144,
-                        "name":  "Atlanta Braves",
-                        "abbreviation":  "ATL",
-                        "wins":  94,
-                        "losses":  68,
-                        "win_pct":  0.58,
-                        "lead":  6.0
-                    },
-                    {
-                        "division":  "NL West",
-                        "league":  "NL",
-                        "team_id":  119,
-                        "name":  "Los Angeles Dodgers",
-                        "abbreviation":  "LAD",
-                        "wins":  100,
-                        "losses":  62,
-                        "win_pct":  0.617,
-                        "lead":  9.0
-                    }
-                ]
+{
+    "season": 2026,
+    "leaders": [
+        {
+            "division": "AL Central",
+            "league": "AL",
+            "team_id": 114,
+            "name": "Cleveland Guardians",
+            "abbreviation": "CLE",
+            "wins": 85,
+            "losses": 77,
+            "win_pct": 0.525,
+            "lead": 1.0
+        },
+        {
+            "division": "AL East",
+            "league": "AL",
+            "team_id": 139,
+            "name": "Tampa Bay Rays",
+            "abbreviation": "TB",
+            "wins": 98,
+            "losses": 64,
+            "win_pct": 0.605,
+            "lead": 4.5
+        },
+        {
+            "division": "AL West",
+            "league": "AL",
+            "team_id": 117,
+            "name": "Houston Astros",
+            "abbreviation": "HOU",
+            "wins": 81,
+            "losses": 81,
+            "win_pct": 0.5,
+            "lead": 1.0
+        },
+        {
+            "division": "NL Central",
+            "league": "NL",
+            "team_id": 158,
+            "name": "Milwaukee Brewers",
+            "abbreviation": "MIL",
+            "wins": 103,
+            "losses": 59,
+            "win_pct": 0.636,
+            "lead": 14.0
+        },
+        {
+            "division": "NL East",
+            "league": "NL",
+            "team_id": 144,
+            "name": "Atlanta Braves",
+            "abbreviation": "ATL",
+            "wins": 94,
+            "losses": 68,
+            "win_pct": 0.58,
+            "lead": 6.0
+        },
+        {
+            "division": "NL West",
+            "league": "NL",
+            "team_id": 119,
+            "name": "Los Angeles Dodgers",
+            "abbreviation": "LAD",
+            "wins": 100,
+            "losses": 62,
+            "win_pct": 0.617,
+            "lead": 9.0
+        }
+    ]
 }

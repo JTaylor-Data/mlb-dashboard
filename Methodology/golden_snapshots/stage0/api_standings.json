@@ -1,216 +1,216 @@
-﻿{
-    "league":  "AL",
-    "best_team_id":  139,
-    "divisions":  [
-                      {
-                          "name":  "AL Central",
-                          "teams":  [
-                                        {
-                                            "team_id":  114,
-                                            "name":  "Cleveland Guardians",
-                                            "abbreviation":  "CLE",
-                                            "wins":  85,
-                                            "losses":  77,
-                                            "win_pct":  0.525,
-                                            "run_diff":  11,
-                                            "one_run_record":  "27-22",
-                                            "last_10":  "8-2",
-                                            "last_30":  "19-11",
-                                            "is_best_in_league":  false
-                                        },
-                                        {
-                                            "team_id":  145,
-                                            "name":  "Chicago White Sox",
-                                            "abbreviation":  "CWS",
-                                            "wins":  84,
-                                            "losses":  78,
-                                            "win_pct":  0.519,
-                                            "run_diff":  56,
-                                            "one_run_record":  "25-22",
-                                            "last_10":  "7-3",
-                                            "last_30":  "15-15",
-                                            "is_best_in_league":  false
-                                        },
-                                        {
-                                            "team_id":  142,
-                                            "name":  "Minnesota Twins",
-                                            "abbreviation":  "MIN",
-                                            "wins":  77,
-                                            "losses":  85,
-                                            "win_pct":  0.475,
-                                            "run_diff":  -58,
-                                            "one_run_record":  "18-23",
-                                            "last_10":  "6-4",
-                                            "last_30":  "13-17",
-                                            "is_best_in_league":  false
-                                        },
-                                        {
-                                            "team_id":  116,
-                                            "name":  "Detroit Tigers",
-                                            "abbreviation":  "DET",
-                                            "wins":  76,
-                                            "losses":  86,
-                                            "win_pct":  0.469,
-                                            "run_diff":  71,
-                                            "one_run_record":  "17-27",
-                                            "last_10":  "4-6",
-                                            "last_30":  "14-16",
-                                            "is_best_in_league":  false
-                                        },
-                                        {
-                                            "team_id":  118,
-                                            "name":  "Kansas City Royals",
-                                            "abbreviation":  "KC",
-                                            "wins":  69,
-                                            "losses":  93,
-                                            "win_pct":  0.426,
-                                            "run_diff":  -120,
-                                            "one_run_record":  "21-26",
-                                            "last_10":  "2-8",
-                                            "last_30":  "11-19",
-                                            "is_best_in_league":  false
-                                        }
-                                    ]
-                      },
-                      {
-                          "name":  "AL East",
-                          "teams":  [
-                                        {
-                                            "team_id":  139,
-                                            "name":  "Tampa Bay Rays",
-                                            "abbreviation":  "TB",
-                                            "wins":  98,
-                                            "losses":  64,
-                                            "win_pct":  0.605,
-                                            "run_diff":  86,
-                                            "one_run_record":  "25-14",
-                                            "last_10":  "5-5",
-                                            "last_30":  "20-10",
-                                            "is_best_in_league":  true
-                                        },
-                                        {
-                                            "team_id":  147,
-                                            "name":  "New York Yankees",
-                                            "abbreviation":  "NYY",
-                                            "wins":  93,
-                                            "losses":  68,
-                                            "win_pct":  0.578,
-                                            "run_diff":  138,
-                                            "one_run_record":  "17-22",
-                                            "last_10":  "5-5",
-                                            "last_30":  "19-11",
-                                            "is_best_in_league":  false
-                                        },
-                                        {
-                                            "team_id":  111,
-                                            "name":  "Boston Red Sox",
-                                            "abbreviation":  "BOS",
-                                            "wins":  87,
-                                            "losses":  75,
-                                            "win_pct":  0.537,
-                                            "run_diff":  78,
-                                            "one_run_record":  "21-21",
-                                            "last_10":  "5-5",
-                                            "last_30":  "14-16",
-                                            "is_best_in_league":  false
-                                        },
-                                        {
-                                            "team_id":  110,
-                                            "name":  "Baltimore Orioles",
-                                            "abbreviation":  "BAL",
-                                            "wins":  79,
-                                            "losses":  82,
-                                            "win_pct":  0.491,
-                                            "run_diff":  -21,
-                                            "one_run_record":  "18-24",
-                                            "last_10":  "6-4",
-                                            "last_30":  "16-14",
-                                            "is_best_in_league":  false
-                                        },
-                                        {
-                                            "team_id":  141,
-                                            "name":  "Toronto Blue Jays",
-                                            "abbreviation":  "TOR",
-                                            "wins":  79,
-                                            "losses":  83,
-                                            "win_pct":  0.488,
-                                            "run_diff":  -46,
-                                            "one_run_record":  "20-24",
-                                            "last_10":  "4-6",
-                                            "last_30":  "15-15",
-                                            "is_best_in_league":  false
-                                        }
-                                    ]
-                      },
-                      {
-                          "name":  "AL West",
-                          "teams":  [
-                                        {
-                                            "team_id":  117,
-                                            "name":  "Houston Astros",
-                                            "abbreviation":  "HOU",
-                                            "wins":  81,
-                                            "losses":  81,
-                                            "win_pct":  0.5,
-                                            "run_diff":  -32,
-                                            "one_run_record":  "15-18",
-                                            "last_10":  "5-5",
-                                            "last_30":  "15-15",
-                                            "is_best_in_league":  false
-                                        },
-                                        {
-                                            "team_id":  140,
-                                            "name":  "Texas Rangers",
-                                            "abbreviation":  "TEX",
-                                            "wins":  80,
-                                            "losses":  82,
-                                            "win_pct":  0.494,
-                                            "run_diff":  -46,
-                                            "one_run_record":  "23-17",
-                                            "last_10":  "4-6",
-                                            "last_30":  "14-16",
-                                            "is_best_in_league":  false
-                                        },
-                                        {
-                                            "team_id":  136,
-                                            "name":  "Seattle Mariners",
-                                            "abbreviation":  "SEA",
-                                            "wins":  76,
-                                            "losses":  86,
-                                            "win_pct":  0.469,
-                                            "run_diff":  -58,
-                                            "one_run_record":  "26-25",
-                                            "last_10":  "6-4",
-                                            "last_30":  "13-17",
-                                            "is_best_in_league":  false
-                                        },
-                                        {
-                                            "team_id":  133,
-                                            "name":  "Athletics",
-                                            "abbreviation":  "ATH",
-                                            "wins":  64,
-                                            "losses":  98,
-                                            "win_pct":  0.395,
-                                            "run_diff":  -238,
-                                            "one_run_record":  "23-23",
-                                            "last_10":  "3-7",
-                                            "last_30":  "13-17",
-                                            "is_best_in_league":  false
-                                        },
-                                        {
-                                            "team_id":  108,
-                                            "name":  "Los Angeles Angels",
-                                            "abbreviation":  "LAA",
-                                            "wins":  62,
-                                            "losses":  100,
-                                            "win_pct":  0.383,
-                                            "run_diff":  -97,
-                                            "one_run_record":  "19-29",
-                                            "last_10":  "4-6",
-                                            "last_30":  "10-20",
-                                            "is_best_in_league":  false
-                                        }
-                                    ]
-                      }
-                  ]
+{
+    "league": "AL",
+    "best_team_id": 139,
+    "divisions": [
+        {
+            "name": "AL Central",
+            "teams": [
+                {
+                    "team_id": 114,
+                    "name": "Cleveland Guardians",
+                    "abbreviation": "CLE",
+                    "wins": 85,
+                    "losses": 77,
+                    "win_pct": 0.525,
+                    "run_diff": 11,
+                    "one_run_record": "27-22",
+                    "last_10": "8-2",
+                    "last_30": "19-11",
+                    "is_best_in_league": false
+                },
+                {
+                    "team_id": 145,
+                    "name": "Chicago White Sox",
+                    "abbreviation": "CWS",
+                    "wins": 84,
+                    "losses": 78,
+                    "win_pct": 0.519,
+                    "run_diff": 56,
+                    "one_run_record": "25-22",
+                    "last_10": "7-3",
+                    "last_30": "15-15",
+                    "is_best_in_league": false
+                },
+                {
+                    "team_id": 142,
+                    "name": "Minnesota Twins",
+                    "abbreviation": "MIN",
+                    "wins": 77,
+                    "losses": 85,
+                    "win_pct": 0.475,
+                    "run_diff": -58,
+                    "one_run_record": "18-23",
+                    "last_10": "6-4",
+                    "last_30": "13-17",
+                    "is_best_in_league": false
+                },
+                {
+                    "team_id": 116,
+                    "name": "Detroit Tigers",
+                    "abbreviation": "DET",
+                    "wins": 76,
+                    "losses": 86,
+                    "win_pct": 0.469,
+                    "run_diff": 71,
+                    "one_run_record": "17-27",
+                    "last_10": "4-6",
+                    "last_30": "14-16",
+                    "is_best_in_league": false
+                },
+                {
+                    "team_id": 118,
+                    "name": "Kansas City Royals",
+                    "abbreviation": "KC",
+                    "wins": 69,
+                    "losses": 93,
+                    "win_pct": 0.426,
+                    "run_diff": -120,
+                    "one_run_record": "21-26",
+                    "last_10": "2-8",
+                    "last_30": "11-19",
+                    "is_best_in_league": false
+                }
+            ]
+        },
+        {
+            "name": "AL East",
+            "teams": [
+                {
+                    "team_id": 139,
+                    "name": "Tampa Bay Rays",
+                    "abbreviation": "TB",
+                    "wins": 98,
+                    "losses": 64,
+                    "win_pct": 0.605,
+                    "run_diff": 86,
+                    "one_run_record": "25-14",
+                    "last_10": "5-5",
+                    "last_30": "20-10",
+                    "is_best_in_league": true
+                },
+                {
+                    "team_id": 147,
+                    "name": "New York Yankees",
+                    "abbreviation": "NYY",
+                    "wins": 93,
+                    "losses": 68,
+                    "win_pct": 0.578,
+                    "run_diff": 138,
+                    "one_run_record": "17-22",
+                    "last_10": "5-5",
+                    "last_30": "19-11",
+                    "is_best_in_league": false
+                },
+                {
+                    "team_id": 111,
+                    "name": "Boston Red Sox",
+                    "abbreviation": "BOS",
+                    "wins": 87,
+                    "losses": 75,
+                    "win_pct": 0.537,
+                    "run_diff": 78,
+                    "one_run_record": "21-21",
+                    "last_10": "5-5",
+                    "last_30": "14-16",
+                    "is_best_in_league": false
+                },
+                {
+                    "team_id": 110,
+                    "name": "Baltimore Orioles",
+                    "abbreviation": "BAL",
+                    "wins": 79,
+                    "losses": 82,
+                    "win_pct": 0.491,
+                    "run_diff": -21,
+                    "one_run_record": "18-24",
+                    "last_10": "6-4",
+                    "last_30": "16-14",
+                    "is_best_in_league": false
+                },
+                {
+                    "team_id": 141,
+                    "name": "Toronto Blue Jays",
+                    "abbreviation": "TOR",
+                    "wins": 79,
+                    "losses": 83,
+                    "win_pct": 0.488,
+                    "run_diff": -46,
+                    "one_run_record": "20-24",
+                    "last_10": "4-6",
+                    "last_30": "15-15",
+                    "is_best_in_league": false
+                }
+            ]
+        },
+        {
+            "name": "AL West",
+            "teams": [
+                {
+                    "team_id": 117,
+                    "name": "Houston Astros",
+                    "abbreviation": "HOU",
+                    "wins": 81,
+                    "losses": 81,
+                    "win_pct": 0.5,
+                    "run_diff": -32,
+                    "one_run_record": "15-18",
+                    "last_10": "5-5",
+                    "last_30": "15-15",
+                    "is_best_in_league": false
+                },
+                {
+                    "team_id": 140,
+                    "name": "Texas Rangers",
+                    "abbreviation": "TEX",
+                    "wins": 80,
+                    "losses": 82,
+                    "win_pct": 0.494,
+                    "run_diff": -46,
+                    "one_run_record": "23-17",
+                    "last_10": "4-6",
+                    "last_30": "14-16",
+                    "is_best_in_league": false
+                },
+                {
+                    "team_id": 136,
+                    "name": "Seattle Mariners",
+                    "abbreviation": "SEA",
+                    "wins": 76,
+                    "losses": 86,
+                    "win_pct": 0.469,
+                    "run_diff": -58,
+                    "one_run_record": "26-25",
+                    "last_10": "6-4",
+                    "last_30": "13-17",
+                    "is_best_in_league": false
+                },
+                {
+                    "team_id": 133,
+                    "name": "Athletics",
+                    "abbreviation": "ATH",
+                    "wins": 64,
+                    "losses": 98,
+                    "win_pct": 0.395,
+                    "run_diff": -238,
+                    "one_run_record": "23-23",
+                    "last_10": "3-7",
+                    "last_30": "13-17",
+                    "is_best_in_league": false
+                },
+                {
+                    "team_id": 108,
+                    "name": "Los Angeles Angels",
+                    "abbreviation": "LAA",
+                    "wins": 62,
+                    "losses": 100,
+                    "win_pct": 0.383,
+                    "run_diff": -97,
+                    "one_run_record": "19-29",
+                    "last_10": "4-6",
+                    "last_30": "10-20",
+                    "is_best_in_league": false
+                }
+            ]
+        }
+    ]
 }

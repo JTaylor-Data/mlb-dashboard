@@ -1,9 +1,7 @@
-﻿{
-    "n_pitches":  1410,
-    "score":  97.25236295149259,
-    "lag_slot_contributions":  [
-
-                               ],
-    "model_version":  "v2",
-    "shap_note":  "SHAP breakdown not available for v2 classifier architecture"
+{
+    "n_pitches": 1410,
+    "score": 97.25236295149259,
+    "lag_slot_contributions": [],
+    "model_version": "v2",
+    "shap_note": "SHAP breakdown not available for v2 classifier architecture"
 }

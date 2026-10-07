@@ -1,63 +1,63 @@
-﻿{
-    "team_id":  147,
-    "name":  "New York Yankees",
-    "abbreviation":  "NYY",
-    "synopsis":  "Historic large-market power/pitching identity - built around thump in the middle of the order and a willingness to spend at the top of the market, while player development fills in around free-agent anchors.",
-    "season":  2026,
-    "metrics":  {
-                    "ops":  {
-                                "value":  0.72,
-                                "rank":  14,
-                                "n_teams":  30,
-                                "rolling_30d":  0.717
-                            },
-                    "era":  {
-                                "value":  3.24,
-                                "rank":  1,
-                                "n_teams":  30,
-                                "rolling_30d":  3.41
-                            },
-                    "bullpen_era":  {
-                                        "value":  3.15,
-                                        "rank":  2,
-                                        "n_teams":  30,
-                                        "rolling_30d":  null
-                                    },
-                    "fip":  {
-                                "value":  3.71,
-                                "rank":  3,
-                                "n_teams":  30,
-                                "rolling_30d":  3.88
-                            },
-                    "baserunning_value":  {
-                                              "value":  11.0,
-                                              "rank":  10,
-                                              "n_teams":  30,
-                                              "rolling_30d":  null
-                                          },
-                    "remaining_sos":  {
-                                          "value":  null,
-                                          "rank":  null,
-                                          "n_teams":  30,
-                                          "n_games_remaining":  null
-                                      },
-                    "war":  {
-                                "value":  44.51516505,
-                                "rank":  6,
-                                "n_teams":  30,
-                                "rolling_30d":  null
-                            },
-                    "il_count":  {
-                                     "value":  7,
-                                     "rank":  8,
-                                     "n_teams":  30,
-                                     "rolling_30d":  null
-                                 },
-                    "park_factor":  {
-                                        "value":  112.1,
-                                        "rank":  7,
-                                        "n_teams":  30,
-                                        "rolling_30d":  null
-                                    }
-                }
+{
+    "team_id": 147,
+    "name": "New York Yankees",
+    "abbreviation": "NYY",
+    "synopsis": "Historic large-market power/pitching identity - built around thump in the middle of the order and a willingness to spend at the top of the market, while player development fills in around free-agent anchors.",
+    "season": 2026,
+    "metrics": {
+        "ops": {
+            "value": 0.72,
+            "rank": 14,
+            "n_teams": 30,
+            "rolling_30d": 0.717
+        },
+        "era": {
+            "value": 3.24,
+            "rank": 1,
+            "n_teams": 30,
+            "rolling_30d": 3.41
+        },
+        "bullpen_era": {
+            "value": 3.15,
+            "rank": 2,
+            "n_teams": 30,
+            "rolling_30d": null
+        },
+        "fip": {
+            "value": 3.71,
+            "rank": 3,
+            "n_teams": 30,
+            "rolling_30d": 3.88
+        },
+        "baserunning_value": {
+            "value": 11.0,
+            "rank": 10,
+            "n_teams": 30,
+            "rolling_30d": null
+        },
+        "remaining_sos": {
+            "value": null,
+            "rank": null,
+            "n_teams": 30,
+            "n_games_remaining": null
+        },
+        "war": {
+            "value": 44.51516505,
+            "rank": 6,
+            "n_teams": 30,
+            "rolling_30d": null
+        },
+        "il_count": {
+            "value": 7,
+            "rank": 8,
+            "n_teams": 30,
+            "rolling_30d": null
+        },
+        "park_factor": {
+            "value": 112.1,
+            "rank": 7,
+            "n_teams": 30,
+            "rolling_30d": null
+        }
+    }
 }

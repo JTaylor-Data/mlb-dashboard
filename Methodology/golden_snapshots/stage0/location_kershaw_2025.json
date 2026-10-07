@@ -1,18 +1,16 @@
-﻿{
-    "n_pitches":  1768,
-    "score":  104.0,
-    "percentile":  35.4,
-    "season_flag":  "",
-    "model_version":  "v3",
-    "model_hash":  {
-                       "xswing":  "3e069dff8b52a427",
-                       "xcs":  "9330c188a3160f47",
-                       "xwhiff":  "8b378e239eb1022e",
-                       "xfoul":  "ce244743d31f0e08",
-                       "bip":  "1f35273d94f6e6c8"
-                   },
-    "contributions":  [
-
-                      ],
-    "shap_note":  "Location+ v3 decomposes into event components (swing, CS, whiff, foul, BIP); SHAP breakdown spans five classifiers and is not available in real-time"
+{
+    "n_pitches": 1768,
+    "score": 104.0,
+    "percentile": 35.4,
+    "season_flag": "",
+    "model_version": "v3",
+    "model_hash": {
+        "xswing": "3e069dff8b52a427",
+        "xcs": "9330c188a3160f47",
+        "xwhiff": "8b378e239eb1022e",
+        "xfoul": "ce244743d31f0e08",
+        "bip": "1f35273d94f6e6c8"
+    },
+    "contributions": [],
+    "shap_note": "Location+ v3 decomposes into event components (swing, CS, whiff, foul, BIP); SHAP breakdown spans five classifiers and is not available in real-time"
 }

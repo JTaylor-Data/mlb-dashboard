@@ -1,398 +1,396 @@
-﻿{
-    "date":  "2026-09-27",
-    "entries":  [
-                    {
-                        "player_id":  608324,
-                        "name":  "Alex Bregman",
-                        "role":  "batter",
-                        "wpa":  0.374,
-                        "team_id":  112,
-                        "stats":  {
-                                      "h":  4,
-                                      "ab":  4,
-                                      "hr":  2,
-                                      "sb":  0,
-                                      "rbi":  4,
-                                      "season_ops":  ".819"
-                                  },
-                        "score":  28,
-                        "game_id":  824705,
-                        "walkoff":  false,
-                        "opponent":  "@ BOS"
-                    },
-                    {
-                        "player_id":  665953,
-                        "name":  "AndrÃ©s Chaparro",
-                        "role":  "batter",
-                        "wpa":  0.29,
-                        "team_id":  120,
-                        "stats":  {
-                                      "h":  3,
-                                      "ab":  4,
-                                      "hr":  2,
-                                      "sb":  0,
-                                      "rbi":  2,
-                                      "season_ops":  ".885"
-                                  },
-                        "score":  21,
-                        "game_id":  822679,
-                        "walkoff":  false,
-                        "opponent":  "vs NYM"
-                    },
-                    {
-                        "player_id":  676356,
-                        "name":  "Jonny DeLuca",
-                        "role":  "batter",
-                        "wpa":  0.033,
-                        "team_id":  139,
-                        "stats":  {
-                                      "h":  2,
-                                      "ab":  4,
-                                      "hr":  2,
-                                      "sb":  0,
-                                      "rbi":  2,
-                                      "season_ops":  ".729"
-                                  },
-                        "score":  18,
-                        "game_id":  823408,
-                        "walkoff":  false,
-                        "opponent":  "@ PHI"
-                    },
-                    {
-                        "player_id":  686469,
-                        "name":  "Vinnie Pasquantino",
-                        "role":  "batter",
-                        "wpa":  0.326,
-                        "team_id":  118,
-                        "stats":  {
-                                      "h":  2,
-                                      "ab":  4,
-                                      "hr":  2,
-                                      "sb":  0,
-                                      "rbi":  2,
-                                      "season_ops":  ".761"
-                                  },
-                        "score":  18,
-                        "game_id":  824055,
-                        "walkoff":  false,
-                        "opponent":  "vs CLE"
-                    },
-                    {
-                        "player_id":  681624,
-                        "name":  "Andy Pages",
-                        "role":  "batter",
-                        "wpa":  0.145,
-                        "team_id":  119,
-                        "stats":  {
-                                      "h":  1,
-                                      "ab":  3,
-                                      "hr":  1,
-                                      "sb":  0,
-                                      "rbi":  4,
-                                      "season_ops":  ".811"
-                                  },
-                        "score":  15,
-                        "game_id":  823164,
-                        "walkoff":  false,
-                        "opponent":  "@ SF"
-                    },
-                    {
-                        "player_id":  643289,
-                        "name":  "Mauricio DubÃ³n",
-                        "role":  "batter",
-                        "wpa":  0.117,
-                        "team_id":  144,
-                        "stats":  {
-                                      "h":  2,
-                                      "ab":  4,
-                                      "hr":  1,
-                                      "sb":  0,
-                                      "rbi":  2,
-                                      "season_ops":  ".720"
-                                  },
-                        "score":  14,
-                        "game_id":  823814,
-                        "walkoff":  false,
-                        "opponent":  "@ MIA"
-                    },
-                    {
-                        "player_id":  677595,
-                        "name":  "Ronny Mauricio",
-                        "role":  "batter",
-                        "wpa":  0.172,
-                        "team_id":  121,
-                        "stats":  {
-                                      "h":  2,
-                                      "ab":  3,
-                                      "hr":  1,
-                                      "sb":  0,
-                                      "rbi":  2,
-                                      "season_ops":  ".699"
-                                  },
-                        "score":  14,
-                        "game_id":  822679,
-                        "walkoff":  false,
-                        "opponent":  "@ WSH"
-                    },
-                    {
-                        "player_id":  804606,
-                        "name":  "Konnor Griffin",
-                        "role":  "batter",
-                        "wpa":  0.039,
-                        "team_id":  134,
-                        "stats":  {
-                                      "h":  2,
-                                      "ab":  4,
-                                      "hr":  1,
-                                      "sb":  0,
-                                      "rbi":  2,
-                                      "season_ops":  ".728"
-                                  },
-                        "score":  14,
-                        "game_id":  824217,
-                        "walkoff":  false,
-                        "opponent":  "@ DET"
-                    },
-                    {
-                        "player_id":  605137,
-                        "name":  "Josh Bell",
-                        "role":  "batter",
-                        "wpa":  0.228,
-                        "team_id":  142,
-                        "stats":  {
-                                      "h":  1,
-                                      "ab":  2,
-                                      "hr":  1,
-                                      "sb":  0,
-                                      "rbi":  3,
-                                      "season_ops":  ".738"
-                                  },
-                        "score":  13,
-                        "game_id":  823650,
-                        "walkoff":  false,
-                        "opponent":  "vs TEX"
-                    },
-                    {
-                        "player_id":  668904,
-                        "name":  "Royce Lewis",
-                        "role":  "batter",
-                        "wpa":  0.001,
-                        "team_id":  142,
-                        "stats":  {
-                                      "h":  2,
-                                      "ab":  4,
-                                      "hr":  1,
-                                      "sb":  1,
-                                      "rbi":  1,
-                                      "season_ops":  ".667"
-                                  },
-                        "score":  13,
-                        "game_id":  823650,
-                        "walkoff":  false,
-                        "opponent":  "vs TEX"
-                    },
-                    {
-                        "player_id":  669302,
-                        "name":  "Logan Gilbert",
-                        "role":  "pitcher",
-                        "wpa":  0.161,
-                        "team_id":  136,
-                        "stats":  {
-                                      "ip":  "4.0",
-                                      "k":  8,
-                                      "h":  0,
-                                      "hr":  0,
-                                      "r":  0,
-                                      "er":  0,
-                                      "season_era":  "3.73"
-                                  },
-                        "score":  28.0,
-                        "game_id":  823084,
-                        "walkoff":  false,
-                        "opponent":  "vs LAA"
-                    },
-                    {
-                        "player_id":  453286,
-                        "name":  "Max Scherzer",
-                        "role":  "pitcher",
-                        "wpa":  0.203,
-                        "team_id":  141,
-                        "stats":  {
-                                      "ip":  "7.0",
-                                      "k":  7,
-                                      "h":  6,
-                                      "hr":  0,
-                                      "r":  1,
-                                      "er":  1,
-                                      "season_era":  "5.74"
-                                  },
-                        "score":  25.0,
-                        "game_id":  822761,
-                        "walkoff":  false,
-                        "opponent":  "vs CIN"
-                    },
-                    {
-                        "player_id":  694819,
-                        "name":  "Jacob Misiorowski",
-                        "role":  "pitcher",
-                        "wpa":  0.177,
-                        "team_id":  158,
-                        "stats":  {
-                                      "ip":  "5.1",
-                                      "k":  5,
-                                      "h":  2,
-                                      "hr":  0,
-                                      "r":  0,
-                                      "er":  0,
-                                      "season_era":  "1.80"
-                                  },
-                        "score":  24.0,
-                        "game_id":  823731,
-                        "walkoff":  false,
-                        "opponent":  "vs STL"
-                    },
-                    {
-                        "player_id":  665152,
-                        "name":  "Dean Kremer",
-                        "role":  "pitcher",
-                        "wpa":  0.225,
-                        "team_id":  142,
-                        "stats":  {
-                                      "ip":  "7.0",
-                                      "k":  4,
-                                      "h":  3,
-                                      "hr":  1,
-                                      "r":  1,
-                                      "er":  1,
-                                      "season_era":  "4.68"
-                                  },
-                        "score":  22.0,
-                        "game_id":  823650,
-                        "walkoff":  false,
-                        "opponent":  "vs TEX"
-                    },
-                    {
-                        "player_id":  683003,
-                        "name":  "Jared Jones",
-                        "role":  "pitcher",
-                        "wpa":  0.201,
-                        "team_id":  134,
-                        "stats":  {
-                                      "ip":  "4.0",
-                                      "k":  5,
-                                      "h":  1,
-                                      "hr":  0,
-                                      "r":  0,
-                                      "er":  0,
-                                      "season_era":  "3.72"
-                                  },
-                        "score":  21.0,
-                        "game_id":  824217,
-                        "walkoff":  false,
-                        "opponent":  "@ DET"
-                    },
-                    {
-                        "player_id":  554430,
-                        "name":  "Zack Wheeler",
-                        "role":  "pitcher",
-                        "wpa":  0.174,
-                        "team_id":  143,
-                        "stats":  {
-                                      "ip":  "6.0",
-                                      "k":  5,
-                                      "h":  5,
-                                      "hr":  1,
-                                      "r":  1,
-                                      "er":  1,
-                                      "season_era":  "3.00"
-                                  },
-                        "score":  19.0,
-                        "game_id":  823408,
-                        "walkoff":  false,
-                        "opponent":  "vs TB"
-                    },
-                    {
-                        "player_id":  676083,
-                        "name":  "Janson Junk",
-                        "role":  "pitcher",
-                        "wpa":  0.076,
-                        "team_id":  146,
-                        "stats":  {
-                                      "ip":  "4.2",
-                                      "k":  5,
-                                      "h":  3,
-                                      "hr":  1,
-                                      "r":  1,
-                                      "er":  1,
-                                      "season_era":  "4.22"
-                                  },
-                        "score":  17.0,
-                        "game_id":  823814,
-                        "walkoff":  false,
-                        "opponent":  "vs ATL"
-                    },
-                    {
-                        "player_id":  676272,
-                        "name":  "Bobby Miller",
-                        "role":  "pitcher",
-                        "wpa":  0.196,
-                        "team_id":  119,
-                        "stats":  {
-                                      "ip":  "2.0",
-                                      "k":  5,
-                                      "h":  1,
-                                      "hr":  0,
-                                      "r":  0,
-                                      "er":  0,
-                                      "season_era":  "3.68"
-                                  },
-                        "score":  15.0,
-                        "game_id":  823164,
-                        "walkoff":  false,
-                        "opponent":  "@ SF"
-                    },
-                    {
-                        "player_id":  680744,
-                        "name":  "Ty Madden",
-                        "role":  "pitcher",
-                        "wpa":  0.06,
-                        "team_id":  116,
-                        "stats":  {
-                                      "ip":  "3.0",
-                                      "k":  3,
-                                      "h":  0,
-                                      "hr":  0,
-                                      "r":  0,
-                                      "er":  0,
-                                      "season_era":  "3.26"
-                                  },
-                        "score":  15.0,
-                        "game_id":  824217,
-                        "walkoff":  false,
-                        "opponent":  "vs PIT"
-                    },
-                    {
-                        "player_id":  681190,
-                        "name":  "Randy VÃ¡squez",
-                        "role":  "pitcher",
-                        "wpa":  0.259,
-                        "team_id":  135,
-                        "stats":  {
-                                      "ip":  "6.0",
-                                      "k":  2,
-                                      "h":  3,
-                                      "hr":  0,
-                                      "r":  1,
-                                      "er":  1,
-                                      "season_era":  "3.90"
-                                  },
-                        "score":  15.0,
-                        "game_id":  823246,
-                        "walkoff":  false,
-                        "opponent":  "vs AZ"
-                    }
-                ],
-    "walkoffs":  [
-
-                 ]
+{
+    "date": "2026-09-27",
+    "entries": [
+        {
+            "player_id": 608324,
+            "name": "Alex Bregman",
+            "role": "batter",
+            "wpa": 0.374,
+            "team_id": 112,
+            "stats": {
+                "h": 4,
+                "ab": 4,
+                "hr": 2,
+                "sb": 0,
+                "rbi": 4,
+                "season_ops": ".819"
+            },
+            "score": 28,
+            "game_id": 824705,
+            "walkoff": false,
+            "opponent": "@ BOS"
+        },
+        {
+            "player_id": 665953,
+            "name": "AndrÃ©s Chaparro",
+            "role": "batter",
+            "wpa": 0.29,
+            "team_id": 120,
+            "stats": {
+                "h": 3,
+                "ab": 4,
+                "hr": 2,
+                "sb": 0,
+                "rbi": 2,
+                "season_ops": ".885"
+            },
+            "score": 21,
+            "game_id": 822679,
+            "walkoff": false,
+            "opponent": "vs NYM"
+        },
+        {
+            "player_id": 676356,
+            "name": "Jonny DeLuca",
+            "role": "batter",
+            "wpa": 0.033,
+            "team_id": 139,
+            "stats": {
+                "h": 2,
+                "ab": 4,
+                "hr": 2,
+                "sb": 0,
+                "rbi": 2,
+                "season_ops": ".729"
+            },
+            "score": 18,
+            "game_id": 823408,
+            "walkoff": false,
+            "opponent": "@ PHI"
+        },
+        {
+            "player_id": 686469,
+            "name": "Vinnie Pasquantino",
+            "role": "batter",
+            "wpa": 0.326,
+            "team_id": 118,
+            "stats": {
+                "h": 2,
+                "ab": 4,
+                "hr": 2,
+                "sb": 0,
+                "rbi": 2,
+                "season_ops": ".761"
+            },
+            "score": 18,
+            "game_id": 824055,
+            "walkoff": false,
+            "opponent": "vs CLE"
+        },
+        {
+            "player_id": 681624,
+            "name": "Andy Pages",
+            "role": "batter",
+            "wpa": 0.145,
+            "team_id": 119,
+            "stats": {
+                "h": 1,
+                "ab": 3,
+                "hr": 1,
+                "sb": 0,
+                "rbi": 4,
+                "season_ops": ".811"
+            },
+            "score": 15,
+            "game_id": 823164,
+            "walkoff": false,
+            "opponent": "@ SF"
+        },
+        {
+            "player_id": 643289,
+            "name": "Mauricio DubÃ³n",
+            "role": "batter",
+            "wpa": 0.117,
+            "team_id": 144,
+            "stats": {
+                "h": 2,
+                "ab": 4,
+                "hr": 1,
+                "sb": 0,
+                "rbi": 2,
+                "season_ops": ".720"
+            },
+            "score": 14,
+            "game_id": 823814,
+            "walkoff": false,
+            "opponent": "@ MIA"
+        },
+        {
+            "player_id": 677595,
+            "name": "Ronny Mauricio",
+            "role": "batter",
+            "wpa": 0.172,
+            "team_id": 121,
+            "stats": {
+                "h": 2,
+                "ab": 3,
+                "hr": 1,
+                "sb": 0,
+                "rbi": 2,
+                "season_ops": ".699"
+            },
+            "score": 14,
+            "game_id": 822679,
+            "walkoff": false,
+            "opponent": "@ WSH"
+        },
+        {
+            "player_id": 804606,
+            "name": "Konnor Griffin",
+            "role": "batter",
+            "wpa": 0.039,
+            "team_id": 134,
+            "stats": {
+                "h": 2,
+                "ab": 4,
+                "hr": 1,
+                "sb": 0,
+                "rbi": 2,
+                "season_ops": ".728"
+            },
+            "score": 14,
+            "game_id": 824217,
+            "walkoff": false,
+            "opponent": "@ DET"
+        },
+        {
+            "player_id": 605137,
+            "name": "Josh Bell",
+            "role": "batter",
+            "wpa": 0.228,
+            "team_id": 142,
+            "stats": {
+                "h": 1,
+                "ab": 2,
+                "hr": 1,
+                "sb": 0,
+                "rbi": 3,
+                "season_ops": ".738"
+            },
+            "score": 13,
+            "game_id": 823650,
+            "walkoff": false,
+            "opponent": "vs TEX"
+        },
+        {
+            "player_id": 668904,
+            "name": "Royce Lewis",
+            "role": "batter",
+            "wpa": 0.001,
+            "team_id": 142,
+            "stats": {
+                "h": 2,
+                "ab": 4,
+                "hr": 1,
+                "sb": 1,
+                "rbi": 1,
+                "season_ops": ".667"
+            },
+            "score": 13,
+            "game_id": 823650,
+            "walkoff": false,
+            "opponent": "vs TEX"
+        },
+        {
+            "player_id": 669302,
+            "name": "Logan Gilbert",
+            "role": "pitcher",
+            "wpa": 0.161,
+            "team_id": 136,
+            "stats": {
+                "ip": "4.0",
+                "k": 8,
+                "h": 0,
+                "hr": 0,
+                "r": 0,
+                "er": 0,
+                "season_era": "3.73"
+            },
+            "score": 28.0,
+            "game_id": 823084,
+            "walkoff": false,
+            "opponent": "vs LAA"
+        },
+        {
+            "player_id": 453286,
+            "name": "Max Scherzer",
+            "role": "pitcher",
+            "wpa": 0.203,
+            "team_id": 141,
+            "stats": {
+                "ip": "7.0",
+                "k": 7,
+                "h": 6,
+                "hr": 0,
+                "r": 1,
+                "er": 1,
+                "season_era": "5.74"
+            },
+            "score": 25.0,
+            "game_id": 822761,
+            "walkoff": false,
+            "opponent": "vs CIN"
+        },
+        {
+            "player_id": 694819,
+            "name": "Jacob Misiorowski",
+            "role": "pitcher",
+            "wpa": 0.177,
+            "team_id": 158,
+            "stats": {
+                "ip": "5.1",
+                "k": 5,
+                "h": 2,
+                "hr": 0,
+                "r": 0,
+                "er": 0,
+                "season_era": "1.80"
+            },
+            "score": 24.0,
+            "game_id": 823731,
+            "walkoff": false,
+            "opponent": "vs STL"
+        },
+        {
+            "player_id": 665152,
+            "name": "Dean Kremer",
+            "role": "pitcher",
+            "wpa": 0.225,
+            "team_id": 142,
+            "stats": {
+                "ip": "7.0",
+                "k": 4,
+                "h": 3,
+                "hr": 1,
+                "r": 1,
+                "er": 1,
+                "season_era": "4.68"
+            },
+            "score": 22.0,
+            "game_id": 823650,
+            "walkoff": false,
+            "opponent": "vs TEX"
+        },
+        {
+            "player_id": 683003,
+            "name": "Jared Jones",
+            "role": "pitcher",
+            "wpa": 0.201,
+            "team_id": 134,
+            "stats": {
+                "ip": "4.0",
+                "k": 5,
+                "h": 1,
+                "hr": 0,
+                "r": 0,
+                "er": 0,
+                "season_era": "3.72"
+            },
+            "score": 21.0,
+            "game_id": 824217,
+            "walkoff": false,
+            "opponent": "@ DET"
+        },
+        {
+            "player_id": 554430,
+            "name": "Zack Wheeler",
+            "role": "pitcher",
+            "wpa": 0.174,
+            "team_id": 143,
+            "stats": {
+                "ip": "6.0",
+                "k": 5,
+                "h": 5,
+                "hr": 1,
+                "r": 1,
+                "er": 1,
+                "season_era": "3.00"
+            },
+            "score": 19.0,
+            "game_id": 823408,
+            "walkoff": false,
+            "opponent": "vs TB"
+        },
+        {
+            "player_id": 676083,
+            "name": "Janson Junk",
+            "role": "pitcher",
+            "wpa": 0.076,
+            "team_id": 146,
+            "stats": {
+                "ip": "4.2",
+                "k": 5,
+                "h": 3,
+                "hr": 1,
+                "r": 1,
+                "er": 1,
+                "season_era": "4.22"
+            },
+            "score": 17.0,
+            "game_id": 823814,
+            "walkoff": false,
+            "opponent": "vs ATL"
+        },
+        {
+            "player_id": 676272,
+            "name": "Bobby Miller",
+            "role": "pitcher",
+            "wpa": 0.196,
+            "team_id": 119,
+            "stats": {
+                "ip": "2.0",
+                "k": 5,
+                "h": 1,
+                "hr": 0,
+                "r": 0,
+                "er": 0,
+                "season_era": "3.68"
+            },
+            "score": 15.0,
+            "game_id": 823164,
+            "walkoff": false,
+            "opponent": "@ SF"
+        },
+        {
+            "player_id": 680744,
+            "name": "Ty Madden",
+            "role": "pitcher",
+            "wpa": 0.06,
+            "team_id": 116,
+            "stats": {
+                "ip": "3.0",
+                "k": 3,
+                "h": 0,
+                "hr": 0,
+                "r": 0,
+                "er": 0,
+                "season_era": "3.26"
+            },
+            "score": 15.0,
+            "game_id": 824217,
+            "walkoff": false,
+            "opponent": "vs PIT"
+        },
+        {
+            "player_id": 681190,
+            "name": "Randy VÃ¡squez",
+            "role": "pitcher",
+            "wpa": 0.259,
+            "team_id": 135,
+            "stats": {
+                "ip": "6.0",
+                "k": 2,
+                "h": 3,
+                "hr": 0,
+                "r": 1,
+                "er": 1,
+                "season_era": "3.90"
+            },
+            "score": 15.0,
+            "game_id": 823246,
+            "walkoff": false,
+            "opponent": "vs AZ"
+        }
+    ],
+    "walkoffs": []
 }

@@ -76,7 +76,9 @@ def get_splits(
         cells = {}
         for c in columns:
             v = row[c]
-            if c in pct_cols and pd.notna(v):
+            if c in ("n_pitches", "n_pa"):
+                cells[c] = int(v) if pd.notna(v) else 0
+            elif c in pct_cols and pd.notna(v):
                 cells[c] = f"{v:.3f}"
             elif pd.isna(v):
                 cells[c] = "-"

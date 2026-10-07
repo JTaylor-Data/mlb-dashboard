@@ -275,14 +275,18 @@ def leaderboard(conn, season, min_pitches=None, top_n=15):
         min_pitches = _min_pitches(season)
     league = _raw_predictions(conn, season)
     if league.empty:
-        return {"n_qualified": 0, "top": [], "bottom": []}
+        return {"n_qualified": 0, "top": [], "bottom": [],
+                "model_version": LOCATION_ACTIVE_VERSION, "season": season,
+                "min_pitches": int(min_pitches or _min_pitches(season))}
 
     g = league.groupby("pitcher_id").agg(
         mean_xrv=("xrv", "mean"), n_pitches=("xrv", "size")
     ).reset_index()
     q = g[g["n_pitches"] >= min_pitches].copy()
     if q.empty or q["mean_xrv"].std() == 0:
-        return {"n_qualified": 0, "top": [], "bottom": []}
+        return {"n_qualified": 0, "top": [], "bottom": [],
+                "model_version": LOCATION_ACTIVE_VERSION, "season": season,
+                "min_pitches": int(min_pitches)}
 
     lm = q["mean_xrv"].mean()
     ls = q["mean_xrv"].std()
@@ -309,7 +313,8 @@ def leaderboard(conn, season, min_pitches=None, top_n=15):
     top = merged.sort_values("score", ascending=False).head(top_n)
     bottom = merged.sort_values("score", ascending=True).head(top_n)
     return {"n_qualified": int(len(q)), "top": _rows(top), "bottom": _rows(bottom),
-            "model_version": LOCATION_ACTIVE_VERSION}
+            "model_version": LOCATION_ACTIVE_VERSION,
+            "season": season, "min_pitches": int(min_pitches)}
 
 
 def pitcher_score(conn, season, pitcher_id, league_raw=None, min_pitches=None):
