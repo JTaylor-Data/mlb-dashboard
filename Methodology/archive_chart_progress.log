@@ -1,0 +1,7 @@
+2026-10-05 18:50:05 - Branch archive-and-chart created, tag pre-archive-chart pushed
+2026-10-05 19:06:44 - Part 1: STARTUP_AND_STORAGE.md written
+2026-10-05 19:06:44 - Part 2: xwOBA chart rework (raw per-PA endpoint, 4 buttons, gradient color, date axis)
+2026-10-05 19:06:44 - Part 3: SHOW_IL_PLAQUES added to season_phase.py, SEASON_PHASE.md updated
+2026-10-05 19:06:44 - Part 4: ARCHIVE_POLICY.md, ROOT_FILES.md, check_archive_hygiene.py created
+2026-10-05 19:13:23 - All parts committed and pushed. Tag post-archive-chart pushed.
+2026-10-05 19:30:00 - Part 5 verification: pytest -q baseline run complete. 177 passed, 23 failed. All 23 failures confirmed pre-existing on master (UTF-8 BOM in golden snapshot fixtures, sys.exit at module level in tools/verify_stuff_page.py, /api/player/543037/progress extra-data JSON, tunneling report 404). Zero new failures introduced by archive-and-chart branch.

@@ -661,12 +661,12 @@ def batter_counting_stats(conn, season, batter_id, throws_filter=None):
     )
 
 
-def batter_rolling_xwoba(conn, season, batter_id, windows=(50, 100, 250)):
-    """Rolling xwOBA for a batter over the given PA-count windows.
+def batter_rolling_xwoba(conn, season, batter_id):
+    """Raw per-qualifying-PA xwOBA for a batter.
 
-    Returns a list of {pa_index, date, <window>: xwoba_value} dicts, one per
-    qualifying PA (woba_denom == 1), ordered chronologically. Each window's
-    value is NaN until enough PAs have accumulated.
+    Returns a list of {pa_index, date, xwoba} dicts, one per qualifying PA
+    (woba_denom == 1), ordered chronologically. The client computes horizon
+    filtering and smoothing so toggling between 50/100/250/YR is instant.
     """
     df = pd.read_sql(
         """
@@ -691,29 +691,45 @@ def batter_rolling_xwoba(conn, season, batter_id, windows=(50, 100, 250)):
     )
     pa = pa.sort_values(["game_date", "at_bat_number"]).reset_index(drop=True)
 
-    # Qualifying PAs for xwOBA
+    # Qualifying PAs for xwOBA (woba_denom == 1 excludes walks/HBPs/Ks
+    # that lack a batted-ball xwOBA estimate)
     qualifying_mask = pa["woba_denom"] == 1
     qpa = pa[qualifying_mask].copy()
-    qpa["_xw"] = qpa["estimated_woba_using_speedangle"].astype(float)
     qpa = qpa.reset_index(drop=True)
 
     if qpa.empty:
         return []
 
-    # Build one point per qualifying PA with rolling means for each window
-    points = []
-    xw_vals = qpa["_xw"].values
+    xw_vals = qpa["estimated_woba_using_speedangle"].astype(float).values
     dates = qpa["game_date"].values
-    total = len(qpa)
 
-    for i in range(total):
-        pt = {"pa_index": i + 1, "date": str(dates[i])}
-        for w in windows:
-            if i + 1 >= w:
-                val = np.nanmean(xw_vals[i + 1 - w: i + 1])
-                pt[str(w)] = None if np.isnan(val) else float(val)
-            else:
-                pt[str(w)] = None
-        points.append(pt)
+    points = []
+    for i in range(len(qpa)):
+        xw = float(xw_vals[i])
+        points.append({
+            "pa_index": i + 1,
+            "date": str(dates[i]),
+            "xwoba": None if np.isnan(xw) else xw,
+        })
 
     return points
+
+
+def league_avg_xwoba(conn, season):
+    """Season-level league-average xwOBA across all qualifying contact PAs.
+
+    Uses the same woba_denom == 1 filter as batter_rolling_xwoba so the
+    reference line is consistent with the per-PA points plotted.
+    """
+    row = conn.execute(
+        """
+        SELECT AVG(estimated_woba_using_speedangle)
+        FROM pitches
+        WHERE season = ? AND woba_denom = 1
+          AND estimated_woba_using_speedangle IS NOT NULL
+        """,
+        (season,),
+    ).fetchone()
+    val = row[0] if row else None
+    # Hard fallback to historical average if DB query returns nothing
+    return float(val) if val is not None else 0.320

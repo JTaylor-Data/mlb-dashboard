@@ -68,6 +68,21 @@ def show_playoff_bracket() -> bool:
     return SEASON_PHASE in (POSTSEASON, OFFSEASON)
 
 
+def show_il_plaques() -> bool:
+    """IL badges and injury data are meaningful only during the regular season.
+
+    POSTSEASON: IL transactions are uncommon/frozen after the roster locks
+    (September expanded rosters). OFFSEASON: no active rosters.
+    When False:
+      - Backend must not fetch or return il_status data.
+      - Frontend receives il_status=null and renders no badge.
+    """
+    return SEASON_PHASE == REGULAR_SEASON
+
+# Exported constant for use in templates and frontend checks.
+SHOW_IL_PLAQUES: bool = show_il_plaques()
+
+
 def percentile_pool_live() -> bool:
     """Whether the current season's percentile pool should be rebuilt on refresh."""
     return SEASON_PHASE in (REGULAR_SEASON, POSTSEASON)
