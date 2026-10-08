@@ -976,11 +976,16 @@ async function renderSimilarPlayers() {
   }
   const cards = d.comps
     .map((c) => {
-      const teamId = c.team_id ? `<img class="sp-team-logo" src="https://www.mlbstatic.com/team-logos/${c.team_id}.svg" onerror="this.style.visibility='hidden'" />` : "";
+      const teamLogo = c.team_id ? `<img class="sp-team-logo" src="https://www.mlbstatic.com/team-logos/${c.team_id}.svg" onerror="this.style.visibility='hidden'" />` : "";
+      const headshot = c.player_id
+        ? `<img class="sp-headshot" src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_120,q_auto:best/v1/people/${c.player_id}/headshot/67/current" alt="${c.name || ""}" />`
+        : "";
+      const url = `index.html?player=${c.player_id}&season=${c.season}`;
       return `
-        <div class="sp-comp">
-          ${teamId}
-          <div class="sp-comp-name">${c.name || "Unknown"}</div>
+        <div class="sp-comp" role="button" tabindex="0" onclick="location.href='${url}'" onkeydown="if(event.key==='Enter'||event.key===' ')location.href='${url}'">
+          ${headshot}
+          ${teamLogo}
+          <a class="sp-comp-name" href="${url}" onclick="event.stopPropagation()">${c.name || "Unknown"}</a>
           <div class="sp-comp-season">${c.season}</div>
         </div>
       `;
