@@ -494,6 +494,32 @@ def _fill_ds_from_wc(conn, season, standings_df, real):
             ]
 
 
+def _fill_cs_from_ds(real):
+    """When both DS matchups have real winners but CS hasn't started yet,
+    pre-populate the championship slot so the bracket shows actual teams
+    rather than TBD. Mirrors _fill_ds_from_wc one round later."""
+    for league in ("al", "nl"):
+        ds = real[league]["division"]
+        cs = real[league]["championship"]
+        if cs and cs[0].get("team_a") is not None:
+            continue  # CS already has real data
+        if len(ds) != 2:
+            continue
+        winners = []
+        for m in ds:
+            wid = m.get("winner_team_id")
+            if wid is None:
+                break
+            for t in (m.get("team_a"), m.get("team_b")):
+                if t and t["team_id"] == wid:
+                    winners.append({"team_id": t["team_id"], "name": t["name"]})
+                    break
+        if len(winners) == 2:
+            real[league]["championship"] = [
+                {"team_a": winners[0], "team_b": winners[1], "winner_team_id": None, "record": None}
+            ]
+
+
 def unified_bracket(conn, standings_df, season):
     """The single entry point the API layer calls: real results when any
     exist for `season`, else the live standings projection. See this
@@ -502,6 +528,7 @@ def unified_bracket(conn, standings_df, season):
     real = real_postseason_bracket(season)
     if real is not None:
         _fill_ds_from_wc(conn, season, standings_df, real)
+        _fill_cs_from_ds(real)
         return {"season": season, "is_real": True, "postseason_started": True, **real}
     projected = _projected_unified_bracket(conn, season, standings_df)
     return {"season": season, "is_real": False, "postseason_started": postseason_started(standings_df), **projected}
