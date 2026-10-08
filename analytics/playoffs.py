@@ -495,9 +495,10 @@ def _fill_ds_from_wc(conn, season, standings_df, real):
 
 
 def _fill_cs_from_ds(real):
-    """When both DS matchups have real winners but CS hasn't started yet,
-    pre-populate the championship slot so the bracket shows actual teams
-    rather than TBD. Mirrors _fill_ds_from_wc one round later."""
+    """When one or both DS matchups have real winners but CS hasn't started
+    yet, pre-populate the championship slot so the bracket shows known teams
+    rather than TBD. One winner known → team_a set, team_b None (TBD).
+    Both winners known → full matchup. Mirrors _fill_ds_from_wc one round later."""
     for league in ("al", "nl"):
         ds = real[league]["division"]
         cs = real[league]["championship"]
@@ -509,12 +510,16 @@ def _fill_cs_from_ds(real):
         for m in ds:
             wid = m.get("winner_team_id")
             if wid is None:
-                break
+                continue
             for t in (m.get("team_a"), m.get("team_b")):
                 if t and t["team_id"] == wid:
                     winners.append({"team_id": t["team_id"], "name": t["name"]})
                     break
-        if len(winners) == 2:
+        if len(winners) == 1:
+            real[league]["championship"] = [
+                {"team_a": winners[0], "team_b": None, "winner_team_id": None, "record": None}
+            ]
+        elif len(winners) == 2:
             real[league]["championship"] = [
                 {"team_a": winners[0], "team_b": winners[1], "winner_team_id": None, "record": None}
             ]
