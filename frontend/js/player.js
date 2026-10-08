@@ -1747,8 +1747,8 @@ function _buildXwobaChart(allPts, windowKey, lgAvg) {
   const iH = H - PAD.top - PAD.bottom;
 
   const allY = [...validSmoothed, lgAvg];
-  const yMin = Math.max(0.150, Math.min(...allY) - 0.015);
-  const yMax = Math.min(0.540, Math.max(...allY) + 0.015);
+  const yMin = Math.min(0.150, Math.min(...allY) - 0.015);
+  const yMax = Math.max(0.500, Math.max(...allY) + 0.015);
 
   const xScale = i => PAD.left + (i / (pts.length - 1 || 1)) * iW;
   const yScale = v => PAD.top + (1 - (v - yMin) / (yMax - yMin)) * iH;
