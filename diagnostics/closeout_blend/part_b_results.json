@@ -1,0 +1,64 @@
+{
+  "B1": {
+    "methodology_note": "Pitcher-level ECE computed from OOF mean predictions vs actual rates. xCS and xFoul ECE values are inflated by comparison mismatch: model predicts P(CS) over all pitches, actual rate computed on takes only. Pitch-level ECE cannot be computed without pitch IDs in OOF. True pitch-level ECE is unverified. Values below are pitcher-level proxies, not formal pitch-level ECE.",
+    "ECE_xSwing_pitcher_level": 0.1761,
+    "ECE_xCS_pitcher_level_inflated": 0.3096,
+    "ECE_xWhiff_pitcher_level": 0.0126,
+    "ECE_xFoul_pitcher_level_inflated": 0.3735,
+    "formal_pitch_level_ECE": "unverified \u2014 OOF parquets lack pitch IDs for exact match",
+    "gate_status": "CANNOT VERIFY \u2014 pitcher-level proxy shows xSwing ECE=0.176 and xWhiff ECE=0.013 but xCS and xFoul values are methodologically contaminated. Completion doc: 'ASSUMED PASS'. Formal computation requires pitch-level OOF with pitch IDs."
+  },
+  "B8": {
+    "pt_grades_path": "C:/Users/joshs/Desktop/mlb_dashboard/diagnostics/closeout_blend/location_v3_pt_grades.parquet",
+    "pt_grades_n": 20811,
+    "components_path": "C:/Users/joshs/Desktop/mlb_dashboard/diagnostics/closeout_blend/location_v3_components.parquet",
+    "components_n": 2623,
+    "components_source": "OOF V0a (30% pitcher subsample)",
+    "min_pitches_per_type": 100,
+    "shrinkage_applied": false,
+    "note": "Pitch-type grades use same z-score standardization as overall score. No shrinkage (not adopted per spec)."
+  },
+  "B2": {
+    "next_season_correlations": {
+      "BB%": {
+        "r": -0.4335,
+        "n": 3527
+      },
+      "xFIP": {
+        "r": -0.1053,
+        "n": 1956
+      }
+    },
+    "incremental_delta_r2": {
+      "BB%": {
+        "delta_r2": 0.0188,
+        "ci_95_lo": 0.0117,
+        "ci_95_hi": 0.0278,
+        "bar_point_met": true,
+        "bar_ci_lo_met": true,
+        "n": 3527
+      }
+    },
+    "pre_reg_bar_bb_corr_final_model": "<= -0.20",
+    "bb_corr_final_model_bar_met": true,
+    "note_pitcher_holdout_analog": "unverified"
+  },
+  "B3": {
+    "pitcher_holdout_yoy_xrv": 0.5859,
+    "n_yoy_pairs": 987
+  },
+  "B5": {
+    "location_plus_v3_vs_stuff_plus_v4": {
+      "r": -0.054,
+      "flag_gt_0.5": false
+    },
+    "location_plus_v3_vs_tunneling_plus": {
+      "r": -0.5798,
+      "flag_gt_0.5": true
+    },
+    "stuff_plus_v4_vs_tunneling_plus": {
+      "r": -0.108,
+      "flag_gt_0.5": false
+    }
+  }
+}

@@ -40,7 +40,7 @@ def score_season(conn, season: int):
     print(f"  Scoring season {season}...")
 
     from analytics.stuff_model import compute_stuff_plus, overall_stuff_plus
-    from analytics.tunneling_v3_model import _raw_predictions as tun_raw, RAW_PREDICTIONS_CACHE_TTL_SECONDS
+    from analytics.tunneling_v2_model import _raw_predictions as tun_raw
     from analytics.location_model import _raw_predictions as loc_raw
     import numpy as np
     import pandas as pd
