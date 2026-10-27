@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: mlb-dashboard
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: starter  # upgrade to standard for always-on
+    disk:
+      name: mlb-data
+      mountPath: /data
+      sizeGB: 10  # increase once you've measured the real DB size
+    envVars:
+      - key: DB_PATH
+        value: /data/mlb_data.db
+      - key: SEASON_PHASE
+        value: POSTSEASON
+      - key: ADMIN_TOKEN
+        generateValue: true  # Render generates a secret; copy it from the dashboard
