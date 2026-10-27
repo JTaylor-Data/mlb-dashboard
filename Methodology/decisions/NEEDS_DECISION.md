@@ -77,23 +77,20 @@ is whatever happened to fit best during training, not an intentional choice.
 
 ---
 
-## ND-02: Deception+ training seasons vs. arm_angle availability
+## ND-02: Deception+ training seasons vs. arm_angle availability — RESOLVED 2026-10-27
 
-**Found**: `models/deception_plus_v1_meta.json` lists `seasons_trained_on: [2015, ..., 2026]`
-(12 seasons). However, `arm_angle` was introduced by Statcast mid-2020 and was only ~75.1%
-populated in 2020. The `engineer_features` function drops rows with missing features via
-`dropna`. Pitches from 2015â€“2019 and most of 2020 would have no `arm_angle` and be silently
-dropped. This means the effective training range is approximately 2021â€“2026, not 2015â€“2026.
-The meta.json's `seasons_trained_on` list may be misleading.
+**Verified**: Booster file `models/deception_plus_v1.txt` (September 2026 retrain) has exactly
+7 unique season categories in its tree splits, confirming effective training range **2020–2026**.
+2015–2019 produced zero rows after arm_angle dropna and are absent. 2020 (~75% coverage) was
+retained in the retrain.
 
-**Decision needed**: Should the meta.json be corrected to reflect the effective range
-(~2021â€“2026), and should the live site's season selector for Deception+ be restricted to
-2021â€“2026? REPORT_SEASON is currently hardcoded to 2026 in the router so this only matters
-if a season selector is added.
+**Changes made**:
+- `models/deception_plus_v1_meta.json`: `seasons_trained_on` corrected from [2015..2026] to
+  [2020..2026] with an explanatory note.
+- `Methodology/HANDOFF.md`: updated two references to agree on 2020–2026.
 
-**Also**: The HANDOFF.md (last updated 2026-09-28) says training was 2021â€“2025, but the
-meta.json (trained_at 2026-09-15) shows 2015â€“2026. These are inconsistent. Confirm which
-retrain is actually live by checking the booster file's own feature-level data statistics.
+**Season selector note**: If a selector is added, restrict display to 2021–2026 for consistency
+(2020 is partial ~75% coverage only).
 
 ---
 

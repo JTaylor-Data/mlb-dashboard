@@ -114,7 +114,8 @@ pulls/  →  mlb_data.db  →  analytics/  →  api/  →  frontend/
 - **`models/`** — trained model artifacts (LightGBM `.txt` boosters + metadata/validation JSONs).
   **Current live versions**: `stuff_plus_v3_lgbm.txt` (2016–2026), `tunneling_plus_v2_{xswing/xcs/xwhiff/xfoul/bip}.txt`
   (2015–2026, promoted 2026-09-21), `location_plus_v2_{xswing/xcs/xwhiff/xfoul/bip}.txt` (2015–2026,
-  promoted 2026-09-21), `deception_plus_v1.txt` (2021–2025). Old single-booster files `tunneling_v3.txt`
+  promoted 2026-09-21), `deception_plus_v1.txt` (2020–2026; 7 season categories confirmed in booster
+  splits — 2015-2019 absent after arm_angle dropna, 2020 ~75% populated and retained). Old single-booster files `tunneling_v3.txt`
   and `location_plus_v1.txt` remain in `models/` for reference — the live API no longer loads them.
   All models were retrained in September 2026 on the full backfilled dataset.
 - **`training/`** — offline model-fitting scripts (ext variants), run by hand, not part of the
@@ -181,9 +182,9 @@ from Stuff+ in the current codebase), `arm_angle_std`, `release_extension_std`,
 `pitcher_bio` table — time-invariant per pitcher, a real limitation for year-over-year work),
 `season`.
 
-**Model**: LightGBM, Huber loss, leave-one-season-out CV 2021–2025. **Training data: 2021–2025**
-(`arm_angle` was introduced by Statcast mid-2020; only 75.1% populated in 2020 — not enough to
-extend further back). The live site scores 2025 only (hardcoded `REPORT_SEASON = 2025` in
+**Model**: LightGBM, Huber loss. **Training data: 2020–2026** (September 2026 retrain extended
+to 2020 — arm_angle ~75% populated in 2020 after dropna, retained; 2015–2019 absent. Booster
+confirms 7 season categories. Original v1 used 2021–2025; meta.json updated to reflect retrain). The live site scores 2025 only (hardcoded `REPORT_SEASON = 2025` in
 `api/routers/deception_report.py`) — the model is season-agnostic, no season selector is wired up.
 
 **Confirmed NOT obtainable from any accessible source**: delivery length, leg-lift timing, time held
