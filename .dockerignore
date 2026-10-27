@@ -10,6 +10,11 @@ mlb_data.db
 mlb_data.db-shm
 mlb_data.db-wal
 mlb_data.db.bak*
+mlb_data.db.backup-*
+data/mlb.db
+derived_cache.db
+derived_cache.db-shm
+derived_cache.db-wal
 
 # Large model training artifacts (models/*.txt are the trained weights, needed;
 # but .parquet training files are not)
