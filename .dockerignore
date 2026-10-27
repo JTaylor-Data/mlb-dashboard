@@ -1,0 +1,26 @@
+# Large directories not needed in the container
+Archive/
+diagnostics/
+project_artifacts/
+Methodology/
+deploy/RENDER_DEPLOY.md
+
+# Real database (never bake into image — mounted at runtime via DB_PATH)
+mlb_data.db
+mlb_data.db-shm
+mlb_data.db-wal
+mlb_data.db.bak*
+
+# Large model training artifacts (models/*.txt are the trained weights, needed;
+# but .parquet training files are not)
+**/*.parquet
+
+# Dev/test noise
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+tests/
+.git/
+*.log

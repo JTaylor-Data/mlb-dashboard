@@ -18,7 +18,7 @@ scikit-learn==1.9.0
 
 # ML models
 lightgbm==4.7.0
-shap==0.52.0
+shap==0.51.0
 
 # Baseball data
 pybaseball==2.2.7
