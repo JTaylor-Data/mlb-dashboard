@@ -83,9 +83,9 @@ TUNNELING_PLUS = {
 }
 
 DECEPTION_PLUS = {
-    # No explicit count check in analytics/deception_model.py (see NEEDS_DECISION.md ND-03)
-    "min_pitches_scoring": None,
-    "min_pitches_leaderboard": None,
+    # MIN_PITCHES = 100 enforced in analytics/deception_model.py pitcher_deception_breakdown()
+    "min_pitches_scoring": 100,
+    "min_pitches_leaderboard": 100,
     # arm_angle available from ~2021; effective scoring range is 2021–2026 even though
     # the model meta lists 2015–2026 as trained seasons (see NEEDS_DECISION.md ND-02)
     "available_seasons": list(range(2021, 2027)),
@@ -95,7 +95,7 @@ DECEPTION_PLUS = {
         "arm_angle is populated in Statcast (introduced mid-2020, reliable from 2021)."
     ),
     "notes": (
-        "No integer min_pitches check; returns None if feat.empty after dropna. "
+        "MIN_PITCHES=100 check in pitcher_deception_breakdown(); returns None if feat.empty or < 100 after dropna. "
         "Requires pitcher_bio record (height_in, weight_lb). REPORT_SEASON = 2026 "
         "hardcoded in api/routers/deception_report.py:25 — no season selector yet. "
         "See NEEDS_DECISION.md ND-02 and ND-03."

@@ -19,6 +19,7 @@ from analytics.location_features import to_plus_scale as _to_plus_scale
 MODELS_DIR = Path(__file__).resolve().parent.parent / "models"
 BOOSTER_PATH = MODELS_DIR / "deception_plus_v1.txt"
 
+MIN_PITCHES = 100  # matches Tunneling+ (100) and Location+ (100/300) qualification gates
 RAW_PREDICTIONS_CACHE_TTL_SECONDS = 600
 _raw_predictions_cache = {}
 _model_cache = {}
@@ -96,7 +97,7 @@ def pitcher_deception_breakdown(conn, season, pitcher_id, league_raw):
     if df.empty:
         return None
     feat = _prepare_features(df, bio)
-    if feat.empty:
+    if feat.empty or len(feat) < MIN_PITCHES:
         return None
 
     model = _load()
