@@ -19,10 +19,13 @@ from ~90s to effectively zero.  If a parquet is missing (first deploy, or
 between a model-version bump and the next weekly rescore) the functions fall
 back to live scoring exactly as before.
 """
+import logging
 import sqlite3
 import threading
 import time as _time
 from pathlib import Path
+
+log = logging.getLogger("warmup")
 
 from api.db import DB_PATH
 
@@ -51,10 +54,10 @@ def _inject_stuff_parquet(season: int):
             return False
         df = pd.read_parquet(path)
         _raw_predictions_cache[(STUFF_ACTIVE_VERSION, season)] = (df, _time.monotonic() + _PARQUET_TTL)
-        print(f"[warmup] stuff {STUFF_ACTIVE_VERSION} {season}: loaded from parquet ({len(df):,} rows)")
+        log.info("stuff %s %s: loaded from parquet (%s rows)", STUFF_ACTIVE_VERSION, season, f"{len(df):,}")
         return True
     except Exception as e:
-        print(f"[warmup] stuff parquet {season} load failed: {e}")
+        log.warning("stuff parquet %s load failed: %s", season, e)
         return False
 
 
@@ -68,10 +71,10 @@ def _inject_tunneling_parquet(season: int):
             return False
         df = pd.read_parquet(path)
         tunneling_v2_model._cache[f"raw_{season}"] = (df, _time.monotonic() + _PARQUET_TTL)
-        print(f"[warmup] tunneling v3 {season}: loaded from parquet ({len(df):,} rows)")
+        log.info("tunneling v3 %s: loaded from parquet (%s rows)", season, f"{len(df):,}")
         return True
     except Exception as e:
-        print(f"[warmup] tunneling parquet {season} load failed: {e}")
+        log.warning("tunneling parquet %s load failed: %s", season, e)
         return False
 
 
@@ -85,10 +88,10 @@ def _inject_location_parquet(season: int):
             return False
         df = pd.read_parquet(path)
         location_v3_model._cache[f"raw_v3_{season}"] = (df, _time.monotonic() + _PARQUET_TTL)
-        print(f"[warmup] location v3 {season}: loaded from parquet ({len(df):,} rows)")
+        log.info("location v3 %s: loaded from parquet (%s rows)", season, f"{len(df):,}")
         return True
     except Exception as e:
-        print(f"[warmup] location parquet {season} load failed: {e}")
+        log.warning("location parquet %s load failed: %s", season, e)
         return False
 
 
@@ -170,15 +173,15 @@ def _warm(conn, full):
             try:
                 _career_stuff_table(conn, ps)
             except Exception as e:
-                print(f"[warmup] career stuff_table({ps}) failed: {e}")
+                log.warning("career stuff_table(%s) failed: %s", ps, e)
             try:
                 _career_tun_table(conn, ps)
             except Exception as e:
-                print(f"[warmup] career tun_table({ps}) failed: {e}")
+                log.warning("career tun_table(%s) failed: %s", ps, e)
             try:
                 _career_loc_table(conn, ps)
             except Exception as e:
-                print(f"[warmup] career loc_table({ps}) failed: {e}")
+                log.warning("career loc_table(%s) failed: %s", ps, e)
         _stuff_dict(conn, season)
         _tunneling_dict(conn, season)
         _location_dict(conn, season)
@@ -194,7 +197,7 @@ def _warm(conn, full):
             try:
                 _leaderboard(conn, d)
             except Exception as e:
-                print(f"[warmup] _leaderboard({d}) failed: {e}")
+                log.warning("_leaderboard(%s) failed: %s", d, e)
     else:
         # Manual "Refresh data" click: model scoring caches weren't cleared
         # (one day of new pitches doesn't meaningfully change Stuff+/Tunneling+/
@@ -216,7 +219,7 @@ def _warm(conn, full):
             try:
                 _leaderboard(conn, d)
             except Exception as e:
-                print(f"[warmup] _leaderboard({d}) failed: {e}")
+                log.warning("_leaderboard(%s) failed: %s", d, e)
 
 
 def _score_new_pitcher(conn, pitcher_id: int, season: int, model: str) -> float | None:

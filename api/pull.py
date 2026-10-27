@@ -27,12 +27,15 @@ The only thing that still varies by trigger is how thoroughly the display
 cache gets rewarmed afterward (`full_warmup`) - see warmup.py's docstring -
 since that's a pure UI-responsiveness tradeoff, not a data-correctness one.
 """
+import logging
 import sqlite3
 import sys
 import threading
 import traceback
 from datetime import date, timedelta
 from pathlib import Path
+
+log = logging.getLogger("refresh")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
@@ -75,7 +78,7 @@ def _run(full_warmup):
         end = date.today()
         start = EARLIEST_SEASON_START
 
-        print(f"[refresh] checking Statcast data {start} to {end} for anything missing...", flush=True)
+        log.info("checking Statcast data %s to %s for anything missing...", start, end)
         # Deliberately doesn't show the full 2021-today range here even
         # though that IS what's being checked (see module docstring) - a
         # date that old reads as "why is this rescanning years of history"
@@ -84,7 +87,7 @@ def _run(full_warmup):
         _status["detail"] = "Checking for new pitch data..."
         pitches_result = pull_statcast.run(start.isoformat(), end.isoformat())
 
-        print("[refresh] updating players/games reference data...", flush=True)
+        log.info("updating players/games reference data...")
         _status["detail"] = "Updating players/games reference data..."
         recent_cutoff = (end - timedelta(days=PLAYERS_GAMES_RECENT_WINDOW_DAYS)).isoformat()
         games_result = pull_players_games.run(since_date=recent_cutoff)
@@ -92,41 +95,41 @@ def _run(full_warmup):
         season = end.year
 
         if not POSTSEASON_MODE:
-            print("[refresh] updating team stats...", flush=True)
+            log.info("updating team stats...")
             _status["detail"] = "Updating team stats..."
             pull_team_stats.run(season)
         else:
-            print("[refresh] postseason mode — skipping team stats (RS records frozen)", flush=True)
+            log.info("postseason mode — skipping team stats (RS records frozen)")
 
-        print("[refresh] updating upcoming schedule / probable pitchers...", flush=True)
+        log.info("updating upcoming schedule / probable pitchers...")
         _status["detail"] = "Updating upcoming schedule..."
         from data.mlb_stats_api import schedule as _mlb_schedule
         _mlb_schedule(end.isoformat(), (end + timedelta(days=14)).isoformat(), db_path=str(DB_PATH))
 
-        print("[refresh] updating remaining schedule (SOS/playoffs)...", flush=True)
+        log.info("updating remaining schedule (SOS/playoffs)...")
         _status["detail"] = "Updating remaining schedule..."
         pull_remaining_schedule.run(season)
 
-        print("[refresh] updating rosters + schedule via MLB Stats API...", flush=True)
+        log.info("updating rosters + schedule via MLB Stats API...")
         _status["detail"] = "Updating rosters/schedule..."
         try:
             from pulls.refresh_mlb_stats import run as _refresh_mlb_stats
             _refresh_mlb_stats(season=season, skip_news=False, postseason=POSTSEASON_MODE)
         except Exception as _me:
-            print(f"[refresh] refresh_mlb_stats failed (non-fatal): {_me}", flush=True)
+            log.warning("refresh_mlb_stats failed (non-fatal): %s", _me)
 
         # Prospects: skip on manual refresh clicks; weekly on Mondays during scheduled runs.
         if full_warmup and date.today().weekday() == 0:
-            print("[refresh] updating prospect rankings + scouting (weekly Monday run)...", flush=True)
+            log.info("updating prospect rankings + scouting (weekly Monday run)...")
             _status["detail"] = "Updating prospect rankings..."
             try:
                 from pulls import pull_prospects, pull_prospect_scouting
                 pull_prospects.run(season)
                 pull_prospect_scouting.run()
             except Exception as _pe:
-                print(f"[refresh] prospect pull failed (non-fatal): {_pe}", flush=True)
+                log.warning("prospect pull failed (non-fatal): %s", _pe)
 
-        print("[refresh] refreshing computed stats...", flush=True)
+        log.info("refreshing computed stats...")
         _status["detail"] = "Refreshing computed stats..."
         if full_warmup and not POSTSEASON_MODE:
             # Scheduled/startup refresh: clear everything including model caches,
@@ -168,11 +171,11 @@ def _run(full_warmup):
                 f"{games_result['games_updated']} game(s) updated, "
                 f"{games_result['players_updated']} player(s) checked."
             )
-        print(f"[refresh] done - {_status['detail']}", flush=True)
+        log.info("done - %s", _status["detail"])
     except Exception as e:
         _status["state"] = "error"
         _status["detail"] = f"Refresh failed: {e}"
-        print(f"[refresh] ERROR: {e}", flush=True)
+        log.error("ERROR: %s", e)
         traceback.print_exc()
     finally:
         _status["finished_at"] = date.today().isoformat()

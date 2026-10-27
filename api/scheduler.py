@@ -21,12 +21,15 @@ To get them into the live cache immediately after the rescore finishes, the
 weekly job also invalidates the model TTL caches so the parquets are re-injected
 on the next request (which hits warmup's usual background path).
 """
+import logging
 import subprocess
 import sys
 import threading
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+
+log = logging.getLogger("scheduler")
 
 from api import pull
 from config.season_phase import SEASON_PHASE, REGULAR_SEASON
@@ -71,16 +74,16 @@ def _run_rescore(season: int):
     """Run tools/maintenance/rescore_models.py for the current season in a subprocess."""
     script = ROOT / "tools" / "maintenance" / "rescore_models.py"
     if not script.exists():
-        print(f"[scheduler] rescore script not found at {script}, skipping")
+        log.warning("rescore script not found at %s, skipping", script)
         return
     try:
-        print(f"[scheduler] starting weekly rescore for season {season}...")
+        log.info("starting weekly rescore for season %s...", season)
         result = subprocess.run(
             [sys.executable, str(script), "--season", str(season), "--model", "all"],
             capture_output=True, text=True, cwd=str(ROOT),
         )
         if result.returncode == 0:
-            print(f"[scheduler] weekly rescore complete:\n{result.stdout[-2000:]}")
+            log.info("weekly rescore complete:\n%s", result.stdout[-2000:])
             # Invalidate model raw-predictions caches so next warmup/request
             # picks up the newly written parquets.
             try:
@@ -103,9 +106,9 @@ def _run_rescore(season: int):
             from api.warmup import warm_cache_background
             warm_cache_background()
         else:
-            print(f"[scheduler] weekly rescore failed (exit {result.returncode}):\n{result.stderr[-2000:]}")
+            log.error("weekly rescore failed (exit %s):\n%s", result.returncode, result.stderr[-2000:])
     except Exception as e:
-        print(f"[scheduler] weekly rescore exception: {e}")
+        log.error("weekly rescore exception: %s", e)
 
 
 def _daily_loop():
@@ -123,8 +126,7 @@ def _weekly_rescore_loop():
     while True:
         time.sleep(_seconds_until_next_sunday_rescore())
         if SEASON_PHASE != REGULAR_SEASON:
-            print(f"[scheduler] weekly rescore skipped: SEASON_PHASE={SEASON_PHASE} "
-                  f"(only runs during REGULAR_SEASON)")
+            log.info("weekly rescore skipped: SEASON_PHASE=%s (only runs during REGULAR_SEASON)", SEASON_PHASE)
             time.sleep(3600)
             continue
         from api.warmup import CURRENT_SEASON
