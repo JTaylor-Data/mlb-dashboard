@@ -405,6 +405,16 @@ async function render() {
     }
 
     await fetchLgAvg();
+
+    // Gate batter Full Yr button: only show when player has 250+ PA this season
+    const fullYrBtn = document.getElementById("batter-full-yr");
+    if (fullYrBtn) {
+      const totalPA = state.role === "batter" && state.season !== "all"
+        ? (data.games || []).reduce((s, g) => s + (g.n_pa || 0), 0)
+        : 0;
+      fullYrBtn.style.display = totalPA >= 250 ? "" : "none";
+    }
+
     buildMetricGrid();
     renderChart();
   } catch (err) {
