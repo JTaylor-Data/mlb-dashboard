@@ -107,19 +107,18 @@ pitches, minimum is 100" vs. receiving a noisy single-pitch score.
 
 ---
 
-## ND-04: 0.938 YoY figure in cross-model validation
+## ND-04: 0.938 YoY figure in cross-model validation — RESOLVED 2026-10-27
 
-**Found**: The task instructions mention "about 0.938 in cross-model validation" as a Stuff+
-YoY stability figure. Searching `training/v2_artifacts/cross_model_validation_v2_checkpoint.json`
-for 0.938 returns results only inside what appear to be score-distribution arrays (individual
-pitcher Stuff+ scores near 93.8), not as a named summary statistic. The file is 512 KB and
-could not be fully read.
+**Verdict**: Not a real named summary statistic.
 
-**Decision needed**: Please search `cross_model_validation_v2_checkpoint.json` for any named
-key with value near 0.938 (e.g. `jq 'path(..) as $p | getpath($p) | numbers | select(. > 0.93
-and . < 0.94)'`) to confirm whether this is a real summary statistic or a data point in a
-distribution. If it is a real figure, document its exact definition (season range, in/out-of-
-sample, pooling method) so it can be added to the reconciled stability table.
+`cross_model_validation_v2_checkpoint.json` contains **455 occurrences** of `0.938`, but a
+regex search for `"key": 0.938` (any named key with that exact value) returns **zero matches**.
+The occurrences are all raw numbers inside distribution arrays (individual pitcher Stuff+ scores
+around 93.8 on the plus scale).
+
+**Do not use this figure.** There is no defined YoY stability metric with value 0.938 in this
+file. Any citation of "0.938 YoY stability" lacks a traceable source and must not appear in
+documentation, the About page, or any user-facing text.
 
 ---
 
