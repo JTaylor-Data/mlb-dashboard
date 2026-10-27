@@ -395,6 +395,17 @@ def real_postseason_bracket(season):
             if wc[0]["winner_team_id"] not in ds_ids[0] and wc[0]["winner_team_id"] in ds_ids[1]:
                 wc[0], wc[1] = wc[1], wc[0]
 
+    # Normalize team_a/team_b ordering within each matchup to match the
+    # slot conventions the frontend's drawConnectors relies on:
+    #   WC:  winner → team_b  (connector branch exits from the bottom slot)
+    #   DS:  WC winner → team_b, bye → team_a  (connector enters ds-X-b)
+    #   CS:  DS-0 winner → team_a, DS-1 winner → team_b  (csSlot("...", cs, "a/b"))
+    # The schedule API returns teams in arbitrary home/away order so without
+    # this normalization the connectors draw to the wrong slots ~50% of the
+    # time, making it look like teams are in the wrong position or missing.
+    for league in ("al", "nl"):
+        _normalize_league_matchup_order(out[league])
+
     # World Series team_a/team_b arrive in whatever order the schedule feed
     # happened to list home/away in, NOT reliably NL-then-AL - the frontend
     # needs a consistent side (NL always drawn on the left, AL on the
@@ -407,6 +418,59 @@ def real_postseason_bracket(season):
             ws["team_a"], ws["team_b"] = ws["team_b"], ws["team_a"]
 
     return out
+
+
+def _normalize_league_matchup_order(league_data):
+    """Normalize team_a/team_b within WC, DS, and CS matchups so the slot
+    positions match what the frontend's drawConnectors expects:
+      WC: winner → team_b (connector branch exits from the b/bottom slot)
+      DS: WC winner → team_b, bye → team_a (connector enters ds-X-b)
+      CS: DS-0 winner → team_a, DS-1 winner → team_b
+    """
+    wc = league_data.get("wildcard", [])
+    ds = league_data.get("division", [])
+    cs = league_data.get("championship", [])
+
+    for m in wc:
+        w = m.get("winner_team_id")
+        a = m.get("team_a")
+        if w and a and a.get("team_id") == w:
+            m["team_a"], m["team_b"] = m["team_b"], m["team_a"]
+
+    for i in range(min(len(wc), len(ds))):
+        wc_winner_id = wc[i].get("winner_team_id")
+        if not wc_winner_id:
+            continue
+        dm = ds[i]
+        a = dm.get("team_a")
+        if a and a.get("team_id") == wc_winner_id:
+            dm["team_a"], dm["team_b"] = dm["team_b"], dm["team_a"]
+
+    if not cs:
+        return
+    cm = cs[0]
+    if not cm or len(ds) < 2:
+        return
+
+    def _winner_ref(dsi):
+        wid = ds[dsi].get("winner_team_id")
+        if not wid:
+            return None
+        for key in ("team_a", "team_b"):
+            t = ds[dsi].get(key)
+            if t and t.get("team_id") == wid:
+                return {"team_id": t["team_id"], "name": t["name"]}
+        return None
+
+    w0, w1 = _winner_ref(0), _winner_ref(1)
+    if w0 and w1:
+        cm["team_a"], cm["team_b"] = w0, w1
+    elif w0:
+        b = cm.get("team_b")
+        if b and b.get("team_id") == w0["team_id"]:
+            cm["team_a"], cm["team_b"] = cm["team_b"], cm["team_a"]
+        else:
+            cm["team_a"] = w0
 
 
 def _team_ref(seed_row):

@@ -134,20 +134,10 @@ function buildChart(allGames, displays, horizon, lgAvgs, showLgAvg) {
     yTicks.push({ v, y: yPos(v) });
   }
 
-  // X ticks — density scales with horizon breadth
+  // X-axis date labels: first and last only (matches xwOBA chart style).
   const xTicks = [];
-  const maxTicks = horizon === "career" || horizon === "days1095" ? 6
-    : horizon === "days365" ? 8
-    : horizon === "days180" ? 8
-    : games.length <= 25 ? games.length : 10;
-  if (games.length <= maxTicks) {
-    games.forEach((g, i) => xTicks.push({ i, label: fmtDate(g.game_date) }));
-  } else {
-    const step = Math.ceil(games.length / maxTicks);
-    for (let i = 0; i < games.length; i += step) {
-      xTicks.push({ i, label: fmtDate(games[i].game_date) });
-    }
-  }
+  if (games.length >= 1) xTicks.push({ i: 0, label: fmtDate(games[0].game_date), anchor: "start" });
+  if (games.length >= 2) xTicks.push({ i: games.length - 1, label: fmtDate(games[games.length - 1].game_date), anchor: "end" });
 
   const decimals = displays[0]?.decimals ?? 1;
   const unit = displays[0]?.unit ?? "";
@@ -165,7 +155,8 @@ function buildChart(allGames, displays, horizon, lgAvgs, showLgAvg) {
 
   const xTickEls = xTicks.map(t => {
     const x = xPos(t.i);
-    return `<text x="${x}" y="${PAD.top + INNER_H + 15}" text-anchor="middle" font-size="9" fill="var(--text-muted)" transform="rotate(-30,${x},${PAD.top + INNER_H + 15})">${t.label}</text>`;
+    const anchor = t.anchor || "middle";
+    return `<text x="${x}" y="${PAD.top + INNER_H + 15}" text-anchor="${anchor}" font-size="9.5" fill="var(--text-muted)">${t.label}</text>`;
   }).join("");
 
   // Build line path

@@ -26,8 +26,6 @@ const MODELS_GROUP = [
 const PLAYOFFS_GROUP = [
   { href: "playoffs-bracket.html", label: "Bracket" },
   { href: "playoffs.html", label: "WC Race" },
-  { href: "playoffs-games.html", label: "Projected Games" },
-  { href: "playoffs-top-performers.html", label: "Top Performers" },
   { href: "playoffs-roster.html", label: "Rosters" },
 ];
 

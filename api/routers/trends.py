@@ -71,6 +71,9 @@ PITCHER_METRICS = [
     {"key": "pt_csw_pct",   "label": "CSW%",   "category": "Pitch Type", "unit": "%", "decimals": 1},
     # Misc
     {"key": "n_pitches", "label": "Pitch Count", "category": "Misc", "unit": "", "decimals": 0},
+    # Counting
+    {"key": "k_count",  "label": "K",  "category": "Counting", "unit": "", "decimals": 0},
+    {"key": "bb_count", "label": "BB", "category": "Counting", "unit": "", "decimals": 0},
 ]
 
 BATTER_METRICS = [
@@ -94,6 +97,10 @@ BATTER_METRICS = [
     {"key": "swing_pct",         "label": "Swing%",     "category": "Process", "unit": "%", "decimals": 1},
     # Misc
     {"key": "n_pitches", "label": "Pitches Seen", "category": "Misc", "unit": "", "decimals": 0},
+    # Counting
+    {"key": "k_count",  "label": "K",  "category": "Counting", "unit": "", "decimals": 0},
+    {"key": "bb_count", "label": "BB", "category": "Counting", "unit": "", "decimals": 0},
+    {"key": "n_pa",     "label": "PA", "category": "Counting", "unit": "", "decimals": 0},
 ]
 
 
@@ -158,6 +165,9 @@ def _pitcher_rows(conn, player_id, seasons, pitch_type=None):
             "game_date": str(game_date),
             "season":    int(season),
             "n_pitches": n,
+            # Counting
+            "k_count":  k,
+            "bb_count": bb,
             # Fastball-only physical
             "fb_avg_velo": _cf(fb["release_speed"].mean(), 1) if not fb.empty else None,
             "fb_max_velo": _cf(fb["release_speed"].max(), 1) if not fb.empty else None,
@@ -229,6 +239,10 @@ def _batter_rows(conn, player_id, seasons):
             "game_date":      str(game_date),
             "season":         int(season),
             "n_pitches":      len(grp),
+            # Counting
+            "k_count":  k,
+            "bb_count": bb,
+            "n_pa":     n_pa,
             "avg_ev":         _cf(ev.mean(), 1) if n_ev else None,
             "max_ev":         _cf(ev.max(), 1) if n_ev else None,
             "ev_90th":        _cf(ev.quantile(0.9), 1) if n_ev >= 5 else None,

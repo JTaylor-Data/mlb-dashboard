@@ -541,6 +541,12 @@ function buildFieldSprayChart(lfPct, cfPct, rfPct, locations, highlightSide, hig
     .filter((p) => p.is_hr)
     .map((p) => Math.hypot(p.x, p.y));
   const fenceR = (hrDists.length ? Math.min(...hrDists) : 125) * scale;
+  // Clip implausible outlier coordinates before sizing the canvas. Statcast's
+  // hc_x/hc_y occasionally contains data errors that produce a distance far
+  // beyond any real hit; without a cap the canvas inflates and the fence wall
+  // shrinks to a pixel. 2.2× the fence radius in raw units is safe headroom:
+  // the longest real hits land at ≈1.5× the shortest HR distance.
+  const maxValidRaw = (fenceR / scale) * 2.2;
 
   // Dots are no longer wall-clamped (see the dots map below) - a real HR by
   // definition cleared the fence SOMEWHERE, and a real double can
@@ -550,8 +556,8 @@ function buildFieldSprayChart(lfPct, cfPct, rfPct, locations, highlightSide, hig
   // to size itself off the farthest real dot, not just fenceR, or a deep
   // shot would get clipped outside the SVG's own viewBox - `size`/`homeX`
   // below only grow past the widened baseline when a real dot actually
-  // needs the room.
-  const allDists = (locations || []).map((p) => Math.hypot(p.x, p.y) * scale);
+  // needs the room. Outlier distances are capped at maxValidRaw.
+  const allDists = (locations || []).map((p) => Math.min(Math.hypot(p.x, p.y), maxValidRaw) * scale);
   const maxDist = Math.max(fenceR, ...allDists, 0);
   const halfWidthNeeded = maxDist * Math.sin(Math.PI / 4) + 24;
   const size = Math.max(baseSize, halfWidthNeeded * 2);
@@ -628,8 +634,9 @@ function buildFieldSprayChart(lfPct, cfPct, rfPct, locations, highlightSide, hig
   // expected to actually trigger.
   const dots = (locations || [])
     .map((p) => {
-      const dist = Math.hypot(p.x, p.y);
-      if (dist === 0) return "";
+      const rawDist = Math.hypot(p.x, p.y);
+      if (rawDist === 0) return "";
+      const dist = Math.min(rawDist, maxValidRaw);
       const angle = Math.max(-45, Math.min(45, (Math.atan2(p.x, p.y) * 180) / Math.PI));
       const [sx, sy] = onCircle(angle, dist * scale);
       if (p.is_hr) {
@@ -763,8 +770,10 @@ function buildAttackAngleGauge(value, leagueAvg, pct) {
           <text x="4" y="${GAUGE_TOP_Y}" font-size="9" fill="var(--text-muted)" font-weight="700">LOFT</text>
           <line x1="15" y1="${GAUGE_MID_Y}" x2="125" y2="${GAUGE_MID_Y}" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="3,3"/>
           <text x="4" y="${GAUGE_BOTTOM_Y}" font-size="9" fill="var(--text-muted)" font-weight="700">GROUND</text>
-          <line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#8b5a2b" stroke-width="7" stroke-linecap="round"/>
-          <circle cx="${contactX}" cy="${contactY}" r="6.5" fill="#fff" stroke="#dc2626" stroke-width="2.5"/>
+          ${pct != null
+            ? `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#8b5a2b" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="${contactX}" cy="${contactY}" r="6.5" fill="#fff" stroke="#dc2626" stroke-width="2.5"/>`
+            : `<text x="70" y="50" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-style="italic">Not qualified</text>`}
         </svg>
         <div class="gauge-value">${fmtDeg(value)}</div>
         <div class="gauge-avg">MLB avg: ${fmtDeg(leagueAvg)}${pct != null ? ` &middot; ${fmtPct(pct)}` : ""}</div>
@@ -890,11 +899,13 @@ function buildSwingTiltGauge(value, leagueAvg, pct) {
           <text x="${(flatX2 - 26).toFixed(1)}" y="${(flatY2 - 5).toFixed(1)}" font-size="9" fill="var(--text-muted)" font-weight="700">FLAT</text>
           <line x1="${pivotX}" y1="${pivotY}" x2="${lgX2.toFixed(1)}" y2="${lgY2.toFixed(1)}" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="3,3"/>
           <text x="${(lgX2 - 10).toFixed(1)}" y="${(lgY2 + 13).toFixed(1)}" font-size="9" fill="var(--text-muted)" font-weight="700">STEEP</text>
-          <g transform="rotate(${v.toFixed(1)} ${pivotX} ${pivotY})">
+          ${pct != null
+            ? `<g transform="rotate(${v.toFixed(1)} ${pivotX} ${pivotY})">
             <rect x="${pivotX}" y="${pivotY - 3}" width="36" height="6" rx="3" fill="#8b5a2b"/>
-            <rect x="${pivotX + 30}" y="${pivotY - 7.5}" width="36" height="15" rx="7.5" fill="#8b5a2b"/>
+            <rect x="${pivotX + 30}" y="${pivotY - 4.5}" width="36" height="9" rx="4.5" fill="#8b5a2b"/>
           </g>
-          <circle cx="${pivotX}" cy="${pivotY}" r="4" fill="#fff" stroke="#8b5a2b" stroke-width="2"/>
+          <circle cx="${pivotX}" cy="${pivotY}" r="4" fill="#fff" stroke="#8b5a2b" stroke-width="2"/>`
+            : `<text x="70" y="50" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-style="italic">Not qualified</text>`}
         </svg>
         <div class="gauge-value">${fmtDeg(value)}</div>
         <div class="gauge-avg">MLB avg: ${fmtDeg(leagueAvg)}${pct != null ? ` &middot; ${fmtPct(pct)}` : ""}</div>
