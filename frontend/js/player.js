@@ -770,13 +770,11 @@ function buildAttackAngleGauge(value, leagueAvg, pct) {
           <text x="4" y="${GAUGE_TOP_Y}" font-size="9" fill="var(--text-muted)" font-weight="700">LOFT</text>
           <line x1="15" y1="${GAUGE_MID_Y}" x2="125" y2="${GAUGE_MID_Y}" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="3,3"/>
           <text x="4" y="${GAUGE_BOTTOM_Y}" font-size="9" fill="var(--text-muted)" font-weight="700">GROUND</text>
-          ${pct != null
-            ? `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#8b5a2b" stroke-width="5" stroke-linecap="round"/>
-          <circle cx="${contactX}" cy="${contactY}" r="6.5" fill="#fff" stroke="#dc2626" stroke-width="2.5"/>`
-            : `<text x="70" y="50" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-style="italic">Not qualified</text>`}
+          <line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#8b5a2b" stroke-width="5" stroke-linecap="round"/>
+          <circle cx="${contactX}" cy="${contactY}" r="6.5" fill="#fff" stroke="#dc2626" stroke-width="2.5"/>
         </svg>
         <div class="gauge-value">${fmtDeg(value)}</div>
-        <div class="gauge-avg">MLB avg: ${fmtDeg(leagueAvg)}${pct != null ? ` &middot; ${fmtPct(pct)}` : ""}</div>
+        <div class="gauge-avg">MLB avg: ${fmtDeg(leagueAvg)}${pct != null ? ` &middot; ${fmtPct(pct)}` : " &middot; Not qualified"}</div>
       </div>
     </div>
   `;
@@ -799,7 +797,7 @@ function buildAttackDirectionGauge(value, leagueAvg, pct) {
           <circle cx="${cx.toFixed(1)}" cy="${GAUGE_MID_Y}" r="5" fill="#dc2626"/>
         </svg>
         <div class="gauge-value">${fmtDeg(value)}</div>
-        <div class="gauge-avg">MLB avg: ${fmtDeg(leagueAvg)}${pct != null ? ` &middot; ${fmtPct(pct)}` : ""}</div>
+        <div class="gauge-avg">MLB avg: ${fmtDeg(leagueAvg)}${pct != null ? ` &middot; ${fmtPct(pct)}` : " &middot; Not qualified"}</div>
       </div>
     </div>
   `;
@@ -846,7 +844,7 @@ function buildSwingLengthGauge(value, leagueAvg, pct) {
           <circle cx="${(barX + fillW).toFixed(1)}" cy="${GAUGE_MID_Y}" r="7" fill="#fff" stroke="#8b5a2b" stroke-width="2.5"/>
         </svg>
         <div class="gauge-value">${fmtFt(value)}</div>
-        <div class="gauge-avg">MLB avg: ${fmtFt(leagueAvg)}${pct != null ? ` &middot; ${fmtPct(pct)}` : ""}</div>
+        <div class="gauge-avg">MLB avg: ${fmtFt(leagueAvg)}${pct != null ? ` &middot; ${fmtPct(pct)}` : " &middot; Not qualified"}</div>
       </div>
     </div>
   `;
@@ -899,16 +897,14 @@ function buildSwingTiltGauge(value, leagueAvg, pct) {
           <text x="${(flatX2 - 26).toFixed(1)}" y="${(flatY2 - 5).toFixed(1)}" font-size="9" fill="var(--text-muted)" font-weight="700">FLAT</text>
           <line x1="${pivotX}" y1="${pivotY}" x2="${lgX2.toFixed(1)}" y2="${lgY2.toFixed(1)}" stroke="var(--border)" stroke-width="1.5" stroke-dasharray="3,3"/>
           <text x="${(lgX2 - 10).toFixed(1)}" y="${(lgY2 + 13).toFixed(1)}" font-size="9" fill="var(--text-muted)" font-weight="700">STEEP</text>
-          ${pct != null
-            ? `<g transform="rotate(${v.toFixed(1)} ${pivotX} ${pivotY})">
+          <g transform="rotate(${v.toFixed(1)} ${pivotX} ${pivotY})">
             <rect x="${pivotX}" y="${pivotY - 3}" width="36" height="6" rx="3" fill="#8b5a2b"/>
             <rect x="${pivotX + 30}" y="${pivotY - 4.5}" width="36" height="9" rx="4.5" fill="#8b5a2b"/>
           </g>
-          <circle cx="${pivotX}" cy="${pivotY}" r="4" fill="#fff" stroke="#8b5a2b" stroke-width="2"/>`
-            : `<text x="70" y="50" font-size="9" fill="var(--text-muted)" text-anchor="middle" font-style="italic">Not qualified</text>`}
+          <circle cx="${pivotX}" cy="${pivotY}" r="4" fill="#fff" stroke="#8b5a2b" stroke-width="2"/>
         </svg>
         <div class="gauge-value">${fmtDeg(value)}</div>
-        <div class="gauge-avg">MLB avg: ${fmtDeg(leagueAvg)}${pct != null ? ` &middot; ${fmtPct(pct)}` : ""}</div>
+        <div class="gauge-avg">MLB avg: ${fmtDeg(leagueAvg)}${pct != null ? ` &middot; ${fmtPct(pct)}` : " &middot; Not qualified"}</div>
       </div>
     </div>
   `;
@@ -991,7 +987,7 @@ async function renderSimilarPlayers() {
       const headshot = c.player_id
         ? `<img class="sp-headshot" src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_120,q_auto:best/v1/people/${c.player_id}/headshot/67/current" alt="${c.name || ""}" />`
         : "";
-      const url = `index.html?player=${c.player_id}&season=${c.season}`;
+      const url = `index.html?player_id=${c.player_id}&season=${c.season}`;
       return `
         <div class="sp-comp" role="button" tabindex="0" onclick="location.href='${url}'" onkeydown="if(event.key==='Enter'||event.key===' ')location.href='${url}'">
           ${headshot}
@@ -1948,8 +1944,14 @@ async function defaultToTopPerformer() {
   const urlParams = new URLSearchParams(window.location.search);
   const urlPlayerId = urlParams.get("player_id");
   const urlRole = urlParams.get("role");
+  const urlSeason = urlParams.get("season");
   if (urlPlayerId) {
     const pid = Number(urlPlayerId);
+    if (urlSeason && urlSeason !== String(state.season)) {
+      state.season = Number(urlSeason);
+      seasonSelect.set(state.season);
+      await playerSearch.load(state.season);
+    }
     const fromSearch = playerSearch.selectDefault((p) => p.player_id === pid);
     const chosen = fromSearch || { player_id: pid, role: urlRole || "pitcher", name: "" };
     if (fromSearch) playerSearch.setValue(fromSearch);

@@ -71,9 +71,6 @@ PITCHER_METRICS = [
     {"key": "pt_csw_pct",   "label": "CSW%",   "category": "Pitch Type", "unit": "%", "decimals": 1},
     # Misc
     {"key": "n_pitches", "label": "Pitch Count", "category": "Misc", "unit": "", "decimals": 0},
-    # Counting
-    {"key": "k_count",  "label": "K",  "category": "Counting", "unit": "", "decimals": 0},
-    {"key": "bb_count", "label": "BB", "category": "Counting", "unit": "", "decimals": 0},
 ]
 
 BATTER_METRICS = [
@@ -97,10 +94,7 @@ BATTER_METRICS = [
     {"key": "swing_pct",         "label": "Swing%",     "category": "Process", "unit": "%", "decimals": 1},
     # Misc
     {"key": "n_pitches", "label": "Pitches Seen", "category": "Misc", "unit": "", "decimals": 0},
-    # Counting
-    {"key": "k_count",  "label": "K",  "category": "Counting", "unit": "", "decimals": 0},
-    {"key": "bb_count", "label": "BB", "category": "Counting", "unit": "", "decimals": 0},
-    {"key": "n_pa",     "label": "PA", "category": "Counting", "unit": "", "decimals": 0},
+    {"key": "n_pa",      "label": "PA",            "category": "Misc", "unit": "", "decimals": 0},
 ]
 
 

@@ -22,6 +22,7 @@ let state = {
   activeCat: "Physical",
   horizon: "days365",   // e.g. "games5", "days180", "pa50", "career"
   showLgAvg: true,
+  showTrendline: false,
   playerId: null,
   playerName: null,
   data: null,
@@ -82,13 +83,13 @@ function filterByHorizon(games, horizon) {
     return filtered.length >= 1 ? filtered : games;
   }
 
-  // Days-based
+  // Days-based — anchor to last game date so past seasons work correctly
   const daysMatch = horizon.match(/^days(\d+)$/);
   if (daysMatch) {
     const days = parseInt(daysMatch[1], 10);
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - days);
-    const cutStr = cutoff.toISOString().slice(0, 10);
+    const refDate = new Date(games[games.length - 1].game_date + "T12:00:00");
+    refDate.setDate(refDate.getDate() - days);
+    const cutStr = refDate.toISOString().slice(0, 10);
     const filtered = games.filter(g => g.game_date >= cutStr);
     return filtered.length >= 2 ? filtered : games;
   }
@@ -98,7 +99,7 @@ function filterByHorizon(games, horizon) {
 
 // ── chart rendering ───────────────────────────────────────────────────────
 
-function buildChart(allGames, displays, horizon, lgAvgs, showLgAvg) {
+function buildChart(allGames, displays, horizon, lgAvgs, showLgAvg, showTrendline) {
   const games = filterByHorizon(allGames, horizon);
   if (!games || !games.length) {
     return `<div class="trend-empty">No data for this player / period.</div>`;
@@ -134,10 +135,21 @@ function buildChart(allGames, displays, horizon, lgAvgs, showLgAvg) {
     yTicks.push({ v, y: yPos(v) });
   }
 
-  // X-axis date labels: first and last only (matches xwOBA chart style).
+  // X-axis: first date, month boundaries, last date
   const xTicks = [];
   if (games.length >= 1) xTicks.push({ i: 0, label: fmtDate(games[0].game_date), anchor: "start" });
-  if (games.length >= 2) xTicks.push({ i: games.length - 1, label: fmtDate(games[games.length - 1].game_date), anchor: "end" });
+  if (games.length >= 2) {
+    let prevMonth = games[0].game_date.slice(0, 7);
+    for (let i = 1; i < games.length - 1; i++) {
+      const m = games[i].game_date.slice(0, 7);
+      if (m !== prevMonth) {
+        const parts = games[i].game_date.split("-");
+        xTicks.push({ i, label: MONTH_ABBR[parseInt(parts[1], 10) - 1], anchor: "middle" });
+        prevMonth = m;
+      }
+    }
+    xTicks.push({ i: games.length - 1, label: fmtDate(games[games.length - 1].game_date), anchor: "end" });
+  }
 
   const decimals = displays[0]?.decimals ?? 1;
   const unit = displays[0]?.unit ?? "";
@@ -190,6 +202,27 @@ function buildChart(allGames, displays, horizon, lgAvgs, showLgAvg) {
     }
   }
 
+  // Trendline (linear regression) for each series
+  let trendlineEls = "";
+  if (showTrendline) {
+    for (const disp of displays) {
+      const pts = games.map((g, i) => ({ i, v: g[disp.key] })).filter(p => p.v != null);
+      if (pts.length < 2) continue;
+      const n = pts.length;
+      const sumX = pts.reduce((s, p) => s + p.i, 0);
+      const sumY = pts.reduce((s, p) => s + p.v, 0);
+      const sumXY = pts.reduce((s, p) => s + p.i * p.v, 0);
+      const sumX2 = pts.reduce((s, p) => s + p.i * p.i, 0);
+      const denom = n * sumX2 - sumX * sumX;
+      if (!denom) continue;
+      const slope = (n * sumXY - sumX * sumY) / denom;
+      const intercept = (sumY - slope * sumX) / n;
+      const y0 = intercept + slope * 0;
+      const y1 = intercept + slope * (games.length - 1);
+      trendlineEls += `<line x1="${xPos(0).toFixed(1)}" y1="${yPos(y0).toFixed(1)}" x2="${xPos(games.length - 1).toFixed(1)}" y2="${yPos(y1).toFixed(1)}" stroke="${disp.color}" stroke-width="1.5" stroke-dasharray="5,3" opacity="0.7"/>`;
+    }
+  }
+
   // Hover rects for first series only (tooltip shows all)
   const hovRects = games.map((g, i) => {
     const parts = displays.map(d => {
@@ -209,6 +242,7 @@ function buildChart(allGames, displays, horizon, lgAvgs, showLgAvg) {
       ${xTickEls}
       ${lgAvgEls}
       ${seriesEls}
+      ${trendlineEls}
       ${hovRects}
       <g id="tr-tt" style="display:none;">
         <rect id="tr-tt-bg" rx="4" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
@@ -296,8 +330,8 @@ function renderPitchTypeSelector() {
   sel.querySelectorAll(".pt-filter-btn").forEach(btn => {
     btn.addEventListener("click", () => {
       state.pitchType = state.pitchType === btn.dataset.pt ? null : btn.dataset.pt;
-      state.activeDisplays = [];
-      state.compatibleUnit = null;
+      // Don't clear activeDisplays — render() will filter stale keys; keeps metric selection
+      state.compatibleUnit = state.activeDisplays.length ? state.compatibleUnit : null;
       sel.querySelectorAll(".pt-filter-btn").forEach(b => b.classList.toggle("active", b === btn && state.pitchType !== null));
       render();
     });
@@ -422,7 +456,7 @@ function renderChart() {
     return;
   }
 
-  chartMount.innerHTML = buildChart(state.data.games, state.activeDisplays, state.horizon, state.lgAvgs, state.showLgAvg);
+  chartMount.innerHTML = buildChart(state.data.games, state.activeDisplays, state.horizon, state.lgAvgs, state.showLgAvg, state.showTrendline);
 
   // Legend
   let legendHtml = state.activeDisplays.map(d =>
@@ -537,6 +571,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (state.showLgAvg && !state.lgAvgs && state.playerId) {
       await fetchLgAvg();
     }
+    renderChart();
+  });
+
+  // Trendline toggle
+  document.getElementById("trendline-toggle").addEventListener("change", (e) => {
+    state.showTrendline = e.target.checked;
     renderChart();
   });
 

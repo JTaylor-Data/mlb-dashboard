@@ -416,6 +416,10 @@ table.movement-summary-table td.pitch-type-cell { font-weight: 800; letter-spaci
   box-shadow: inset 4px 0 0 var(--bark);
 }
 .division-table img.team-logo { width: 26px; height: 26px; vertical-align: middle; }
+/* Global: any team logo rendered from the MLB static CDN is clickable via nav.js's
+   delegated handler — add cursor affordance and a subtle hover so users can discover it. */
+img[src*="team-logos"] { cursor: pointer; transition: opacity 0.12s; }
+img[src*="team-logos"]:hover { opacity: 0.75; }
 
 /* --- Top Performers --- */
 .performers-list {

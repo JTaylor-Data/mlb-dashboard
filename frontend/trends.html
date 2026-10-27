@@ -73,6 +73,13 @@
       background: var(--accent); color: #fff;
       border-color: var(--accent);
     }
+    /* Pitcher/hitter role toggle gets a distinct gold highlight */
+    #role-toggle .pill-btn.active {
+      background: #a06030; color: #fff; border-color: #a06030;
+    }
+    #role-toggle .pill-btn:hover:not(.active) {
+      border-color: #a06030; color: #a06030;
+    }
 
     /* player search */
     .player-search { position: relative; }
@@ -275,7 +282,6 @@
               <button class="cat-tab active" data-cat="Physical">Physical</button>
               <button class="cat-tab" data-cat="Results">Results</button>
               <button class="cat-tab" data-cat="Process">Process</button>
-              <button class="cat-tab" data-cat="Counting">Counting</button>
               <button class="cat-tab" data-cat="Pitch Type">Pitch Type</button>
               <button class="cat-tab" data-cat="Misc">Misc</button>
             </div>
@@ -293,6 +299,10 @@
               <label class="lg-avg-toggle" id="lg-avg-label">
                 <input type="checkbox" id="lg-avg-toggle" checked />
                 League avg
+              </label>
+              <label class="lg-avg-toggle" id="trendline-label">
+                <input type="checkbox" id="trendline-toggle" />
+                Trendline
               </label>
             </div>
             <div class="active-chips" id="active-chips"></div>

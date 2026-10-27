@@ -91,11 +91,12 @@ function col(label, bodyHtml, extraClass) {
 // Build a "one side of the championship" slot from a championship matchup.
 // side='a' = top team (DS-0 winner), side='b' = bottom team (DS-1 winner).
 function csSlot(id, champ, side) {
-  if (!champ) return matchupSlot(id, null);
+  if (!champ) return teamSlot(id, null, false, 62);
   const team = side === "a" ? champ.team_a : champ.team_b;
+  if (!team) return teamSlot(id, null, false, 62);
   const win = champ.winner_team_id;
-  const isWinner = !!(win && team && team.team_id === win);
-  return matchupSlot(id, team ? { team_a: team, winner_team_id: isWinner ? team.team_id : null } : null);
+  const isWinner = !!(win && team.team_id === win);
+  return teamSlot(id, team, isWinner, 62);
 }
 
 function bracketHtml(data) {

@@ -589,6 +589,27 @@ def _fill_cs_from_ds(real):
             ]
 
 
+def _sort_ds_by_seed(standings_df, real):
+    """Sort DS[0]/DS[1] so DS[0] contains Seed 1 (best-record bye team).
+    After normalization each DS matchup has the bye in team_a; we compare
+    their win totals from standings_df and put the higher-win team first."""
+    if standings_df is None or standings_df.empty:
+        return
+    for league in ("al", "nl"):
+        ds = real[league]["division"]
+        if len(ds) != 2:
+            continue
+
+        def bye_wins(m):
+            bye = m.get("team_a")
+            if not bye:
+                return 0
+            row = standings_df[standings_df["team_id"].astype(int) == int(bye["team_id"])]
+            return int(row.iloc[0]["wins"]) if not row.empty else 0
+
+        ds.sort(key=bye_wins, reverse=True)
+
+
 def unified_bracket(conn, standings_df, season):
     """The single entry point the API layer calls: real results when any
     exist for `season`, else the live standings projection. See this
@@ -597,6 +618,9 @@ def unified_bracket(conn, standings_df, season):
     real = real_postseason_bracket(season)
     if real is not None:
         _fill_ds_from_wc(conn, season, standings_df, real)
+        _sort_ds_by_seed(standings_df, real)
+        for league in ("al", "nl"):
+            _normalize_league_matchup_order(real[league])
         _fill_cs_from_ds(real)
         return {"season": season, "is_real": True, "postseason_started": True, **real}
     projected = _projected_unified_bracket(conn, season, standings_df)
