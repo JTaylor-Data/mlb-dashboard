@@ -610,6 +610,21 @@ def _sort_ds_by_seed(standings_df, real):
         ds.sort(key=bye_wins, reverse=True)
 
 
+def _sort_wc_to_match_ds(real):
+    """After _sort_ds_by_seed rearranges DS, re-align WC so WC[i].winner
+    feeds DS[i]. The frontend connects WC[i] to DS[i] by index; without
+    this re-sort the connector lines cross after a DS seed swap."""
+    for league in ("al", "nl"):
+        wc = real[league].get("wildcard", [])
+        ds = real[league].get("division", [])
+        if len(wc) != 2 or len(ds) != 2:
+            continue
+        ds0_b = ds[0].get("team_b") or {}
+        ds0_b_id = ds0_b.get("team_id") if isinstance(ds0_b, dict) else None
+        if ds0_b_id and wc[1].get("winner_team_id") == ds0_b_id:
+            wc[0], wc[1] = wc[1], wc[0]
+
+
 def unified_bracket(conn, standings_df, season):
     """The single entry point the API layer calls: real results when any
     exist for `season`, else the live standings projection. See this
@@ -618,7 +633,13 @@ def unified_bracket(conn, standings_df, season):
     real = real_postseason_bracket(season)
     if real is not None:
         _fill_ds_from_wc(conn, season, standings_df, real)
+        for league in ("al", "nl"):
+            _normalize_league_matchup_order(real[league])
+        # Sort DS[0] = seed 1 (highest-wins bye) so the top/bottom bracket
+        # halves are consistent across all seasons, then re-align WC to match.
         _sort_ds_by_seed(standings_df, real)
+        _sort_wc_to_match_ds(real)
+        # Re-normalize after the DS/WC reorder so CS assignments reflect the new DS[0]/DS[1].
         for league in ("al", "nl"):
             _normalize_league_matchup_order(real[league])
         _fill_cs_from_ds(real)

@@ -135,20 +135,60 @@ function buildChart(allGames, displays, horizon, lgAvgs, showLgAvg, showTrendlin
     yTicks.push({ v, y: yPos(v) });
   }
 
-  // X-axis: first date, month boundaries, last date
+  // X-axis: adapt to date range — year markers for spans > ~14 months, month markers otherwise
   const xTicks = [];
-  if (games.length >= 1) xTicks.push({ i: 0, label: fmtDate(games[0].game_date), anchor: "start" });
-  if (games.length >= 2) {
-    let prevMonth = games[0].game_date.slice(0, 7);
-    for (let i = 1; i < games.length - 1; i++) {
-      const m = games[i].game_date.slice(0, 7);
-      if (m !== prevMonth) {
-        const parts = games[i].game_date.split("-");
-        xTicks.push({ i, label: MONTH_ABBR[parseInt(parts[1], 10) - 1], anchor: "middle" });
-        prevMonth = m;
+  if (games.length >= 1) {
+    const firstYear = parseInt(games[0].game_date.slice(0, 4), 10);
+    const lastYear  = parseInt(games[games.length - 1].game_date.slice(0, 4), 10);
+    const spanMonths = (lastYear - firstYear) * 12
+      + parseInt(games[games.length - 1].game_date.slice(5, 7), 10)
+      - parseInt(games[0].game_date.slice(5, 7), 10);
+    const multiYear = spanMonths > 14;
+
+    xTicks.push({ i: 0, label: fmtDate(games[0].game_date), anchor: "start" });
+    if (games.length >= 2) {
+      if (multiYear) {
+        // Year boundaries: find first game of each new year
+        let prevYear = games[0].game_date.slice(0, 4);
+        for (let i = 1; i < games.length - 1; i++) {
+          const y = games[i].game_date.slice(0, 4);
+          if (y !== prevYear) {
+            xTicks.push({ i, label: y, anchor: "middle" });
+            prevYear = y;
+          }
+        }
+      } else {
+        // Month boundaries
+        let prevMonth = games[0].game_date.slice(0, 7);
+        for (let i = 1; i < games.length - 1; i++) {
+          const m = games[i].game_date.slice(0, 7);
+          if (m !== prevMonth) {
+            const parts = games[i].game_date.split("-");
+            xTicks.push({ i, label: MONTH_ABBR[parseInt(parts[1], 10) - 1], anchor: "middle" });
+            prevMonth = m;
+          }
+        }
       }
+      xTicks.push({ i: games.length - 1, label: fmtDate(games[games.length - 1].game_date), anchor: "end" });
     }
-    xTicks.push({ i: games.length - 1, label: fmtDate(games[games.length - 1].game_date), anchor: "end" });
+  }
+
+  // Filter x-axis ticks: remove boundary ticks too close to their neighbors.
+  // Start tick uses anchor="start" (text extends right), end tick uses anchor="end"
+  // (text extends left ~50px), so the end-gap threshold is larger to avoid visual overlap.
+  const MIN_TICK_PX = 46;
+  const END_TICK_BUFFER = 50; // extra clearance for end-anchored label extending leftward
+  const filteredXTicks = [];
+  for (let k = 0; k < xTicks.length; k++) {
+    if (k === 0) { filteredXTicks.push(xTicks[k]); continue; }
+    const prevKept = filteredXTicks[filteredXTicks.length - 1];
+    const gap = (xTicks[k].i - prevKept.i) * xStep;
+    if (k === xTicks.length - 1) {
+      if (gap < MIN_TICK_PX + END_TICK_BUFFER && filteredXTicks.length > 1) filteredXTicks.pop();
+      filteredXTicks.push(xTicks[k]);
+    } else if (gap >= MIN_TICK_PX) {
+      filteredXTicks.push(xTicks[k]);
+    }
   }
 
   const decimals = displays[0]?.decimals ?? 1;
@@ -165,7 +205,7 @@ function buildChart(allGames, displays, horizon, lgAvgs, showLgAvg, showTrendlin
       <line x1="${PAD.left}" y1="${t.y}" x2="${PAD.left + INNER_W}" y2="${t.y}" stroke="var(--border)" stroke-width="0.5"/>`;
   }).join("");
 
-  const xTickEls = xTicks.map(t => {
+  const xTickEls = filteredXTicks.map(t => {
     const x = xPos(t.i);
     const anchor = t.anchor || "middle";
     return `<text x="${x}" y="${PAD.top + INNER_H + 15}" text-anchor="${anchor}" font-size="9.5" fill="var(--text-muted)">${t.label}</text>`;
@@ -383,7 +423,8 @@ async function render() {
   clearActiveChips();
 
   try {
-    let url = `/api/players/${state.playerId}/trends?role=${state.role}&season=${state.season}`;
+    const apiSeason = state.season;
+    let url = `/api/players/${state.playerId}/trends?role=${state.role}&season=${apiSeason}`;
     if (state.pitchType && state.activeCat === "Pitch Type") {
       url += `&pitch_type=${encodeURIComponent(state.pitchType)}`;
     }
@@ -443,13 +484,26 @@ function renderChart() {
   const chipsEl = document.getElementById("active-chips");
   const titleEl = document.getElementById("chart-title");
 
-  // Chips
-  chipsEl.innerHTML = state.activeDisplays.map(d =>
+  // Chips — pitch type filter chip first (if active), then metric chips
+  // Rendered before the early-return so the PT chip shows even with no metrics selected
+  let chipsHtml = "";
+  if (state.pitchType) {
+    chipsHtml += `<span class="active-chip" style="background:var(--accent);">vs ${state.pitchType}<span class="active-chip-x" data-pt-remove="1">×</span></span>`;
+  }
+  chipsHtml += state.activeDisplays.map(d =>
     `<span class="active-chip" style="background:${d.color};">${d.label}<span class="active-chip-x" data-key="${d.key}">×</span></span>`
   ).join("");
-  chipsEl.querySelectorAll(".active-chip-x").forEach(x => {
+  chipsEl.innerHTML = chipsHtml;
+  chipsEl.querySelectorAll(".active-chip-x[data-key]").forEach(x => {
     x.addEventListener("click", () => removeDisplay(x.dataset.key));
   });
+  const ptRemoveBtn = chipsEl.querySelector(".active-chip-x[data-pt-remove]");
+  if (ptRemoveBtn) {
+    ptRemoveBtn.addEventListener("click", () => {
+      state.pitchType = null;
+      render();
+    });
+  }
 
   // Title
   if (state.activeDisplays.length === 1) {
@@ -461,7 +515,9 @@ function renderChart() {
   }
 
   if (!state.activeDisplays.length) {
-    chartMount.innerHTML = `<div class="trend-empty">Select a metric to view.</div>`;
+    chartMount.innerHTML = state.pitchType
+      ? `<div class="trend-empty">Pitch type filter active (${state.pitchType}). Select a metric to view.</div>`
+      : `<div class="trend-empty">Select a metric to view.</div>`;
     legendMount.innerHTML = "";
     return;
   }
@@ -539,7 +595,8 @@ document.addEventListener("DOMContentLoaded", async () => {
           const inActiveGroup = !b.closest(".horizon-group") || b.closest(".horizon-group").style.display !== "none";
           b.setAttribute("aria-pressed", String(b === btn && inActiveGroup));
         });
-        renderChart();
+        // Multi-year horizons need a fresh API fetch (season=all); single-year can reuse data
+        if (state.playerId) render(); else renderChart();
       });
     });
   }

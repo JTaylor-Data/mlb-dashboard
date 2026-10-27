@@ -99,6 +99,15 @@ function csSlot(id, champ, side) {
   return teamSlot(id, team, isWinner, 62);
 }
 
+// Championship pair: both slots + record badge between them (mirrors teamPair).
+function csPair(prefix, champ) {
+  return `<div class="bk-pair">
+    ${csSlot(`${prefix}-0`, champ, "a")}
+    ${recordBadge(champ && champ.record)}
+    ${csSlot(`${prefix}-1`, champ, "b")}
+  </div>`;
+}
+
 function bracketHtml(data) {
   const nl = data.nl, al = data.al;
   const ws = data.world_series;
@@ -128,9 +137,7 @@ function bracketHtml(data) {
         </div>
       </div>
 
-      ${col("NLCS",
-        csSlot("nl-cs-0", nlCS, "a") + csSlot("nl-cs-1", nlCS, "b"),
-        "bk-col-mid")}
+      ${col("NLCS", csPair("nl-cs", nlCS), "bk-col-mid")}
       ${col("NL Champion",
         matchupSlot("nl-champ", nlTeam ? { team_a: nlTeam, winner_team_id: winnerId ? nlTeam.team_id : null } : null),
         "bk-col-mid")}
@@ -154,9 +161,7 @@ function bracketHtml(data) {
       ${col("AL Champion",
         matchupSlot("al-champ", alTeam ? { team_a: alTeam, winner_team_id: winnerId ? alTeam.team_id : null } : null),
         "bk-col-mid")}
-      ${col("ALCS",
-        csSlot("al-cs-0", alCS, "a") + csSlot("al-cs-1", alCS, "b"),
-        "bk-col-mid")}
+      ${col("ALCS", csPair("al-cs", alCS), "bk-col-mid")}
 
       <div class="bk-half">
         <div class="bk-league-lbl" style="text-align:right">American League</div>
