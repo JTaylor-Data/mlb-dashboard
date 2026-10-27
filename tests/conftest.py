@@ -9,7 +9,7 @@ import pytest
 import requests
 
 BASE_URL = os.environ.get("TEST_BASE_URL", "http://localhost:8010")
-SNAPSHOT_DIR = os.path.join(os.path.dirname(__file__), "..", "Methodology", "golden_snapshots", "stage0")
+SNAPSHOT_DIR = os.path.join(os.path.dirname(__file__), "golden_snapshots", "stage0")
 
 
 @pytest.fixture(scope="session")

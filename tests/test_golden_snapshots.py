@@ -9,7 +9,7 @@ import pytest
 import requests
 
 BASE = "http://localhost:8010"
-SNAP_DIR = os.path.join(os.path.dirname(__file__), "..", "Methodology", "golden_snapshots", "stage0")
+SNAP_DIR = os.path.join(os.path.dirname(__file__), "golden_snapshots", "stage0")
 
 SNAPSHOT_ROUTES = [
     ("meta", "/api/meta"),

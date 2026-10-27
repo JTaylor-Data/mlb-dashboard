@@ -173,7 +173,7 @@ See `Methodology/SEASON_PHASE.md` for the full transition checklist.
 ## Validation
 
 - `tools/build_validation_content.py` reads `diagnostics/stuff_v4/` to produce the validation page.
-- `Methodology/golden_snapshots/stage0/` holds JSON baselines from before the audit.
+- `tests/golden_snapshots/stage0/` holds JSON baselines from before the audit.
 - Run `pytest tests/ -q` with the server live on port 8010 to check all smoke + snapshot tests.
 
 ---
@@ -189,6 +189,6 @@ See `Methodology/SEASON_PHASE.md` for the full transition checklist.
 | LightGBM booster files | `models/` |
 | Pre-computed score parquets | `scores/` (gitignored) |
 | Audit defect list | `Methodology/AUDIT_REPORT.md` |
-| Deferred owner decisions | `Methodology/decisions/NEEDS_DECISION.md` |
+| Deferred owner decisions | `Methodology/NEEDS_DECISION.md` |
 | Archived training code | `Archive/training_scripts/` |
 | What files were moved and why | `Archive/MOVED_FILES.csv` |
