@@ -44,7 +44,8 @@ mlb_dashboard/
 ├── tests/                  # pytest suite (198 tests; run against a live server on port 8010)
 ├── tools/                  # Build utilities (validation content, hygiene checks)
 ├── Archive/                # Non-live training/diagnostic code (moved with git mv)
-└── Methodology/            # Audit reports, architecture docs, decisions (NEEDS_DECISION.md)
+├── docs/                   # Project/process docs (ARCHITECTURE.md, HOSTING.md, etc.)
+└── Methodology/            # Model methodology, handoff notes, decisions (NEEDS_DECISION.md)
 ```
 
 ---
@@ -90,7 +91,7 @@ Tunneling+ v3 artifacts that are not present on most machines).
 
 Defined by `render.yaml`. A persistent disk at `/data` holds the database between
 deploys. `start.sh` creates a stub database at startup if the disk is empty, so the
-server always boots cleanly. See `HOSTING.md` for the full deployment guide.
+server always boots cleanly. See `docs/HOSTING.md` for the full deployment guide.
 
 Required environment variables:
 
@@ -108,7 +109,7 @@ Nightly pulls (via APScheduler) update Statcast pitch data, team standings, rost
 injuries, and probable pitchers. On startup, `warmup.py` loads pre-computed score
 parquets into memory so the first request is fast.
 
-Model retraining is **not** automated — see `Methodology/decisions/NEEDS_DECISION.md`
+Model retraining is **not** automated — see `Methodology/NEEDS_DECISION.md`
 (ND-01) for the annual retrain decision.
 
 ---
@@ -117,9 +118,9 @@ Model retraining is **not** automated — see `Methodology/decisions/NEEDS_DECIS
 
 | File | Purpose |
 |---|---|
-| `ARCHITECTURE.md` | Full folder tree, data-flow diagram, router index, cache docs |
-| `HOSTING.md` | Render deployment guide |
+| `docs/ARCHITECTURE.md` | Full folder tree, data-flow diagram, router index, cache docs |
+| `docs/HOSTING.md` | Render deployment guide |
 | `config/model_policy.py` | Per-model thresholds, active versions, available seasons |
 | `config/season_phase.py` | `SEASON_PHASE` constant and phase-aware helpers |
 | `Methodology/HANDOFF.md` | Session-by-session change log, active model versions |
-| `Methodology/decisions/NEEDS_DECISION.md` | Open decisions requiring owner input |
+| `Methodology/NEEDS_DECISION.md` | Open decisions requiring owner input |

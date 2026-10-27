@@ -1,16 +1,66 @@
-# NEEDS_DECISION.md
+﻿# NEEDS_DECISION.md
 
 Unresolved questions that require the owner's judgment. Each entry includes what was found, the
 options, and the recommendation. Written as part of the About-rework audit (2026-10-02).
 
 ---
 
-## ND-01: `season` as a categorical feature — new seasons require retraining or removal
+## ND-06: Deception+ scale claim vs. actual tail behavior (codebase-audit, 2026-10-05)
+
+**Audited by**: `docs(task6)` commit on `codebase-audit` branch.
+
+**What was checked**: `diagnostics/deception_v2/deception_v2b_scores.parquet`, 2026 season
+(495 pitchers, all with n_pitches >= 200).
+
+**Actual distribution (2026)**:
+- mean = 100.00, std = 10.00
+- min = 74.08, max = 143.56
+- p1 = 79.96, p5 = 85.11, p50 = 99.28, p95 = 117.48, p99 = 130.50
+
+**Finding**: The "10 points = 1 standard deviation" claim IS correct — the scale is constructed
+to have std = 10 exactly. The p99 is 130.5, matching the expected ~130 at the 99th percentile.
+However, the absolute maximum (143.56 in 2026, 145.14 all-time) implies the single best
+pitcher-season sits ~4.4 SDs above the mean. Any UI text or methodology doc that states
+"top scores are around 130" or "max is ~130" is misleading for the tails.
+
+**UI/doc locations to review**:
+- Any tooltip or description in the frontend that references a specific cap or "typical max"
+  for Deception+. The correct framing is "10 points = 1 SD above/below average; top pitchers
+  may reach 130-145 in exceptional seasons."
+
+**Recommendation**: Update any static text that implies 130 is the ceiling. The scale itself
+is correct; only the described range is understated for elite outliers.
+
+---
+
+## ND-07: game_type audit findings (codebase-audit, 2026-10-05)
+
+**Task**: Task 2 game-type audit on `codebase-audit` branch.
+
+**Finding — DB contains only R pitches**: `pull_statcast.filter_game_types()` already restricts
+ingestion to `KEEP_GAME_TYPES = ('R', 'F', 'D', 'L', 'W')`. The actual `pitches` table has
+**zero non-R rows** as of 2026-10-05 (verified by direct COUNT query). No postseason, spring
+training, or exhibition pitches exist in the DB.
+
+**Implication**: The `AND game_type = 'R'` predicates in `analytics/stuff_model.py` and
+`analytics/location_v3_model.py` are a correct but redundant safety belt. They have been
+refactored to use `config.qualifiers.regular_season_filter()` so intent is explicit.
+
+**2026 parquet cache verdict**: Both `stuff_plus_v4_2026.parquet` and
+`location_plus_v3_2026.parquet` were built by `_raw_predictions()` which already contained
+`AND game_type = 'R'`. Since the DB itself has no non-R pitches, the caches are R-only by
+construction. **No rescore needed.**
+
+**Decision needed**: None — no action required. Documented for completeness.
+
+---
+
+## ND-01: `season` as a categorical feature â€” new seasons require retraining or removal
 
 **Affects**: Stuff+ v3, Location+ v2, Tunneling+ v2, Deception+ v1. All four include `season`
 as a categorical feature for era-adjustment. A season value not in the training set (e.g. 2027)
 is treated by LightGBM as a missing category and falls to the model's own learned missing-value
-branch. That branch is not meaningless, but it is uncontrolled — the missing-category behavior
+branch. That branch is not meaningless, but it is uncontrolled â€” the missing-category behavior
 is whatever happened to fit best during training, not an intentional choice.
 
 **Options**:
@@ -27,23 +77,20 @@ is whatever happened to fit best during training, not an intentional choice.
 
 ---
 
-## ND-02: Deception+ training seasons vs. arm_angle availability
+## ND-02: Deception+ training seasons vs. arm_angle availability — RESOLVED 2026-10-27
 
-**Found**: `models/deception_plus_v1_meta.json` lists `seasons_trained_on: [2015, ..., 2026]`
-(12 seasons). However, `arm_angle` was introduced by Statcast mid-2020 and was only ~75.1%
-populated in 2020. The `engineer_features` function drops rows with missing features via
-`dropna`. Pitches from 2015–2019 and most of 2020 would have no `arm_angle` and be silently
-dropped. This means the effective training range is approximately 2021–2026, not 2015–2026.
-The meta.json's `seasons_trained_on` list may be misleading.
+**Verified**: Booster file `models/deception_plus_v1.txt` (September 2026 retrain) has exactly
+7 unique season categories in its tree splits, confirming effective training range **2020–2026**.
+2015–2019 produced zero rows after arm_angle dropna and are absent. 2020 (~75% coverage) was
+retained in the retrain.
 
-**Decision needed**: Should the meta.json be corrected to reflect the effective range
-(~2021–2026), and should the live site's season selector for Deception+ be restricted to
-2021–2026? REPORT_SEASON is currently hardcoded to 2026 in the router so this only matters
-if a season selector is added.
+**Changes made**:
+- `models/deception_plus_v1_meta.json`: `seasons_trained_on` corrected from [2015..2026] to
+  [2020..2026] with an explanatory note.
+- `Methodology/HANDOFF.md`: updated two references to agree on 2020–2026.
 
-**Also**: The HANDOFF.md (last updated 2026-09-28) says training was 2021–2025, but the
-meta.json (trained_at 2026-09-15) shows 2015–2026. These are inconsistent. Confirm which
-retrain is actually live by checking the booster file's own feature-level data statistics.
+**Season selector note**: If a selector is added, restrict display to 2021–2026 for consistency
+(2020 is partial ~75% coverage only).
 
 ---
 
@@ -60,19 +107,18 @@ pitches, minimum is 100" vs. receiving a noisy single-pitch score.
 
 ---
 
-## ND-04: 0.938 YoY figure in cross-model validation
+## ND-04: 0.938 YoY figure in cross-model validation — RESOLVED 2026-10-27
 
-**Found**: The task instructions mention "about 0.938 in cross-model validation" as a Stuff+
-YoY stability figure. Searching `training/v2_artifacts/cross_model_validation_v2_checkpoint.json`
-for 0.938 returns results only inside what appear to be score-distribution arrays (individual
-pitcher Stuff+ scores near 93.8), not as a named summary statistic. The file is 512 KB and
-could not be fully read.
+**Verdict**: Not a real named summary statistic.
 
-**Decision needed**: Please search `cross_model_validation_v2_checkpoint.json` for any named
-key with value near 0.938 (e.g. `jq 'path(..) as $p | getpath($p) | numbers | select(. > 0.93
-and . < 0.94)'`) to confirm whether this is a real summary statistic or a data point in a
-distribution. If it is a real figure, document its exact definition (season range, in/out-of-
-sample, pooling method) so it can be added to the reconciled stability table.
+`cross_model_validation_v2_checkpoint.json` contains **455 occurrences** of `0.938`, but a
+regex search for `"key": 0.938` (any named key with that exact value) returns **zero matches**.
+The occurrences are all raw numbers inside distribution arrays (individual pitcher Stuff+ scores
+around 93.8 on the plus scale).
+
+**Do not use this figure.** There is no defined YoY stability metric with value 0.938 in this
+file. Any citation of "0.938 YoY stability" lacks a traceable source and must not appear in
+documentation, the About page, or any user-facing text.
 
 ---
 
@@ -81,7 +127,7 @@ sample, pooling method) so it can be added to the reconciled stability table.
 **Deferred per Part A instructions**: A full spot-check verifying that cached in-process
 predictions match a fresh live computation requires a running database connection, which was not
 used during this audit. The cache TTL is 600 seconds for all four models. The warmup pre-warms
-CURRENT_SEASON = 2026 on startup and seasons 2021–2025 on full refresh. No evidence of
+CURRENT_SEASON = 2026 on startup and seasons 2021â€“2025 on full refresh. No evidence of
 inconsistency was found in the code; a live spot-check is still good practice before any
 cache-policy change.
 
@@ -107,7 +153,7 @@ separate tool page later, or archive it permanently?
 
 ---
 
-## ND-08: Stuff+ v4 — Promotion approval required
+## ND-08: Stuff+ v4 â€” Promotion approval required
 
 **Found during**: Stuff+ v4 training run (2026-10-02).
 
@@ -122,47 +168,47 @@ v4 as a research artifact.
 **Key decisions within the report**:
 1. Were the feature drops (season and/or effective_speed) adopted per the ablation rules?
 2. Was haa_residual adopted? (requires leakage check pass AND predictive improvement)
-3. Is the v3→v4 correlation at the expected level (>0.97)?
+3. Is the v3â†’v4 correlation at the expected level (>0.97)?
 4. Are the 2020 flagging and qualification threshold scaling satisfactory?
 
 **Logged**: 2026-10-02 by automated training run.
 
 ---
 
-## ND-09: Stuff+ v4 — Next-season predictive bar not met
+## ND-09: Stuff+ v4 â€” Next-season predictive bar not met
 
 **Found during**: Part 4 close-out checks, Stuff+ v4 promotion (2026-10-02).
 
-**Context**: The pre-registered threshold for promotion was `corr(Stuff+_S, xFIP_{S+1}) <= -0.30` (pooled consecutive-year pairs, qualified pitchers ≥300 pitches, excluding 2020). The computed value is `r = -0.225` (n=2334 pitcher-season pairs). This is statistically significant and in the right direction, but does not reach the threshold.
+**Context**: The pre-registered threshold for promotion was `corr(Stuff+_S, xFIP_{S+1}) <= -0.30` (pooled consecutive-year pairs, qualified pitchers â‰¥300 pitches, excluding 2020). The computed value is `r = -0.225` (n=2334 pitcher-season pairs). This is statistically significant and in the right direction, but does not reach the threshold.
 
 **Additional findings**:
 - `corr(Stuff+_S, ERA_{S+1}) = -0.145` (n=3689)
-- Incremental delta-R² over last-season xFIP: −0.049 (NEGATIVE — computed as simple correlation comparison, not multivariate regression; the methodology is insufficient)
+- Incremental delta-RÂ² over last-season xFIP: âˆ’0.049 (NEGATIVE â€” computed as simple correlation comparison, not multivariate regression; the methodology is insufficient)
 - The evaluation is in-sample (model was trained on all scored seasons); true out-of-sample holdout is not available
 
 **Why the threshold may be too strict**:
 1. The threshold (~-0.30) was aspirational and set to approximately v3's best holdout window. In-sample validation likely inflates the apparent v3 figure by the same amount as v4.
 2. Stuff+ is a pitch-shape model, not a pitcher-outcome prediction model. Claiming it predicts next-season xFIP better than last-season xFIP is an ambitious bar.
-3. The incremental delta-R² computation was a simple correlation comparison; a multivariate regression (predicting next-xFIP from both last-xFIP and Stuff+ simultaneously) is the correct test.
+3. The incremental delta-RÂ² computation was a simple correlation comparison; a multivariate regression (predicting next-xFIP from both last-xFIP and Stuff+ simultaneously) is the correct test.
 
 **Decisions needed**:
 1. Accept r = -0.225 as sufficient for the provisional status threshold, given the in-sample caveat?
-2. Run the correct multivariate delta-R² test (partial correlation controlling for last-season xFIP)?
+2. Run the correct multivariate delta-RÂ² test (partial correlation controlling for last-season xFIP)?
 3. Revise the threshold in spec_lock_addendum.json for future versions?
 
-**Current status**: Promotion proceeded with `stuff_v4_status: "provisional"`. Status badge shows "v4 — validation in progress". Do NOT flip to "validated" until this item is reviewed.
+**Current status**: Promotion proceeded with `stuff_v4_status: "provisional"`. Status badge shows "v4 â€” validation in progress". Do NOT flip to "validated" until this item is reviewed.
 
 **Logged**: 2026-10-02 by automated promotion session (stuff-v4-live branch).
 
 ---
 
-## ND-11: Stuff+ page rebuild � stuff-page-remake branch decisions needed (logged 2026-10-02)
+## ND-11: Stuff+ page rebuild ï¿½ stuff-page-remake branch decisions needed (logged 2026-10-02)
 
 **Context**: The stuff-page-remake branch rebuilt stuff-model.html as a template-driven page.
 
 **Items requiring owner decision**:
 
-1. **Status badge text**: Currently "v4 � validation in progress". Will flip to "v4 � validated" only when ND-09 (next-season bar) and ND-10 (seed stability) are resolved and stuff_status is set to "validated" in rontend/content/stuff_page.json.
+1. **Status badge text**: Currently "v4 ï¿½ validation in progress". Will flip to "v4 ï¿½ validated" only when ND-09 (next-season bar) and ND-10 (seed stability) are resolved and stuff_status is set to "validated" in rontend/content/stuff_page.json.
 
 2. **LOPO YoY not run for v4**: Pitcher-holdout (LOPO) year-over-year stability was not run for v4. Card 2 shows "Not yet run for v4" and references v3's r=0.558. Decision: run the LOPO test against v4 scored data and run 	ools/build_validation_content.py to fill it in.
 
@@ -173,7 +219,7 @@ v4 as a research artifact.
 5. **Merge decision**: stuff-page-remake replaces the Stuff+ page. Do not merge to main until owner has verified the live app and signed off on all "Not yet run" items.
 
 
-## Morning Summary � stuff-page-remake (2026-10-02)
+## Morning Summary ï¿½ stuff-page-remake (2026-10-02)
 
 ### What was removed
 - Old static Stuff+ page markup that had numbers typed directly into HTML
@@ -186,21 +232,21 @@ v4 as a research artifact.
 - diagnostics/stuff_v4/ artifact files as the sole source of numbers
 
 ### New files
-- frontend/content/stuff_page.json � prose and config (status: draft)
-- frontend/content/validation_results.json � updated for v4 via tools/build_validation_content.py
-- tools/verify_stuff_page.py � verification script (all checks pass)
+- frontend/content/stuff_page.json ï¿½ prose and config (status: draft)
+- frontend/content/validation_results.json ï¿½ updated for v4 via tools/build_validation_content.py
+- tools/verify_stuff_page.py ï¿½ verification script (all checks pass)
 - New API endpoints: /api/stuff-model/pitch-types, /pitcher/{id}/career, /pitcher/{id}/summary
 
 ### Numbers showing "Not yet run"
-- card_repeatability.yoy_season_holdout_cv � season-holdout CV not run for v4
-- card_repeatability.yoy_pitcher_holdout_lopo � pitcher-holdout LOPO not run for v4
-- card_learning.seed_stability_status � seed stability check not yet run
-- card_learning.identifiability_lopo � pitcher-holdout identifiability probe not run for v4
+- card_repeatability.yoy_season_holdout_cv ï¿½ season-holdout CV not run for v4
+- card_repeatability.yoy_pitcher_holdout_lopo ï¿½ pitcher-holdout LOPO not run for v4
+- card_learning.seed_stability_status ï¿½ seed stability check not yet run
+- card_learning.identifiability_lopo ï¿½ pitcher-holdout identifiability probe not run for v4
 
 ### Status badge
-"v4 � validation in progress" (provisional). Reason: next-season xFIP correlation
+"v4 ï¿½ validation in progress" (provisional). Reason: next-season xFIP correlation
 r=-0.225 did not reach pre-registered threshold of r<=-0.30 (ND-09). Seed stability
-not formally run (ND-10). Badge will flip to "v4 � validated" when ND-09 and ND-10
+not formally run (ND-10). Badge will flip to "v4 ï¿½ validated" when ND-09 and ND-10
 are resolved and stuff_status in stuff_page.json is set to "validated".
 
 ### Decisions still needed
@@ -222,18 +268,18 @@ Branch: stuff-page-remake. Tags: pre-stuff-page-remake, post-stuff-page-remake. 
 
 **Timestamp**: 2026-10-02 20:24 (crash), 20:26 (fixed)
 **Context**: Part 4 final fit completed all training and scoring successfully (6744 pitcher-seasons saved). Crash occurred in diagnostic comparison block trying to correlate v3 vs v2 scores.
-**Root cause**: v3_scores column is named 'score'; v2_scores column is named 'plus_score'. When merging with suffixes=("_v3","_v2"), pandas only applies suffixes to columns that collide � since 'score' and 'plus_score' don't collide, neither gets a suffix. Code referenced non-existent 'score_v3'.
+**Root cause**: v3_scores column is named 'score'; v2_scores column is named 'plus_score'. When merging with suffixes=("_v3","_v2"), pandas only applies suffixes to columns that collide ï¿½ since 'score' and 'plus_score' don't collide, neither gets a suffix. Code referenced non-existent 'score_v3'.
 **Fix applied**: Changed both occurrences (Part 4 line ~1481, Part 5 line ~1560) to use merged_v["score"].corr(merged_v["plus_score"]).
 **Result**: v2v3_corr = 0.8856 (computed from saved parquets; exceeds 0.70 gate threshold).
 **Default applied**: Computed correlation manually, wrote part4_done checkpoint, relaunched for Part 5.
 
 ---
 
-## DEC-V2-01: Deception+ v2 — promotion requires owner review of gate results
+## DEC-V2-01: Deception+ v2 â€” promotion requires owner review of gate results
 
 **Found during**: Deception+ v2 training run (2026-10-03).
 
-**Context**: Parts 0–7 of the deception-v2 pipeline were executed. See `diagnostics/deception_v2/gate_results.json` for the full gate and evidence-bar check. The automated pipeline applies default decisions at each decision point but cannot make the final call on promotion-to-production.
+**Context**: Parts 0â€“7 of the deception-v2 pipeline were executed. See `diagnostics/deception_v2/gate_results.json` for the full gate and evidence-bar check. The automated pipeline applies default decisions at each decision point but cannot make the final call on promotion-to-production.
 
 **Items requiring owner decision**:
 1. Review `Methodology/DECEPTION_COMPLETION.md` (completion table with all gate pass/fail results).
@@ -243,8 +289,8 @@ Branch: stuff-page-remake. Tags: pre-stuff-page-remake, post-stuff-page-remake. 
 5. Merge `deception-v2` branch to `master` after review.
 
 **Key pre-registered decisions already applied by the pipeline**:
-- arm_angle kept (R²=0.789 < 0.90 threshold from Part 1)
-- Identity-prone features (height, weight, arm_angle_std, release_extension_std, release_consistency) dropped per identifiability rule (146× chance accuracy)
+- arm_angle kept (RÂ²=0.789 < 0.90 threshold from Part 1)
+- Identity-prone features (height, weight, arm_angle_std, release_extension_std, release_consistency) dropped per identifiability rule (146Ã— chance accuracy)
 - Chosen config selected by form_rule (pitcher-season preferred unless per-pitch significantly better)
 - Season feature dropped if inconclusive per pre-registered rule
 
@@ -252,18 +298,18 @@ Branch: stuff-page-remake. Tags: pre-stuff-page-remake, post-stuff-page-remake. 
 
 ---
 
-## DEC-V2-02: Season feature — DROP recorded but not enforced in B training (2026-10-03)
+## DEC-V2-02: Season feature â€” DROP recorded but not enforced in B training (2026-10-03)
 
 **Found during**: Post-run rule audit (deception-v2 branch).
 
-**Context**: The Part 2 screening rule `inconclusive_means_drop` triggered for the `season` feature (diff = −0.0012, below the 0.03 margin). The decision was recorded in `chosen_config.json` as `season_drop_note: "DECISION: inconclusive (diff=-0.0012) -> DROP per pre-registered rule"`. However, config B's feature list (`F2 = release_pos_x_as, release_pos_z, release_extension, arm_angle, season`) still includes `season`, and the model was trained with `season` present. The drop was noted but not implemented.
+**Context**: The Part 2 screening rule `inconclusive_means_drop` triggered for the `season` feature (diff = âˆ’0.0012, below the 0.03 margin). The decision was recorded in `chosen_config.json` as `season_drop_note: "DECISION: inconclusive (diff=-0.0012) -> DROP per pre-registered rule"`. However, config B's feature list (`F2 = release_pos_x_as, release_pos_z, release_extension, arm_angle, season`) still includes `season`, and the model was trained with `season` present. The drop was noted but not implemented.
 
 **Current state**: The live model includes `season`. Gate (c) hygiene check did not flag `season` as a violation (it is classified as a mechanics/context feature, not an identity-prone feature). The gate passed.
 
 **Decision needed**: Should B be retrained with `season` removed from F2, or is `season` acceptable as a context feature (era-adjustment) in the pitcher-season model?
 
 **Implications**:
-- Removing `season`: slight loss per the screening result (diff = −0.0012, essentially zero), but honors the pre-registered inconclusive-means-drop rule
+- Removing `season`: slight loss per the screening result (diff = âˆ’0.0012, essentially zero), but honors the pre-registered inconclusive-means-drop rule
 - Keeping `season`: small era-adjustment benefit; contradicts the recorded drop decision
 - If removed, the feature set becomes F2_no_season = [release_pos_x_as, release_pos_z, release_extension, arm_angle]; a retrain of B under Part B of the next audit cycle would be needed
 
@@ -275,11 +321,11 @@ Branch: stuff-page-remake. Tags: pre-stuff-page-remake, post-stuff-page-remake. 
 
 **Found during**: Post-run rule audit (deception-v2 branch).
 
-**Context**: Spec_lock requires `"(ii) incremental_deltaR2_over_last_season_xFIP_positive_with_CI_lower_above_0"`. The validation only checked that all five individual year-pair delta-R² values are positive (range: 0.00043 to 0.00496). A pooled CI was not computed; `gate_results.json` notes "CI approximated: all_positive used as proxy for CI_lower > 0."
+**Context**: Spec_lock requires `"(ii) incremental_deltaR2_over_last_season_xFIP_positive_with_CI_lower_above_0"`. The validation only checked that all five individual year-pair delta-RÂ² values are positive (range: 0.00043 to 0.00496). A pooled CI was not computed; `gate_results.json` notes "CI approximated: all_positive used as proxy for CI_lower > 0."
 
-The 2022→2023 pair has delta-R² = 0.00043 — very close to zero. A proper pooled CI could plausibly include zero as the lower bound.
+The 2022â†’2023 pair has delta-RÂ² = 0.00043 â€” very close to zero. A proper pooled CI could plausibly include zero as the lower bound.
 
-**Decision needed**: Run the proper pooled incremental delta-R² test with a Fisher z or bootstrap pooled CI to confirm whether the lower bound is truly > 0. Until then, item (ii) cannot be marked as meeting the pre-registered threshold.
+**Decision needed**: Run the proper pooled incremental delta-RÂ² test with a Fisher z or bootstrap pooled CI to confirm whether the lower bound is truly > 0. Until then, item (ii) cannot be marked as meeting the pre-registered threshold.
 
 **Impact**: Evidence bar item (i) already fails, so the `limited_evidence` label is correct regardless of item (ii) outcome. This is a documentation/correctness concern, not a promotion-blocking issue.
 
@@ -296,7 +342,7 @@ in `api/routers/deception_report.py` looks for a specific JSON payload format th
 provide. The canonical data endpoint `/api/deception/report` works correctly and exposes all
 relevant metadata (trained_at, seasons_trained_on, features, cv_seasons, target, etc.).
 
-**Impact**: Minor — the /meta endpoint is not used by any frontend page. The /report endpoint
+**Impact**: Minor â€” the /meta endpoint is not used by any frontend page. The /report endpoint
 is used instead. Not a new regression.
 
 **Options**:
@@ -304,7 +350,64 @@ is used instead. Not a new regression.
    and returns the same shape as /report-level metadata. Low effort.
 2. Leave as-is and document that /report is the canonical endpoint.
 
-**Recommendation**: Option 1 — implement the /meta endpoint properly for consistency with
+**Recommendation**: Option 1 â€” implement the /meta endpoint properly for consistency with
 Stuff+ and Location+.
 
 **Logged**: 2026-10-04 integration-merge verification.
+
+---
+
+## ND-CHECK-C: pitcher_model_scores.tunneling_plus contains stale v3 (single-classifier) scores (post-merge)
+
+**Found during**: CHECK (c) codebase-audit merge verification, 2026-10-05.
+
+**What was checked**: For each column in `pitcher_model_scores` (`stuff_plus`, `stuff_plus_v4`,
+`tunneling_plus`, `location_plus`), compared values to active score parquets for 5 pitcher-seasons
+in 2024 and 2025. Computed correlation and mean absolute difference.
+
+**Findings**:
+
+| Column | Parquet | Correlation | Verdict |
+|--------|---------|-------------|---------|
+| `stuff_plus` | `scores/stuff_plus_v4_*.parquet` | -0.9892 | v4 ✓ (active) |
+| `stuff_plus_v4` | `scores/stuff_plus_v4_*.parquet` | -0.9892 | v4 ✓ identical to stuff_plus |
+| `location_plus` | `scores/location_plus_v3_*.parquet` | 0.8713 | v3 ✓ (active; only v3 parquets exist) |
+| `tunneling_plus` | `scores/tunneling_plus_v3_*.parquet` | 0.7469 | **STALE** — parquet uses v2 5-classifier, table uses old v3 single-classifier |
+
+The `tunneling_plus` discrepancy: `precompute_model_scores.py` (last run 2026-09-19) imports
+`analytics.tunneling_v3_model` (the old single-classifier model). The active parquets in `scores/`
+were re-scored 2026-10-04 by `rescore_models.py` using `analytics.tunneling_v2_model._raw_predictions`
+(the NEW 5-classifier model, despite the parquet filename still reading `tunneling_plus_v3_*`).
+The lower correlation (0.75) confirms these are different algorithms.
+
+**computed_at build date**: 2026-09-19T17:46:20 to 2026-09-19T18:10:22 (pre-v2 promotion).
+
+**Readers of pitcher_model_scores** (2 readers, ≤ 3 threshold):
+1. `api/routers/career.py` — `_pitcher_scores_from_db()` is used as fallback only; the preferred
+   path is `_pitcher_scores_from_parquets()` which reads the active v2-scored parquets. Risk: LOW.
+2. `tools/model_correlation_heatmap.py` — correlation analysis tool, not a production API.
+
+**Action needed (post-merge)**: Update `pulls/precompute_model_scores.py` to import from
+`analytics.tunneling_v2_model` (not `tunneling_v3_model`) so future runs of precompute populate
+`tunneling_plus` with the active v2 5-classifier scores. Re-run precompute to refresh the table.
+
+**Logged**: 2026-10-05 codebase-audit CHECK (c).
+
+
+---
+
+## ND-ARCHIVE-01: Superseded diagnostics and live_models/ documents
+
+**Found during**: archive-and-chart branch (2026-10-05).
+
+**Files marked "unproven" (kept in place, not yet moved to Archive/):**
+
+- `diagnostics/closeout_blend/` — No live code reads these. Candidate for `Archive/diagnostics/closeout_blend/`.
+- `diagnostics/deception_v2/` — Deception+ v2 scores; served from `scores/` parquets, not this folder. Candidate for `Archive/diagnostics/deception_v2/`.
+- `Methodology/live_models/DECEPTION_PLUS_V1_METHODOLOGY.html` — Superseded by v2b. Candidate for `Methodology/Archive/`.
+- `Methodology/live_models/TUNNELING_PLUS_V2_METHODOLOGY.html` — Superseded by v3. Candidate for `Methodology/Archive/`.
+- `Methodology/live_models/LOCATION_PLUS_V2_METHODOLOGY.html` — Superseded by v3. Candidate for `Methodology/Archive/`.
+
+**Action needed**: Confirm none of these are read by any live route, then move with `git mv` and update `Archive/MOVED_FILES.csv`.
+
+**Logged**: 2026-10-05 archive-and-chart branch.
