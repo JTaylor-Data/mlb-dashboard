@@ -910,6 +910,38 @@ function buildSwingTiltGauge(value, leagueAvg, pct) {
   `;
 }
 
+function buildTunnelingPairsTable(pairs) {
+  if (!pairs || !pairs.length) return "";
+  const rows = pairs.map((p) => {
+    const dotA = `<span class="seq-legend-dot" style="background:${pitchColor(p.type_a)};display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:3px;"></span>`;
+    const dotB = `<span class="seq-legend-dot" style="background:${pitchColor(p.type_b)};display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:3px;"></span>`;
+    return `<tr>
+      <td>${dotA}${p.type_a} / ${dotB}${p.type_b}</td>
+      <td>${p.commit_distance.toFixed(1)}"</td>
+      <td>${p.divergence.toFixed(1)}"</td>
+      <td>${p.shape_break_plus.toFixed(1)}"</td>
+      <td style="font-weight:600;">${p.composite_score.toFixed(0)}</td>
+    </tr>`;
+  }).join("");
+  return `
+    <div class="tunneling-pairs-widget" style="margin-top:12px;">
+      <div class="pitch-usage-title">TUNNELING PAIRS</div>
+      <table class="tunneling-pairs-table" style="width:100%;border-collapse:collapse;font-size:12px;">
+        <thead>
+          <tr style="border-bottom:1px solid var(--color-border,#ccc);">
+            <th style="text-align:left;padding:3px 4px;">Pair</th>
+            <th style="text-align:right;padding:3px 4px;" title="Commit distance (inches) — lower = tighter tunnel">Commit</th>
+            <th style="text-align:right;padding:3px 4px;" title="Divergence = plate - commit distance (inches)">Divg</th>
+            <th style="text-align:right;padding:3px 4px;" title="Shape break (inches above straight-line midpoint)">Break</th>
+            <th style="text-align:right;padding:3px 4px;" title="Composite score (plus-scale; higher = better tunnel)">Score</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>
+  `;
+}
+
 function renderRightPanel(data) {
   const mount = document.getElementById("right-panel-mount");
 
@@ -930,6 +962,7 @@ function renderRightPanel(data) {
             ${data.babip_against ? `<div class="babip-widget"><div class="pitch-usage-title">BABIP Against</div><div class="gauge-value" style="text-align:center;">${data.babip_against.value_str}</div></div>` : ""}
           </div>
         </div>
+        ${buildTunnelingPairsTable(data.tunneling_pairs)}
         <div id="similar-players-mount"></div>
       </div>
       <div class="movement-plot-caption">Dashed line = this pitcher's average arm angle (labeled). Shaded circles = the league-wide average movement for that pitch among OTHER pitchers with a similar (within 3&#176;) arm angle - hover for the pitcher count. Arm-side-adjusted break, matching Baseball Savant - positive HB is arm side for either hand. Only the 50% of pitches closest to each pitch type's own average are plotted; the table on the right uses every pitch. Fixed across the L/R toggle (a pitch's movement doesn't depend on who's in the box) - still updates with season. Pitch usage by batter side is shown on the Pitch Locations card.</div>

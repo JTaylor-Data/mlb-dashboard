@@ -41,6 +41,7 @@ from analytics.tunneling_v3_model import pitcher_score as tunneling_v3_pitcher_s
 from api.routers.location_report import _raw_predictions_table as _location_raw_predictions_table
 from analytics.location_v3_model import pitcher_score as location_v3_pitcher_score
 from api.routers.top_performers import _leaderboard
+from analytics.tunneling_pair_composite import season_all_pairs, pitcher_pairs_from_season
 
 router = APIRouter(prefix="/api")
 
@@ -365,6 +366,17 @@ def _location_plus_badge(conn, season, player_id):
         return None
 
 
+@ttl_cache()
+def _tunneling_pair_season(conn, season):
+    """Precomputes all qualifying pitcher-season pairs with composite scores
+    for one season. Expensive (~minutes), cached at the season grain so every
+    subsequent pitcher page hit in the same session is a fast filter."""
+    try:
+        return season_all_pairs(conn, season)
+    except Exception:
+        return None
+
+
 def _il_status(conn, player_id):
     """Current IL entry for this player, if any - see pulls/pull_injuries.py
     for how start_date/injury are real (parsed from the transactions feed)
@@ -624,6 +636,13 @@ def _build_player_steps(conn, player_id, role, split, season):
             "value": _clean(stats["babip"]),
             "value_str": format_value(stats["babip"], "{:.3f}"),
         }
+
+        all_season_pairs = _tunneling_pair_season(conn, season)
+        base["tunneling_pairs"] = (
+            pitcher_pairs_from_season(all_season_pairs, player_id)
+            if all_season_pairs is not None and not all_season_pairs.empty
+            else []
+        )
 
         summary_rows = []
         filtered = mv
