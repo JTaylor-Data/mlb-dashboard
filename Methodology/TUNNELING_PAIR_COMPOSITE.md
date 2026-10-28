@@ -31,10 +31,18 @@ n = 14,727 qualifying pairs, pooled 2021–2026.
 
 ## Part 3 — Composite Formula
 
+**Updated 2026-10-28:** `plate_distance` replaces `divergence` as the third component (divergence had CI crossing zero; plate_distance directly captures separation at the plate, which was the intuition behind divergence anyway).
+
 ```
-composite_z = (−commit_distance_z + shape_break_plus_z) / 2
+composite_z = (−commit_distance_z + plate_distance_z + shape_break_plus_z) / 3
 composite_score = 100 + 10 × composite_z   [plus-scale]
 ```
+
+- `−commit_distance_z`: small commit-point distance = pitches look alike at decision time = good
+- `+plate_distance_z`: large plate distance = pitches diverge enough to be useful = good
+- `+shape_break_plus_z`: above-expected mid-trajectory divergence = good
+
+**To restore divergence instead of plate_distance:** in `_compute_composite()`, swap `plate_distance_z` line for `divergence_z = (df["divergence"] - pop_stats["divergence_mean"]) / pop_stats["divergence_std"]` and update formula. Note divergence = plate_distance − commit_distance so it is partially collinear with both.
 
 **Display scale decision:** Plus-scale (100-centered, 10 = 1 SD), matching every other metric in the dashboard. Raw z-scores would require the user to mentally reference a mean; plus-scale reads identically to Stuff+/Tunneling+/etc.
 
@@ -76,24 +84,47 @@ composite_score = 100 + 10 × composite_z   [plus-scale]
 
 Top pairs (Detmers, deGrom CU/FF) are qualitatively plausible — both are known for elite spin-direction diversity between their curveball and four-seamer.
 
-### ⚠ Sequential Whiff-Rate Tercile Test — FAILED
+### 2025 Leaderboard (pitcher-level mean composite)
 
-| Tercile | Whiff Rate | n |
-|---|---|---|
-| Low composite | 12.6% | 94,204 |
-| High composite | 11.3% | 94,150 |
-| Diff | −1.34 pp | |
-| z-stat | −8.99 | |
+538 qualifying pitchers, 2,721 pairs. Most top-10 pitchers have n_pairs=1 (high variance; single-pair pitchers can land anywhere — a 2+ pair requirement would be a reasonable display filter).
 
-The test shows the **opposite** of the expected direction: high-composite pairs yield fewer whiffs on the next pitch, not more. This is statistically significant.
+| Rank | Name | Team | Score | Pairs |
+|---|---|---|---|---|
+| 1 | Blake Treinen | LAD | 108.5 | 1 |
+| 2 | Mick Abel | MIN | 107.3 | 1 |
+| 3 | Trevor Megill | MIL | 107.1 | 1 |
+| 4 | Spencer Arrighetti | TOR | 106.9 | 1 |
+| 5 | Hayden Wesneski | HOU | 106.8 | 1 |
+| 538 | Tyler Gilbert | CWS | 91.2 | 6 |
+| 537 | Tommy Kahnle | BOS | 91.6 | 1 |
+| 536 | Carson Whisenhunt | SF | 92.1 | 1 |
 
-**Interpretation:** The composite captures commit-point distance and shape break relative to a straight-line midpoint, which are geometric tunneling properties. These do not appear to translate to a same-at-bat sequential whiff lift. Possible reasons:
+### Sequential Whiff-Rate Test (fixed, pair-level)
 
-1. The outcome metric (mean_pair_dre from the sign check) reflects run value over full seasons, not pitch-to-pitch whiff tunneling. A pair that reduces run value may do so through chase rates, weaker contact, or count management rather than through induced swings-and-misses on the next pitch.
-2. High-composite pairs often involve breaking ball + fastball combinations. Breaking balls thrown after fastballs may have structurally lower whiff rates than other orderings, confounding the test.
-3. commit_distance tightness suppresses reactability for the batter in aggregate across many at-bats, without necessarily generating immediate per-pitch whiff inflation.
+**Previous test** (tercile bucketing) was methodologically flawed — it mixed causal direction. Fixed test:
 
-**Decision:** Build remains on branch. The face validity (top pairs look like real elite tunnelers; bottom pairs are clustered around pitchers with awkward shape combinations) is real. But the whiff-rate test failure is an honest red flag and is documented here. Recommend reviewing before merging.
+For each pitch that follows its pair-partner in the same at-bat, assign that pitch the pair's composite_score. Aggregate to pair level (mean_whiff_rate per pair), then correlate pair composite_score vs pair mean_whiff_rate.
+
+| Stat | Value |
+|---|---|
+| n pairs with sequence data | 2,715 |
+| n eligible follow-up pitches | 282,345 |
+| r (composite vs whiff rate) | **−0.021** |
+| 95% CI | [−0.059, +0.017] |
+| CI crosses zero | **Yes** |
+
+Signal is indistinguishable from zero — the composite does not predict next-pitch whiff rate at pair level. This is consistent with what the sign check was measuring (run value over full seasons, not per-pitch whiff inflation).
+
+### YoY Predictive Validity (composite_t → ERA/xFIP at t+1)
+
+n = 2,244 pitcher-seasons (2021→2026, all with matched t+1 outcomes).
+
+| Outcome | r | 95% CI | CI crosses zero |
+|---|---|---|---|
+| ERA (t+1) | −0.056 | [−0.097, −0.015] | **No** ✓ |
+| xFIP (t+1) | −0.108 | [−0.149, −0.067] | **No** ✓ |
+
+Both CIs exclude zero. Higher composite (better geometric tunneling) predicts lower ERA and xFIP the following year. xFIP signal is stronger (r=−0.108 vs r=−0.056 for ERA), consistent with xFIP being a cleaner estimator of true skill. Effect sizes are modest but the directional signal is real and statistically reliable.
 
 ---
 

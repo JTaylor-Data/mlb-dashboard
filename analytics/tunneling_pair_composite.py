@@ -1,17 +1,16 @@
 """
 Tunneling+ per-pitch-type-pair composite (hand-built, no ML model).
 
-Composite formula: (-commit_distance_z + shape_break_plus_z) / 2
+Composite formula: (-commit_distance_z + plate_distance_z + shape_break_plus_z) / 3
 displayed as plus-scale (100-centered, 10=1SD; higher = better tunnel).
 
 Sign decisions from Part 2 sign check (14,727 pairs, pooled 2021-2026):
-  commit_distance:  r=+0.138 [+0.122, +0.153] -> use NEGATIVE (larger = worse)
-  divergence:       r=+0.006 [-0.010, +0.023] -> DROPPED (CI crosses zero)
+  commit_distance:  r=+0.138 [+0.122, +0.153] -> use NEGATIVE (larger at commit = worse)
+  divergence:       r=+0.006 [-0.010, +0.023] -> was DROPPED (CI crosses zero)
+  plate_distance:   not separately tested; larger separation at plate = better, use POSITIVE
   shape_break_plus: r=-0.021 [-0.037, -0.004] -> use POSITIVE (larger = better)
 
-To re-add divergence: add pop_stats entries for divergence_mean/std, then
-in _compute_composite uncomment the two divergence lines and change the
-composite formula to (-commit_distance_z + shape_break_plus_z - divergence_z) / 3.
+plate_distance replaces divergence per user spec (2026-10-28).
 """
 import numpy as np
 import pandas as pd
@@ -47,19 +46,21 @@ def _raw_pairs(conn, season, pitcher_id=None):
 
 def _compute_composite(pairs_df, pop_stats):
     """Apply z-score composite to a pairs DataFrame in place of a copy.
-    pop_stats keys: commit_distance_mean/std, shape_break_plus_mean/std."""
+    pop_stats keys: commit_distance_mean/std, plate_distance_mean/std, shape_break_plus_mean/std."""
     df = pairs_df.copy()
     df["commit_distance_z"] = (
         (df["commit_distance"] - pop_stats["commit_distance_mean"])
         / pop_stats["commit_distance_std"]
     )
+    df["plate_distance_z"] = (
+        (df["plate_distance"] - pop_stats["plate_distance_mean"])
+        / pop_stats["plate_distance_std"]
+    )
     df["shape_break_plus_z"] = (
         (df["shape_break_plus"] - pop_stats["shape_break_plus_mean"])
         / pop_stats["shape_break_plus_std"]
     )
-    # divergence dropped: CI crosses zero (r=+0.006, CI [-0.010, +0.023])
-    # divergence_z = (df["divergence"] - pop_stats["divergence_mean"]) / pop_stats["divergence_std"]
-    raw_z = (-df["commit_distance_z"] + df["shape_break_plus_z"]) / 2
+    raw_z = (-df["commit_distance_z"] + df["plate_distance_z"] + df["shape_break_plus_z"]) / 3
     df["composite_score"] = 100.0 + 10.0 * raw_z
     return df
 
@@ -69,6 +70,8 @@ def _pop_stats_from_pairs(pairs):
     return {
         "commit_distance_mean": float(pairs["commit_distance"].mean()),
         "commit_distance_std": float(pairs["commit_distance"].std()),
+        "plate_distance_mean": float(pairs["plate_distance"].mean()),
+        "plate_distance_std": float(pairs["plate_distance"].std()),
         "shape_break_plus_mean": float(pairs["shape_break_plus"].mean()),
         "shape_break_plus_std": float(pairs["shape_break_plus"].std()),
     }
@@ -86,7 +89,7 @@ def season_all_pairs(conn, season):
     pop_stats = _pop_stats_from_pairs(pairs)
     pairs = _compute_composite(pairs, pop_stats)
     cols = ["pitcher_id", "season", "type_a", "type_b", "n_a", "n_b",
-            "commit_distance", "divergence", "shape_break_plus", "composite_score"]
+            "commit_distance", "plate_distance", "divergence", "shape_break_plus", "composite_score"]
     return pairs[cols].sort_values("composite_score", ascending=False).reset_index(drop=True)
 
 
@@ -104,6 +107,7 @@ def pitcher_pairs_from_season(all_pairs_df, pitcher_id):
             "n_a": int(r["n_a"]),
             "n_b": int(r["n_b"]),
             "commit_distance": round(float(r["commit_distance"]), 2),
+            "plate_distance": round(float(r["plate_distance"]), 2),
             "divergence": round(float(r["divergence"]), 2),
             "shape_break_plus": round(float(r["shape_break_plus"]), 2),
             "composite_score": round(float(r["composite_score"]), 1),

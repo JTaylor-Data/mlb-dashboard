@@ -1,0 +1,58 @@
+﻿{
+  "formula": "(-commit_distance_z + plate_distance_z + shape_break_plus_z) / 3",
+  "note": "plate_distance replaces divergence (2026-10-28). divergence CI crossed zero.",
+  "leaderboard_2025": {
+    "n_pitchers": 538,
+    "n_pairs": 2721,
+    "top_10": [
+      {"rank":1,"name":"Blake Treinen","team":"LAD","score":108.5,"n_pairs":1},
+      {"rank":2,"name":"Mick Abel","team":"MIN","score":107.3,"n_pairs":1},
+      {"rank":3,"name":"Trevor Megill","team":"MIL","score":107.1,"n_pairs":1},
+      {"rank":4,"name":"Spencer Arrighetti","team":"TOR","score":106.9,"n_pairs":1},
+      {"rank":5,"name":"Hayden Wesneski","team":"HOU","score":106.8,"n_pairs":1},
+      {"rank":6,"name":"Taylor Rogers","team":"MIN","score":106.7,"n_pairs":1},
+      {"rank":7,"name":"Max Lazar","team":"PHI","score":105.8,"n_pairs":1},
+      {"rank":8,"name":"Eduard Bazardo","team":"SEA","score":105.4,"n_pairs":3},
+      {"rank":9,"name":"Matt Brash","team":"SEA","score":105.3,"n_pairs":1},
+      {"rank":10,"name":"David Robertson","team":"PHI","score":105.3,"n_pairs":1}
+    ],
+    "bottom_10": [
+      {"rank":538,"name":"Tyler Gilbert","team":"CWS","score":91.2,"n_pairs":6},
+      {"rank":537,"name":"Tommy Kahnle","team":"BOS","score":91.6,"n_pairs":1},
+      {"rank":536,"name":"Carson Whisenhunt","team":"SF","score":92.1,"n_pairs":1},
+      {"rank":535,"name":"Alek Jacob","team":"SD","score":92.3,"n_pairs":1},
+      {"rank":534,"name":"Tim Hill","team":"NYY","score":92.8,"n_pairs":1},
+      {"rank":533,"name":"Erik Miller","team":"BOS","score":92.9,"n_pairs":3},
+      {"rank":532,"name":"Matt Strahm","team":"KC","score":93.2,"n_pairs":6},
+      {"rank":531,"name":"Felix Bautista","team":"BAL","score":93.5,"n_pairs":1},
+      {"rank":530,"name":"Gunnar Hoglund","team":"ATH","score":94.1,"n_pairs":1},
+      {"rank":529,"name":"Hunter Gaddis","team":"CLE","score":94.2,"n_pairs":3}
+    ],
+    "note": "Most top pitchers have n_pairs=1 (high variance). Pitchers with multiple pairs are more reliable."
+  },
+  "whiff_rate_test_2025": {
+    "n_eligible_pitches": 282345,
+    "n_pairs_with_sequence": 2715,
+    "r_composite_vs_whiff_rate": -0.021,
+    "ci_95": [-0.0586, 0.0166],
+    "ci_crosses_zero": true,
+    "correct_sign": false,
+    "note": "Indistinguishable from zero. Composite does not predict next-pitch whiff rate at pair level."
+  },
+  "yoy_validity_2021_2025": {
+    "n_pitcher_season_pairs": 2244,
+    "composite_t_vs_era_t1": {
+      "r": -0.0561,
+      "ci_95": [-0.0972, -0.0147],
+      "ci_crosses_zero": false,
+      "correct_sign_negative": true
+    },
+    "composite_t_vs_xfip_t1": {
+      "r": -0.1083,
+      "ci_95": [-0.149, -0.0672],
+      "ci_crosses_zero": false,
+      "correct_sign_negative": true
+    },
+    "note": "Both CI exclude zero. xFIP signal stronger (r=-0.108) than ERA (r=-0.056). YoY predictive validity confirmed, though effect sizes are modest."
+  }
+}
