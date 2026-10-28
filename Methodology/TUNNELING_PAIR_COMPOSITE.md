@@ -160,6 +160,47 @@ Pitch color dots use the same `seq-legend-dot` inline-span pattern used in `outi
 
 ---
 
+## Weighting sensitivity
+
+### Part 1 — Standalone component correlations
+
+Each component tested individually against all four outcomes (n=2,611–2,721 pair-level for 2025; n=1,599 pitcher-seasons for YoY):
+
+| Component | Whiff r | 95% CI | EV-delta r | 95% CI | YoY ERA r | 95% CI | YoY xFIP r | 95% CI |
+|---|---|---|---|---|---|---|---|---|
+| −commit_distance_z | −0.115 | [−0.153, −0.077] ✓ | +0.043 | [+0.004, +0.081] ⚠️ wrong sign | −0.009 | [−0.058, +0.041] ✗ | −0.084 | [−0.132, −0.035] ✓ |
+| +divergence_z | +0.079 | [+0.040, +0.117] ⚠️ wrong sign | −0.006 | [−0.045, +0.033] ✗ | −0.037 | [−0.086, +0.012] ✗ | −0.057 | [−0.105, −0.008] ✓ |
+| +shape_break_plus_z | −0.028 | [−0.066, +0.011] ✗ | −0.027 | [−0.065, +0.012] ✗ | +0.004 | [−0.045, +0.053] ✗ | −0.022 | [−0.071, +0.027] ✗ |
+
+Mean |r| across all four outcomes: −commit=0.063, +divergence=0.045, +shape_break_plus=0.020.
+
+**shape_break_plus IS the weakest component** — its mean |r| (0.020) is less than half of either other component, and it fails to clear zero on any of the four outcome CIs. Part 2 therefore ran.
+
+Notable: commit_distance has the strongest signal overall (dominant on whiff-rate and YoY xFIP), but its EV-delta sign is wrong (+0.043 where we want negative). Divergence's whiff-rate sign is also wrong (+0.079). This confirms the composite's YoY xFIP validity is driven mostly by commit_distance, while the within-at-bat signals are noisy.
+
+### Part 2 — Pre-registered weight grid (2025-2026 holdout)
+
+Four weightings tested strictly on held-out 2025–2026 data (n=5,418–5,471 pair-level; n=335 for YoY 2025→2026). No fitting was done on this data before the grid ran.
+
+| Weighting | EV-delta r | 95% CI | Whiff r | 95% CI | YoY xFIP r | 95% CI |
+|---|---|---|---|---|---|---|
+| W0 (1/3, 1/3, 1/3) | +0.021 | [−0.005, +0.048] | −0.043 | [−0.069, −0.016] ✓ | −0.113 | [−0.218, −0.006] ✓ |
+| W1 (0.4, 0.4, 0.2) | +0.030 | [+0.003, +0.056] | −0.037 | [−0.063, −0.010] ✓ | −0.108 | [−0.212, −0.001] ✓ |
+| W2 (0.45, 0.45, 0.1) | +0.033 | [+0.006, +0.059] | −0.031 | [−0.057, −0.004] ✓ | −0.097 | [−0.202, +0.010] ✗ |
+| W3 (0.5, 0.5, 0.0) | +0.034 | [+0.007, +0.060] | −0.025 | [−0.052, +0.001] ✗ | −0.086 | [−0.192, +0.021] ✗ |
+
+**Selection rule (pre-stated):** W1/W2/W3 wins only if it beats W0 on EV-delta by more than its own 95% CI width.
+
+- W1 improvement over W0: |0.030|−|0.021| = 0.009 < CI width 0.053 → not enough
+- W2 improvement: 0.011 < 0.053 → not enough
+- W3 improvement: 0.012 < 0.053 → not enough
+
+**W0 wins — no improvement exceeds noise. Equal weights (1/3, 1/3, 1/3) retained.**
+
+The weight grid also shows that down-weighting shape_break_plus hurts whiff and YoY xFIP more than it helps EV-delta. There is no empirical case for re-weighting. Also note EV-delta sign is positive (wrong) across all weightings — this is a consistent finding, not a weighting problem.
+
+---
+
 ## Files Changed
 
 - `analytics/tunneling_pair_composite.py` — new module
