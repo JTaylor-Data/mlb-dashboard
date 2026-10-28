@@ -1,0 +1,170 @@
+{
+  "season": 2025,
+  "v2": {
+    "n": 723,
+    "r_vs_mean_dre": -0.15782027361138484,
+    "ci_95": [
+      -0.2281,
+      -0.0859
+    ],
+    "r_vs_whiff_rate": 0.25408198166745016,
+    "r_vs_k_pct": 0.1696583064975497,
+    "sign_correct": true,
+    "expected_sign": "negative (r<0 means higher score maps to lower mean_dre = better pitching outcomes)",
+    "spot_check": {
+      "top_10_by_k_pct": [
+        {
+          "pitcher_id": 695243,
+          "name": "Mason Miller",
+          "v2_score": 99.5978261636929,
+          "k_pct": 0.4425531914893617,
+          "mean_dre": -0.017606995884773664
+        },
+        {
+          "pitcher_id": 666142,
+          "name": "Cole Ragans",
+          "v2_score": 100.61897217755708,
+          "k_pct": 0.38132295719844356,
+          "mean_dre": -0.002104726598702503
+        },
+        {
+          "pitcher_id": 621242,
+          "name": "Edwin D\u00edaz",
+          "v2_score": 108.40371828244454,
+          "k_pct": 0.3783783783783784,
+          "mean_dre": -0.015973758200562325
+        },
+        {
+          "pitcher_id": 680694,
+          "name": "Kyle Bradish",
+          "v2_score": 94.83130206225907,
+          "k_pct": 0.373015873015873,
+          "mean_dre": -0.01402834008097166
+        },
+        {
+          "pitcher_id": 547973,
+          "name": "Aroldis Chapman",
+          "v2_score": 97.24584179480733,
+          "k_pct": 0.37280701754385964,
+          "mean_dre": -0.025326063249727374
+        },
+        {
+          "pitcher_id": 623352,
+          "name": "Josh Hader",
+          "v2_score": 98.36668551422953,
+          "k_pct": 0.36893203883495146,
+          "mean_dre": -0.01492443919716647
+        },
+        {
+          "pitcher_id": 813349,
+          "name": "Connelly Early",
+          "v2_score": 105.30608386927395,
+          "k_pct": 0.3670886075949367,
+          "mean_dre": -0.015643962848297215
+        },
+        {
+          "pitcher_id": 518585,
+          "name": "Fernando Cruz",
+          "v2_score": 113.03178509943939,
+          "k_pct": 0.3582089552238806,
+          "mean_dre": -0.007015151515151514
+        },
+        {
+          "pitcher_id": 676206,
+          "name": "Freddy Tarnok",
+          "v2_score": 79.72181746830285,
+          "k_pct": 0.35714285714285715,
+          "mean_dre": -0.0065461538461538465
+        },
+        {
+          "pitcher_id": 669093,
+          "name": "Jeremiah Estrada",
+          "v2_score": 110.93617841072515,
+          "k_pct": 0.35526315789473684,
+          "mean_dre": -0.005221682847896441
+        }
+      ],
+      "bottom_10_by_mean_dre": [
+        {
+          "pitcher_id": 573009,
+          "name": "Joe Mantiply",
+          "v2_score": 105.3315204975453,
+          "k_pct": 0.13793103448275862,
+          "mean_dre": 0.05977604166666667
+        },
+        {
+          "pitcher_id": 663562,
+          "name": "Noah Davis",
+          "v2_score": 96.44800105043346,
+          "k_pct": 0.23076923076923078,
+          "mean_dre": 0.057999999999999996
+        },
+        {
+          "pitcher_id": 502043,
+          "name": "Kyle Gibson",
+          "v2_score": 100.50893868051203,
+          "k_pct": 0.136986301369863,
+          "mean_dre": 0.05797142857142857
+        },
+        {
+          "pitcher_id": 647315,
+          "name": "Zach Pop",
+          "v2_score": 99.02468467719488,
+          "k_pct": 0.07692307692307693,
+          "mean_dre": 0.05203149606299212
+        },
+        {
+          "pitcher_id": 695534,
+          "name": "Chase Petty",
+          "v2_score": 95.26365671746039,
+          "k_pct": 0.175,
+          "mean_dre": 0.05110650887573965
+        },
+        {
+          "pitcher_id": 664129,
+          "name": "Geoff Hartlieb",
+          "v2_score": 95.17963596541158,
+          "k_pct": 0.20833333333333334,
+          "mean_dre": 0.049284403669724766
+        },
+        {
+          "pitcher_id": 802419,
+          "name": "Thomas Harrington",
+          "v2_score": 101.26343957006868,
+          "k_pct": 0.14,
+          "mean_dre": 0.04866000000000001
+        },
+        {
+          "pitcher_id": 671162,
+          "name": "Connor Thomas",
+          "v2_score": 91.69364949856003,
+          "k_pct": 0.16129032258064516,
+          "mean_dre": 0.04743697478991597
+        },
+        {
+          "pitcher_id": 694646,
+          "name": "Chayce McDermott",
+          "v2_score": 74.0486548795157,
+          "k_pct": 0.17647058823529413,
+          "mean_dre": 0.04736923076923077
+        },
+        {
+          "pitcher_id": 700187,
+          "name": "Troy Taylor",
+          "v2_score": 102.57444298233143,
+          "k_pct": 0.05405405405405406,
+          "mean_dre": 0.04580882352941177
+        }
+      ]
+    }
+  },
+  "v3": {
+    "n": 723,
+    "r_vs_mean_dre": -0.18054922413828903,
+    "ci_95": [
+      -0.2502,
+      -0.1091
+    ],
+    "sign_correct": true
+  }
+}

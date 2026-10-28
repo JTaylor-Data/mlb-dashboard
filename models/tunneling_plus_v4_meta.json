@@ -1,0 +1,65 @@
+{
+  "feature_cols": [
+    "lag1_commit_distance",
+    "lag1_plate_distance",
+    "lag1_shape_break",
+    "lag2_commit_distance",
+    "lag2_plate_distance",
+    "lag2_shape_break",
+    "lag3_commit_distance",
+    "lag3_plate_distance",
+    "lag3_shape_break",
+    "lag4_commit_distance",
+    "lag4_plate_distance",
+    "lag4_shape_break",
+    "lag5_commit_distance",
+    "lag5_plate_distance",
+    "lag5_shape_break",
+    "lag6_commit_distance",
+    "lag6_plate_distance",
+    "lag6_shape_break"
+  ],
+  "categorical_cols": [],
+  "lgbm_params": {
+    "objective": "huber",
+    "n_estimators": 300,
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "min_child_samples": 50,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 1.0
+  },
+  "seeds": [
+    42,
+    123,
+    456
+  ],
+  "trained_at": "2026-10-27T22:49:30.081282",
+  "all_seasons": [
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+  ],
+  "cv_seasons": [
+    2021,
+    2022,
+    2023,
+    2024,
+    2025
+  ],
+  "min_pitches": 100,
+  "ablation_season_decision": "dropped",
+  "ablation_entropy_decision": "dropped",
+  "n_pitcher_seasons": 8253
+}

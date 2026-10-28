@@ -1,0 +1,57 @@
+{
+  "_meta": {
+    "description": "Pre-registered spec for Tunneling+ v4 (pitcher-season grain). Locked before results. Same convention as Stuff+ v4, Location+ v3, Deception+ v2b.",
+    "locked_at": "2026-10-27",
+    "spec_source": "User-pasted spec in session e31f8a0c-ad2a-4fc4-8e86-e5d2f7da221c"
+  },
+  "grain": "pitcher_season",
+  "architecture": "LightGBM, Huber loss",
+  "cv_scheme": "leave_one_season_out",
+  "cv_seasons": [2021, 2022, 2023, 2024, 2025],
+  "all_seasons": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
+  "min_pitches_qualify": 100,
+  "excluded_pitch_types": ["PO", "UN", "EP"],
+  "kn_kept": true,
+  "features_candidate": {
+    "lag_numerics": "6 lag slots x (commit_distance, plate_distance, shape_break) = 18 means per pitcher-season",
+    "arsenal_entropy": "Shannon entropy over post-exclusion usage shares (candidate, subject to ablation)",
+    "season": "categorical (candidate, subject to inconclusive_means_drop rule)"
+  },
+  "target": "mean delta_run_exp per pitcher-season (delta_run_exp IS NOT NULL)",
+  "lgbm_hyperparams_starting_point": {
+    "objective": "huber",
+    "n_estimators": 300,
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "min_child_samples": 50,
+    "subsample": 0.8,
+    "subsample_freq": 1,
+    "colsample_bytree": 0.8,
+    "reg_lambda": 1.0
+  },
+  "ensemble": {"n_repeats": 3, "seeds": [42, 123, 456], "method": "average_predictions"},
+  "ablation": {
+    "configs": ["with_season_with_entropy", "no_season_with_entropy", "with_season_no_entropy", "no_season_no_entropy"],
+    "adoption_rule": "inconclusive_means_drop: diff(with vs without) <= 0.03 MAE -> drop feature"
+  },
+  "validation_gates": {
+    "sign_check": "r(v4_score, mean_dre) < 0 (lower mean_dre = worse pitch outcomes = should map to lower score)",
+    "score_spread": "target > 12 pts spread (v3 was 9 pts -- grain change meant to fix this)",
+    "yoy_stability": "pooled r2 >= 0.25",
+    "split_half_reliability": "r >= 0.60",
+    "predictive_validity": "at least one outcome (xwOBA, whiff%, swstr%, K%, BB%, chase%) shows r with same direction as sign check",
+    "independence": "r(Stuff+) < 0.5, r(Location+) < 0.5 (should be a distinct dimension)"
+  },
+  "hard_boundaries": {
+    "no_production_promotion": true,
+    "files_not_touched": [
+      "config/model_policy.py",
+      "api/routers/tunneling_report.py",
+      "api/routers/tunneling_3d.py",
+      "analytics/tunneling_v2_model.py",
+      "analytics/tunneling_v3_model.py"
+    ]
+  },
+  "commit_table_source": "Archive/training_scripts/training/tunneling_plus_ext_artifacts/pitcher_season_commit_point_ext.csv",
+  "note_on_part0": "Part 0 diagnostic uses mean_dre as ERA/xFIP proxy since real ERA is not stored in the DB. This is an internal-consistency check, not fully independent validation."
+}
