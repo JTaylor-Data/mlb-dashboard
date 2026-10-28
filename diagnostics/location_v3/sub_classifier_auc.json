@@ -1,0 +1,13 @@
+{
+  "measured_at": "2026-10-27T18:40:16.916074",
+  "note": "Binary AUCs from Part-3 OOF (V0a, 30% pitcher subsample, 5-fold grouped CV). BIP accuracy from time-based holdout: train 2015-2024 excl 2020, eval 2025.",
+  "xswing_auc": 0.8494,
+  "xcs_auc": 0.9824,
+  "xwhiff_auc": 0.7536,
+  "xfoul_auc": 0.6196,
+  "bip_holdout_accuracy_2025": 0.2222,
+  "bip_n_holdout": 124109,
+  "bip_n_classes": 20,
+  "bip_train_seasons": "2015-2024 excl 2020",
+  "bip_holdout_season": 2025
+}

@@ -209,9 +209,7 @@ Direct monotonicity verification (mean exit velocity by predicted class) is not 
 
 ### B7: Training Seasons
 
-Location+ v3 `meta.json` did not expose training seasons directly. Per completion doc Part 4 notes: final fit used **2015–2025 excluding 2020** (not 2026). 2026 is scored as an unseen season using 2025 season weights, per the `unseen_seasons_policy` in `spec_lock.json`.
-
-This is consistent with the spec's stated policy. The "2015–2026" in the spec refers to the *scoring* range, not the training range.
+Location+ v3 `meta.json` `train_seasons` field originally listed 2015–2025 due to a stale constant in the training script, but the actual training data included 2026 (the load query covers 2015–2026 and only 2020 was excluded). Confirmed 2026-10-27: the DB ends 2026-09-27 and v3 was trained 2026-10-02, so the full 2026 regular season was present and included. The `train_seasons` field has been corrected to 2015–2026 excl. 2020.
 
 ### B8: Missing Page Pieces — Precomputed
 
@@ -351,7 +349,7 @@ Saved to `diagnostics/closeout_blend/quadrant_table.csv` (9 cells: Stuff+ tercil
 5. **B1**: Location+ ECE — pitch-level computation requires pitch IDs in OOF
 6. **B4**: RV sensitivity — parquet not stored
 7. **B2**: Location+ pitcher-holdout analog
-8. **B7**: Training season list not exposed in meta.json (completion doc attests 2015–2025)
+8. **B7**: Training season list corrected in meta.json — actual range is 2015–2026 excl. 2020 (field was stale)
 
 ---
 

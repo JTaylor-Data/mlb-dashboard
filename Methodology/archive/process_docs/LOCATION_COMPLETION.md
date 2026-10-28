@@ -66,7 +66,7 @@ One row per criterion from the Location+ v3 spec. Status: ✓ = met, ~ = partial
 
 ---
 
-## Part 4 — Final fit (2015–2025 excl. 2020)
+## Part 4 — Final fit (2015–2026 excl. 2020)
 
 | Criterion | Status | Notes |
 |-----------|--------|-------|

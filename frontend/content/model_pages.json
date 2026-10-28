@@ -56,7 +56,7 @@
       "items": [
         "v1 (original): single LightGBM regressor on plate_x, plate_z, count, pitch_type, stand. Developed a sign flip (ERA r = -0.257, xFIP r = -0.507) — higher score was predicting worse pitchers — and by 2024→2025 YoY stability collapsed to r = 0.009.",
         "v2 (promoted 2026-09-21): five-classifier decomposed-event architecture. Each outcome (swing, called strike, whiff, foul, BIP type) is predicted separately and combined via a fixed (non-count-specific) run-value table. Sign flip resolved (ERA r = +0.208, xFIP r = +0.349). Stability restored. Trained 2015-2026.",
-        "v3 (current, promoted 2026-10-02): count-specific run-value table fixes the core v2 defect. S1 baseline adjustment adopted (subtracts league mean xRV per pitch-type × count × stand × season cell) — improves BB% correlation from r=−0.590 to r=−0.667. No empirical-Bayes shrinkage (split-half r_SB at 300 = 0.815 >> 0.70 threshold). 2020 excluded from training; scored by averaging 2019/2021 model predictions. Qualification threshold raised to 300 pitches (split-half reliability r_SB=0.815 at 300+ pitches per half). Trained 2015-2025 excl. 2020."
+        "v3 (current, promoted 2026-10-02): count-specific run-value table fixes the core v2 defect. S1 baseline adjustment adopted (subtracts league mean xRV per pitch-type × count × stand × season cell) — improves BB% correlation from r=−0.590 to r=−0.667. No empirical-Bayes shrinkage (split-half r_SB at 300 = 0.815 >> 0.70 threshold). 2020 excluded from training; scored by averaging 2019/2021 model predictions. Qualification threshold raised to 300 pitches (split-half reliability r_SB=0.815 at 300+ pitches per half). Trained 2015-2026 excl. 2020."
       ]
     }
   },

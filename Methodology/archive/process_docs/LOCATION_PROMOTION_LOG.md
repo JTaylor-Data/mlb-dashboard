@@ -12,7 +12,7 @@
 | `analytics/location_v3_model.py` | New runtime scorer: 5 classifiers, count-specific RV table, 2020 averaging, vectorized numpy xRV |
 | `frontend/location-model.html` | Rebuilt for v3 (gates, split-half, outcome corrs, next-season predictive; removed SHAP/ablation/CV) |
 | `frontend/js/location-model.js` | v3 JS matching new API response shape |
-| `models/location_plus_v3_*.txt` | 5 LightGBM classifiers (xSwing, xCS, xWhiff, xFoul, BIP×EV); trained on 2015–2025 excl. 2020 |
+| `models/location_plus_v3_*.txt` | 5 LightGBM classifiers (xSwing, xCS, xWhiff, xFoul, BIP×EV); trained on 2015–2026 excl. 2020 |
 | `models/location_plus_v3_meta.json` | Model metadata, scoring config, feature columns, BIP classes |
 | `diagnostics/location_v3/count_rv_table.json` | Count-specific run-value table (7,856,785 rows, 2015–2026 excl. 2020) |
 | `diagnostics/location_v3/scoring_config.json` | S1 adopted, no shrinkage, min_pitches=300 |
