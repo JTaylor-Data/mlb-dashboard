@@ -201,6 +201,50 @@ The weight grid also shows that down-weighting shape_break_plus hurts whiff and 
 
 ---
 
+## Pair-type normalization (2026-10-28)
+
+### The confound
+
+Without normalization, CU/FF pairs dominated the top leaderboard because curveballs break more in absolute terms — a CU/FF pair has inherently large `plate_distance` and naturally low `commit_distance` simply because of what those pitch types are, not because of how cleverly the pitcher hides them. The composite was partly measuring "does this pitcher throw a fastball and a curveball" rather than "does this pitcher tunnel that pair unusually well."
+
+### The fix
+
+`commit_distance` and `divergence` are now de-meaned by (type_a, type_b) before z-scoring:
+
+```
+commit_residual   = commit_distance - mean_commit_for_(type_a,type_b)_that_season
+divergence_residual = divergence - mean_divergence_for_(type_a,type_b)_that_season
+```
+
+Residuals are then z-scored across all pairs. The composite now answers "is this CU/FF better-tunneled than the average CU/FF?" `shape_break_plus` was already pair-type-normalized internally, so it is unchanged.
+
+### Before/after leaderboards (top 5 individual pairs)
+
+| Before (raw) | After (normalized) |
+|---|---|
+| Bednar CU/FF 116.7 | Wheeler CU/SI 120.1 |
+| Civale CU/FF 116.5 | Civale CU/FF 119.1 |
+| Thielbar CU/FF 115.8 | Wheeler CU/SI 119.1 |
+| Nola CU/FF 115.6 | Wheeler CU/SI 118.9 |
+| Englert CU/FF 115.4 | Pruitt CU/SI 118.8 |
+
+CU/FF still appears (Civale, Bednar) but no longer monopolizes — CU/SI pairs now compete on their own terms. More pitch type diversity in the top/bottom lists.
+
+### Before/after validation
+
+| Metric | Before (raw) | 95% CI | After (normalized) | 95% CI | Change |
+|---|---|---|---|---|---|
+| Whiff-rate | −0.032 | [−0.070, −0.005] ✓ | +0.055 | [+0.028, +0.081] ⚠️ sign flips | worse |
+| EV-delta | +0.022 | [−0.016, +0.060] ✗ | **−0.039** | [**−0.071, −0.007**] ✓ | **better** |
+| YoY ERA | −0.058 | [−0.100, −0.017] ✓ | **−0.073** | [**−0.114, −0.032**] ✓ | **better** |
+| YoY xFIP | −0.123 | [−0.164, −0.083] ✓ | **−0.147** | [**−0.188, −0.107**] ✓ | **better** |
+
+Normalization improves EV-delta (previously wrong sign, now correct and significant), YoY ERA, and YoY xFIP. The whiff-rate sign flips — this warrants investigation but may reflect that pair-type-normalized commit_distance captures a different dimension than raw commit_distance did for immediate at-bat effects.
+
+Overall: normalization makes the metric stronger on the outcomes that most matter (contact quality suppression and future ERA/xFIP prediction) and is theoretically correct — it answers the right question.
+
+---
+
 ## Files Changed
 
 - `analytics/tunneling_pair_composite.py` — new module
