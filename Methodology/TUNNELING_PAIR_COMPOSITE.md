@@ -243,6 +243,37 @@ Normalization improves EV-delta (previously wrong sign, now correct and signific
 
 Overall: normalization makes the metric stronger on the outcomes that most matter (contact quality suppression and future ERA/xFIP prediction) and is theoretically correct — it answers the right question.
 
+### CU-pair variance: signal vs noise check (2026-10-28)
+
+Even after mean-subtracting by pair type, CU-containing pairs still populate the leaderboard extremes. Two tests were run to determine whether this reflects real pitcher-to-pitcher variance in tunneling quality or measurement noise from smaller samples.
+
+#### Test 1 — Split-half reliability (2025, n=569 CU pairs, n=927 FF pairs)
+
+Each pitcher-season's pitches were split temporally (first 50% / second 50%). Components were recomputed independently on each half (min 50 pitches per type per half). Correlation between the two halves measures reproducibility.
+
+| Component | CU pairs r | 95% CI | n | FF pairs r | 95% CI | n |
+|---|---|---|---|---|---|---|
+| commit_distance | 0.779 | [0.745, 0.810] | 569 | 0.824 | [0.802, 0.844] | 927 |
+| divergence | 0.850 | [0.825, 0.871] | 569 | 0.883 | [0.868, 0.896] | 927 |
+| shape_break_plus | 0.909 | [0.894, 0.923] | 569 | 0.890 | [0.876, 0.903] | 927 |
+
+**Verdict:** CU pairs are slightly *less* reliable than FF pairs on commit_distance and divergence (r ~0.78–0.85 vs ~0.82–0.88), but the difference is small and both groups are highly reliable. shape_break_plus is marginally *more* reliable for CU pairs. There is no evidence of a measurement noise problem — both groups are in the same reliability ballpark.
+
+#### Test 2 — Sample size distribution (2021–2026, 14,727 pairs)
+
+| Group | n pairs | Median min_n | p25 | p75 |
+|---|---|---|---|---|
+| CU-containing | 3,577 | 204 | 142 | 295 |
+| FF-containing (non-CU) | 5,557 | 222 | 148 | 349 |
+
+CU-containing pairs have slightly smaller qualifying samples (median 204 vs 222 pitches for the smaller-count type). The difference is modest and not large enough to explain substantially wider spread on its own — particularly given that split-half reliability is only marginally lower.
+
+#### Conclusion
+
+The evidence supports **real variance** as the dominant explanation for CU-pair leaderboard presence after normalization. CU pairs are slightly noisier and slightly smaller-n than FF pairs, but both gaps are small. Elite curveballs genuinely differentiate more from average curveballs (in tunneling geometry) than elite fastballs differ from average fastballs — this is a property of the pitch type, not an artifact of measurement.
+
+**The mean-only pair-type normalization is supported for merge as-is.** No further normalization (e.g. SD-scaling within pair type) is warranted — it would suppress real cross-pitcher variance in curveball tunneling quality.
+
 ---
 
 ## Files Changed
