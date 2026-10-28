@@ -427,60 +427,61 @@ function buildMovementPlotSVG(points, armAngle, throws, peerMovement) {
 // = 3B side). Clamped to a generous +/-3ft range since release point (arm
 // reach/extension) spans wider than actual foot placement on the 24in
 // rubber - a rough, honest indicator, not a precise foot-plant measurement.
-const RUBBER_RANGE_FT = 3;
-
-// A real cleat photo (frontend/img/cleat.png - cropped/recolored from the
-// user-supplied source image) planted on the rubber, positioned by real
-// release_pos_x - the metric is center-of-rubber to center-of-foot, so the
-// cleat's own visual center is what lands at that offset, not an edge or a
-// separate marker.
+// Top-down "approach angle" cartoon: mound at top, plate at bottom,
+// dotted straight line from pitcher's season-avg release_pos_x to plate
+// center. release_pos_x is field-relative (negative = 3B side, positive =
+// 1B side). This is a simplified visual — NOT the physics HAA from
+// compute_haa(); that's a per-pitch trajectory number. This widget stays
+// what it's always been (season-avg lateral release position), just drawn
+// honestly as a straight release-to-plate line.
 //
-// The rubber is drawn at its REAL width (24in = 2ft), not stretched to fill
-// the whole plottable range - it's a distinct board sitting in the middle of
-// a wider dirt strip that spans the full +/-RUBBER_RANGE_FT the foot can
-// travel across. A rule of the position is that only the pitcher's TOE has
-// to contact the rubber; the center of the foot (what release_pos_x tracks)
-// can legitimately sit outside the rubber's own 24in width entirely - so
-// the foot icon is free to visually slide past the rubber's edges onto the
-// dirt on either side, rather than being clamped to always look like it's
-// centered on the rubber board itself (the previous version scaled the
-// whole +/-3ft range to the rubber's own drawn width, which made the foot
-// look glued to the rubber no matter how extreme the real value was).
-const RUBBER_REAL_WIDTH_FT = 2; // 24 inches, official MLB rubber width
+// ViewBox reuses GAUGE_VB (140×90) so it scales and aligns like every
+// other gauge in this file.
+const APPROACH_RANGE_FT = 3; // clamp range ±3 ft
 
-function buildRubberIconSVG(releasePosX, throws) {
+function buildApproachAngleSVG(releasePosX, throws) {
   if (releasePosX === null || releasePosX === undefined) return "";
-  const v = Math.max(-RUBBER_RANGE_FT, Math.min(RUBBER_RANGE_FT, releasePosX));
-  // Bigger now that it has this side column to itself (pitch usage moved to
-  // the Pitch Locations card instead) - pxPerFt up from 18 to 30. The dirt
-  // background is gone (a purely decorative rect, not load-bearing), but
-  // the underlying math is unchanged: footX is still positioned on the
-  // exact same real-feet scale as the rubber board itself, still free to
-  // sit outside the board's own edges when release_pos_x is extreme - that
-  // accuracy was never about the dirt, just about not stretching the whole
-  // +/-3ft range to fit the rubber's own 24in width.
-  const pxPerFt = 30;
-  const rangeW = 2 * RUBBER_RANGE_FT * pxPerFt;
-  const vbW = rangeW + 20, rangeX = (vbW - rangeW) / 2;
-  const rubberW = RUBBER_REAL_WIDTH_FT * pxPerFt, rubberX = rangeX + (rangeW - rubberW) / 2;
-  const rubberY = 85, rubberH = 13;
-  const footX = rangeX + ((v + RUBBER_RANGE_FT) / (2 * RUBBER_RANGE_FT)) * rangeW;
+  const v = Math.max(-APPROACH_RANGE_FT, Math.min(APPROACH_RANGE_FT, releasePosX));
+
+  // Layout within 140×90 viewBox:
+  // Mound row at y=18, plate row at y=76, field spans x=15..125 (110px wide)
+  const fieldX1 = 15, fieldX2 = 125, fieldMid = (fieldX1 + fieldX2) / 2;
+  const fieldW = fieldX2 - fieldX1;
+  const moundY = 18, plateY = 76;
+
+  // Map release_pos_x to SVG x: negative (3B side) → left of center
+  // raw field-relative: 0 ft = center (x=fieldMid), +3ft = 1B = right
+  const releaseX = fieldMid + (v / APPROACH_RANGE_FT) * (fieldW / 2);
+
+  // Side label
   let sideLabel;
-  if (releasePosX < -1.5) sideLabel = "Extreme 3B";
+  if (releasePosX < -1.5) sideLabel = "Extreme 3B side";
   else if (releasePosX < -0.3) sideLabel = "3B side";
   else if (releasePosX <= 0.3) sideLabel = "Neutral";
   else if (releasePosX <= 1.5) sideLabel = "1B side";
-  else sideLabel = "Extreme 1B";
-  const imgW = 56, imgH = imgW * (172 / 360);
+  else sideLabel = "Extreme 1B side";
+
+  // Mound: filled circle
+  const moundR = 7;
+  // Home plate: simple pentagon approximation (flat top, pointed bottom)
+  const pw = 10, ph = 8, px = fieldMid, py = plateY;
+  const platePath = `M${px - pw/2},${py - ph/2} L${px + pw/2},${py - ph/2} L${px + pw/2},${py} L${px},${py + ph/2} L${px - pw/2},${py} Z`;
+
   return `
     <div class="rubber-widget">
-      <div class="pitch-usage-title">Rubber Position${throws ? ` (${throws}HP)` : ""}</div>
-      <svg viewBox="0 0 ${vbW.toFixed(0)} 110" width="100%" style="max-width:240px; display:block; margin:0 auto;">
-        <rect x="${rubberX.toFixed(1)}" y="${rubberY}" width="${rubberW.toFixed(1)}" height="${rubberH}" rx="2" fill="#e8e2d0" stroke="#8b7355" stroke-width="2"/>
-        <rect x="${(footX - 13).toFixed(1)}" y="${rubberY}" width="26" height="${rubberH}" rx="3" fill="#dc2626" fill-opacity="0.3"/>
-        <image href="img/cleat.png" x="${(footX - imgW / 2).toFixed(1)}" y="${(rubberY + rubberH * 0.4 - imgH).toFixed(1)}" width="${imgW.toFixed(1)}" height="${imgH.toFixed(1)}" preserveAspectRatio="xMidYMid meet"/>
+      <div class="pitch-usage-title">Approach Angle${throws ? ` (${throws}HP)` : ""}</div>
+      <svg viewBox="${GAUGE_VB}" width="100%" style="max-width:220px; display:block; margin:0 auto;">
+        <text x="${fieldX1}" y="10" font-size="8" fill="var(--text-muted)" font-weight="700">3B</text>
+        <text x="${fieldX2 - 10}" y="10" font-size="8" fill="var(--text-muted)" font-weight="700">1B</text>
+        <circle cx="${releaseX.toFixed(1)}" cy="${moundY}" r="${moundR}" fill="var(--text-muted)" fill-opacity="0.25" stroke="var(--text-muted)" stroke-width="1.5"/>
+        <line x1="${releaseX.toFixed(1)}" y1="${moundY + moundR}" x2="${fieldMid}" y2="${plateY - ph/2}"
+              stroke="var(--accent)" stroke-width="2" stroke-dasharray="4,3"/>
+        <path d="${platePath}" fill="var(--surface)" stroke="var(--text-muted)" stroke-width="1.5"/>
       </svg>
       <div class="gauge-avg" style="text-align:center; margin-top:2px;">${sideLabel}</div>
+      <div style="font-size:9px; color:var(--text-muted); text-align:center; margin-top:4px; line-height:1.3; padding:0 4px;">
+        Straight line from release to plate center — movement-agnostic. Won't match true horizontal approach angle for pitches with significant horizontal break.
+      </div>
     </div>
   `;
 }
@@ -958,7 +959,7 @@ function renderRightPanel(data) {
           <div class="movement-plot-svg-wrap">${buildMovementPlotSVG(mv.points, mv.arm_angle, rp.throws, mv.peer_avg_movement)}</div>
           <div class="movement-plot-side-col">
             ${buildMovementSummaryTable(mv.summary)}
-            ${buildRubberIconSVG(rp.release_pos_x, rp.throws)}
+            ${buildApproachAngleSVG(rp.release_pos_x, rp.throws)}
             ${data.babip_against ? `<div class="babip-widget"><div class="pitch-usage-title">BABIP Against</div><div class="gauge-value" style="text-align:center;">${data.babip_against.value_str}</div></div>` : ""}
           </div>
         </div>

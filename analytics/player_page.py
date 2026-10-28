@@ -300,12 +300,11 @@ def pitch_usage_by_stand(conn, season, pitcher_id):
 
 
 def pitcher_rubber_position(conn, season, pitcher_id):
-    """Average RAW (not arm-side-adjusted) release_pos_x, in feet - this
-    answers "which physical side of the rubber does he stand on," a fixed
-    field-relative fact everyone shares regardless of throwing hand, unlike
-    the arm-side-adjusted release_pos_x_as used elsewhere on this page for
-    movement/deception purposes (that answers a different question: how far
-    toward HIS OWN arm side his release point is)."""
+    """Season-average RAW (not arm-side-adjusted) release_pos_x, in feet.
+    Field-relative: negative = third-base side, positive = first-base side.
+    Used on the player page as a simplified 'approach angle' visual — a
+    straight release-to-plate line, not a physics-correct horizontal approach
+    angle (which requires full pitch-trajectory data via compute_haa())."""
     row = conn.execute(
         "SELECT AVG(release_pos_x) FROM pitches WHERE season = ? AND pitcher_id = ? AND release_pos_x IS NOT NULL",
         (season, pitcher_id),
