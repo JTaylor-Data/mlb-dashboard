@@ -31,18 +31,28 @@ n = 14,727 qualifying pairs, pooled 2021–2026.
 
 ## Part 3 — Composite Formula
 
-**Updated 2026-10-28:** `plate_distance` replaces `divergence` as the third component (divergence had CI crossing zero; plate_distance directly captures separation at the plate, which was the intuition behind divergence anyway).
-
 ```
-composite_z = (−commit_distance_z + plate_distance_z + shape_break_plus_z) / 3
+composite_z = (−commit_distance_z + divergence_z + shape_break_plus_z) / 3
 composite_score = 100 + 10 × composite_z   [plus-scale]
 ```
 
 - `−commit_distance_z`: small commit-point distance = pitches look alike at decision time = good
-- `+plate_distance_z`: large plate distance = pitches diverge enough to be useful = good
+- `+divergence_z`: large divergence (plate_distance − commit_distance) = pitches grow apart after commit = good
 - `+shape_break_plus_z`: above-expected mid-trajectory divergence = good
 
-**To restore divergence instead of plate_distance:** in `_compute_composite()`, swap `plate_distance_z` line for `divergence_z = (df["divergence"] - pop_stats["divergence_mean"]) / pop_stats["divergence_std"]` and update formula. Note divergence = plate_distance − commit_distance so it is partially collinear with both.
+### Component selection: divergence vs plate_distance (2026-10-28)
+
+Head-to-head comparison run on 2025 data (n=2,721 pairs) and YoY validity (n=2,244 pitcher-seasons, 2021→2026):
+
+| Metric | plate_distance r | 95% CI | divergence r | 95% CI |
+|---|---|---|---|---|
+| Whiff-rate (pair-level, 2025) | −0.021 | [−0.059, **+0.017**] ⚠️ crosses 0 | **−0.032** | [−0.070, **−0.005**] ✓ |
+| YoY ERA (t→t+1) | −0.056 | [−0.097, −0.015] ✓ | −0.058 | [−0.100, −0.017] ✓ |
+| YoY xFIP (t→t+1) | −0.108 | [−0.149, −0.067] ✓ | **−0.123** | [−0.164, −0.083] ✓ |
+
+Divergence wins on all three: its whiff-rate CI excludes zero (plate_distance does not), and its xFIP signal is ~1.5 points stronger. The intuition: divergence captures *growth* in separation after the hitter commits, which is the mechanistically meaningful quantity. Raw plate_distance conflates separation growth with initial release spread.
+
+**To swap back to plate_distance:** in `_compute_composite()`, replace the `divergence_z` line with `plate_distance_z = (df["plate_distance"] - pop_stats["plate_distance_mean"]) / pop_stats["plate_distance_std"]` and update pop_stats and formula accordingly.
 
 **Display scale decision:** Plus-scale (100-centered, 10 = 1 SD), matching every other metric in the dashboard. Raw z-scores would require the user to mentally reference a mean; plus-scale reads identically to Stuff+/Tunneling+/etc.
 
