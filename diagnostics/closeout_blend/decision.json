@@ -3,7 +3,7 @@
   "decision": "A",
   "tunneling_verdict": "descriptive",
   "deception_verdict": "descriptive",
-  "timestamp": "2026-10-06T22:21:10Z",
+  "timestamp": "2026-10-27T14:31:49Z",
   "pre_registered_rules": {
     "decision_A": "Both conditions met: blended Pitching+ earns a score",
     "decision_B": "Only Condition 2 met: axes add beyond last season; headline is quadrant view",

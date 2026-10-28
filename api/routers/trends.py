@@ -92,6 +92,13 @@ BATTER_METRICS = [
     {"key": "chase_pct",         "label": "Chase%",     "category": "Process", "unit": "%", "decimals": 1},
     {"key": "zone_contact_pct",  "label": "Z-Contact%", "category": "Process", "unit": "%", "decimals": 1},
     {"key": "swing_pct",         "label": "Swing%",     "category": "Process", "unit": "%", "decimals": 1},
+    # Pitch Type — per selected pitch type (computed on pitch_type-filtered dataset)
+    {"key": "pt_whiff_pct",      "label": "Whiff%",        "category": "Pitch Type", "unit": "%",   "decimals": 1},
+    {"key": "pt_chase_pct",      "label": "Chase%",        "category": "Pitch Type", "unit": "%",   "decimals": 1},
+    {"key": "pt_avg_ev",         "label": "Avg Exit Velo", "category": "Pitch Type", "unit": "mph", "decimals": 1},
+    {"key": "pt_xwoba",          "label": "xwOBA",         "category": "Pitch Type", "unit": "",    "decimals": 3},
+    {"key": "pt_hard_hit_pct",   "label": "Hard Hit%",     "category": "Pitch Type", "unit": "%",   "decimals": 1},
+    {"key": "pt_sweet_spot_pct", "label": "Sweet Spot%",   "category": "Pitch Type", "unit": "%",   "decimals": 1},
     # Misc
     {"key": "n_pitches", "label": "Pitches Seen", "category": "Misc", "unit": "", "decimals": 0},
     {"key": "n_pa",      "label": "PA",            "category": "Misc", "unit": "", "decimals": 0},
@@ -193,11 +200,13 @@ def _pitcher_rows(conn, player_id, seasons, pitch_type=None):
     return rows
 
 
-def _batter_rows(conn, player_id, seasons):
+def _batter_rows(conn, player_id, seasons, pitch_type=None):
     ph = ",".join("?" * len(seasons))
+    extra = f" AND pitch_type = ?" if pitch_type else ""
+    params = [player_id] + list(seasons) + ([pitch_type] if pitch_type else [])
     df = pd.read_sql(
-        f"{_BATTER_SELECT} AND season IN ({ph}) ORDER BY game_date, game_id",
-        conn, params=[player_id] + list(seasons),
+        f"{_BATTER_SELECT} AND season IN ({ph}){extra} ORDER BY game_date, game_id",
+        conn, params=params,
     )
     if df.empty:
         return []
@@ -253,6 +262,13 @@ def _batter_rows(conn, player_id, seasons):
             "zone_contact_pct": _cf(zone_con / zone_sw * 100, 1) if zone_sw else None,
             "swing_pct":      _cf(swings / len(grp) * 100, 1),
             "gb_pct":         _cf(gb / len(bip) * 100, 1) if len(bip) else None,
+            # Pitch Type category (same computation, separate keys; meaningful when pitch_type filter is active)
+            "pt_whiff_pct":      _cf(whiffs / swings * 100, 1) if swings else None,
+            "pt_chase_pct":      _cf(chase_sw / out_z_count * 100, 1) if out_z_count else None,
+            "pt_avg_ev":         _cf(ev.mean(), 1) if n_ev else None,
+            "pt_xwoba":          _cf(xwoba_vals.mean(), 3) if len(xwoba_vals) else None,
+            "pt_hard_hit_pct":   _cf(hard / n_ev * 100, 1) if n_ev else None,
+            "pt_sweet_spot_pct": _cf(sweet_spot / n_ev * 100, 1) if n_ev else None,
         })
     return rows
 
@@ -295,7 +311,7 @@ def get_player_trends(
     if role == "pitcher":
         games = _pitcher_rows(conn, player_id, seasons, pitch_type=pitch_type)
     else:
-        games = _batter_rows(conn, player_id, seasons)
+        games = _batter_rows(conn, player_id, seasons, pitch_type=pitch_type)
 
     return {"games": games, "metrics": metrics, "seasons": seasons, "pitch_types": pitch_types}
 

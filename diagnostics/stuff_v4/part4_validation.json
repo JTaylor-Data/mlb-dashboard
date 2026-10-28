@@ -957,18 +957,18 @@
     "forbidden_features_absent": true,
     "forbidden_features_checked": [
       "pitch_id",
-      "game_id",
+      "release_extension",
+      "pitcher_id",
+      "player_id",
+      "arm_angle",
       "strikes",
       "plate_z",
-      "pitcher_id",
-      "arm_angle",
-      "release_extension",
-      "release_pos_x_as",
       "release_pos_z",
-      "balls",
       "batter_id",
+      "balls",
       "plate_x",
-      "player_id"
+      "game_id",
+      "release_pos_x_as"
     ],
     "features_used": [
       "release_speed",

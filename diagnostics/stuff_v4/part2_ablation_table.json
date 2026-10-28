@@ -12,9 +12,9 @@
       "n_pitcher_seasons": 2212,
       "corr_with_v0a": 0.9785651298838871,
       "same_season_xfip_corr": -0.19853518197208977,
-      "same_season_era_corr": -0.15334806712802446,
-      "next_season_xfip_corr": -0.16949251285807665,
-      "next_season_era_corr": -0.09220097695225606
+      "same_season_era_corr": -0.15334806712802443,
+      "next_season_xfip_corr": -0.16949251285807668,
+      "next_season_era_corr": -0.09220097695225604
     },
     "V1": {
       "n_pitcher_seasons": 2212,
@@ -79,5 +79,5 @@
   "subsample_fraction": 0.3,
   "subsample_seed": 42,
   "n_folds": 5,
-  "elapsed_minutes": 31.558487760000087
+  "elapsed_minutes": 33.77208714166663
 }
