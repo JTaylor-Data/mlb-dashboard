@@ -8,7 +8,6 @@
 // group's member pages.
 const PLAYER_GROUP = [
   { href: "index.html", label: "Overview" },
-  { href: "splits.html", label: "Splits" },
   { href: "outings.html", label: "Outing" },
   { href: "trends.html", label: "Trends" },
   { href: "career.html", label: "Career" },

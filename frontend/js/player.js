@@ -473,10 +473,12 @@ function buildApproachAngleSVG(releasePosX, throws, angleDeg, percentile) {
 
   const angleLabel = angleDeg !== null && angleDeg !== undefined ? `${angleDeg >= 0 ? "+" : ""}${angleDeg.toFixed(1)}°` : "";
   const pctLabel = percentile !== null && percentile !== undefined
-    ? `${Math.round(percentile)}${_ordinalSuffix(Math.round(percentile))} pctile vs. ${throws}HP`
+    ? `${Math.round(percentile)}${_ordinalSuffix(Math.round(percentile))} percentile`
     : "";
 
-  // Mound: filled circle + small rubber rectangle centered on it
+  // Mound: filled circle (at the release point) + a separate rubber
+  // rectangle fixed at true dead-center of the mound - the rubber doesn't
+  // move with the pitcher's release point, the circle does.
   const moundR = 7;
   const rubberW = 9, rubberH = 2.5;
   // Home plate: simple pentagon approximation (flat top, pointed bottom)
@@ -493,7 +495,7 @@ function buildApproachAngleSVG(releasePosX, throws, angleDeg, percentile) {
         <text x="${fieldX1}" y="10" font-size="8" fill="var(--text-muted)" font-weight="700">3B</text>
         <text x="${fieldX2 - 10}" y="10" font-size="8" fill="var(--text-muted)" font-weight="700">1B</text>
         <circle cx="${releaseX.toFixed(1)}" cy="${moundY}" r="${moundR}" fill="var(--text-muted)" fill-opacity="0.25" stroke="var(--text-muted)" stroke-width="1.5"/>
-        <rect x="${(releaseX - rubberW / 2).toFixed(1)}" y="${(moundY - rubberH / 2).toFixed(1)}" width="${rubberW}" height="${rubberH}" rx="0.5" fill="var(--text-muted)"/>
+        <rect x="${(fieldMid - rubberW / 2).toFixed(1)}" y="${(moundY - rubberH / 2).toFixed(1)}" width="${rubberW}" height="${rubberH}" rx="0.5" fill="var(--text-muted)"/>
         <line x1="${releaseX.toFixed(1)}" y1="${moundY + moundR}" x2="${fieldMid}" y2="${plateY - ph/2}"
               stroke="var(--accent)" stroke-width="2" stroke-dasharray="4,3"/>
         ${angleLabel ? `<text x="${midX.toFixed(1)}" y="${(midY - 4).toFixed(1)}" font-size="8" fill="var(--accent)" font-weight="700" text-anchor="middle">${angleLabel}</text>` : ""}
@@ -502,7 +504,7 @@ function buildApproachAngleSVG(releasePosX, throws, angleDeg, percentile) {
       <div class="gauge-avg" style="text-align:center; margin-top:2px;">${sideLabel}</div>
       ${pctLabel ? `<div style="font-size:9px; color:var(--text-muted); text-align:center; margin-top:2px;">${pctLabel}</div>` : ""}
       <div style="font-size:9px; color:var(--text-muted); text-align:center; margin-top:4px; line-height:1.3; padding:0 4px;">
-        Straight line from release to plate center — movement-agnostic.
+        Straight line from release to plate center, movement-agnostic.
       </div>
     </div>
   `;
@@ -946,34 +948,59 @@ function buildSwingTiltGauge(value, leagueAvg, pct) {
 
 function buildTunnelingPairsTable(pairs) {
   if (!pairs || !pairs.length) return "";
+  // Display-only: drops Divergence/Break columns and the pitch-type text
+  // labels (dots + "/" only). Both values stay in `pairs` and keep feeding
+  // the sort below - sort order (by composite_score desc) is unchanged.
   const rows = pairs.map((p) => {
-    const dotA = `<span class="seq-legend-dot" style="background:${pitchColor(p.type_a)};display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:3px;"></span>`;
-    const dotB = `<span class="seq-legend-dot" style="background:${pitchColor(p.type_b)};display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:3px;"></span>`;
+    const dot = (type) => `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${pitchColor(type)};"></span>`;
     return `<tr>
-      <td>${dotA}${p.type_a} / ${dotB}${p.type_b}</td>
-      <td>${p.commit_distance.toFixed(1)}"</td>
-      <td>${p.divergence.toFixed(1)}"</td>
-      <td>${p.shape_break_plus.toFixed(1)}"</td>
-      <td style="font-weight:600;">${p.composite_score.toFixed(0)}</td>
+      <td style="padding:2px 3px;white-space:nowrap;">${dot(p.type_a)}<span style="margin:0 3px;color:var(--text-muted);">/</span>${dot(p.type_b)}</td>
+      <td style="padding:2px 3px;text-align:right;">${p.commit_distance.toFixed(1)}"</td>
+      <td style="padding:2px 3px;text-align:right;font-weight:600;">${p.composite_score.toFixed(0)}</td>
     </tr>`;
   }).join("");
   return `
-    <div class="tunneling-pairs-widget" style="margin-top:12px;">
-      <div class="pitch-usage-title">TUNNELING PAIRS</div>
-      <table class="tunneling-pairs-table" style="width:100%;border-collapse:collapse;font-size:12px;">
+    <div class="tunneling-pairs-widget rubber-widget">
+      <div class="pitch-usage-title">TUNNEL+ PAIRS</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;">
         <thead>
-          <tr style="border-bottom:1px solid var(--color-border,#ccc);">
-            <th style="text-align:left;padding:3px 4px;">Pair</th>
-            <th style="text-align:right;padding:3px 4px;" title="Commit distance (inches) — lower = tighter tunnel">Commit</th>
-            <th style="text-align:right;padding:3px 4px;" title="Divergence = plate - commit distance (inches)">Divg</th>
-            <th style="text-align:right;padding:3px 4px;" title="Shape break (inches above straight-line midpoint)">Break</th>
-            <th style="text-align:right;padding:3px 4px;" title="Composite score (plus-scale; higher = better tunnel)">Score</th>
+          <tr style="border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:2px 3px;">Pair</th>
+            <th style="text-align:right;padding:2px 3px;" title="Commit-point distance (inches) — lower = tighter tunnel">Commit</th>
+            <th style="text-align:right;padding:2px 3px;" title="Tunnel+ composite score (plus-scale; higher = better tunnel)">Tunnel+</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
       </table>
     </div>
   `;
+}
+
+// The Movement Plot's side column (and so the Tunnel+ Pairs card at its
+// bottom) is only as tall as the plot itself - Last 5 Outings in the left
+// column is a separate flex column that isn't guaranteed to match that
+// height. Pad the card's bottom by the measured gap so its bottom edge
+// lines up with Last 5 Outings' bottom edge exactly, instead of guessing a
+// fixed padding that would only work for one particular pair count. Skipped
+// below the 900px breakpoint where the layout stacks to one column and the
+// two cards are no longer side-by-side.
+function _alignTunnelingPairsToLast5() {
+  if (window.innerWidth <= 900) return;
+  const last5 = document.getElementById("last-5-mount");
+  const widget = document.querySelector(".tunneling-pairs-widget");
+  if (!last5 || !widget) return;
+  widget.style.paddingBottom = "";
+  const diff = last5.getBoundingClientRect().bottom - widget.getBoundingClientRect().bottom;
+  if (diff > 0) widget.style.paddingBottom = `${diff}px`;
+}
+
+// Last 5 Outings' bottom edge can keep drifting for a bit after the first
+// call above - other async content elsewhere on the page (headshots, team
+// logos) still loading in and reflowing things. Re-run on a short settle
+// schedule rather than once, so the final padding reflects the page's
+// actually-settled layout instead of a mid-reflow snapshot.
+function _scheduleAlignSettle() {
+  [0, 300, 700, 1200, 2000, 3500].forEach((ms) => setTimeout(_alignTunnelingPairsToLast5, ms));
 }
 
 function renderRightPanel(data) {
@@ -994,9 +1021,9 @@ function renderRightPanel(data) {
             ${buildMovementSummaryTable(mv.summary)}
             ${buildApproachAngleSVG(rp.release_pos_x, rp.throws, rp.angle_deg, rp.percentile)}
             ${data.babip_against ? `<div class="babip-widget"><div class="pitch-usage-title">BABIP Against</div><div class="gauge-value" style="text-align:center;">${data.babip_against.value_str}</div></div>` : ""}
+            <div id="tunneling-pairs-mount"></div>
           </div>
         </div>
-        <div id="tunneling-pairs-mount"></div>
         <div id="similar-players-mount"></div>
       </div>
       <div class="movement-plot-caption">Dashed line = arm angle (labeled). Shaded circles = league avg movement for pitchers within 3&#176; of same arm angle (hover for count). Arm-side-adjusted HB (positive = arm side). Inner 50% of pitches plotted; table uses all. Fixed on L/R toggle; updates with season. Usage by batter side: Pitch Locations card.</div>
@@ -1713,6 +1740,7 @@ async function loadPlayer() {
           if (capturedId !== loadPlayerRequestId) return;
           const el = document.getElementById("tunneling-pairs-mount");
           if (el) el.innerHTML = buildTunnelingPairsTable(pairs);
+          _scheduleAlignSettle();
         })
         .catch(() => {});
     }
@@ -2022,6 +2050,12 @@ async function defaultToTopPerformer() {
   }
   return playerSearch.selectDefault((p) => p.role === "pitcher");
 }
+
+let _alignResizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(_alignResizeTimer);
+  _alignResizeTimer = setTimeout(_alignTunnelingPairsToLast5, 150);
+});
 
 (async function init() {
   state.season = await seasonSelect.load();
