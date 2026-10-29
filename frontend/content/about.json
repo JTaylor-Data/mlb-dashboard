@@ -5,11 +5,11 @@
   },
   "goal": {
     "status": "draft",
-    "text": "This dashboard is built to be the one tab you need: Baseball Savant's pitch-level detail plus FanGraphs' league context, in one place, without flipping between sites or scrolling past metrics you'll never use. Four independent models — Stuff+, Location+, Deception+, and Tunneling+ — grade a pitcher on separate axes, each scaled so 100 is league average and 10 points is one standard deviation. The interesting cases are where they disagree."
+    "text": "This dashboard is built to be the one tab you need: Baseball Savant's pitch-level detail plus FanGraphs' league context, in one place, without flipping between sites or scrolling past metrics you'll never use. Four independent models (Stuff+, Location+, Deception+, and Tunneling+) grade a pitcher on separate axes, each scaled so 100 is league average and 10 points is one standard deviation. The interesting cases are where they disagree."
   },
   "about_me": {
     "status": "draft",
-    "text": "I'm a third-year Economics student at the University of Toronto with a growing passion for data analytics. I have 4+ years of experience leading and instructing athletics programs, which taught me to bring a structured, data-driven approach to everyday problem solving. Most recently I built Luck+, a Ridge-regression model that quantifies and forecasts MLB team luck. This dashboard is the project I built to develop and show the kind of analytical work I want to do professionally — I'm looking for summer and entry-level opportunities in data analytics, finance, business, or consulting."
+    "text": "I'm a third-year Economics student at the University of Toronto, trying to find my way into sports or data analytics. The data-driven habit actually started on the field: I've spent 4+ years coaching and instructing athletics programs, and you learn fast that gut feel and the box score don't always agree. On the analytics side, I recently built Luck+, a Ridge-regression model that quantifies and forecasts MLB team luck, and this dashboard is the bigger project that grew out of that. Mostly, I'm just a baseball fan who got curious enough to start building. I'm looking for summer and entry-level opportunities in data analytics, finance, business, or consulting."
   },
   "links": {
     "linkedin": "https://www.linkedin.com/in/joshua-taylor-86450a32a/",
@@ -18,30 +18,28 @@
   },
   "model_blurbs": {
     "status": "draft",
-    "stuff_plus": "Grades the physical shape of a pitch — velocity, movement, spin, and release geometry — independent of where it was thrown or the count.",
+    "stuff_plus": "Grades the physical shape of a pitch: velocity, movement, spin, and release geometry, independent of where it was thrown or the count.",
     "location_plus": "Grades where a pitch was thrown relative to the zone and the count, independent of what the pitch itself looks like.",
-    "tunneling_plus": "Grades how indistinguishable a pitcher's pitches look from each other at the hitter's commit point.",
-    "deception_plus": "Grades release mechanics — arm slot, extension, release point — as predictors of outcomes, independent of pitch shape."
+    "tunneling_plus": "Grades how indistinguishable a pitcher's pitches look from each other, from release all the way to the plate.",
+    "deception_plus": "Grades release mechanics (arm slot, extension, release point) as predictors of outcomes, independent of pitch shape."
   },
   "known_limitations": {
     "status": "draft",
     "items": [
-      "All four models explain a small share of per-pitch variance (R² 0.0002–0.007) — a real signal, but a thin slice of any single pitch.",
+      "All four models explain a small share of per-pitch variance (R² 0.0002–0.007): a real signal, but a thin slice of any single pitch.",
       "Stuff+'s out-of-sample stability (r=0.558) trails its in-sample fit (r=0.907), suggesting some memorization of pitcher-season patterns.",
-      "Location+ measures where a pitch ended up, not intent — a missed spot that lands well still scores as good command.",
-      "Tunneling+'s geometry features add no independent signal once pitch-type sequencing is accounted for; its predictive power comes from sequencing, not the tunnel itself.",
+      "Location+ measures where a pitch ended up, not intent: a missed spot that lands well still scores as good command.",
       "Deception+ can still partly track pitcher identity through arm slot and extension (ICC 0.90–0.99), even after removing the most identity-prone features.",
-      "Small samples are noisy. Only Stuff+ currently applies shrinkage — scores under ~300 pitches should be read with caution.",
+      "Small samples are noisy. Only Stuff+ currently applies shrinkage, so scores under ~300 pitches should be read with caution.",
       "All four models include season as a feature and need an annual retrain once a new season accumulates enough data."
     ]
   },
   "future_work": {
     "status": "draft",
     "items": [
-      "Redesign Tunneling+ around pitch-type sequencing directly, instead of geometric distances that add no independent signal.",
-      "Pitcher archetype profiles — group by arsenal shape and sequencing style rather than a single ranked score.",
-      "Run the pitcher-holdout identifiability audit (done for Stuff+ and Deception+) on Location+ and Tunneling+.",
-      "Video-derived biomechanics for Deception+ — pose tracking from broadcast video to capture timing and concealment Statcast doesn't record.",
+      "Pitcher archetype profiles: group by arsenal shape and sequencing style rather than a single ranked score.",
+      "Run the pitcher-holdout identifiability audit (done for Stuff+ and Deception+) on Location+ as well.",
+      "Video-derived biomechanics for Deception+: pose tracking from broadcast video to capture timing and concealment Statcast doesn't record.",
       "A combined view showing all four scores for one pitcher side-by-side, with disagreement between them highlighted.",
       "Finish integrating the 3D tunneling viewer prototype into the site."
     ]
