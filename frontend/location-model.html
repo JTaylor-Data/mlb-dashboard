@@ -22,21 +22,45 @@
     #lc-pitcher-shap-table td.plus-pos { color: #1a7f37; font-weight: 700; }
     #lc-pitcher-shap-table td.plus-neg { color: #c9302c; font-weight: 700; }
     #lc-status { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+
+    /* Feature bubbles */
+    .lc-bubbles { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 14px; }
+    .lc-bubble  { font-size: 11.5px; font-weight: 600; color: var(--forest-dark); background: var(--surface-alt); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; }
+
+    /* Evolution box */
+    .lc-evolution { margin-top: 28px; }
+    .lc-evolution h2 { font-size: 17px; font-weight: 800; color: var(--forest-dark); margin: 0 0 14px; }
+    .lc-evo-list { padding-left: 0; list-style: none; margin: 0; }
+    .lc-evo-list li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; margin-bottom: 8px; font-size: 13px; line-height: 1.55; color: var(--text); }
+    .lc-evo-num { font-weight: 800; color: var(--forest-dark); background: var(--surface-alt); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; }
+
+    /* The guts (collapsible) */
+    .lc-hood { margin-top: 28px; }
+    .lc-hood-toggle { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; color: var(--forest-dark); cursor: pointer; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
+    .lc-hood-toggle:hover { background: var(--surface-alt); }
+    .lc-hood-toggle[aria-expanded="true"] { background: var(--surface-alt); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+    .lc-hood-chevron { transition: transform 0.2s; font-size: 12px; }
+    .lc-hood-toggle[aria-expanded="true"] .lc-hood-chevron { transform: rotate(180deg); }
+    .lc-hood-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 16px; display: none; }
+    .lc-hood-body.open { display: block; }
   </style>
 </head>
 <body>
   <div id="nav"></div>
   <div id="subnav"></div>
   <div class="page">
-    <h1>Location+ Model</h1>
+    <h1>Location+</h1>
     <p class="lc-blurb">
-      v3. Measures where a pitch ended up and how valuable that location was, <b>given the count and batter
-      handedness</b> — nothing about the pitch's physical shape (that's Stuff+), delivery (Deception+), or
-      relationship to other pitches in the arsenal (Tunneling+). Key v3 fix: the run-value table is now
-      <b>count-specific</b> (a called strike on 3-2 is worth ~7.8x more than on 0-0 in run expectancy terms —
-      v2 used a single pooled mean and missed this entirely). Training excludes 2020; the 60-game season is
-      scored by averaging model predictions from season=2019 and season=2021 categorical inputs.
+      Grades where a pitch was thrown relative to the strike zone, given the count and batter handedness,
+      independent of the pitch's physical shape (Stuff+), delivery (Deception+), or relationship to the rest
+      of the arsenal (Tunneling+).
     </p>
+    <div class="lc-bubbles">
+      <span class="lc-bubble">Plate location</span>
+      <span class="lc-bubble">Count</span>
+      <span class="lc-bubble">Batter handedness</span>
+      <span class="lc-bubble">Count-specific run value</span>
+    </div>
 
     <div class="plus-explainer">
       <div class="plus-explainer-icon">&#8505;&#65039;</div>
@@ -44,59 +68,17 @@
         <div class="plus-explainer-title">How to read this number</div>
         <div class="plus-explainer-body">
           <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b>.
-          Location+ needs ~300 pitches before it is reliable at the pitcher level (split-half r ≥ 0.81 at 300+
-          pitches per half). Read leaderboard positions below that pitch count with real caution.
+          Scores are z-scored fresh within each season, so the same score in two different years means the
+          same relative standing. Location+ needs ~300 pitches before it is reliable at the pitcher level
+          (split-half r &ge; 0.81 at 300+ pitches per half) &mdash; read leaderboard positions below that
+          pitch count with real caution.
         </div>
       </div>
     </div>
 
-    <div class="lc-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Model</h3>
-        <div class="lc-meta-grid" id="lc-meta-mount"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Stop-Ship Gates</h3>
-        <div id="lc-gates-mount"><div class="lc-note">Loading…</div></div>
-      </div>
-    </div>
-
-    <div class="lc-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Split-Half Reliability</h3>
-        <table class="data-table lc-table" id="lc-reliability-table"></table>
-        <div class="lc-note" id="lc-reliability-note"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Outcome Correlations (pitcher-season)</h3>
-        <div id="lc-outcome-mount"><div class="lc-note">Loading…</div></div>
-      </div>
-    </div>
-
-    <div class="lc-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Year-Over-Year Stability</h3>
-        <div id="lc-yoy-mount"><div class="lc-note">Loading…</div></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Next-Season Predictive Validity (BB%)</h3>
-        <div id="lc-predictive-mount"><div class="lc-note">Loading…</div></div>
-      </div>
-    </div>
-
-    <div class="lc-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Highest Location+</h3>
-        <table class="data-table lc-table" id="lc-top-table"></table>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Lowest Location+</h3>
-        <table class="data-table lc-table" id="lc-bottom-table"></table>
-      </div>
-    </div>
-
+    <!-- PITCHER LOOKUP -->
     <div class="card section">
-      <h3 style="margin-top:0;">Inspect a Pitcher</h3>
+      <h3 style="margin-top:0;">Pitcher lookup</h3>
       <div class="controls-row">
         <div style="min-width:320px; flex:1; max-width:420px;">
           <span class="control-label">Pitcher</span>
@@ -114,11 +96,68 @@
       <div id="lc-pitcher-mount" style="margin-top:16px;"></div>
     </div>
 
-    <h2 style="font-size:17px;font-weight:800;color:var(--forest-dark);margin:32px 0 14px;">What's behind it</h2>
-    <div id="guts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;"></div>
+    <!-- RESULTS -->
+    <div class="lc-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Highest Location+</h3>
+        <table class="data-table lc-table" id="lc-top-table"></table>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Lowest Location+</h3>
+        <table class="data-table lc-table" id="lc-bottom-table"></table>
+      </div>
+    </div>
 
-    <h2 style="font-size:17px;font-weight:800;color:var(--forest-dark);margin:32px 0 14px;">How it evolved</h2>
-    <ol id="evolution-list" style="padding-left:20px;margin:0 0 28px;font-size:13px;line-height:1.7;color:var(--text);"></ol>
+    <!-- EVOLUTION -->
+    <div class="lc-evolution section">
+      <h2>The evolution</h2>
+      <ul class="lc-evo-list" id="evolution-list"><li><span class="lc-evo-num">1</span><span>Loading...</span></li></ul>
+    </div>
+
+    <!-- THE GUTS -->
+    <div class="lc-hood section">
+      <button class="lc-hood-toggle" id="lc-hood-toggle" aria-expanded="false" aria-controls="lc-hood-body">
+        The guts: validation for the live model
+        <span class="lc-hood-chevron" aria-hidden="true">v</span>
+      </button>
+      <div class="lc-hood-body" id="lc-hood-body">
+        <div class="lc-layout" style="margin-bottom:16px;">
+          <div class="card">
+            <h3 style="margin-top:0;">Model</h3>
+            <div class="lc-meta-grid" id="lc-meta-mount"></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0;">Stop-ship gates</h3>
+            <div id="lc-gates-mount"><div class="lc-note">Loading...</div></div>
+          </div>
+        </div>
+
+        <div class="lc-layout" style="margin-bottom:16px;">
+          <div class="card">
+            <h3 style="margin-top:0;">Split-half reliability</h3>
+            <table class="data-table lc-table" id="lc-reliability-table"></table>
+            <div class="lc-note" id="lc-reliability-note"></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0;">Outcome correlations (pitcher-season)</h3>
+            <div id="lc-outcome-mount"><div class="lc-note">Loading...</div></div>
+          </div>
+        </div>
+
+        <div class="lc-layout" style="margin-bottom:16px;">
+          <div class="card">
+            <h3 style="margin-top:0;">Year-over-year stability</h3>
+            <div id="lc-yoy-mount"><div class="lc-note">Loading...</div></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0;">Next-season predictive validity (BB%)</h3>
+            <div id="lc-predictive-mount"><div class="lc-note">Loading...</div></div>
+          </div>
+        </div>
+
+        <div id="guts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"></div>
+      </div>
+    </div>
   </div>
 
   <script src="js/api.js?v=17"></script>
@@ -152,9 +191,19 @@
       }
       const ev = mp["location_plus"] && mp["location_plus"].evolution;
       if (ev && ev.items) {
-        document.getElementById("evolution-list").innerHTML = ev.items.map(i => `<li style="margin-bottom:8px;">${i}</li>`).join("");
+        document.getElementById("evolution-list").innerHTML = ev.items.map((i, idx) =>
+          `<li><span class="lc-evo-num">${idx + 1}</span><span>${i}</span></li>`
+        ).join("");
       }
     } catch(e) { console.error("guts load error:", e); }
+
+    const hoodBtn = document.getElementById("lc-hood-toggle");
+    const hoodBody = document.getElementById("lc-hood-body");
+    hoodBtn.addEventListener("click", () => {
+      const open = hoodBtn.getAttribute("aria-expanded") === "true";
+      hoodBtn.setAttribute("aria-expanded", String(!open));
+      hoodBody.classList.toggle("open", !open);
+    });
   })();
   </script>
 </body>
