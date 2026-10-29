@@ -973,20 +973,20 @@ function buildTunnelingPairsTable(pairs) {
     shown = shown.filter((p) => keep.has(p));
   }
   const rows = shown.map((p) => {
-    const dot = (type) => `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${pitchColor(type)};"></span>`;
+    const dot = (type) => `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${pitchColor(type)};"></span>`;
     return `<tr>
-      <td style="padding:3px 4px;white-space:nowrap;">${dot(p.type_a)}<span style="margin:0 3px;color:var(--text-muted);">/</span>${dot(p.type_b)}</td>
-      <td style="padding:3px 4px;text-align:right;font-weight:600;">${p.composite_score.toFixed(0)}</td>
+      <td style="padding:4px 5px;white-space:nowrap;">${dot(p.type_a)}<span style="margin:0 4px;color:var(--text-muted);">/</span>${dot(p.type_b)}</td>
+      <td style="padding:4px 5px;text-align:right;font-weight:600;">${p.composite_score.toFixed(0)}</td>
     </tr>`;
   }).join("");
   return `
     <div class="tunneling-pairs-widget rubber-widget">
       <div class="pitch-usage-title">TUNNEL+ PAIRS</div>
-      <table style="width:100%;border-collapse:collapse;font-size:15px;">
+      <table style="width:100%;border-collapse:collapse;font-size:18px;">
         <thead>
           <tr style="border-bottom:1px solid var(--border);">
-            <th style="text-align:left;padding:3px 4px;">Pair</th>
-            <th style="text-align:right;padding:3px 4px;" title="Tunnel+ composite score (plus-scale; higher = better tunnel)">Tunnel+</th>
+            <th style="text-align:left;padding:4px 5px;">Pair</th>
+            <th style="text-align:right;padding:4px 5px;" title="Tunnel+ composite score (plus-scale; higher = better tunnel)">Tunnel+</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
