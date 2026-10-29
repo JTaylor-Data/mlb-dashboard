@@ -128,7 +128,9 @@ async function selectPitcher(pitcherId, season) {
   _currentPitcher = pitcherId;
   const mount = document.getElementById("dc-pitcher-mount");
   const status = document.getElementById("dc-pitcher-status");
-  status.textContent = "Loading…";
+  const loadingBar = document.getElementById("dc-loading");
+  status.textContent = "";
+  if (loadingBar) loadingBar.classList.add("active");
   mount.style.display = "none";
 
   // Get available seasons for this pitcher
@@ -138,11 +140,16 @@ async function selectPitcher(pitcherId, season) {
     data = await getJSON(url);
   } catch(e) {
     status.textContent = `No Deception+ data for this pitcher.`;
+    if (loadingBar) loadingBar.classList.remove("active");
     return;
   }
 
-  if (!data) { status.textContent = "No data found."; return; }
-  status.textContent = "";
+  if (!data) {
+    status.textContent = "No data found.";
+    if (loadingBar) loadingBar.classList.remove("active");
+    return;
+  }
+  if (loadingBar) loadingBar.classList.remove("active");
   mount.style.display = "block";
   setParam("pitcher", pitcherId);
   setParam("season", data.season);
@@ -292,18 +299,14 @@ async function loadLabelBadge() {
 }
 
 // ──────────────────────────────────────────────────────── player search wiring
-function wirePlayerSearch() {
+async function wirePlayerSearch() {
   const input = document.getElementById("dc-pitcher-input");
   const dropdown = document.getElementById("dc-pitcher-dropdown");
-  if (typeof PlayerSearch !== "undefined") {
-    new PlayerSearch(input, dropdown, {
-      filterType: "pitcher",
-      onSelect: (p) => {
-        selectPitcher(p.player_id);
-        input.value = p.name;
-      }
-    });
-  }
+  const search = createPlayerSearch(input, dropdown, (p) => {
+    selectPitcher(p.player_id);
+  }, { roleFilter: "pitcher" });
+  await search.load();
+  return search;
 }
 
 // ──────────────────────────────────────────────────────── main init
@@ -339,10 +342,16 @@ function wirePlayerSearch() {
   });
 
   // Deep-link support
-  wirePlayerSearch();
+  const search = await wirePlayerSearch();
   const pitcherParam = getParam("pitcher");
+  const remembered = window.PlayerContext && PlayerContext.getCurrent();
   if (pitcherParam) {
     const sParam = getParam("season");
+    const name = _playerNames[Number(pitcherParam)];
+    if (name) search.setValue({ player_id: Number(pitcherParam), name, role: "pitcher" });
     await selectPitcher(parseInt(pitcherParam), sParam || undefined);
+  } else if (remembered && remembered.role === "pitcher") {
+    search.setValue(remembered);
+    await selectPitcher(remembered.player_id);
   }
 })();

@@ -24,10 +24,8 @@ function renderPitcherDetail(detail, name, season) {
   const mount = document.getElementById("tn-pitcher-mount");
   const rows = detail.pairs.map((p) => `<tr>
     <td>${p.type_a}/${p.type_b}</td>
-    <td>${p.pct_a !== undefined ? p.pct_a.toFixed(1) + "%" : p.n_a}</td>
-    <td>${p.pct_b !== undefined ? p.pct_b.toFixed(1) + "%" : p.n_b}</td>
-    <td>${p.commit_distance.toFixed(1)}"</td>
-    <td>${p.plate_distance.toFixed(1)}"</td>
+    <td>${p.commit_distance.toFixed(1)}" <span class="muted">(${p.commit_distance_plus.toFixed(0)})</span></td>
+    <td>${p.plate_distance.toFixed(1)}" <span class="muted">(${p.plate_distance_plus.toFixed(0)})</span></td>
     <td>${p.divergence.toFixed(1)}"</td>
     <td>${p.shape_break_plus.toFixed(1)}</td>
     <td class="${p.composite_score >= 100 ? "plus-pos" : "plus-neg"}">${p.composite_score.toFixed(1)}</td>
@@ -39,26 +37,35 @@ function renderPitcherDetail(detail, name, season) {
     </div>
     <table class="data-table tn-table" id="tn-pitcher-pairs-table">
       <thead><tr>
-        <th>Pair</th><th>Usage A</th><th>Usage B</th>
+        <th>Pair</th>
         <th>Commit dist.</th><th>Plate dist.</th><th>Divergence</th><th>Shape break</th><th>Composite</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
-    <div class="tn-note">Distances are the full pairwise mean (inches) between every real pitch of type A and every real pitch of type B at that point in the flight path, not centroid-to-centroid. Composite = pair-type-normalized z-score of (-commit distance, + divergence, + shape break), averaged 1-to-3. The headline Tunneling+ above is the usage-weighted mean of these pair composites.</div>
+    <div class="tn-note">
+      <b>Commit</b>: how far apart the pair looked at the hitter's decision point (100 in brackets = league average; higher = closer, better tunnel).
+      <b>Plate</b>: how far apart they land (100 in brackets = league average; higher = farther apart, better).
+      <b>Divergence</b>: plate minus commit, how much separation grows after the hitter has to decide.
+      <b>Shape break</b>: how much the pair bends away from a straight line between release and commit.
+      <b>Composite</b> combines all three, z-scored within that pitch-type pair's own season population.
+    </div>
   `;
 }
 
 async function loadPitcherDetail(playerId, name, season) {
   const status = document.getElementById("tn-status");
+  const loadingBar = document.getElementById("tn-loading");
   const mount = document.getElementById("tn-pitcher-mount");
-  status.textContent = "Loading...";
+  status.textContent = "";
+  if (loadingBar) loadingBar.classList.add("active");
   mount.innerHTML = "";
   try {
     const detail = await getJSON(`/api/tunneling/v3/pitcher/${playerId}?season=${season}`);
-    status.textContent = "";
     renderPitcherDetail(detail, name, season);
   } catch (err) {
     status.textContent = "No Tunneling+ data for this pitcher/season (needs 2+ qualifying pitch types, 100+ pitches each, and a qualifying commit point).";
+  } finally {
+    if (loadingBar) loadingBar.classList.remove("active");
   }
 }
 

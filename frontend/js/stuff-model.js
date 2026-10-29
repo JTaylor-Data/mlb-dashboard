@@ -286,8 +286,10 @@ function renderShapContributions(breakdown) {
 
 async function loadPitcherLookup(pitcherId, season, playerName, cfg) {
   const statusEl = document.getElementById("sp-lookup-status");
+  const loadingBar = document.getElementById("sp-loading");
   const panelEl  = document.getElementById("sp-lookup-panel");
-  statusEl.textContent = "Loading…";
+  statusEl.textContent = "";
+  if (loadingBar) loadingBar.classList.add("active");
   panelEl.innerHTML = "";
 
   try {
@@ -295,7 +297,7 @@ async function loadPitcherLookup(pitcherId, season, playerName, cfg) {
       getJSON(`/api/stuff-model/pitcher/${pitcherId}/summary?season=${season}`),
       getJSON(`/api/stuff-model/pitcher/${pitcherId}?season=${season}`),
     ]);
-    statusEl.textContent = "";
+    if (loadingBar) loadingBar.classList.remove("active");
 
     panelEl.innerHTML = `
       ${renderPitcherSummary(summary, cfg)}
@@ -341,6 +343,7 @@ async function loadPitcherLookup(pitcherId, season, playerName, cfg) {
     });
 
   } catch (err) {
+    if (loadingBar) loadingBar.classList.remove("active");
     statusEl.textContent = "No data for this pitcher/season.";
     panelEl.innerHTML = "";
   }

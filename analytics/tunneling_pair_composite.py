@@ -128,7 +128,8 @@ def season_all_pairs(conn, season):
     res_stats = _residual_stats(pairs, pair_type_means)
     pairs = _compute_composite(pairs, pair_type_means, res_stats)
     cols = ["pitcher_id", "season", "type_a", "type_b", "n_a", "n_b", "pair_weight",
-            "commit_distance", "plate_distance", "divergence", "shape_break_plus", "composite_score"]
+            "commit_distance", "tunnel_spread_plus", "plate_distance", "late_divergence_plus",
+            "divergence", "shape_break_plus", "composite_score"]
     return pairs[cols].sort_values("composite_score", ascending=False).reset_index(drop=True)
 
 
@@ -151,7 +152,9 @@ def pitcher_pairs_from_season(all_pairs_df, pitcher_id, total_pitches=None):
             "n_a": int(r["n_a"]),
             "n_b": int(r["n_b"]),
             "commit_distance": round(float(r["commit_distance"]), 2),
+            "commit_distance_plus": round(float(r["tunnel_spread_plus"]), 0),
             "plate_distance": round(float(r["plate_distance"]), 2),
+            "plate_distance_plus": round(float(r["late_divergence_plus"]), 0),
             "divergence": round(float(r["divergence"]), 2),
             "shape_break_plus": round(float(r["shape_break_plus"]), 2),
             "composite_score": round(float(r["composite_score"]), 1),

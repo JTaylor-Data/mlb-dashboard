@@ -57,15 +57,18 @@ function renderPitcherDetail(detail, name, season) {
 
 async function loadPitcherDetail(playerId, name, season) {
   const status = document.getElementById("lc-status");
+  const loadingBar = document.getElementById("lc-loading");
   const mount = document.getElementById("lc-pitcher-mount");
-  if (status) status.textContent = "Loading…";
+  if (status) status.textContent = "";
+  if (loadingBar) loadingBar.classList.add("active");
   if (mount) mount.innerHTML = "";
   try {
     const detail = await getJSON(`/api/location/pitcher/${playerId}?season=${season}`);
-    if (status) status.textContent = "";
     renderPitcherDetail(detail, name, season);
   } catch (err) {
     if (status) status.textContent = "No Location+ data for this pitcher/season (needs 300+ pitches; 111 for 2020).";
+  } finally {
+    if (loadingBar) loadingBar.classList.remove("active");
   }
 }
 
