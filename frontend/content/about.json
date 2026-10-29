@@ -3,79 +3,47 @@
     "description": "Prose content for the main About page. All numbers reference stored artifacts via validation_results.json or scoring_policy.json. Status draft = needs owner review before publishing.",
     "status": "draft"
   },
+  "goal": {
+    "status": "draft",
+    "text": "This dashboard is built to be the one tab you need: Baseball Savant's pitch-level detail plus FanGraphs' league context, in one place, without flipping between sites or scrolling past metrics you'll never use. Four independent models — Stuff+, Location+, Deception+, and Tunneling+ — grade a pitcher on separate axes, each scaled so 100 is league average and 10 points is one standard deviation. The interesting cases are where they disagree."
+  },
   "about_me": {
     "status": "draft",
-    "text": "I'm a third-year economics student at the University of Toronto with a focus in data analytics and a minor in statistics. I want to work in baseball analytics. I built this dashboard solo to develop the skills and produce the kind of work I'd want to show in that context."
+    "text": "I'm a third-year Economics student at the University of Toronto with a growing passion for data analytics. I have 4+ years of experience leading and instructing athletics programs, which taught me to bring a structured, data-driven approach to everyday problem solving. Most recently I built Luck+, a Ridge-regression model that quantifies and forecasts MLB team luck. This dashboard is the project I built to develop and show the kind of analytical work I want to do professionally — I'm looking for summer and entry-level opportunities in data analytics, finance, business, or consulting."
   },
-  "purpose": {
-    "status": "draft",
-    "text": "The goal is a quick read on how a pitcher is succeeding using four independent axes: stuff, location, deception, and tunneling. The interesting part is where they disagree. A pitcher can throw a mediocre fastball to exactly the right corner at exactly the right count and outscore his underlying stuff. Another can have elite velocity and movement but give it all back by tipping sequences. Each model was validated against out-of-sample results, and bugs found along the way were fixed and documented rather than quietly patched."
+  "links": {
+    "linkedin": "https://www.linkedin.com/in/joshua-taylor-86450a32a/",
+    "github": "https://github.com/JTaylor-Data/mlb-dashboard",
+    "resume": null
   },
   "model_blurbs": {
     "status": "draft",
-    "stuff_plus": "Stuff+ (v4, promoted 2026-10-02) grades the physical shape of a pitch: velocity, movement, spin, axis differential, fastball-relative separation, and — new in v4 — horizontal approach angle residual (haa_residual), which captures how much the pitch bends laterally relative to what its release geometry predicts. It does not know where the pitch was thrown or what the count was. A 100 is league average for that season; 10 points is one standard deviation. The model is trained on 2016–2026 Statcast data (excluding 2020); every season including 2020 is scored by the single model, with 2020 values carrying an asterisk (60-game season, not in training). Knuckleballers score below average by construction, which is correct but incomplete — the model captures their unusual physics while missing why it works. Season and effective_speed features were retained from v3 (feature-drop ablations were underpowered at 30% pitcher holdout).",
-    "location_plus": "Location+ grades where a pitch was thrown relative to the strike zone and the count, independent of what the pitch is. It fills the deliberate gap left by Stuff+ and Tunneling+, both of which exclude plate location by design. The model was replaced in September 2026 with a five-classifier decomposed-event architecture after the original version developed a sign flip (ERA r = −0.257) and a stability collapse (year-over-year r = 0.009 for 2024→2025). The current version scores ERA r = +0.208 and xFIP r = +0.349, with the correct sign. Location measures where pitches ended up, not intent, and needs large samples for stable estimates.",
-    "tunneling_plus": "Tunneling+ grades how indistinguishable a pitcher's pitches look from each other at the hitter's commit point. It uses lag-context features — commit-point distance, plate-arrival distance, and shape-break between consecutive pitches — across the previous six pitches in a game. It was also replaced in September 2026 with a five-classifier decomposed-event architecture, fixing a sign flip in the prior version (ERA r = −0.218). A 2026 diagnostic found that the geometry features themselves add no independent predictive signal for real whiff rates; the model's predictive power comes from pitch-type sequencing. This is documented as an unresolved finding, not concealed. Year-over-year r² is 0.31–0.53, lower than Stuff+ as expected — sequencing is partly strategic.",
-    "deception_plus": "Deception+ v2 grades pitcher arm slot, release point, and extension — the measurable mechanics of how a pitcher delivers the ball — and asks whether variation in those mechanics predicts better outcomes, independent of pitch velocity, movement, or spin. The model was rebuilt in 2026 with a cross-fitted ensemble (pitcher-grouped folds, no data leakage) after v1 was found to have an artifact split-half r of 0.998 caused by consistency features being computed on the full season before splitting. v2 removes identity-prone features (height, weight, arm_angle_std, release_extension_std, release_consistency) per a pre-registered identifiability audit that found mechanics features identify individual pitchers at 146× chance. Scores cover 2021–2026; arm_angle was not available in Statcast before mid-2020. All scores are pre-computed — no per-request model scoring. A computer-vision pipeline using broadcast video is in R&D to recover timing, leg lift, and ball-concealment features that Statcast does not publish."
+    "stuff_plus": "Grades the physical shape of a pitch — velocity, movement, spin, and release geometry — independent of where it was thrown or the count.",
+    "location_plus": "Grades where a pitch was thrown relative to the zone and the count, independent of what the pitch itself looks like.",
+    "tunneling_plus": "Grades how indistinguishable a pitcher's pitches look from each other at the hitter's commit point.",
+    "deception_plus": "Grades release mechanics — arm slot, extension, release point — as predictors of outcomes, independent of pitch shape."
   },
   "known_limitations": {
     "status": "draft",
     "items": [
-      {
-        "text": "All four models train toward run value (delta_run_exp) and explain very little per-pitch variance. R² values from leave-one-season-out CV are 0.0002–0.007. The models are measuring a real signal but it accounts for a small fraction of what happens on any individual pitch.",
-        "source": "models/stuff_plus_v3_lgbm_report.json cv_r2_mean=0.000247; models/deception_plus_v1_report_2026.json cv_r2_mean=-0.000464"
-      },
-      {
-        "text": "Stuff+'s out-of-sample stability (LOPO r=0.558) is substantially lower than the in-sample figure (r=0.907). The LOPO figure is the honest generalization number. The gap suggests some memorization of pitcher-season patterns even with pitcher identity excluded as a feature.",
-        "source": "diagnostics/stuff_memorization/memorization_report.json"
-      },
-      {
-        "text": "Location+ measures where pitches ended up, not intent. A missed location that happens to end up in a favorable spot scores as good command. Large samples are needed because average plate position stabilizes slowly.",
-        "source": "Methodology/HANDOFF.md; Methodology/in_progress/LOCATION_PLUS_V2_METHODOLOGY_IN_PROGRESS.html"
-      },
-      {
-        "text": "Tunneling+'s geometry features (commit-point distance, plate-arrival distance, shape-break) show no independent predictive signal for real whiff rates when isolated from pitch-type sequencing information. The model predicts outcomes, but through pitch-type patterns rather than the geometric measurement it was designed around.",
-        "source": "Methodology/HANDOFF.md lines 229-233 (corrected sequential test, 2026-09-21)"
-      },
-      {
-        "text": "Deception+ v2 covers 2021–2026 (arm_angle introduced mid-2020). Identity-prone features (height, weight, consistency variability) were removed after an identifiability audit showed raw mechanics features identify individual pitchers at 146× chance. The core mechanics features (arm_angle, release_pos_x, release_pos_z, release_extension) still have very high intraclass correlations (ICC 0.90–0.99 across pitchers), meaning the model can still partially track pitchers via their typical slot and extension. This is an inherent constraint of the available data, not a modeling error.",
-        "source": "diagnostics/deception_v2/audit.md; diagnostics/deception_v2/spec_lock.json"
-      },
-      {
-        "text": "Scores for small samples are noisy. Stuff+ uses empirical-Bayes shrinkage to handle this, but the other three models do not. A pitcher with 110 pitches has a noisier score than one with 1,500.",
-        "source": "analytics/stuff_model.py _shrinkage_params(); analytics/location_v2_model.py MIN_PITCHES=100"
-      },
-      {
-        "text": "All four models include season as a categorical feature for era-adjustment. This means they need an annual retrain before a new season's data accumulates, or the new season falls to LightGBM's missing-category branch with uncontrolled behavior.",
-        "source": "config/model_policy.py; NEEDS_DECISION.md ND-01"
-      },
-      {
-        "text": "Stuff+ v4's validation figures are in-sample (descriptive) or from a pitcher-holdout ablation subsample (labeled 'conservative'), not true out-of-sample historical forecasts. Displayed past-season scores (2016–2026) were computed with a single model trained on all seasons 2016–2026 (excluding 2020).",
-        "source": "diagnostics/stuff_v4/part4_validation.json; PROMOTION_CHECKLIST.md item 7"
-      },
-      {
-        "text": "2020 Stuff+ scores are based on a 60-game season and were not part of the model's training data. Treat 2020 values with caution.",
-        "source": "diagnostics/stuff_v4/part4_validation.json season_stats.2020.season_flag"
-      },
-      {
-        "text": "Stuff+ v4 season and effective_speed ablation results were underpowered (30% pitcher holdout, 5-fold CV) — the feature-drop ablation could not distinguish dropping these features from reseeding noise. They are retained pending a more powered study.",
-        "source": "diagnostics/stuff_v4/part2_ablation_table.json stage1_result"
-      },
-      {
-        "text": "AB (automatic ball) pitch code appears in v4 category levels but is effectively excluded by null tracking features (dropna on CORE_NUMERIC_FEATURES). One AB pitch was present in training seasons; its share in any pitcher-season is negligible (1/2247 pitches in the largest case).",
-        "source": "diagnostics/stuff_v4/part1_stopship.json pitch_code_audit"
-      }
+      "All four models explain a small share of per-pitch variance (R² 0.0002–0.007) — a real signal, but a thin slice of any single pitch.",
+      "Stuff+'s out-of-sample stability (r=0.558) trails its in-sample fit (r=0.907), suggesting some memorization of pitcher-season patterns.",
+      "Location+ measures where a pitch ended up, not intent — a missed spot that lands well still scores as good command.",
+      "Tunneling+'s geometry features add no independent signal once pitch-type sequencing is accounted for; its predictive power comes from sequencing, not the tunnel itself.",
+      "Deception+ can still partly track pitcher identity through arm slot and extension (ICC 0.90–0.99), even after removing the most identity-prone features.",
+      "Small samples are noisy. Only Stuff+ currently applies shrinkage — scores under ~300 pitches should be read with caution.",
+      "All four models include season as a feature and need an annual retrain once a new season accumulates enough data."
     ]
   },
   "future_work": {
     "status": "draft",
     "items": [
-      "Tunneling+ redesign: the current geometry features add no independent signal beyond pitch-type sequencing. A redesign that focuses directly on pitch-type transition patterns (rather than geometric distances) would be more honest about what the model is actually measuring.",
-      "Pitcher archetype profiles: group pitchers by arsenal shape and sequencing style rather than ranking them on a single axis. More useful for scouting context than a single score.",
-      "Pitcher-holdout test for Location+: the identifiability and memorization audit done for Stuff+ has not yet been run for Location+ or Tunneling+.",
-      "Deception+ with video-derived biomechanics: a computer-vision pipeline using broadcast video and pose tracking to recover timing, leg lift, and ball concealment features that Statcast does not publish. Currently in R&D.",
-      "Combined view: a single page showing all four scores for a pitcher side-by-side with the disagreement highlighted, so the interesting cases stand out.",
-      "A 3D tunneling viewer was developed; a working prototype exists. It is not yet integrated into the site."
+      "Redesign Tunneling+ around pitch-type sequencing directly, instead of geometric distances that add no independent signal.",
+      "Pitcher archetype profiles — group by arsenal shape and sequencing style rather than a single ranked score.",
+      "Run the pitcher-holdout identifiability audit (done for Stuff+ and Deception+) on Location+ and Tunneling+.",
+      "Video-derived biomechanics for Deception+ — pose tracking from broadcast video to capture timing and concealment Statcast doesn't record.",
+      "A combined view showing all four scores for one pitcher side-by-side, with disagreement between them highlighted.",
+      "Finish integrating the 3D tunneling viewer prototype into the site."
     ]
   }
 }
