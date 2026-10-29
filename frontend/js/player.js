@@ -961,8 +961,17 @@ function buildTunnelingPairsTable(pairs) {
   // usage - pct_a/pct_b come from the backend (n_a/n_b over total season
   // pitches). Pairs missing pct (no total_pitches available) are kept
   // rather than silently dropped.
-  const shown = pairs.filter((p) => (p.pct_a === undefined || p.pct_a >= 5) && (p.pct_b === undefined || p.pct_b >= 5));
+  let shown = pairs.filter((p) => (p.pct_a === undefined || p.pct_a >= 5) && (p.pct_b === undefined || p.pct_b >= 5));
   if (!shown.length) return "";
+  // Cap at the 8 highest-usage pairs - "usage" for a pair is bounded by its
+  // rarer pitch type, so rank by min(pct_a, pct_b). Selecting from `shown`
+  // (already composite_score-desc from the backend) rather than re-sorting
+  // the whole list keeps that original Tunnel+ order for the pairs kept.
+  if (shown.length > 8) {
+    const usage = (p) => Math.min(p.pct_a ?? 100, p.pct_b ?? 100);
+    const keep = new Set([...shown].sort((a, b) => usage(b) - usage(a)).slice(0, 8));
+    shown = shown.filter((p) => keep.has(p));
+  }
   const rows = shown.map((p) => {
     const dot = (type) => `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${pitchColor(type)};"></span>`;
     return `<tr>
