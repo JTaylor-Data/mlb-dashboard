@@ -170,7 +170,7 @@
         </div>
 
         <!-- Season history -->
-        <div>
+        <div style="margin-bottom:16px;">
           <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Season History</div>
           <table class="dc-career-table" id="dc-career-table">
             <thead><tr>
@@ -182,6 +182,12 @@
             <tbody id="dc-career-tbody"></tbody>
           </table>
         </div>
+
+        <!-- Feature contributions (live SHAP, v2b fold models) -->
+        <details style="margin-top:4px;">
+          <summary style="font-size:13px;font-weight:700;cursor:pointer;color:var(--forest-dark);user-select:none;">What drives the grade (feature contributions)</summary>
+          <div id="dc-shap-mount" style="margin-top:10px;"></div>
+        </details>
       </div>
     </div>
 
@@ -234,6 +240,6 @@
   <script src="js/nav.js?v=114"></script>
   <script src="js/player-context.js?v=1"></script>
   <script src="js/player-search.js?v=24"></script>
-  <script src="js/deception-model.js?v=5"></script>
+  <script src="js/deception-model.js?v=6"></script>
 </body>
 </html>

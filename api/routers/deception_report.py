@@ -10,9 +10,10 @@ import json
 from pathlib import Path
 
 import pandas as pd
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
 from api.cache import ttl_cache_all_args
+from api.db import get_conn
 from config.model_policy import CURRENT_SEASON, DECEPTION_ACTIVE_VERSION, DECEPTION_PLUS
 
 router = APIRouter(prefix="/api/deception")
@@ -192,3 +193,25 @@ def get_pitcher_breakdown(pitcher_id: int, season: str = None):
         raise HTTPException(404, f"No score for pitcher {pitcher_id} in {season}")
     result["available_seasons"] = available_seasons
     return result
+
+
+@router.get("/pitcher/{pitcher_id}/shap")
+def get_pitcher_shap(pitcher_id: int, season: str, conn=Depends(get_conn)):
+    """Live SHAP breakdown for one pitcher-season, scored through the v2b
+    fold models that held this pitcher out at training time. Only defined
+    for the live v2b model - v2b is the only version with saved fold models."""
+    if DECEPTION_ACTIVE_VERSION != "v2b":
+        raise HTTPException(404, "SHAP breakdown is only available for the live v2b model")
+
+    df = _load_scores("v2b")
+    if df.empty:
+        raise HTTPException(404, "No deception scores found")
+    row = df[(df["pitcher_id"] == pitcher_id) & (df["season"] == season)]
+    if row.empty:
+        raise HTTPException(404, f"No score for pitcher {pitcher_id} in {season}")
+
+    from analytics.deception_v2b_shap import pitcher_shap_breakdown
+    breakdown = pitcher_shap_breakdown(conn, season, pitcher_id, row.iloc[0].to_dict())
+    if breakdown is None:
+        raise HTTPException(404, f"No qualifying pitches found for pitcher {pitcher_id} in {season}")
+    return breakdown

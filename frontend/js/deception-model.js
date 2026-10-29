@@ -170,6 +170,45 @@ async function selectPitcher(pitcherId, season) {
 
   // Career/season table — fetch all seasons this pitcher has
   await renderCareerTable(pitcherId, data.season, data.available_seasons || [data.season]);
+
+  // Live SHAP breakdown (v2b fold models only)
+  loadShapBreakdown(pitcherId, data.season);
+}
+
+// ──────────────────────────────────────────────────────── SHAP breakdown
+function renderShapContributions(breakdown) {
+  if (!breakdown || !breakdown.contributions || !breakdown.contributions.length) {
+    return `<div style="font-size:12.5px;color:var(--text-muted);">No feature breakdown available.</div>`;
+  }
+  const maxAbs = Math.max(...breakdown.contributions.map(([, v]) => Math.abs(v)), 0.01);
+  const rows = breakdown.contributions.map(([f, pts, tv]) => {
+    const halfW = (Math.abs(pts) / maxAbs) * 50;
+    const left  = pts >= 0 ? 50 : 50 - halfW;
+    const clr   = pts >= 0 ? "#1a7f37" : "#c9302c";
+    const tvStr = typeof tv === "number" ? tv.toFixed(2) : "n/a";
+    const label = MECH_LABELS[f] || f;
+    return `<div class="dc-shap-row">
+      <div class="dc-shap-label">${label} <span class="muted">(${tvStr})</span></div>
+      <div class="dc-shap-track">
+        <div class="dc-shap-zero" style="left:50%"></div>
+        <div class="dc-shap-bar" style="left:${left}%;width:${halfW}%;background:${clr};"></div>
+      </div>
+      <div class="dc-shap-val ${pts >= 0 ? "pos" : "neg"}">${pts >= 0 ? "+" : ""}${pts.toFixed(1)}</div>
+    </div>`;
+  }).join("");
+  return `<div>${rows}<div class="dc-shap-note">Contributions are in Deception+ points, scored live through the fold models that held this pitcher out at training time (fold ${breakdown.fold}). The sum may differ from (Deception+−100) by the EB-shrinkage correction.</div></div>`;
+}
+
+async function loadShapBreakdown(pitcherId, season) {
+  const mount = document.getElementById("dc-shap-mount");
+  if (!mount) return;
+  mount.innerHTML = `<div style="font-size:12.5px;color:var(--text-muted);">Loading…</div>`;
+  try {
+    const breakdown = await getJSON(`/api/deception/pitcher/${pitcherId}/shap?season=${season}`);
+    mount.innerHTML = renderShapContributions(breakdown);
+  } catch (e) {
+    mount.innerHTML = `<div style="font-size:12.5px;color:var(--text-muted);">No feature breakdown available for this pitcher/season.</div>`;
+  }
 }
 
 function renderMechBars(data) {
