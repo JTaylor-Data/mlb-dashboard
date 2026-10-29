@@ -956,22 +956,9 @@ function buildSwingTiltGauge(value, leagueAvg, pct) {
 function buildTunnelingPairsTable(pairs) {
   if (!pairs || !pairs.length) return "";
   // Display-only: drops Divergence/Break columns and the pitch-type text
-  // labels (dots + "/" only), and hides (doesn't resort or recompute) any
-  // pair where either pitch type is under 5% of this pitcher's season
-  // usage - pct_a/pct_b come from the backend (n_a/n_b over total season
-  // pitches). Pairs missing pct (no total_pitches available) are kept
-  // rather than silently dropped.
-  let shown = pairs.filter((p) => (p.pct_a === undefined || p.pct_a >= 5) && (p.pct_b === undefined || p.pct_b >= 5));
-  if (!shown.length) return "";
-  // Cap at the 8 highest-usage pairs - "usage" for a pair is bounded by its
-  // rarer pitch type, so rank by min(pct_a, pct_b). Selecting from `shown`
-  // (already composite_score-desc from the backend) rather than re-sorting
-  // the whole list keeps that original Tunnel+ order for the pairs kept.
-  if (shown.length > 8) {
-    const usage = (p) => Math.min(p.pct_a ?? 100, p.pct_b ?? 100);
-    const keep = new Set([...shown].sort((a, b) => usage(b) - usage(a)).slice(0, 8));
-    shown = shown.filter((p) => keep.has(p));
-  }
+  // labels (dots + "/" only). Capped at the top 8 pairs by composite_score
+  // (already sorted desc by the backend), regardless of usage.
+  const shown = pairs.slice(0, 8);
   const rows = shown.map((p) => {
     const dot = (type) => `<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${pitchColor(type)};"></span>`;
     return `<tr>
