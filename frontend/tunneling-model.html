@@ -31,90 +31,63 @@
     #tn-pitcher-shap-table td.plus-pos { color: #1a7f37; font-weight: 700; }
     #tn-pitcher-shap-table td.plus-neg { color: #c9302c; font-weight: 700; }
     #tn-status { font-size: 13px; color: var(--text-muted); margin-top: 8px; }
+
+    /* Feature bubbles */
+    .tn-bubbles { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 14px; }
+    .tn-bubble  { font-size: 11.5px; font-weight: 600; color: var(--forest-dark); background: var(--surface-alt); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; }
+
+    /* Evolution box */
+    .tn-evolution { margin-top: 28px; }
+    .tn-evolution h2 { font-size: 17px; font-weight: 800; color: var(--forest-dark); margin: 0 0 14px; }
+    .tn-evo-list { padding-left: 0; list-style: none; margin: 0; }
+    .tn-evo-list li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; margin-bottom: 8px; font-size: 13px; line-height: 1.55; color: var(--text); }
+    .tn-evo-num { font-weight: 800; color: var(--forest-dark); background: var(--surface-alt); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; }
+
+    /* The guts (collapsible) */
+    .tn-hood { margin-top: 28px; }
+    .tn-hood-toggle { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; color: var(--forest-dark); cursor: pointer; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
+    .tn-hood-toggle:hover { background: var(--surface-alt); }
+    .tn-hood-toggle[aria-expanded="true"] { background: var(--surface-alt); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+    .tn-hood-chevron { transition: transform 0.2s; font-size: 12px; }
+    .tn-hood-toggle[aria-expanded="true"] .tn-hood-chevron { transform: rotate(180deg); }
+    .tn-hood-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 16px; display: none; }
+    .tn-hood-body.open { display: block; }
   </style>
 </head>
 <body>
   <div id="nav"></div>
   <div id="subnav"></div>
   <div class="page">
-    <h1>Tunneling+ Model</h1>
+    <h1>Tunneling+</h1>
     <p class="tn-blurb">
-      v3, the current standard. A single trained model (LightGBM, no hand-built composite) that scores every real
-      pitch using up to 6 pitches of real, same-at-bat sequence history: for each pitch back (lag 1-6), how far apart
-      it and the current pitch were at this pitcher's own <b>commit point</b> (reused from v2 - the distance from the
-      plate reached 200ms before arrival, computed from that pitcher's own fastest fastball-family pitch, not a fixed
-      distance for every pitcher) and at the plate, plus a shape-break term and the prior pitch's type. Unlike v1/v2,
-      same-type prior pitches are NOT excluded - a pitcher's 2nd straight fastball is real information, not noise to
-      drop. The model has no separate "pair score" at all - it's trained directly against real run-value outcomes
-      (delta_run_exp) and scored 100 = league average, same convention as every other model on this site. A tighter
-      score spread than Stuff+ is expected here, not a flaw: tunneling is a real but inherently smaller lever a
-      pitcher can pull independently, compared to raw pitch quality.
+      Grades how indistinguishable a pitcher's pitches look from each other, from release all the way to the
+      plate, using up to 6 pitches of real same-at-bat sequence history. A tighter score spread than Stuff+ is
+      expected here, not a flaw: tunneling is a real but inherently smaller lever than raw pitch quality.
     </p>
+    <div class="tn-bubbles">
+      <span class="tn-bubble">Commit-point distance</span>
+      <span class="tn-bubble">Plate-arrival distance</span>
+      <span class="tn-bubble">Shape-break</span>
+      <span class="tn-bubble">Prior pitch type</span>
+      <span class="tn-bubble">6-pitch lag history</span>
+    </div>
 
     <div class="plus-explainer">
       <div class="plus-explainer-icon">&#8505;&#65039;</div>
       <div>
         <div class="plus-explainer-title">How to read this number</div>
         <div class="plus-explainer-body">
-          <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b> from that
-          season's league-wide average - a score of 110 means a pitcher graded roughly 1 standard deviation better
-          than average that season, <b>not "10% better."</b> Scores are z-scored fresh within each season, so the
-          same score in two different years means the same relative standing, not necessarily the same raw value.
+          <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b>.
+          Scores are z-scored fresh within each season, so the same score in two different years means the
+          same relative standing, not necessarily the same raw value. A score of 110 means roughly 1 SD
+          better than that season's average, <b>not "10% better."</b>
         </div>
       </div>
     </div>
 
-    <div class="tn-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Model</h3>
-        <div class="tn-meta-grid" id="tn-meta-mount"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Lag-Slot Importance (SHAP)</h3>
-        <div id="tn-lagshap-mount"></div>
-        <div class="tn-note">Mean absolute SHAP contribution per pitch-back (commit + plate + shape-break distances, plus prior pitch type) - how much each lag slot actually moves a prediction, on average. Falls off with distance back, as expected: what happened 1 pitch ago matters more than 6 pitches ago.</div>
-      </div>
-    </div>
-
-    <div class="tn-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Sequential Same-At-Bat Test</h3>
-        <div id="tn-seq-mount"></div>
-        <div class="tn-note" id="tn-seq-note"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Out-of-Sample Predictive Validity</h3>
-        <table class="data-table tn-table" id="tn-predictive-table"></table>
-        <div class="tn-note">A model trained on every season except 2024, scored on 2024's pitches, correlated against each pitcher's REAL 2025 outcomes - a genuine out-of-sample check, not in-sample fit.</div>
-      </div>
-    </div>
-
-    <div class="tn-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Year-Over-Year Stability</h3>
-        <table class="data-table tn-table" id="tn-yoy-table"></table>
-        <div class="tn-note" id="tn-yoy-note"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Cross-Model Correlation, Cross-Validation (2021-2025)</h3>
-        <table class="data-table tn-table" id="tn-cross-table"></table>
-        <table class="data-table tn-table" id="tn-cv-table" style="margin-top:14px;"></table>
-      </div>
-    </div>
-
-    <div class="tn-layout section">
-      <div class="card">
-        <h3 style="margin-top:0;">Highest Tunneling+</h3>
-        <table class="data-table tn-table" id="tn-top-table"></table>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0;">Lowest Tunneling+</h3>
-        <table class="data-table tn-table" id="tn-bottom-table"></table>
-      </div>
-    </div>
-
+    <!-- PITCHER LOOKUP -->
     <div class="card section">
-      <h3 style="margin-top:0;">Inspect a Pitcher</h3>
+      <h3 style="margin-top:0;">Pitcher lookup</h3>
       <div class="controls-row">
         <div style="min-width:320px; flex:1; max-width:420px;">
           <span class="control-label">Pitcher</span>
@@ -132,11 +105,72 @@
       <div id="tn-pitcher-mount" style="margin-top:16px;"></div>
     </div>
 
-    <h2 style="font-size:17px;font-weight:800;color:var(--forest-dark);margin:32px 0 14px;">What's behind it</h2>
-    <div id="guts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:28px;"></div>
+    <!-- RESULTS -->
+    <div class="tn-layout section">
+      <div class="card">
+        <h3 style="margin-top:0;">Highest Tunneling+</h3>
+        <table class="data-table tn-table" id="tn-top-table"></table>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0;">Lowest Tunneling+</h3>
+        <table class="data-table tn-table" id="tn-bottom-table"></table>
+      </div>
+    </div>
 
-    <h2 style="font-size:17px;font-weight:800;color:var(--forest-dark);margin:32px 0 14px;">How it evolved</h2>
-    <ol id="evolution-list" style="padding-left:20px;margin:0 0 28px;font-size:13px;line-height:1.7;color:var(--text);"></ol>
+    <!-- EVOLUTION -->
+    <div class="tn-evolution section">
+      <h2>The evolution</h2>
+      <ul class="tn-evo-list" id="evolution-list"><li><span class="tn-evo-num">1</span><span>Loading...</span></li></ul>
+    </div>
+
+    <!-- THE GUTS -->
+    <div class="tn-hood section">
+      <button class="tn-hood-toggle" id="tn-hood-toggle" aria-expanded="false" aria-controls="tn-hood-body">
+        The guts: validation for the live model
+        <span class="tn-hood-chevron" aria-hidden="true">v</span>
+      </button>
+      <div class="tn-hood-body" id="tn-hood-body">
+        <div class="tn-layout" style="margin-bottom:16px;">
+          <div class="card">
+            <h3 style="margin-top:0;">Model</h3>
+            <div class="tn-meta-grid" id="tn-meta-mount"></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0;">Lag-slot importance (SHAP)</h3>
+            <div id="tn-lagshap-mount"></div>
+            <div class="tn-note">Mean absolute SHAP contribution per pitch-back (commit + plate + shape-break distances, plus prior pitch type): how much each lag slot actually moves a prediction, on average. Falls off with distance back, as expected: what happened 1 pitch ago matters more than 6 pitches ago.</div>
+          </div>
+        </div>
+
+        <div class="tn-layout" style="margin-bottom:16px;">
+          <div class="card">
+            <h3 style="margin-top:0;">Sequential same-at-bat test</h3>
+            <div id="tn-seq-mount"></div>
+            <div class="tn-note" id="tn-seq-note"></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0;">Out-of-sample predictive validity</h3>
+            <table class="data-table tn-table" id="tn-predictive-table"></table>
+            <div class="tn-note">A model trained on every season except 2024, scored on 2024's pitches, correlated against each pitcher's real 2025 outcomes: a genuine out-of-sample check, not in-sample fit.</div>
+          </div>
+        </div>
+
+        <div class="tn-layout" style="margin-bottom:16px;">
+          <div class="card">
+            <h3 style="margin-top:0;">Year-over-year stability</h3>
+            <table class="data-table tn-table" id="tn-yoy-table"></table>
+            <div class="tn-note" id="tn-yoy-note"></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-top:0;">Cross-model correlation, cross-validation (2021-2025)</h3>
+            <table class="data-table tn-table" id="tn-cross-table"></table>
+            <table class="data-table tn-table" id="tn-cv-table" style="margin-top:14px;"></table>
+          </div>
+        </div>
+
+        <div id="guts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"></div>
+      </div>
+    </div>
   </div>
 
   <script src="js/api.js?v=17"></script>
@@ -168,9 +202,19 @@
       }
       const ev = mp["tunneling_plus"] && mp["tunneling_plus"].evolution;
       if (ev && ev.items) {
-        document.getElementById("evolution-list").innerHTML = ev.items.map(i => `<li style="margin-bottom:8px;">${i}</li>`).join("");
+        document.getElementById("evolution-list").innerHTML = ev.items.map((i, idx) =>
+          `<li><span class="tn-evo-num">${idx + 1}</span><span>${i}</span></li>`
+        ).join("");
       }
     } catch(e) { console.error("guts load error:", e); }
+
+    const hoodBtn = document.getElementById("tn-hood-toggle");
+    const hoodBody = document.getElementById("tn-hood-body");
+    hoodBtn.addEventListener("click", () => {
+      const open = hoodBtn.getAttribute("aria-expanded") === "true";
+      hoodBtn.setAttribute("aria-expanded", String(!open));
+      hoodBody.classList.toggle("open", !open);
+    });
   })();
   </script>
 </body>
