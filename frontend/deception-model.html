@@ -87,6 +87,17 @@
     .verdict-mixed   { color: #b45309; }
     .verdict-fail    { color: #c9302c; }
     .verdict-pending { color: var(--text-muted); }
+
+    /* Feature bubbles */
+    .dc-bubbles { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 2px; }
+    .dc-bubble  { font-size: 11.5px; font-weight: 600; color: var(--forest-dark); background: var(--surface-alt); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; }
+
+    /* Evolution box */
+    .dc-evolution { margin-top: 28px; }
+    .dc-evolution h3 { font-size: 14px; font-weight: 800; color: var(--forest-dark); margin: 0 0 10px; }
+    .dc-evo-list { padding-left: 0; list-style: none; margin: 0; }
+    .dc-evo-list li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; margin-bottom: 8px; font-size: 13px; line-height: 1.55; color: var(--text); }
+    .dc-evo-num { font-weight: 800; color: var(--forest-dark); background: var(--surface-alt); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -102,45 +113,26 @@
         <span class="dc-badge" id="dc-label-badge" style="display:none"></span>
       </div>
       <p class="dc-blurb">
-        Measures how much a pitcher's <b>arm slot, release point, extension, and delivery consistency</b>
-        predict outcomes — independent of pitch velocity, movement, and spin. This is the "mechanics as
-        deception" question: does the way a pitcher's body moves, rather than what the pitch does, make
-        hitters worse off? The model uses only measurable body and release data from Statcast; it cannot
-        see pitch type, velocity, or anything that describes the pitch itself, so it can't re-derive Stuff+
-        under a different name. Scores are <b>cross-fitted</b>: every pitcher's score comes from models
-        that never trained on their own pitches, so there is no data leakage.
+        Grades release mechanics (arm slot, extension, release point) as predictors of outcomes,
+        independent of pitch velocity, movement, or spin. Scores are <b>cross-fitted</b>: every pitcher's
+        grade comes from models that never trained on their own pitches.
       </p>
+      <div class="dc-bubbles">
+        <span class="dc-bubble">Arm slot</span>
+        <span class="dc-bubble">Release extension</span>
+        <span class="dc-bubble">Release position</span>
+        <span class="dc-bubble">Delivery consistency</span>
+      </div>
       <div class="dc-scale-box">
         <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b>
-        above or below league average — a score of 120 means a pitcher's mechanics graded roughly 2 SD
+        above or below league average: a score of 120 means a pitcher's mechanics graded roughly 2 SD
         more deceptive than the league that year. Scores are standardized within each season, so the
         same score in different years means the same relative standing. Minimum <b>300 pitches</b>
         to qualify; below-threshold pitchers are shrunk toward average and marked unqualified.
       </div>
     </div>
 
-    <!-- LEADERBOARD -->
-    <div class="card section">
-      <div class="dc-controls">
-        <div>
-          <span class="control-label">Season</span>
-          <select id="dc-season-sel" class="control-select"></select>
-        </div>
-        <div id="dc-lb-caption" class="dc-lb-caption" style="margin-top:18px;"></div>
-      </div>
-      <div class="dc-lb-grid">
-        <div>
-          <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Most Deceptive</div>
-          <div id="dc-lb-top"></div>
-        </div>
-        <div>
-          <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Least Deceptive</div>
-          <div id="dc-lb-bot"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- PITCHER LOOKUP -->
+<!-- PITCHER LOOKUP -->
     <div class="card section">
       <h3 style="margin-top:0;">Pitcher Lookup</h3>
       <div class="dc-lookup-controls">
@@ -160,14 +152,14 @@
       <div id="dc-pitcher-mount" style="margin-top:12px;display:none;">
         <div class="dc-summary">
           <div>
-            <div class="dc-summary-score" id="dc-score-val">—</div>
+            <div class="dc-summary-score" id="dc-score-val">–</div>
             <div class="dc-summary-meta">
               <span id="dc-pct-val" class="dc-summary-pct"></span><br>
               <span id="dc-pitches-val"></span>
             </div>
           </div>
           <div id="dc-unqualified-msg" class="dc-unqualified" style="display:none;">
-            Below 300-pitch minimum — score is shrunk toward average and less reliable.
+            Below 300-pitch minimum, score is shrunk toward average and less reliable.
           </div>
         </div>
 
@@ -193,19 +185,46 @@
       </div>
     </div>
 
-    <!-- UNDER THE HOOD -->
+    <!-- LEADERBOARD -->
+    <div class="card section">
+      <div class="dc-controls">
+        <div>
+          <span class="control-label">Season</span>
+          <select id="dc-season-sel" class="control-select"></select>
+        </div>
+        <div id="dc-lb-caption" class="dc-lb-caption" style="margin-top:18px;"></div>
+      </div>
+      <div class="dc-lb-grid">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Most Deceptive</div>
+          <div id="dc-lb-top"></div>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Least Deceptive</div>
+          <div id="dc-lb-bot"></div>
+        </div>
+      </div>
+    </div>
+
+    
+    <!-- EVOLUTION -->
+    <div class="dc-evolution section">
+      <h3>The evolution</h3>
+      <ul class="dc-evo-list" id="dc-evo-list">
+        <li><span class="dc-evo-num">1</span><span><b>v1:</b> proof-of-concept single-season model, per-request scoring. Split-half r=0.998 was an artifact (consistency features computed on the full season before splitting); body features (height, weight) could memorize pitcher identity.</span></li>
+        <li><span class="dc-evo-num">2</span><span><b>v2:</b> cross-fitted ensemble (pitcher-grouped folds). Removed body identity features (height, weight, arm_angle_std, release_extension_std, release_consistency) per pre-registered identifiability rules. No per-request scoring, all scores pre-computed. Season selector enabled (2021-2026).</span></li>
+        <li><span class="dc-evo-num">3</span><span><b>v2b (current):</b> dropped the season feature per a pre-registered inconclusive_means_drop rule (ablation found it did not help). Same cross-fitted ensemble architecture otherwise. Scores 2021-2026.</span></li>
+      </ul>
+    </div>
+
+    <!-- THE GUTS -->
     <div class="dc-hood section">
       <button class="dc-hood-toggle" aria-expanded="false" id="dc-hood-btn">
-        <span>Under the hood</span>
-        <span class="dc-hood-chevron">?</span>
+        <span>The guts: validation for the live model</span>
+        <span class="dc-hood-chevron">v</span>
       </button>
       <div class="dc-hood-body" id="dc-hood-body">
         <div class="dc-cards" id="dc-cards-mount"></div>
-        <div style="font-size:12px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Version history</div>
-        <ul id="dc-version-list" style="padding-left:20px;margin:0;font-size:13px;line-height:1.7;color:var(--text);">
-          <li><b>v1</b> — proof-of-concept single-season model. Per-request scoring. Split-half r=0.998 was artifact (consistency features computed on full season before splitting). Body features (height, weight) could memorize pitcher identity.</li>
-          <li><b>v2</b> — cross-fitted ensemble (pitcher-grouped folds). Removed body identity features (height, weight, arm_angle_std, release_extension_std, release_consistency) per pre-registered identifiability rules. No per-request scoring — all scores pre-computed. Season selector enabled (2021–2026). Gates and evidence bar checked.</li>
-        </ul>
       </div>
     </div>
 
@@ -215,6 +234,6 @@
   <script src="js/nav.js?v=114"></script>
   <script src="js/player-context.js?v=1"></script>
   <script src="js/player-search.js?v=24"></script>
-  <script src="js/deception-model.js?v=4"></script>
+  <script src="js/deception-model.js?v=5"></script>
 </body>
 </html>

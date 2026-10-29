@@ -52,11 +52,11 @@ let _currentPitcher = null;
 let _playerNames = {};     // pitcher_id → name
 
 // ──────────────────────────────────────────────────────── load player names
-async function loadPlayerNames() {
+async function loadPlayerNames(season) {
   try {
-    const data = await getJSON("api/players?limit=2000");
-    if (data && data.players) {
-      for (const p of data.players) {
+    const data = await getJSON(`/api/players/all?season=${season}`);
+    if (Array.isArray(data)) {
+      for (const p of data) {
         if (p.player_id && p.name) _playerNames[p.player_id] = p.name;
       }
     }
@@ -313,7 +313,8 @@ async function loadVersionMeta() {
     const meta = await getJSON("api/deception/meta");
     if (!meta) return;
     const badge = document.getElementById("dc-version-badge");
-    badge.textContent = "v" + (meta.version || "2");
+    const v = meta.version || "2";
+    badge.textContent = v.startsWith("v") ? v : "v" + v;
   } catch(e) { /* non-fatal */ }
 }
 
@@ -360,7 +361,8 @@ function wirePlayerSearch() {
 
 // ──────────────────────────────────────────────────────── main init
 (async function init() {
-  await loadPlayerNames();
+  const initSeason = Number(getParam("season")) || 2026;
+  await loadPlayerNames(initSeason);
   loadVersionMeta();
   loadLabelBadge();
 
