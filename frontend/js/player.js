@@ -128,7 +128,6 @@ function renderPlayerCard(data) {
       <div class="plus-scorecard-row">
         ${badgeFn("STUFF+", cardData.badge)}
         ${badgeFn("DECEPTION+", cardData.deception_badge)}
-        ${badgeFn("TUNNEL+", cardData.tunneling_badge)}
         ${badgeFn("LOCATION+", cardData.location_badge)}
       </div>
     `;
@@ -158,7 +157,8 @@ function renderPlayerCard(data) {
   }
   const ilHtml = buildIlBadge(data.il_status);
 
-  const positionHtml = data.position ? `<div class="player-card-position">${data.position}</div>` : "";
+  // Suppress generic "P" for pitchers — their role (SP/RP) already shows via handedness line
+  const positionHtml = (data.position && data.role !== "pitcher") ? `<div class="player-card-position">${data.position}</div>` : "";
   document.getElementById("player-card-mount").innerHTML = `
     <div class="card player-card">
       <div class="player-card-id">
@@ -963,10 +963,10 @@ function renderRightPanel(data) {
             ${data.babip_against ? `<div class="babip-widget"><div class="pitch-usage-title">BABIP Against</div><div class="gauge-value" style="text-align:center;">${data.babip_against.value_str}</div></div>` : ""}
           </div>
         </div>
-        ${buildTunnelingPairsTable(data.tunneling_pairs)}
+        <div id="tunneling-pairs-mount"></div>
         <div id="similar-players-mount"></div>
       </div>
-      <div class="movement-plot-caption">Dashed line = this pitcher's average arm angle (labeled). Shaded circles = the league-wide average movement for that pitch among OTHER pitchers with a similar (within 3&#176;) arm angle - hover for the pitcher count. Arm-side-adjusted break, matching Baseball Savant - positive HB is arm side for either hand. Only the 50% of pitches closest to each pitch type's own average are plotted; the table on the right uses every pitch. Fixed across the L/R toggle (a pitch's movement doesn't depend on who's in the box) - still updates with season. Pitch usage by batter side is shown on the Pitch Locations card.</div>
+      <div class="movement-plot-caption">Dashed line = arm angle (labeled). Shaded circles = league avg movement for pitchers within 3&#176; of same arm angle (hover for count). Arm-side-adjusted HB (positive = arm side). Inner 50% of pitches plotted; table uses all. Fixed on L/R toggle; updates with season. Usage by batter side: Pitch Locations card.</div>
     `;
   } else {
     const sf = data.swing_field;
@@ -1609,7 +1609,7 @@ async function renderPitchLocations() {
       ${d.has_data ? `
         <div class="heatmap-subtitle">Pitcher View</div>
         <div class="heatmap-wrap">${buildPitchLocationsSVG(d, state.heatmapSplit, currentPitchUsage)}</div>
-        <div class="heatmap-caption">${d.n_pitches} pitches - one dot per pitch type at its season-average location. Dot size = league-wide command percentile for that pitch type (smallest = best-commanded); falls back to this pitcher's own spread when the league sample's too thin to rank. Pitch types thrown under 5% of the time to the active batter hand aren't shown.</div>
+        <div class="heatmap-caption">${d.n_pitches} pitches — one dot per type at season-avg location. Dot size = command percentile (smallest = best); uses pitcher's own spread when league sample is thin. Pitch types &lt;5% vs. active hand hidden.</div>
       ` : `<div class="empty-state">No pitch-location data for this selection.</div>`}
     </div>
   `;
@@ -1621,14 +1621,14 @@ async function renderPitchLocations() {
   });
 }
 
-// Loading bar tied to GET /api/player/{id}/progress's real checkpoints
-// (see api/routers/players.py's _build_player_steps) - not a fake timer.
-function setLoadProgress(active, pct, label) {
+// Indeterminate loading bar — animates via CSS (@keyframes load-sweep),
+// no checkpoint-driven width updates. The label is static HTML ("This could
+// take up to 10 seconds"); pct/label args are accepted but ignored so call
+// sites don't need to change.
+function setLoadProgress(active) {
   const el = document.getElementById("load-progress");
   if (!el) return;
   el.classList.toggle("active", active);
-  document.getElementById("load-progress-fill").style.width = `${pct}%`;
-  document.getElementById("load-progress-label").textContent = label || "";
 }
 
 async function loadPlayer() {
@@ -1668,6 +1668,21 @@ async function loadPlayer() {
   document.getElementById("last-5-title").textContent = state.mode === "pitcher" ? "Last 5 Outings" : "Last 5 Games";
   document.getElementById("last-5-mount").innerHTML = buildLast5Card(data.last_5_games, state.mode, data.il_status);
   if (state.mode === "pitcher") {
+    // Tunneling pairs are fetched separately — season_all_pairs() is slow on
+    // first call and would block the main player payload. Fill the placeholder
+    // after the page is already rendered.
+    const pairsMount = document.getElementById("tunneling-pairs-mount");
+    if (pairsMount) {
+      const capturedId = requestId;
+      fetch(`/api/player/${state.playerId}/tunneling-pairs?season=${state.season}`)
+        .then(r => r.json())
+        .then(pairs => {
+          if (capturedId !== loadPlayerRequestId) return;
+          const el = document.getElementById("tunneling-pairs-mount");
+          if (el) el.innerHTML = buildTunnelingPairsTable(pairs);
+        })
+        .catch(() => {});
+    }
     currentPitchUsage = data.pitch_usage_by_stand;
     renderTable(data.pitch_table, "");
     await renderPitchLocations();
@@ -1971,7 +1986,6 @@ async function defaultToTopPerformer() {
 
 (async function init() {
   state.season = await seasonSelect.load();
-  await playerSearch.load(state.season);
 
   // URL params win over everything — lets external links (probable-pitchers,
   // top performers, etc.) navigate directly to a specific player by ID.
@@ -1984,8 +1998,11 @@ async function defaultToTopPerformer() {
     if (urlSeason && urlSeason !== String(state.season)) {
       state.season = Number(urlSeason);
       seasonSelect.set(state.season);
-      await playerSearch.load(state.season);
     }
+    // Load the player list in the background — not needed to render the player
+    // card from URL params (we fall back to the raw param values if the list
+    // isn't ready yet), so don't block the page on it.
+    playerSearch.load(state.season);
     const fromSearch = playerSearch.selectDefault((p) => p.player_id === pid);
     const chosen = fromSearch || { player_id: pid, role: urlRole || "pitcher", name: "" };
     if (fromSearch) playerSearch.setValue(fromSearch);
@@ -1995,6 +2012,9 @@ async function defaultToTopPerformer() {
     await loadPlayer();
     return;
   }
+
+  // No URL params — need the player list before we can pick a default.
+  await playerSearch.load(state.season);
 
   // A player selected on another tab (player/splits/stuff-model/
   // tunneling-model/deception-model all share this) wins over the default -

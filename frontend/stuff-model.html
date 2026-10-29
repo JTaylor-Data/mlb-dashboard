@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Stuff+ — MLB Dashboard</title>
+  <title>Stuff+ � MLB Dashboard</title>
   <link rel="stylesheet" href="css/theme.css?v=45" />
   <style>
-    /* ── Page-level layout ── */
+    /* -- Page-level layout -- */
     .sp-content  { max-width: 1000px; }
     .sp-wide     { max-width: 1200px; }
 
-    /* ── Header band ── */
+    /* -- Header band -- */
     .sp-header   { margin: 20px 0 6px; }
     .sp-title    { font-size: 24px; font-weight: 800; color: var(--forest-dark); display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     .sp-badge    { font-size: 11.5px; font-weight: 700; letter-spacing: 0.3px; padding: 3px 9px; border-radius: 12px; background: var(--bark-tint); color: var(--bark-dark); white-space: nowrap; }
@@ -19,15 +19,15 @@
     .sp-scale    { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 4px; }
     .sp-footer   { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; }
 
-    /* ── Scale explainer box ── */
+    /* -- Scale explainer box -- */
     .sp-scale-box { background: var(--surface-alt); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 13px; color: var(--text); line-height: 1.55; margin: 12px 0 0; max-width: 860px; }
     .sp-scale-box b { color: var(--forest-dark); }
 
-    /* ── Season row ── */
+    /* -- Season row -- */
     .sp-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 20px 0 12px; }
     .sp-controls .control-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; display: block; margin-bottom: 3px; }
 
-    /* ── Two-column leaderboard ── */
+    /* -- Two-column leaderboard -- */
     .sp-lb-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     @media (max-width: 680px) { .sp-lb-grid { grid-template-columns: 1fr; } }
 
@@ -40,7 +40,7 @@
     .sp-lb-val   { font-size: 14px; font-weight: 800; text-align: right; }
     .sp-lb-caption { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
 
-    /* ── Pitcher lookup ── */
+    /* -- Pitcher lookup -- */
     .sp-lookup-controls { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
     .sp-lookup-status   { font-size: 13px; color: var(--text-muted); min-height: 18px; margin-bottom: 8px; }
 
@@ -87,7 +87,7 @@
     /* Pitch type leaderboard selector row */
     .sp-pt-lb-controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
 
-    /* ── Under the hood ── */
+    /* -- Under the hood -- */
     .sp-hood { margin-top: 28px; }
     .sp-hood-toggle { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; color: var(--forest-dark); cursor: pointer; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
     .sp-hood-toggle:hover { background: var(--surface-alt); }
@@ -139,23 +139,23 @@
   <div id="subnav"></div>
   <div class="page">
 
-    <!-- ═══════════════════════════════════════════════════════ HEADER -->
+    <!-- ------------------------------------------------------- HEADER -->
     <div class="sp-header sp-content">
       <div class="sp-title">
         <span id="sp-title-text">Stuff+</span>
-        <span class="sp-badge" id="sp-version-badge">v4 — loading…</span>
+        <span class="sp-badge" id="sp-version-badge">v4 � loading�</span>
       </div>
       <p class="sp-blurb" id="sp-opening-blurb"></p>
       <p class="sp-scale" id="sp-scale-statement"></p>
       <div class="sp-scale-box" id="sp-scale-box">
         <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b>.
-        A score of 120 means the pitcher's stuff graded roughly 2 standard deviations above average — not "20% better."
+        A score of 120 means the pitcher's stuff graded roughly 2 standard deviations above average � not "20% better."
         Scores are z-scored fresh within each season so the same score in two different years means the same relative standing.
       </div>
-      <div class="sp-footer" id="sp-meta-footer">Loading model info…</div>
+      <div class="sp-footer" id="sp-meta-footer">Loading model info�</div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════ LEADERBOARD -->
+    <!-- ------------------------------------------------------- LEADERBOARD -->
     <div class="card section sp-wide">
       <div class="sp-controls">
         <div>
@@ -177,14 +177,14 @@
       <div class="sp-lb-caption" id="sp-lb-caption"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════ PITCHER LOOKUP -->
+    <!-- ------------------------------------------------------- PITCHER LOOKUP -->
     <div class="card section sp-wide" id="sp-lookup-card">
       <h3 style="margin:0 0 12px;">Pitcher lookup</h3>
       <div class="sp-lookup-controls">
         <div style="min-width:300px; flex:1; max-width:400px;">
           <span class="control-label">Pitcher</span>
           <div class="player-search">
-            <input type="text" class="player-search-input" id="sp-player-input" placeholder="Search any pitcher…" autocomplete="off" />
+            <input type="text" class="player-search-input" id="sp-player-input" placeholder="Search A Player" autocomplete="off" />
             <div class="player-search-dropdown" id="sp-player-dropdown"></div>
           </div>
         </div>
@@ -197,14 +197,14 @@
       <div id="sp-lookup-panel"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════ PITCH-TYPE LEADERBOARD -->
+    <!-- ------------------------------------------------------- PITCH-TYPE LEADERBOARD -->
     <div class="card section sp-wide">
       <h3 style="margin:0 0 10px;">Leaderboard by pitch type</h3>
       <div class="sp-pt-lb-controls">
         <div>
           <span class="control-label">Pitch type</span>
           <select id="sp-pt-select">
-            <option value="FF">FF — Four-seam</option>
+            <option value="FF">FF � Four-seam</option>
           </select>
         </div>
         <div>
@@ -225,16 +225,16 @@
       <div class="sp-lb-caption" id="sp-pt-caption"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════════════ UNDER THE HOOD -->
+    <!-- ------------------------------------------------------- UNDER THE HOOD -->
     <div class="sp-hood section sp-wide">
       <button class="sp-hood-toggle" id="sp-hood-toggle" aria-expanded="false" aria-controls="sp-hood-body">
         Under the hood: ablation and testing
-        <span class="sp-hood-chevron" aria-hidden="true">▼</span>
+        <span class="sp-hood-chevron" aria-hidden="true">?</span>
       </button>
       <div class="sp-hood-body" id="sp-hood-body">
         <div class="sp-cards" id="sp-cards-mount"></div>
         <h3 style="margin:16px 0 8px; font-size:14px;">Version history</h3>
-        <ul class="sp-version-list" id="sp-version-list" style="opacity:0.7;font-style:italic;">Loading…</ul>
+        <ul class="sp-version-list" id="sp-version-list" style="opacity:0.7;font-style:italic;">Loading�</ul>
       </div>
     </div>
 
@@ -243,8 +243,8 @@
   <script src="js/api.js?v=17"></script>
   <script src="js/nav.js?v=113"></script>
   <script src="js/player-context.js?v=1"></script>
-  <script src="js/player-search.js?v=21"></script>
-  <script src="js/season-select.js?v=18"></script>
+  <script src="js/player-search.js?v=24"></script>
+  <script src="js/season-select.js?v=19"></script>
   <script src="js/stuff-model.js?v=30"></script>
 </body>
 </html>

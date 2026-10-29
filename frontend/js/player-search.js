@@ -122,7 +122,9 @@ function createPlayerSearch(inputEl, dropdownEl, onSelect, { roleFilter } = {}) 
 
   return {
     async load(_season) {
-      const players = await getJSON("/api/players/all");
+      const resp = await fetch("/api/players/all");
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const players = await resp.json();
       const filtered = roleFilter ? players.filter((p) => p.role === roleFilter) : players;
       allPlayers = filtered.map((p) => ({ ...p, _folded: fold(p.name) }));
     },

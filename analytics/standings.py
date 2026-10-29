@@ -11,7 +11,12 @@ def _team_game_log(games_df):
     """One row per (team, game) - the same game appears twice, once from
     each team's perspective."""
     g = games_df.copy()
-    g[["home_score", "away_score"]] = g["final_score"].str.split("-", expand=True).astype(int)
+    if g.empty:
+        return pd.DataFrame(columns=["team_id", "game_date", "team_score", "opp_score", "won", "margin"])
+    split = g["final_score"].str.split("-", expand=True)
+    if split.shape[1] < 2:
+        return pd.DataFrame(columns=["team_id", "game_date", "team_score", "opp_score", "won", "margin"])
+    g[["home_score", "away_score"]] = split.astype(int)
     g["home_team"] = g["home_team"].astype(int)
     g["away_team"] = g["away_team"].astype(int)
 
@@ -60,6 +65,10 @@ def compute_standings(conn, season):
             games_played=len(team_log),
         ))
 
+    if not rows:
+        return pd.DataFrame(columns=["team_id", "name", "abbreviation", "league", "division",
+                                     "wins", "losses", "win_pct", "run_diff",
+                                     "one_run_record", "last_10", "last_30", "games_played"])
     standings = pd.DataFrame(rows).merge(teams_df, on="team_id")
     return standings.sort_values(["league", "division", "win_pct"], ascending=[True, True, False])
 

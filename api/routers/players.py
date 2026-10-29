@@ -457,23 +457,40 @@ def _all_players(conn, season):
     # one (where they may have no data). The pitcher_role classification uses
     # the requested season for active players; inactive ones fall back to
     # their own latest season.
+    # A player is a real pitcher only if their listed position says so (P or
+    # the two-way tag TWP) AND they've pitched in >= 3 career games - the
+    # games-pitched threshold alone isn't enough: 120 position players
+    # (catchers, infielders, outfielders) have mopped up 3+ blowout games
+    # over a career without ever being pitchers, e.g. Jeff Mathis, Miguel
+    # Rojas, Josh Harrison. Gating on position fixes that; Ohtani (TWP, 114
+    # games pitched) still clears it.
     df = pd.read_sql("""
         SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws,
                'pitcher' AS role, p.latest_season
         FROM players pl
-        JOIN (SELECT pitcher_id, MAX(season) AS latest_season FROM pitches GROUP BY pitcher_id) p
-          ON pl.player_id = p.pitcher_id
+        JOIN (
+            SELECT pitcher_id, MAX(season) AS latest_season
+            FROM pitches
+            GROUP BY pitcher_id
+            HAVING COUNT(DISTINCT game_id) >= 3
+        ) p ON pl.player_id = p.pitcher_id
+        WHERE pl.position IN ('P', 'TWP')
         UNION
         SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws,
                'batter' AS role, b.latest_season
         FROM players pl
         JOIN (SELECT batter_id, MAX(season) AS latest_season FROM pitches GROUP BY batter_id) b
           ON pl.player_id = b.batter_id
-        -- Exclude pitchers from the batter list (except Ohtani who truly plays both)
-        WHERE pl.player_id = 660271
-           OR pl.player_id NOT IN (
-               SELECT pitcher_id FROM pitches GROUP BY pitcher_id
-           )
+        WHERE pl.player_id NOT IN (
+            SELECT pl2.player_id
+            FROM players pl2
+            JOIN (
+                SELECT pitcher_id FROM pitches
+                GROUP BY pitcher_id
+                HAVING COUNT(DISTINCT game_id) >= 3
+            ) p2 ON pl2.player_id = p2.pitcher_id
+            WHERE pl2.position IN ('P', 'TWP')
+        )
         ORDER BY name
     """, conn)
     pitcher_roles = _pitcher_roles(conn, season)
@@ -637,12 +654,6 @@ def _build_player_steps(conn, player_id, role, split, season):
             "value_str": format_value(stats["babip"], "{:.3f}"),
         }
 
-        all_season_pairs = _tunneling_pair_season(conn, season)
-        base["tunneling_pairs"] = (
-            pitcher_pairs_from_season(all_season_pairs, player_id)
-            if all_season_pairs is not None and not all_season_pairs.empty
-            else []
-        )
 
         summary_rows = []
         filtered = mv
@@ -877,6 +888,72 @@ def get_player_progress(
             conn.close()
 
     return StreamingResponse(gen(), media_type="application/x-ndjson")
+
+
+# ---------------------------------------------------------------------------
+# Part C2: Tunneling pair composite (separate endpoint — slow first call)
+# ---------------------------------------------------------------------------
+
+@router.get("/player/{player_id}/tunneling-pairs")
+def get_tunneling_pairs(
+    player_id: int,
+    season: int = Query(2026),
+    conn=Depends(get_conn),
+):
+    """Per-pitch-type-pair tunneling composite scores for one pitcher-season.
+    Returned as a separate endpoint (not baked into /player/{id}) because
+    the first season call builds all ~2700 pairs (~minutes); subsequent calls
+    are cached. The frontend fetches this after the main player payload lands."""
+    all_season_pairs = _tunneling_pair_season(conn, season)
+    if all_season_pairs is None or all_season_pairs.empty:
+        return []
+    return pitcher_pairs_from_season(all_season_pairs, player_id)
+
+
+# ---------------------------------------------------------------------------
+# Part C2: Player season list (seasons with pitch data + team per season)
+# ---------------------------------------------------------------------------
+
+@router.get("/players/{player_id}/seasons")
+def get_player_seasons(player_id: int, conn=Depends(get_conn)):
+    """Seasons this player has pitch data in, most recent first.
+    Each entry includes the team_id they were on that season (most-used team).
+    Team derivation differs by role:
+      - pitcher in Top inning  → pitching for home team
+      - pitcher in Bot inning  → pitching for away team
+      - batter  in Top inning  → batting for away team
+      - batter  in Bot inning  → batting for home team
+    We run separate subqueries for each role and aggregate before picking the
+    plurality team per season so two-way players also work correctly."""
+    rows = conn.execute(
+        """
+        SELECT season, team_id, SUM(n) AS total FROM (
+            SELECT p.season,
+                   CASE p.inning_topbot WHEN 'Top' THEN g.home_team ELSE g.away_team END AS team_id,
+                   COUNT(*) AS n
+            FROM pitches p JOIN games g ON p.game_id = g.game_id
+            WHERE p.pitcher_id = ?
+            GROUP BY p.season, team_id
+            UNION ALL
+            SELECT p.season,
+                   CASE p.inning_topbot WHEN 'Top' THEN g.away_team ELSE g.home_team END AS team_id,
+                   COUNT(*) AS n
+            FROM pitches p JOIN games g ON p.game_id = g.game_id
+            WHERE p.batter_id = ?
+            GROUP BY p.season, team_id
+        )
+        GROUP BY season, team_id
+        ORDER BY season DESC, total DESC
+        """,
+        (player_id, player_id),
+    ).fetchall()
+
+    seen = {}
+    for season, team_id, _ in rows:
+        if season not in seen:
+            seen[season] = int(team_id) if team_id else None
+
+    return [{"season": s, "team_id": t} for s, t in seen.items()]
 
 
 # ---------------------------------------------------------------------------

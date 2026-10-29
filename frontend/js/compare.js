@@ -31,7 +31,7 @@ let playerSearchA, playerSearchB;
 function buildPlayerSearches() {
   if (playerSearchA) playerSearchA.destroy();
   if (playerSearchB) playerSearchB.destroy();
-  const placeholder = state.role === "pitcher" ? "Search a pitcher..." : "Search a hitter...";
+  const placeholder = state.role === "pitcher" ? "Search A Player" : "Search A Player";
   const inputA = document.getElementById("player-search-input-a");
   const inputB = document.getElementById("player-search-input-b");
   inputA.placeholder = placeholder;

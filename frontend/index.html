@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -46,11 +46,11 @@
        display:none, so it never causes a layout jump when it appears; the
        label's own width changes every checkpoint (step names differ in
        length) but the bar itself doesn't reflow around that. */
-    .load-progress { display: flex; align-items: center; gap: 10px; height: 0; opacity: 0; overflow: hidden; margin: 0; transition: opacity 0.15s ease; }
-    .load-progress.active { height: auto; opacity: 1; margin: 4px 0 12px; }
-    .load-progress-track { flex: 1; height: 4px; background: var(--surface-alt); border-radius: 3px; overflow: hidden; }
-    .load-progress-fill { height: 100%; width: 0%; background: linear-gradient(90deg, var(--forest-light), var(--forest)); border-radius: 3px; transition: width 0.3s ease; }
-    .load-progress-label { font-size: 11px; font-weight: 700; color: var(--text-muted); white-space: nowrap; min-width: 150px; text-align: right; }
+    .load-progress { height: 0; opacity: 0; overflow: hidden; margin: 0; transition: opacity 0.15s ease; }
+    .load-progress.active { height: auto; opacity: 1; margin: 4px 0 12px; display: flex; align-items: center; gap: 10px; }
+    .load-progress-track { flex: 1; height: 8px; background: var(--surface-alt); border-radius: 4px; overflow: hidden; position: relative; }
+    .load-progress-fill { height: 100%; width: 45%; background: linear-gradient(90deg, var(--forest-light), var(--forest)); border-radius: 4px; animation: load-sweep 1.4s ease-in-out infinite alternate; }
+    .load-progress-label { font-size: 11px; color: var(--text-muted); white-space: nowrap; }
 
     .pitch-usage-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-muted); margin-bottom: 8px; }
     .rubber-widget { border-top: 1px solid var(--border); padding-top: 12px; }
@@ -150,8 +150,9 @@
       white-space: nowrap; letter-spacing: 0.2px;
     }
     .xwoba-win-btn:hover:not([aria-pressed="true"]) { border-color: var(--accent); color: var(--accent); }
-    /* active = aria-pressed=true: forest-light (#2d6a4f) bg, white text — WCAG AA contrast ratio ~6.5:1 */
+    /* active = aria-pressed=true: forest-light (#2d6a4f) bg, white text � WCAG AA contrast ratio ~6.5:1 */
     .xwoba-win-btn[aria-pressed="true"] { background: var(--forest-light); color: #fff; border-color: var(--forest-light); }
+    @keyframes load-sweep { from { margin-left: -45%; } to { margin-left: 100%; } }
   </style>
 </head>
 <body>
@@ -164,7 +165,7 @@
       <div style="min-width:320px; flex:1; max-width:420px;">
         <span class="control-label">Player</span>
         <div class="player-search">
-          <input type="text" class="player-search-input" id="player-search-input" placeholder="Search any pitcher or hitter..." autocomplete="off" />
+          <input type="text" class="player-search-input" id="player-search-input" placeholder="Search A Player" autocomplete="off" />
           <div class="player-search-dropdown" id="player-search-dropdown"></div>
         </div>
       </div>
@@ -184,7 +185,7 @@
 
     <div class="load-progress" id="load-progress" aria-hidden="true">
       <div class="load-progress-track"><div class="load-progress-fill" id="load-progress-fill"></div></div>
-      <div class="load-progress-label" id="load-progress-label"></div>
+      <div class="load-progress-label" id="load-progress-label">This could take up to 10 seconds</div>
     </div>
 
     <div id="player-card-mount"></div>
@@ -244,9 +245,9 @@
   <script src="js/gradient.js?v=23"></script>
   <script src="js/nav.js?v=113"></script>
   <script src="js/player-context.js?v=1"></script>
-  <script src="js/player-search.js?v=21"></script>
-  <script src="js/season-select.js?v=18"></script>
-  <script src="js/player.js?v=45"></script>
+  <script src="js/player-search.js?v=24"></script>
+  <script src="js/season-select.js?v=19"></script>
+  <script src="js/player.js?v=48"></script>
 </body>
 </html>
 

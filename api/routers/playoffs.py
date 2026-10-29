@@ -24,7 +24,7 @@ def get_wildcard_race(league: str = Query("AL", pattern="^(AL|NL)$"), season: in
     return {"season": season, "league": league, "race": wildcard_race(conn, season, _standings(conn, season), league)}
 
 
-@ttl_cache()
+@ttl_cache(ttl_seconds=300)  # 5-min TTL: real postseason data from MLB API needs to refresh frequently
 def _bracket(conn, season):
     return unified_bracket(conn, _standings(conn, season), season)
 

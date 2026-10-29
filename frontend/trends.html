@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
@@ -29,7 +29,7 @@
       .trends-page { height: auto; }
     }
 
-    /* â”€â”€ Controls panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* -- Controls panel ----------------------------------- */
     .trends-controls {
       display: flex;
       flex-direction: column;
@@ -84,7 +84,7 @@
     /* player search */
     .player-search { position: relative; }
 
-    /* â”€â”€ Category tabs â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* -- Category tabs ------------------------------------- */
     .cat-tabs {
       display: flex; gap: 0; border-bottom: 2px solid var(--border);
       margin-bottom: 8px; flex-wrap: wrap;
@@ -116,7 +116,7 @@
       border-color: var(--accent); background: var(--accent); color: #fff;
     }
 
-    /* â”€â”€ Metric buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* -- Metric buttons ------------------------------------ */
     #metric-grid {
       display: flex; flex-wrap: wrap; gap: 5px;
     }
@@ -140,7 +140,7 @@
       opacity: 0.3; cursor: not-allowed;
     }
 
-    /* â”€â”€ Right panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    /* -- Right panel --------------------------------------- */
     .trends-right {
       display: flex;
       flex-direction: column;
@@ -244,7 +244,7 @@
             <div class="player-year-row">
               <div class="player-search">
                 <input type="text" class="player-search-input" id="player-input"
-                       placeholder="Search any playerâ€¦" autocomplete="off" />
+                       placeholder="Search A Player" autocomplete="off" />
                 <div class="player-search-dropdown" id="player-datalist-dropdown"></div>
               </div>
               <select class="year-select" id="year-select">
@@ -314,7 +314,7 @@
   <script src="js/api.js?v=18"></script>
   <script src="js/player-context.js?v=1"></script>
   <script src="js/nav.js?v=113"></script>
-  <script src="js/player-search.js?v=21"></script>
+  <script src="js/player-search.js?v=24"></script>
   <script src="js/trends.js?v=11"></script>
 </body>
 </html>
