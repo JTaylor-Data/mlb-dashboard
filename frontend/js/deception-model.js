@@ -262,90 +262,6 @@ async function renderCareerTable(pitcherId, currentSeason, availableSeasons) {
   }
 }
 
-// ──────────────────────────────────────────────────────── under the hood cards
-function buildHoodCards(report) {
-  const el = document.getElementById("dc-cards-mount");
-  el.innerHTML = "";
-  if (!report) return;
-
-  const yoy = report.yoy_stability || {};
-  const pooled_yoy = yoy.pooled;
-  const ss = report.same_season_validity || {};
-  const xfip_r = ss.xFIP?.r;
-  const ns = report.next_season_validity || {};
-  const ns_rs = Object.values(ns).map(v => v.xfip_r).filter(r => r != null);
-  const avg_ns_r = ns_rs.length ? ns_rs.reduce((a, b) => a + b, 0) / ns_rs.length : null;
-  const indep = report.independence || {};
-  const stuff_r = indep.v2_vs_stuff_plus_v4?.r;
-  const loc_r = indep.v2_vs_location_plus_v3?.r;
-
-  const cards = [
-    {
-      title: "(a) What I tried",
-      what: "Cross-validated configurations: v1 baseline (A0), pruned identity-prone features (A1/A2), pitcher-season aggregation (B). Equivalence tests selected the leanest config that isn't significantly worse.",
-      numbers: [
-        ["v1 baseline (A0) xFIP corr", xfip_r != null ? xfip_r.toFixed(3) : "n/a"],
-        ["Chosen config", report._chosen_config || "B"],
-        ["Seasons trained", "2021–2026"],
-      ],
-      verdict: "—",
-      verdict_note: "See part2_results.json for full config test table.",
-    },
-    {
-      title: "(b) Does it repeat?",
-      what: "Year-over-year score correlation for pitchers with ≥300 pitches in consecutive seasons (excluding 2020 pairs). Split-half reliability at 300 pitches.",
-      numbers: [
-        ["Pooled YoY correlation", pooled_yoy != null ? pooled_yoy.toFixed(3) : "—"],
-        ["Target (pre-registered)", "≥ 0.30"],
-        ["Min consecutive pair", yoy.pairs ? Object.values(yoy.pairs).filter(v => v.r != null).map(v => v.r).reduce((a,b) => Math.min(a,b), 1).toFixed(3) : "—"],
-      ],
-      verdict: pooled_yoy != null ? (pooled_yoy >= 0.30 ? "Passes" : "Fails") : "Pending",
-      verdict_note: "Pre-registered threshold: pooled YoY ≥ 0.30, no consecutive pair < 0.25 (excl. 2020).",
-    },
-    {
-      title: "(c) Does it predict results?",
-      what: "Same-season xFIP/ERA correlation (cross-fitted, so no data leakage). Next-season xFIP correlation. Incremental delta-R² over last-season xFIP.",
-      numbers: [
-        ["Same-season xFIP r (cross-fitted)", xfip_r != null ? xfip_r.toFixed(3) : "—"],
-        ["Avg next-season xFIP r", avg_ns_r != null ? avg_ns_r.toFixed(3) : "—"],
-        ["Target (evidence bar)", "≤ −0.20"],
-      ],
-      verdict: avg_ns_r != null ? (avg_ns_r <= -0.20 ? "Passes" : "Mixed") : "Pending",
-      verdict_note: "Pre-registered evidence bar: next-season xFIP r ≤ −0.20. Same-season r expected negative (higher Deception+ = lower xFIP).",
-    },
-    {
-      title: "(d) Is it learning mechanics or pitchers?",
-      what: "Independence from Stuff+ (pitch-level) and Location+ (location-level). Within-pitcher score variation confirms the model isn't just memorizing identity.",
-      numbers: [
-        ["v2 vs Stuff+ v4 r", stuff_r != null ? stuff_r.toFixed(3) : "—"],
-        ["v2 vs Location+ v3 r", loc_r != null ? loc_r.toFixed(3) : "—"],
-        ["Within-pitcher score std", report.memorization_check?.score_within_pitcher_std != null ? report.memorization_check.score_within_pitcher_std.toFixed(2) : "—"],
-      ],
-      verdict: stuff_r != null ? (Math.abs(stuff_r) < 0.40 && Math.abs(loc_r || 0) < 0.40 ? "Passes" : "Mixed") : "Pending",
-      verdict_note: "Low correlation with Stuff+/Location+ confirms Deception+ is measuring something distinct.",
-    },
-  ];
-
-  const VERDICT_COL = { "Passes": "#1a7f37", "Mixed": "#b45309", "Fails": "#c9302c", "Pending": "var(--text-muted)", "—": "var(--text-muted)" };
-
-  for (const card of cards) {
-    const div = document.createElement("div");
-    div.className = "dc-card";
-    const numRows = card.numbers.map(([k, v]) =>
-      `<div><span class="kv-label">${k}: </span><span class="kv-val">${v}</span></div>`
-    ).join("");
-    const col = VERDICT_COL[card.verdict] || "var(--text-muted)";
-    div.innerHTML = `
-      <div class="dc-card-title">${card.title}</div>
-      <div class="dc-card-summary">${card.what}</div>
-      <div class="dc-card-numbers">${numRows}</div>
-      <div class="dc-card-verdict" style="color:${col}">${card.verdict}</div>
-      <div class="dc-card-verdict-note">${card.verdict_note}</div>
-    `;
-    el.appendChild(div);
-  }
-}
-
 // ──────────────────────────────────────────────────────── version badge
 async function loadVersionMeta() {
   try {
@@ -374,14 +290,6 @@ async function loadLabelBadge() {
     }
   } catch(e) { /* non-fatal */ }
 }
-
-// ──────────────────────────────────────────────────────── under-the-hood toggle
-document.getElementById("dc-hood-btn").addEventListener("click", function() {
-  const expanded = this.getAttribute("aria-expanded") === "true";
-  this.setAttribute("aria-expanded", String(!expanded));
-  const body = document.getElementById("dc-hood-body");
-  body.classList.toggle("open", !expanded);
-});
 
 // ──────────────────────────────────────────────────────── player search wiring
 function wirePlayerSearch() {
@@ -429,12 +337,6 @@ function wirePlayerSearch() {
   buildSeasonSelector(available, _currentSeason, "dc-pitcher-season-sel", (s) => {
     if (_currentPitcher) selectPitcher(_currentPitcher, s);
   });
-
-  // Under-the-hood cards
-  try {
-    const report = await getJSON("api/deception/report");
-    buildHoodCards(report);
-  } catch(e) { console.warn("Could not load deception report:", e); }
 
   // Deep-link support
   wirePlayerSearch();

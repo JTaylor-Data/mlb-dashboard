@@ -66,17 +66,18 @@
     "title": "Tunneling+",
     "badge_code": "TUN+",
     "badge_class": "badge-tunnel",
-    "opening_blurb": "Tunneling+ grades how indistinguishable a pitcher's pitches look from each other at the hitter's commit point. It uses lag-context features over the previous six pitches in a plate appearance (commit-point distance, plate-arrival distance, and shape-break between consecutive pitches) as inputs to a five-classifier model. The model was not designed to capture pitch-type sequencing, but a 2026 diagnostic found that its predictive power comes from pitch-type patterns rather than the geometric distances themselves. This is documented as an unresolved finding. A 3D tunneling viewer was developed; a working prototype exists and is not yet integrated into the site.",
-    "scale_statement": "100 = league average among qualifying pitchers that season. 10 points = 1 standard deviation. Minimum 100 pitches (before lag exclusion) and a qualifying commit point required.",
+    "opening_blurb": "Tunneling+ grades how indistinguishable a pitcher's pitches look from each other at the hitter's decision point, and how far apart they end up by the plate. The live version is a hand-built, pair-type-normalized geometric composite, not a trained model: real pairwise distances between every pitch of type A and every pitch of type B that season, scored directly, with no ML step in between.",
+    "scale_statement": "100 = league average among qualifying pitch-type pairs that season. 10 points = 1 standard deviation. A pitcher needs 2+ qualifying pitch types (100+ pitches each) and a qualifying commit point to produce a pair.",
     "available_seasons": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
-    "min_pitches_caption": "Leaderboard and scores require 100 or more pitches and a qualifying commit point (FF/SI/FC pitch) that season.",
+    "min_pitches_caption": "Leaderboard requires 2+ qualifying pitch-type pairs; each pair needs 100+ pitches of both types and a qualifying commit point.",
     "evolution": {
       "status": "draft",
       "items": [
-        "v1 (original): pair-level geometry model. For each pitcher-season, computed real pairwise mean distances at release, commit point, and plate for every qualifying pitch-type pair. decision_similarity_plus and plate_separation_plus combined into tunneling_plus per pair, then usage-weighted. Still powers the Tunneling+ 3D viewer.",
-        "v2 (original v2 attempt): single LightGBM regressor on lag-context geometry features. Trained on same architecture. Developed a sign flip (ERA r = -0.218, xFIP r = -0.348).",
-        "v3 (renamed from v2 during development): single LightGBM regressor with corrected lag features. Corrected sequential same-at-bat test: z = 84.7. A 2026 geometry-isolation diagnostic found the geometry SHAP (z = -1.7) adds nothing beyond pitch-type SHAP (z = 18.6).",
-        "Current live model (v2, promoted 2026-09-21): five-classifier decomposed-event architecture applied to the same lag features. Sign flip resolved (ERA r = +0.182, xFIP r = +0.337). Trained 2015-2026. Router still uses /v3/ paths for backward compatibility."
+        "v1 (original): pair-level geometry model. decision_similarity_plus and plate_separation_plus (geometric mean) per pitch-type pair, usage-weighted into a pitcher score. Still powers the separate Tunneling+ 3D viewer only, on its own static per-season files.",
+        "v2 attempt: single LightGBM regressor on lag-context (up to 6 pitches back) geometry features. Developed a sign flip (ERA r = -0.218, xFIP r = -0.348).",
+        "v3: lag-regressor with corrected lag features, real per-pitcher SHAP. A 2026 diagnostic found its predictive power came from pitch-type identity, not the geometric distances themselves - an unresolved red flag, retired.",
+        "v2 (ML): five-classifier decomposed-event architecture on the same lag features, promoted 2026-09-21, sign flip resolved. No per-pitcher explainability. Retired in favor of the hand-built composite below.",
+        "Current live model: hand-built, pair-type-normalized z-score composite of (-commit distance, +divergence, +shape break), per pitch-type pair, usage-weighted into a pitcher score. No ML involved. The same composite that powers the pair table on each pitcher's own Overview page. YoY xFIP r = -0.108, ERA r = -0.056 (both 95% CIs exclude zero, 2021-2026 pooled)."
       ]
     }
   },

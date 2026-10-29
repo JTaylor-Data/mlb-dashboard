@@ -33,16 +33,6 @@
     .lc-evo-list { padding-left: 0; list-style: none; margin: 0; }
     .lc-evo-list li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; margin-bottom: 8px; font-size: 13px; line-height: 1.55; color: var(--text); }
     .lc-evo-num { font-weight: 800; color: var(--forest-dark); background: var(--surface-alt); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; }
-
-    /* The guts (collapsible) */
-    .lc-hood { margin-top: 28px; }
-    .lc-hood-toggle { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; color: var(--forest-dark); cursor: pointer; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
-    .lc-hood-toggle:hover { background: var(--surface-alt); }
-    .lc-hood-toggle[aria-expanded="true"] { background: var(--surface-alt); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-    .lc-hood-chevron { transition: transform 0.2s; font-size: 12px; }
-    .lc-hood-toggle[aria-expanded="true"] .lc-hood-chevron { transform: rotate(180deg); }
-    .lc-hood-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 16px; display: none; }
-    .lc-hood-body.open { display: block; }
   </style>
 </head>
 <body>
@@ -113,51 +103,6 @@
       <h2>The evolution</h2>
       <ul class="lc-evo-list" id="evolution-list"><li><span class="lc-evo-num">1</span><span>Loading...</span></li></ul>
     </div>
-
-    <!-- THE GUTS -->
-    <div class="lc-hood section">
-      <button class="lc-hood-toggle" id="lc-hood-toggle" aria-expanded="false" aria-controls="lc-hood-body">
-        The guts: validation for the live model
-        <span class="lc-hood-chevron" aria-hidden="true">v</span>
-      </button>
-      <div class="lc-hood-body" id="lc-hood-body">
-        <div class="lc-layout" style="margin-bottom:16px;">
-          <div class="card">
-            <h3 style="margin-top:0;">Model</h3>
-            <div class="lc-meta-grid" id="lc-meta-mount"></div>
-          </div>
-          <div class="card">
-            <h3 style="margin-top:0;">Stop-ship gates</h3>
-            <div id="lc-gates-mount"><div class="lc-note">Loading...</div></div>
-          </div>
-        </div>
-
-        <div class="lc-layout" style="margin-bottom:16px;">
-          <div class="card">
-            <h3 style="margin-top:0;">Split-half reliability</h3>
-            <table class="data-table lc-table" id="lc-reliability-table"></table>
-            <div class="lc-note" id="lc-reliability-note"></div>
-          </div>
-          <div class="card">
-            <h3 style="margin-top:0;">Outcome correlations (pitcher-season)</h3>
-            <div id="lc-outcome-mount"><div class="lc-note">Loading...</div></div>
-          </div>
-        </div>
-
-        <div class="lc-layout" style="margin-bottom:16px;">
-          <div class="card">
-            <h3 style="margin-top:0;">Year-over-year stability</h3>
-            <div id="lc-yoy-mount"><div class="lc-note">Loading...</div></div>
-          </div>
-          <div class="card">
-            <h3 style="margin-top:0;">Next-season predictive validity (BB%)</h3>
-            <div id="lc-predictive-mount"><div class="lc-note">Loading...</div></div>
-          </div>
-        </div>
-
-        <div id="guts-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:16px;"></div>
-      </div>
-    </div>
   </div>
 
   <script src="js/api.js?v=17"></script>
@@ -165,45 +110,18 @@
   <script src="js/player-context.js?v=1"></script>
   <script src="js/player-search.js?v=24"></script>
   <script src="js/season-select.js?v=19"></script>
-  <script src="js/location-model.js?v=3"></script>
+  <script src="js/location-model.js?v=4"></script>
   <script>
   (async function () {
     try {
-      const [vr, mp] = await Promise.all([
-        getJSON("content/validation_results.json"),
-        getJSON("content/model_pages.json"),
-      ]);
-      const m = vr["location_plus"];
-      if (m) {
-        const cards = [m.card_repeatability, m.card_predictive, m.card_independence, m.card_stress].filter(Boolean);
-        const VERDICT_COLOR = { "Passes": "#1a7f37", "Mixed": "#b45309", "Fails": "#c9302c" };
-        if (cards.length) {
-          document.getElementById("guts-grid").innerHTML = cards.map(c => {
-            const col = VERDICT_COLOR[c.verdict] || "var(--text-muted)";
-            return `<div class="card" style="font-size:13px;">
-              <div style="font-weight:700;font-size:14px;color:var(--forest-dark);margin-bottom:6px;">${c.title}</div>
-              <div style="color:var(--text-muted);margin-bottom:8px;line-height:1.55;">${c.what_it_tests}</div>
-              <div style="font-weight:700;color:${col};">${c.verdict}</div>
-              <div style="color:var(--text-muted);font-size:12px;margin-top:4px;line-height:1.5;">${c.verdict_note}</div>
-            </div>`;
-          }).join("");
-        }
-      }
+      const mp = await getJSON("content/model_pages.json");
       const ev = mp["location_plus"] && mp["location_plus"].evolution;
       if (ev && ev.items) {
         document.getElementById("evolution-list").innerHTML = ev.items.map((i, idx) =>
           `<li><span class="lc-evo-num">${idx + 1}</span><span>${i}</span></li>`
         ).join("");
       }
-    } catch(e) { console.error("guts load error:", e); }
-
-    const hoodBtn = document.getElementById("lc-hood-toggle");
-    const hoodBody = document.getElementById("lc-hood-body");
-    hoodBtn.addEventListener("click", () => {
-      const open = hoodBtn.getAttribute("aria-expanded") === "true";
-      hoodBtn.setAttribute("aria-expanded", String(!open));
-      hoodBody.classList.toggle("open", !open);
-    });
+    } catch(e) { console.error("evolution load error:", e); }
   })();
   </script>
 </body>

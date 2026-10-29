@@ -391,118 +391,6 @@ async function populatePitchTypeSelector(season) {
   }
 }
 
-// ──────────────────────────────────────────────────────────── under the hood cards
-function renderCard(id, title, summary, numbers, verdict, verdictNote, detailsHtml) {
-  const vc = verdictClass(verdict);
-  const detailsId = `sp-details-${id}`;
-  return `<div class="sp-card">
-    <div class="sp-card-title">${title}</div>
-    <div class="sp-card-summary">${summary}</div>
-    <div class="sp-card-numbers">${numbers}</div>
-    <div class="sp-card-verdict">
-      <span class="${vc}">${verdict || "Not yet run"}</span>
-    </div>
-    <div class="sp-card-verdict-note">${verdictNote || ""}</div>
-    ${detailsHtml ? `<button class="sp-details-toggle" aria-expanded="false" aria-controls="${detailsId}">Details</button>
-      <div class="sp-details-body" id="${detailsId}">${detailsHtml}</div>` : ""}
-  </div>`;
-}
-
-function renderCards(vr) {
-  const d = vr.stuff_plus_v4;
-  if (!d) return "<div class='muted'>Validation data not loaded.</div>";
-
-  // Card 1: Ablation
-  const abl = d.card_ablation || {};
-  const card1 = renderCard("abl",
-    "What I tried adding and removing",
-    "Three ablation variants (drop season, drop effective_speed, drop both) run against a noise baseline. Horizontal approach angle (haa_residual) separately tested for location leakage before adoption.",
-    [
-      kv("Noise floor (reseed r)", displayVal(abl.v0b_reseed_corr_with_v0a), "in-sample 30% holdout"),
-      kv("Drop season (corr with baseline)", displayVal(abl.v1_drop_season_corr), abl.v1_drop_season_corr && !notYetRun(abl.v1_drop_season_corr) ? "underpowered, diff within noise" : ""),
-      kv("Drop effective_speed", displayVal(abl.v2_drop_eff_speed_corr), "underpowered"),
-      kv("Drop both", displayVal(abl.v3_drop_both_corr), "classified fails by spec; underpowered at 30% holdout"),
-      kv("HAA corr with baseline", displayVal(abl.haa_corr_with_vchosen), "< 0.9985 = load-bearing; leakage |r| plate_x=" + displayVal(abl.haa_leakage_plate_x) + " release_pos_x=" + displayVal(abl.haa_leakage_release_pos_x)),
-      kv("Season zeroed (counterfactual)", displayVal(abl.cf_season_zeroed_corr), "load-bearing, pitch-level"),
-      kv("effective_speed=velo (counterfactual)", displayVal(abl.cf_eff_speed_equals_velo_corr), "load-bearing, pitch-level"),
-      kv("HAA zeroed (counterfactual)", displayVal(abl.cf_haa_zeroed_corr), "load-bearing; counterfactual ≠ refit"),
-    ].join(""),
-    abl.verdict || "Not yet run",
-    abl.verdict_note || "",
-    `<b>Subsample:</b> ${displayVal(abl.subsample_n_pitchers) || "—"} pitcher-seasons, ${displayVal(abl.n_folds) || "—"}-fold CV.<br>
-     Ablation is underpowered: 30% holdout / 5 folds could not distinguish drops from noise.
-     Season feature is load-bearing by counterfactual (corr=0.920); so is effective_speed (0.973) and haa_residual (0.263).
-     Counterfactual scoring removes a feature without refitting; it shows whether the model uses the feature, not whether removing it would improve a retrained model.`
-  );
-
-  // Card 2: Repeatability
-  const rep = d.card_repeatability || {};
-  const card2 = renderCard("rep",
-    "Does it repeat?",
-    "Year-over-year stability at three levels: in-sample (live model), season-holdout CV, and pitcher-holdout. Split-half reliability at different pitch counts.",
-    [
-      kv("YoY pooled mean r (in-sample)", displayVal(rep.yoy_insample_pooled_mean_r), "9 consecutive-pair seasons excl. 2020"),
-      kv("YoY season-holdout CV", displayVal(rep.yoy_season_holdout_cv) === "Not yet run" ? "Not yet run" : displayVal(rep.yoy_season_holdout_cv)),
-      kv("YoY pitcher-holdout (LOPO)", notYetRun(rep.yoy_pitcher_holdout_lopo) ? "Not yet run for v4" : displayVal(rep.yoy_pitcher_holdout_lopo)),
-      kv("Split-half SB at n=50", displayVal(rep.split_half_sb_at_50), "in-sample; already exceeds 0.8 and 0.7 thresholds"),
-      kv("Split-half SB at n=300", displayVal(rep.split_half_sb_at_300), "in-sample"),
-      kv("n to reach r=0.8", displayVal(rep.reliability_0_8_n), "< 50 pitches (SB=0.994 at n=50)"),
-    ].join(""),
-    rep.verdict || "Not yet run",
-    rep.verdict_note || "",
-    `YoY pairs: ${(rep.yoy_pairs||[]).map(p=>`${p.s1}→${p.s2}: r=${p.r.toFixed(3)}`).join(", ")}.<br>
-     Pitcher-holdout (LOPO) not yet run for v4. v3 LOPO r=0.558 (leave-one-pitcher-out YoY).`
-  );
-
-  // Card 3: Predictive
-  const prd = d.card_predictive || {};
-  const card3 = renderCard("prd",
-    "Does it predict results?",
-    "Same-season and next-season correlations with ERA and xFIP. Pre-registered bar: next-season xFIP r ≤ −0.30.",
-    [
-      kv("Same-season xFIP r", displayVal(prd.concurrent_xfip_r), `n=${prd.concurrent_xfip_n||"—"}, in-sample, negative = correct`),
-      kv("Same-season ERA r",  displayVal(prd.concurrent_era_r),  `n=${prd.concurrent_era_n||"—"}, in-sample`),
-      kv("Next-season xFIP r", displayVal(prd.next_xfip_r),       `n=${prd.next_xfip_n||"—"}, in-sample; bar ≤ −0.30, NOT MET`),
-      kv("Next-season ERA r",  displayVal(prd.next_era_r),        "in-sample"),
-      kv("Incremental ΔR² over last-yr xFIP", displayVal(prd.incremental_delta_r2_xfip), "negative: Stuff+ alone explains less variance than last-yr xFIP"),
-    ].join(""),
-    prd.verdict || "Not yet run",
-    prd.verdict_note || "",
-    `Last-season xFIP R²=${displayVal(prd.r2_last_season_xfip) || "—"} vs Stuff+ R²=${displayVal(prd.r2_stuff_alone) || "—"}. xFIP as a mean-reversion baseline explains more variance.
-    The incremental test used simple R² comparison, not a multivariate regression; a proper partial R² test is pending (see NEEDS_DECISION.md ND-09).
-    All next-season tests are in-sample (the live model was trained on all seasons including the scored ones). True holdout would require a model not trained on the target season.`
-  );
-
-  // Card 4: Learning pitches
-  const lrn = d.card_learning || {};
-  const ptMeans = lrn.mean_score_by_pitch_type || {};
-  const ptRows = Object.entries(ptMeans)
-    .sort((a,b)=>a[1]-b[1])
-    .map(([pt,s]) => `${pt}: ${s.toFixed(0)}`).join(" · ");
-  const card4 = renderCard("lrn",
-    "Is it learning pitches?",
-    "Forbidden-feature check, location leakage probes, seed stability, 2020 sensitivity, and calibration by pitch type.",
-    [
-      kv("Forbidden features absent", lrn.forbidden_features_absent && displayVal(lrn.forbidden_features_absent) === "true" ? "Yes" : notYetRun(lrn.forbidden_features_absent) ? "Not yet run" : displayVal(lrn.forbidden_features_absent)),
-      kv("HAA leakage plate_x |r|", displayVal(lrn.haa_plate_x_corr), "threshold < 0.10"),
-      kv("HAA leakage release_pos_x |r|", displayVal(lrn.haa_release_pos_x_corr), "threshold < 0.10"),
-      kv("Seed stability", lrn.seed_stability_status === "not_yet_run" ? `Not yet run, proxy split-half r=${displayVal(lrn.seed_stability_proxy)}` : displayVal(lrn.seed_stability_status)),
-      kv("2020 score vs 2019 relabeled r", displayVal(lrn.sensitivity_2020_vs_2019), "pitch-level"),
-      kv("2020 score vs 2021 relabeled r", displayVal(lrn.sensitivity_2020_vs_2021), "pitch-level"),
-      kv("Identifiability probe", notYetRun(lrn.identifiability_lopo) ? "Not yet run for v4" : displayVal(lrn.identifiability_lopo)),
-      kv("KN mean score", displayVal(lrn.kn_mean_score), "below average by construction"),
-      kv("CU mean score", displayVal(lrn.cu_mean_score), "below average; noted"),
-    ].join(""),
-    lrn.verdict || "Not yet run",
-    lrn.verdict_note || "",
-    `Pitch-type mean scores (all seasons): ${ptRows || "—"}.<br>
-     AB and CS codes are rare and unreliable. KN below average by construction (limited movement).
-     Seed stability requires a full extra-seed refit (~30 min training); deferred. Proxy evidence (split-half r=0.988) is consistent with ≥ 0.99.`
-  );
-
-  return card1 + card2 + card3 + card4;
-}
-
 function renderEvolution(cfg) {
   const el = document.getElementById("sp-evo-list");
   const items = cfg.version_history && cfg.version_history.items;
@@ -523,35 +411,11 @@ function renderFeatureBubbles(cfg) {
   el.innerHTML = bubbles.map(b => `<span class="sp-bubble">${b}</span>`).join("");
 }
 
-// ──────────────────────────────────────────────────────────── disclosure toggle
-function initHoodToggle() {
-  const btn  = document.getElementById("sp-hood-toggle");
-  const body = document.getElementById("sp-hood-body");
-  btn.addEventListener("click", () => {
-    const open = btn.getAttribute("aria-expanded") === "true";
-    btn.setAttribute("aria-expanded", String(!open));
-    body.classList.toggle("open", !open);
-  });
-}
-
-function initCardDetailToggles() {
-  document.querySelectorAll(".sp-details-toggle").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const open  = btn.getAttribute("aria-expanded") === "true";
-      const bodyId= btn.getAttribute("aria-controls");
-      const bodyEl= document.getElementById(bodyId);
-      btn.setAttribute("aria-expanded", String(!open));
-      if (bodyEl) bodyEl.classList.toggle("open", !open);
-      btn.textContent = open ? "Details" : "Collapse";
-    });
-  });
-}
 
 // ──────────────────────────────────────────────────────────── init
 async function init() {
-  const [cfg, vr, meta] = await Promise.all([
+  const [cfg, meta] = await Promise.all([
     getJSON("content/stuff_page.json"),
-    getJSON("content/validation_results.json"),
     getJSON("/api/stuff-model/meta").catch(() => null),
   ]);
 
@@ -640,11 +504,8 @@ async function init() {
     loadPitchTypeLeaderboard(s, ptSelect.value, 10, cfg);
   });
 
-  // ---- Evolution + The guts
+  // ---- Evolution
   renderEvolution(cfg);
-  initHoodToggle();
-  document.getElementById("sp-cards-mount").innerHTML = renderCards(vr);
-  initCardDetailToggles();
 }
 
 document.addEventListener("DOMContentLoaded", init);

@@ -61,33 +61,6 @@
     .dc-career-table tr:last-child td { border-bottom: none; }
     .dc-career-table tr.dc-current-row { background: var(--surface-alt); font-weight: 700; }
 
-    /* -- Under the hood -- */
-    .dc-hood { margin-top: 28px; }
-    .dc-hood-toggle { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; color: var(--forest-dark); cursor: pointer; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
-    .dc-hood-toggle:hover { background: var(--surface-alt); }
-    .dc-hood-toggle[aria-expanded="true"] { background: var(--surface-alt); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-    .dc-hood-toggle:focus-visible { outline: 2px solid var(--forest-light); outline-offset: 2px; }
-    .dc-hood-chevron { transition: transform 0.2s; font-size: 12px; }
-    .dc-hood-toggle[aria-expanded="true"] .dc-hood-chevron { transform: rotate(180deg); }
-    .dc-hood-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 16px; display: none; }
-    .dc-hood-body.open { display: block; }
-
-    /* Cards grid */
-    .dc-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-    @media (max-width: 700px) { .dc-cards { grid-template-columns: 1fr; } }
-    .dc-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--surface); }
-    .dc-card-title   { font-size: 14px; font-weight: 700; color: var(--forest-dark); margin-bottom: 4px; }
-    .dc-card-summary { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
-    .dc-card-numbers { font-size: 12.5px; line-height: 1.8; margin-bottom: 10px; }
-    .dc-card-numbers .kv-label { color: var(--text-muted); }
-    .dc-card-numbers .kv-val   { font-weight: 700; color: var(--text); }
-    .dc-card-verdict { font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-    .dc-card-verdict-note { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
-    .verdict-pass    { color: #1a7f37; }
-    .verdict-mixed   { color: #b45309; }
-    .verdict-fail    { color: #c9302c; }
-    .verdict-pending { color: var(--text-muted); }
-
     /* Feature bubbles */
     .dc-bubbles { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 2px; }
     .dc-bubble  { font-size: 11.5px; font-weight: 600; color: var(--forest-dark); background: var(--surface-alt); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; }
@@ -223,23 +196,12 @@
       </ul>
     </div>
 
-    <!-- THE GUTS -->
-    <div class="dc-hood section">
-      <button class="dc-hood-toggle" aria-expanded="false" id="dc-hood-btn">
-        <span>The guts: validation for the live model</span>
-        <span class="dc-hood-chevron">v</span>
-      </button>
-      <div class="dc-hood-body" id="dc-hood-body">
-        <div class="dc-cards" id="dc-cards-mount"></div>
-      </div>
-    </div>
-
   </div><!-- /page -->
 
   <script src="js/api.js?v=17"></script>
   <script src="js/nav.js?v=114"></script>
   <script src="js/player-context.js?v=1"></script>
   <script src="js/player-search.js?v=24"></script>
-  <script src="js/deception-model.js?v=6"></script>
+  <script src="js/deception-model.js?v=7"></script>
 </body>
 </html>

@@ -36,12 +36,10 @@ from api.presentation import (
     PITCHER_TABLE_FMT, format_row, format_value,
 )
 from api.routers.deception_report import _bracket as _deception_bracket
-from api.routers.tunneling_report import _v3_raw_predictions_table
-from analytics.tunneling_v3_model import pitcher_score as tunneling_v3_pitcher_score
 from api.routers.location_report import _raw_predictions_table as _location_raw_predictions_table
 from analytics.location_v3_model import pitcher_score as location_v3_pitcher_score
 from api.routers.top_performers import _leaderboard
-from analytics.tunneling_pair_composite import season_all_pairs, pitcher_pairs_from_season
+from analytics.tunneling_pair_composite import season_all_pairs, pitcher_pairs_from_season, pitcher_composite_scores
 
 router = APIRouter(prefix="/api")
 
@@ -342,18 +340,21 @@ def _deception_plus_badge(conn, player_id):
 
 @ttl_cache()
 def _tunneling_plus_badge(conn, season, player_id):
-    """Tunneling+ v3 (the standard, promoted version) - live-scored, same
-    try/except-wrapped pattern as _deception_plus_badge above, since this
-    runs a real SHAP-adjacent per-pitcher scoring pass rather than reading
-    a static file. v1's own static per-season report/pitcher-detail JSON
-    (api/routers/tunneling_report.py's v1 endpoints) stays untouched for
-    the separate 3D trajectory viewer, which still depends on its exact
-    pair-shaped contract."""
+    """Tunneling+ badge - the same hand-built pair composite
+    (analytics/tunneling_pair_composite.py) that feeds the pair comparison
+    table lower on this same player page, aggregated to one pitcher-level
+    number, same try/except-wrapped pattern as _deception_plus_badge above.
+    Reuses the already-cached season pair table (_tunneling_pair_season
+    below) rather than recomputing it."""
     try:
-        league = _v3_raw_predictions_table(conn, season)
-        if league.empty:
+        all_pairs = _tunneling_pair_season(conn, season)
+        if all_pairs is None or all_pairs.empty:
             return None
-        return tunneling_v3_pitcher_score(conn, season, player_id, league)
+        g = pitcher_composite_scores(conn, season, all_pairs_df=all_pairs)
+        row = g[g["pitcher_id"] == player_id]
+        if row.empty:
+            return None
+        return float(row["tunneling_plus"].iloc[0])
     except Exception:
         return None
 

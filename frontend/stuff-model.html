@@ -100,41 +100,6 @@
     .sp-evo-list li .vl { font-weight: 700; }
     .sp-evo-list li.sp-evo-current .vl { color: var(--forest); }
 
-    /* -- Under the hood -- */
-    .sp-hood { margin-top: 28px; }
-    .sp-hood-toggle { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; color: var(--forest-dark); cursor: pointer; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
-    .sp-hood-toggle:hover { background: var(--surface-alt); }
-    .sp-hood-toggle[aria-expanded="true"] { background: var(--surface-alt); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
-    .sp-hood-toggle:focus-visible { outline: 2px solid var(--forest-light); outline-offset: 2px; }
-    .sp-hood-chevron { transition: transform 0.2s; font-size: 12px; }
-    .sp-hood-toggle[aria-expanded="true"] .sp-hood-chevron { transform: rotate(180deg); }
-    .sp-hood-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 8px 8px; padding: 16px; display: none; }
-    .sp-hood-body.open { display: block; }
-
-    /* Cards grid */
-    .sp-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
-    @media (max-width: 700px) { .sp-cards { grid-template-columns: 1fr; } }
-
-    .sp-card { border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; background: var(--surface); }
-    .sp-card-title  { font-size: 14px; font-weight: 700; color: var(--forest-dark); margin-bottom: 4px; }
-    .sp-card-summary { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
-    .sp-card-numbers { font-size: 12.5px; line-height: 1.8; margin-bottom: 10px; }
-    .sp-card-numbers .kv-label { color: var(--text-muted); }
-    .sp-card-numbers .kv-val   { font-weight: 700; color: var(--text); }
-    .sp-card-verdict { font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-    .sp-card-verdict-note { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.5; }
-
-    .verdict-pass    { color: #1a7f37; }
-    .verdict-mixed   { color: #b45309; }
-    .verdict-fail    { color: #c9302c; }
-    .verdict-pending { color: var(--text-muted); }
-
-    /* Card details expander */
-    .sp-details-toggle { background: none; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 12px; color: var(--text-muted); cursor: pointer; margin-top: 8px; }
-    .sp-details-toggle:focus-visible { outline: 2px solid var(--forest-light); outline-offset: 2px; }
-    .sp-details-body  { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-top: 8px; display: none; }
-    .sp-details-body.open { display: block; }
-
     /* Version history */
     .sp-version-list { padding-left: 0; list-style: none; margin: 0; }
     .sp-version-list li { margin-bottom: 10px; font-size: 13px; line-height: 1.6; color: var(--text); }
@@ -245,17 +210,6 @@
       <ul class="sp-evo-list" id="sp-evo-list"><li><span class="sp-evo-num">1</span><span>Loading...</span></li></ul>
     </div>
 
-    <!-- ------------------------------------------------------- THE GUTS -->
-    <div class="sp-hood section sp-wide">
-      <button class="sp-hood-toggle" id="sp-hood-toggle" aria-expanded="false" aria-controls="sp-hood-body">
-        The guts: validation for the live model
-        <span class="sp-hood-chevron" aria-hidden="true">v</span>
-      </button>
-      <div class="sp-hood-body" id="sp-hood-body">
-        <div class="sp-cards" id="sp-cards-mount"></div>
-      </div>
-    </div>
-
   </div><!-- /.page -->
 
   <script src="js/api.js?v=17"></script>
@@ -263,6 +217,6 @@
   <script src="js/player-context.js?v=1"></script>
   <script src="js/player-search.js?v=24"></script>
   <script src="js/season-select.js?v=19"></script>
-  <script src="js/stuff-model.js?v=31"></script>
+  <script src="js/stuff-model.js?v=32"></script>
 </body>
 </html>
