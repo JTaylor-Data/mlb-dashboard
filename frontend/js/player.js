@@ -973,21 +973,19 @@ function buildTunnelingPairsTable(pairs) {
     shown = shown.filter((p) => keep.has(p));
   }
   const rows = shown.map((p) => {
-    const dot = (type) => `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${pitchColor(type)};"></span>`;
+    const dot = (type) => `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${pitchColor(type)};"></span>`;
     return `<tr>
       <td style="padding:3px 4px;white-space:nowrap;">${dot(p.type_a)}<span style="margin:0 3px;color:var(--text-muted);">/</span>${dot(p.type_b)}</td>
-      <td style="padding:3px 4px;text-align:right;">${p.commit_distance.toFixed(1)}"</td>
       <td style="padding:3px 4px;text-align:right;font-weight:600;">${p.composite_score.toFixed(0)}</td>
     </tr>`;
   }).join("");
   return `
     <div class="tunneling-pairs-widget rubber-widget">
       <div class="pitch-usage-title">TUNNEL+ PAIRS</div>
-      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <table style="width:100%;border-collapse:collapse;font-size:15px;">
         <thead>
           <tr style="border-bottom:1px solid var(--border);">
             <th style="text-align:left;padding:3px 4px;">Pair</th>
-            <th style="text-align:right;padding:3px 4px;" title="Commit-point distance (inches) — lower = tighter tunnel">Commit</th>
             <th style="text-align:right;padding:3px 4px;" title="Tunnel+ composite score (plus-scale; higher = better tunnel)">Tunnel+</th>
           </tr>
         </thead>
@@ -1008,14 +1006,39 @@ function _alignMovementPlotToLast5() {
   if (window.innerWidth <= 900) return;
   const last5 = document.getElementById("last-5-mount");
   const row = document.querySelector(".movement-plot-row");
-  if (!last5 || !row) return;
+  const sideCol = document.querySelector(".movement-plot-side-col");
+  if (!last5 || !row || !sideCol) return;
+
+  // Reset any previous forcing before measuring natural positions/sizes.
   row.style.height = "";
   row.style.flex = "";
-  const target = last5.getBoundingClientRect().bottom - row.getBoundingClientRect().top;
-  if (target > 0) {
-    row.style.flex = "0 0 auto";
-    row.style.height = `${target}px`;
-  }
+  last5.style.paddingBottom = "";
+
+  const rowTop = row.getBoundingClientRect().top;
+  const last5Rect = last5.getBoundingClientRect();
+
+  // Side column's own real content need (summary table + Approach Angle +
+  // however many Tunnel+ Pairs rows survived) - read off its first/last
+  // child's own box, which stays true to the content's natural size even
+  // while the column itself is being stretched or shrunk by its flex
+  // parent, unlike sideCol's own getBoundingClientRect().
+  const kids = sideCol.children;
+  const sideColContent = kids.length
+    ? kids[kids.length - 1].getBoundingClientRect().bottom - kids[0].getBoundingClientRect().top
+    : 0;
+
+  // Normally the plot shrinks DOWN to Last 5's bottom edge (the common
+  // case - Last 5 is fixed at 5 rows, the plot has real headroom to give
+  // up). Only when the side column genuinely needs more room than that
+  // (lots of pitch types/pairs) does Last 5 get padded instead, so the two
+  // bottoms still land on the same pixel without the side column's content
+  // spilling into Similar Players below it.
+  const last5BasedHeight = last5Rect.bottom - rowTop;
+  const target = Math.max(sideColContent, last5BasedHeight);
+  if (target <= 0) return;
+  row.style.flex = "0 0 auto";
+  row.style.height = `${target}px`;
+  if (target > last5BasedHeight) last5.style.paddingBottom = `${target - last5BasedHeight}px`;
 }
 
 // Last 5 Outings' bottom edge can keep drifting for a bit after the first
