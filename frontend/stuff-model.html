@@ -87,6 +87,19 @@
     /* Pitch type leaderboard selector row */
     .sp-pt-lb-controls { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 12px; }
 
+    /* -- Feature bubbles -- */
+    .sp-bubbles { display: flex; flex-wrap: wrap; gap: 6px; margin: 14px 0 2px; }
+    .sp-bubble  { font-size: 11.5px; font-weight: 600; color: var(--forest-dark); background: var(--surface-alt); border: 1px solid var(--border); border-radius: 999px; padding: 4px 11px; }
+
+    /* -- Evolution box -- */
+    .sp-evolution { margin-top: 28px; }
+    .sp-evolution h3 { font-size: 14px; font-weight: 800; color: var(--forest-dark); margin: 0 0 10px; }
+    .sp-evo-list { padding-left: 0; list-style: none; margin: 0; }
+    .sp-evo-list li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; margin-bottom: 8px; font-size: 13px; line-height: 1.55; color: var(--text); }
+    .sp-evo-num { font-weight: 800; color: var(--forest-dark); background: var(--surface-alt); border-radius: 50%; width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; flex-shrink: 0; }
+    .sp-evo-list li .vl { font-weight: 700; }
+    .sp-evo-list li.sp-evo-current .vl { color: var(--forest); }
+
     /* -- Under the hood -- */
     .sp-hood { margin-top: 28px; }
     .sp-hood-toggle { background: none; border: 1px solid var(--border); border-radius: 8px; padding: 10px 16px; font-size: 14px; font-weight: 700; color: var(--forest-dark); cursor: pointer; width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; transition: background 0.15s; }
@@ -146,6 +159,7 @@
         <span class="sp-badge" id="sp-version-badge">v4 — loading…</span>
       </div>
       <p class="sp-blurb" id="sp-opening-blurb"></p>
+      <div class="sp-bubbles" id="sp-bubbles"></div>
       <p class="sp-scale" id="sp-scale-statement"></p>
       <div class="sp-scale-box" id="sp-scale-box">
         <b>100 = league average</b> for that season. Each 10 points is <b>one standard deviation</b>.
@@ -153,6 +167,26 @@
         Scores are z-scored fresh within each season so the same score in two different years means the same relative standing.
       </div>
       <div class="sp-footer" id="sp-meta-footer">Loading model info…</div>
+    </div>
+
+    <!-- ------------------------------------------------------- PITCHER LOOKUP -->
+    <div class="card section sp-wide" id="sp-lookup-card">
+      <h3 style="margin:0 0 12px;">Pitcher lookup</h3>
+      <div class="sp-lookup-controls">
+        <div style="min-width:300px; flex:1; max-width:400px;">
+          <span class="control-label">Pitcher</span>
+          <div class="player-search">
+            <input type="text" class="player-search-input" id="sp-player-input" placeholder="Search A Player" autocomplete="off" />
+            <div class="player-search-dropdown" id="sp-player-dropdown"></div>
+          </div>
+        </div>
+        <div id="sp-lookup-season-wrap" style="display:none;">
+          <span class="control-label">Season</span>
+          <select id="sp-lookup-season"></select>
+        </div>
+      </div>
+      <div class="sp-lookup-status" id="sp-lookup-status"></div>
+      <div id="sp-lookup-panel"></div>
     </div>
 
     <!-- ------------------------------------------------------- LEADERBOARD -->
@@ -175,26 +209,6 @@
         </div>
       </div>
       <div class="sp-lb-caption" id="sp-lb-caption"></div>
-    </div>
-
-    <!-- ------------------------------------------------------- PITCHER LOOKUP -->
-    <div class="card section sp-wide" id="sp-lookup-card">
-      <h3 style="margin:0 0 12px;">Pitcher lookup</h3>
-      <div class="sp-lookup-controls">
-        <div style="min-width:300px; flex:1; max-width:400px;">
-          <span class="control-label">Pitcher</span>
-          <div class="player-search">
-            <input type="text" class="player-search-input" id="sp-player-input" placeholder="Search A Player" autocomplete="off" />
-            <div class="player-search-dropdown" id="sp-player-dropdown"></div>
-          </div>
-        </div>
-        <div id="sp-lookup-season-wrap" style="display:none;">
-          <span class="control-label">Season</span>
-          <select id="sp-lookup-season"></select>
-        </div>
-      </div>
-      <div class="sp-lookup-status" id="sp-lookup-status"></div>
-      <div id="sp-lookup-panel"></div>
     </div>
 
     <!-- ------------------------------------------------------- PITCH-TYPE LEADERBOARD -->
@@ -225,16 +239,20 @@
       <div class="sp-lb-caption" id="sp-pt-caption"></div>
     </div>
 
-    <!-- ------------------------------------------------------- UNDER THE HOOD -->
+    <!-- ------------------------------------------------------- EVOLUTION -->
+    <div class="sp-evolution section sp-wide">
+      <h3>The evolution</h3>
+      <ul class="sp-evo-list" id="sp-evo-list"><li><span class="sp-evo-num">1</span><span>Loading...</span></li></ul>
+    </div>
+
+    <!-- ------------------------------------------------------- THE GUTS -->
     <div class="sp-hood section sp-wide">
       <button class="sp-hood-toggle" id="sp-hood-toggle" aria-expanded="false" aria-controls="sp-hood-body">
-        Under the hood: ablation and testing
-        <span class="sp-hood-chevron" aria-hidden="true">?</span>
+        The guts: validation for the live model
+        <span class="sp-hood-chevron" aria-hidden="true">v</span>
       </button>
       <div class="sp-hood-body" id="sp-hood-body">
         <div class="sp-cards" id="sp-cards-mount"></div>
-        <h3 style="margin:16px 0 8px; font-size:14px;">Version history</h3>
-        <ul class="sp-version-list" id="sp-version-list" style="opacity:0.7;font-style:italic;">Loading…</ul>
       </div>
     </div>
 
@@ -245,6 +263,6 @@
   <script src="js/player-context.js?v=1"></script>
   <script src="js/player-search.js?v=24"></script>
   <script src="js/season-select.js?v=19"></script>
-  <script src="js/stuff-model.js?v=30"></script>
+  <script src="js/stuff-model.js?v=31"></script>
 </body>
 </html>

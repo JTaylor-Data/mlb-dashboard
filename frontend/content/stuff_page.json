@@ -1,17 +1,18 @@
 {
   "_meta": {
-    "description": "Config and prose for the Stuff+ model page. Prose is marked draft. Numbers must come from validation_results.json or live API — never typed here.",
+    "description": "Config and prose for the Stuff+ model page. Prose is marked draft. Numbers must come from validation_results.json or live API, never typed here.",
     "status": "draft"
   },
   "title": "Stuff+",
   "active_version": "v4",
   "stuff_status": "provisional",
-  "version_badge": "v4 — validation in progress",
-  "version_badge_validated": "v4 — validated",
+  "version_badge": "v4, validation in progress",
+  "version_badge_validated": "v4, validated",
   "status_badge_note": "Provisional: next-season xFIP bar not met (r=−0.225 vs threshold −0.30) and seed stability not formally run. See Methodology/STUFF_V4_COMPLETION.md.",
-  "opening_blurb": "Stuff+ grades the physical shape of a pitch. It uses velocity, horizontal and induced vertical break, spin rate, spin axis, how a pitch’s shape separates from the pitcher’s own primary fastball, and — added in v4 — the horizontal approach angle residual, which captures how much the pitch bends toward or away from the batter relative to what its release geometry predicts. One LightGBM model is trained to predict per-pitch run value from those inputs across all pitch types. No plate location, count, or pitcher identity enters the model. Scores are usage-weighted averages of the pitcher’s per-pitch-type grades.",
+  "opening_blurb": "Stuff+ grades the physical shape of a pitch: velocity, movement, spin, and how it separates from the pitcher's own fastball, independent of location, count, or pitcher identity. One model scores every pitch type on a single run-value scale.",
+  "feature_bubbles": ["Velocity", "Horizontal break", "Induced vertical break", "Spin rate", "Spin axis", "Fastball separation", "Approach angle residual"],
   "scale_statement": "100 = league average for that season. 10 points = one standard deviation of the qualified pitcher population (200+ pitches) for that season.",
-  "scale_note_common_mistake": "Stuff+ is not percentage-based. A score of 120 does not mean “20% better than average” — it means 2 standard deviations above the season mean. The same score in two different years means the same relative standing, not the same underlying raw output.",
+  "scale_note_common_mistake": "Stuff+ is not percentage-based. A score of 120 does not mean \"20% better than average,\" it means 2 standard deviations above the season mean. The same score in two different years means the same relative standing, not the same underlying raw output.",
   "available_seasons": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026],
   "default_season": 2026,
   "season_2020_asterisk": true,
@@ -20,7 +21,7 @@
   "leaderboard_min_pitches_per_type": 100,
   "leaderboard_caption": "Minimum 200 pitches to qualify for the overall leaderboard.",
   "leaderboard_caption_per_type": "Minimum 100 pitches of that type to qualify.",
-  "footnote_kn": "Knuckleball pitchers score below average by construction — limited movement and lower velocity reduce raw predicted run value.",
+  "footnote_kn": "Knuckleball pitchers score below average by construction: limited movement and lower velocity reduce raw predicted run value.",
   "footnote_excluded": "Pitchouts, eephus pitches, unclassified (FA/AB) and rare codes (CS, FO, SC) are excluded from leaderboard ranking and should be read with caution in pitcher breakdowns.",
   "under_the_hood_title": "Under the hood: ablation and testing",
   "card_definitions": [
@@ -55,7 +56,7 @@
       {
         "version": "v1",
         "label": "Original",
-        "change": "Single LightGBM regressor on raw velo/movement/spin. Included release_extension, release_pos_x, release_pos_z, arm_angle — later moved to Deception+."
+        "change": "Single LightGBM regressor on raw velo/movement/spin. Included release_extension, release_pos_x, release_pos_z, arm_angle (later moved to Deception+)."
       },
       {
         "version": "v2",
@@ -69,7 +70,7 @@
       },
       {
         "version": "v4",
-        "label": "Horizontal approach angle (current)",
+        "label": "Horizontal approach angle",
         "change": "Added haa_residual (horizontal approach angle residual). Season and effective_speed retained (ablation underpowered). Trained once 2016–2026 excl. 2020; all 11 seasons scored. v3→v4 pitcher-season correlation r=0.97 (2021–2025, ≥300 pitches). Promoted 2026-10-02.",
         "is_current": true
       }
