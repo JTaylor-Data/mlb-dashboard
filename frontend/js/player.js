@@ -439,7 +439,15 @@ function buildMovementPlotSVG(points, armAngle, throws, peerMovement) {
 // other gauge in this file.
 const APPROACH_RANGE_FT = 3; // clamp range ±3 ft
 
-function buildApproachAngleSVG(releasePosX, throws) {
+// Tertile cutoffs on |angle| (degrees, atan2(release_pos_x, 55ft)) across all
+// qualified (>=100 pitches) pitchers in the 2026 season, both hands pooled:
+// 33rd pct ~= 1.7°, 67th pct ~= 2.3° - rounded to one decimal. Splits the
+// league into three roughly-even, honestly-labeled groups instead of an
+// arbitrary round number.
+const APPROACH_STRAIGHT_MAX_DEG = 1.7;
+const APPROACH_STEEP_MAX_DEG = 2.3;
+
+function buildApproachAngleSVG(releasePosX, throws, angleDeg, percentile) {
   if (releasePosX === null || releasePosX === undefined) return "";
   const v = Math.max(-APPROACH_RANGE_FT, Math.min(APPROACH_RANGE_FT, releasePosX));
 
@@ -453,19 +461,30 @@ function buildApproachAngleSVG(releasePosX, throws) {
   // raw field-relative: 0 ft = center (x=fieldMid), +3ft = 1B = right
   const releaseX = fieldMid + (v / APPROACH_RANGE_FT) * (fieldW / 2);
 
-  // Side label
+  // Three-tier descriptive label, mapped off the real |angle| tertiles above.
+  // Direction (3B/1B side) comes from the sign of release_pos_x itself.
+  const side = releasePosX < 0 ? "3B" : "1B";
+  const absAngle = angleDeg !== null && angleDeg !== undefined ? Math.abs(angleDeg) : null;
   let sideLabel;
-  if (releasePosX < -1.5) sideLabel = "Extreme 3B side";
-  else if (releasePosX < -0.3) sideLabel = "3B side";
-  else if (releasePosX <= 0.3) sideLabel = "Neutral";
-  else if (releasePosX <= 1.5) sideLabel = "1B side";
-  else sideLabel = "Extreme 1B side";
+  if (absAngle === null) sideLabel = "";
+  else if (absAngle < APPROACH_STRAIGHT_MAX_DEG) sideLabel = "Straight Up";
+  else if (absAngle < APPROACH_STEEP_MAX_DEG) sideLabel = `Steep ${side}`;
+  else sideLabel = `Extreme ${side}`;
 
-  // Mound: filled circle
+  const angleLabel = angleDeg !== null && angleDeg !== undefined ? `${angleDeg >= 0 ? "+" : ""}${angleDeg.toFixed(1)}°` : "";
+  const pctLabel = percentile !== null && percentile !== undefined
+    ? `${Math.round(percentile)}${_ordinalSuffix(Math.round(percentile))} pctile vs. ${throws}HP`
+    : "";
+
+  // Mound: filled circle + small rubber rectangle centered on it
   const moundR = 7;
+  const rubberW = 9, rubberH = 2.5;
   // Home plate: simple pentagon approximation (flat top, pointed bottom)
   const pw = 10, ph = 8, px = fieldMid, py = plateY;
   const platePath = `M${px - pw/2},${py - ph/2} L${px + pw/2},${py - ph/2} L${px + pw/2},${py} L${px},${py + ph/2} L${px - pw/2},${py} Z`;
+
+  // Angle text placed at the line's midpoint, offset above the line
+  const midX = (releaseX + fieldMid) / 2, midY = (moundY + moundR + (plateY - ph/2)) / 2;
 
   return `
     <div class="rubber-widget">
@@ -474,16 +493,30 @@ function buildApproachAngleSVG(releasePosX, throws) {
         <text x="${fieldX1}" y="10" font-size="8" fill="var(--text-muted)" font-weight="700">3B</text>
         <text x="${fieldX2 - 10}" y="10" font-size="8" fill="var(--text-muted)" font-weight="700">1B</text>
         <circle cx="${releaseX.toFixed(1)}" cy="${moundY}" r="${moundR}" fill="var(--text-muted)" fill-opacity="0.25" stroke="var(--text-muted)" stroke-width="1.5"/>
+        <rect x="${(releaseX - rubberW / 2).toFixed(1)}" y="${(moundY - rubberH / 2).toFixed(1)}" width="${rubberW}" height="${rubberH}" rx="0.5" fill="var(--text-muted)"/>
         <line x1="${releaseX.toFixed(1)}" y1="${moundY + moundR}" x2="${fieldMid}" y2="${plateY - ph/2}"
               stroke="var(--accent)" stroke-width="2" stroke-dasharray="4,3"/>
+        ${angleLabel ? `<text x="${midX.toFixed(1)}" y="${(midY - 4).toFixed(1)}" font-size="8" fill="var(--accent)" font-weight="700" text-anchor="middle">${angleLabel}</text>` : ""}
         <path d="${platePath}" fill="var(--surface)" stroke="var(--text-muted)" stroke-width="1.5"/>
       </svg>
       <div class="gauge-avg" style="text-align:center; margin-top:2px;">${sideLabel}</div>
+      ${pctLabel ? `<div style="font-size:9px; color:var(--text-muted); text-align:center; margin-top:2px;">${pctLabel}</div>` : ""}
       <div style="font-size:9px; color:var(--text-muted); text-align:center; margin-top:4px; line-height:1.3; padding:0 4px;">
-        Straight line from release to plate center — movement-agnostic. Won't match true horizontal approach angle for pitches with significant horizontal break.
+        Straight line from release to plate center — movement-agnostic.
       </div>
     </div>
   `;
+}
+
+function _ordinalSuffix(n) {
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 13) return "th";
+  switch (n % 10) {
+    case 1: return "st";
+    case 2: return "nd";
+    case 3: return "rd";
+    default: return "th";
+  }
 }
 
 function buildMovementSummaryTable(summary) {
@@ -959,7 +992,7 @@ function renderRightPanel(data) {
           <div class="movement-plot-svg-wrap">${buildMovementPlotSVG(mv.points, mv.arm_angle, rp.throws, mv.peer_avg_movement)}</div>
           <div class="movement-plot-side-col">
             ${buildMovementSummaryTable(mv.summary)}
-            ${buildApproachAngleSVG(rp.release_pos_x, rp.throws)}
+            ${buildApproachAngleSVG(rp.release_pos_x, rp.throws, rp.angle_deg, rp.percentile)}
             ${data.babip_against ? `<div class="babip-widget"><div class="pitch-usage-title">BABIP Against</div><div class="gauge-value" style="text-align:center;">${data.babip_against.value_str}</div></div>` : ""}
           </div>
         </div>
@@ -1683,6 +1716,12 @@ async function loadPlayer() {
         })
         .catch(() => {});
     }
+    // Rolling xwOBA is a hitter-only graphic - force it hidden and skip the
+    // fetch entirely on a pitcher page rather than relying on it to come
+    // back empty (it won't always: a true two-way player like Ohtani has
+    // real batting PAs under his own player_id).
+    const xwobaSection = document.getElementById("rolling-xwoba-section");
+    if (xwobaSection) xwobaSection.style.display = "none";
     currentPitchUsage = data.pitch_usage_by_stand;
     renderTable(data.pitch_table, "");
     await renderPitchLocations();

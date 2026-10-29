@@ -312,6 +312,58 @@ def pitcher_rubber_position(conn, season, pitcher_id):
     return row[0]
 
 
+# Mound-to-plate distance used only to turn the Approach Angle line's lateral
+# offset into a labeled angle - NOT the real 60.5ft rubber distance, since
+# release_pos_x is measured at release, in front of the rubber. 55ft is the
+# distance minus a league-average-ish extension (~6ft); this is a cosmetic
+# label on a deliberately simplified cartoon, not a physics HAA, so it isn't
+# worth pulling real per-pitcher extension in for.
+APPROACH_ANGLE_DISTANCE_FT = 55
+
+
+def pitcher_approach_angle_percentile(conn, season, pitcher_id, throws, min_pitches=100):
+    """This pitcher's season-avg release_pos_x, as a degree angle off the
+    release-to-plate centerline, plus a percentile rank against OTHER
+    pitchers who throw the same hand (same-season, same `throws`).
+
+    Ranking against the same-hand pool (not literally all LHP, regardless of
+    this pitcher's own hand) is a deliberate deviation from a literal reading
+    of the original ask: LHP release_pos_x runs positive (~0 to 4ft) and RHP
+    runs negative (~-4 to 0ft) - field-relative sign flips with the pitcher's
+    throwing side - so ranking a RHP against the LHP pool would place nearly
+    every RHP near the 0th percentile regardless of how extreme their own
+    angle actually is. Same-hand ranking is the only version of this stat
+    that's meaningful for both LHP and RHP pages.
+    """
+    import math
+
+    this_row = conn.execute(
+        "SELECT AVG(release_pos_x) FROM pitches WHERE season = ? AND pitcher_id = ? AND release_pos_x IS NOT NULL",
+        (season, pitcher_id),
+    ).fetchone()
+    this_rpx = this_row[0]
+    if this_rpx is None or not throws:
+        return None
+
+    pool = pd.read_sql(
+        """
+        SELECT AVG(p.release_pos_x) AS rpx
+        FROM pitches p
+        JOIN players pl ON pl.player_id = p.pitcher_id
+        WHERE p.season = ? AND pl.throws = ? AND p.release_pos_x IS NOT NULL
+        GROUP BY p.pitcher_id
+        HAVING COUNT(*) >= ?
+        """,
+        conn, params=(season, throws, min_pitches),
+    )["rpx"]
+    if pool.empty:
+        return None
+
+    angle_deg = math.degrees(math.atan2(this_rpx, APPROACH_ANGLE_DISTANCE_FT))
+    percentile = float((pool <= this_rpx).mean() * 100)
+    return {"angle_deg": angle_deg, "percentile": percentile, "n_pool": int(len(pool))}
+
+
 def pitcher_arm_angle(conn, season, pitcher_id):
     """Season-wide average arm angle (degrees), independent of the L/R
     toggle - used as a fixed reference line on the movement plot, not a

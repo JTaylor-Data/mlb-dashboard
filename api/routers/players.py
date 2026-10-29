@@ -22,7 +22,7 @@ from analytics.player_page import (
     all_pitcher_arm_angles, batter_counting_stats, batter_pitch_type_table, batter_rolling_xwoba,
     batter_wrc_plus, field_zone_pcts, league_avg_xwoba, league_average_batter_row, league_average_swing_profile,
     league_hr_per_fb, movement_plot_data, pitch_usage_by_stand, pitcher_arm_angle,
-    pitcher_counting_stats, pitcher_league_avg_row, pitcher_pitch_table, pitcher_rubber_position,
+    pitcher_approach_angle_percentile, pitcher_counting_stats, pitcher_league_avg_row, pitcher_pitch_table, pitcher_rubber_position,
     player_last_n_games, similar_arm_angle_movement, swing_profile,
 )
 from analytics.stuff_model import compute_stuff_plus, compute_stuff_plus_by_stand, overall_stuff_plus
@@ -242,6 +242,11 @@ def _pitch_usage_by_stand(conn, season, player_id):
 @ttl_cache()
 def _pitcher_rubber_position(conn, season, player_id):
     return pitcher_rubber_position(conn, season, player_id)
+
+
+@ttl_cache()
+def _pitcher_approach_angle_percentile(conn, season, player_id, throws):
+    return pitcher_approach_angle_percentile(conn, season, player_id, throws)
 
 
 @ttl_cache()
@@ -647,8 +652,13 @@ def _build_player_steps(conn, player_id, role, split, season):
         mv = _movement_plot_data(conn, season, player_id)
         arm_angle = _pitcher_arm_angle(conn, season, player_id)
         base["pitch_usage_by_stand"] = _pitch_usage_by_stand(conn, season, player_id)
-        base["rubber_position"] = {"release_pos_x": _clean(_pitcher_rubber_position(conn, season, player_id)),
-                                    "throws": throws}
+        aa_pct = _pitcher_approach_angle_percentile(conn, season, player_id, throws)
+        base["rubber_position"] = {
+            "release_pos_x": _clean(_pitcher_rubber_position(conn, season, player_id)),
+            "throws": throws,
+            "angle_deg": _clean(aa_pct["angle_deg"]) if aa_pct else None,
+            "percentile": _clean(aa_pct["percentile"]) if aa_pct else None,
+        }
         base["babip_against"] = {
             "value": _clean(stats["babip"]),
             "value_str": format_value(stats["babip"], "{:.3f}"),
