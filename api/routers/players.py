@@ -917,7 +917,12 @@ def get_tunneling_pairs(
     all_season_pairs = _tunneling_pair_season(conn, season)
     if all_season_pairs is None or all_season_pairs.empty:
         return []
-    return pitcher_pairs_from_season(all_season_pairs, player_id)
+    total_row = conn.execute(
+        "SELECT COUNT(*) FROM pitches WHERE pitcher_id = ? AND season = ?",
+        (player_id, season),
+    ).fetchone()
+    total_pitches = total_row[0] if total_row else None
+    return pitcher_pairs_from_season(all_season_pairs, player_id, total_pitches)
 
 
 # ---------------------------------------------------------------------------

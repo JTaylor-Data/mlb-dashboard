@@ -122,15 +122,20 @@ def season_all_pairs(conn, season):
     return pairs[cols].sort_values("composite_score", ascending=False).reset_index(drop=True)
 
 
-def pitcher_pairs_from_season(all_pairs_df, pitcher_id):
+def pitcher_pairs_from_season(all_pairs_df, pitcher_id, total_pitches=None):
     """Filter a precomputed season_all_pairs DataFrame to one pitcher.
-    Returns list of dicts for JSON serialization, sorted by composite_score desc."""
+    Returns list of dicts for JSON serialization, sorted by composite_score desc.
+
+    total_pitches, when given, is this pitcher-season's overall pitch count -
+    used to add pct_a/pct_b (each pitch type's share of the season), which
+    the player page uses to hide pairs built from a pitch thrown under 5% of
+    the time. n_a/n_b alone aren't comparable across pitchers without it."""
     sub = all_pairs_df[all_pairs_df["pitcher_id"] == pitcher_id].copy()
     if sub.empty:
         return []
     rows = []
     for _, r in sub.iterrows():
-        rows.append({
+        row = {
             "type_a": r["type_a"],
             "type_b": r["type_b"],
             "n_a": int(r["n_a"]),
@@ -140,5 +145,9 @@ def pitcher_pairs_from_season(all_pairs_df, pitcher_id):
             "divergence": round(float(r["divergence"]), 2),
             "shape_break_plus": round(float(r["shape_break_plus"]), 2),
             "composite_score": round(float(r["composite_score"]), 1),
-        })
+        }
+        if total_pitches:
+            row["pct_a"] = round(row["n_a"] / total_pitches * 100, 1)
+            row["pct_b"] = round(row["n_b"] / total_pitches * 100, 1)
+        rows.append(row)
     return rows

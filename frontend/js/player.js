@@ -485,8 +485,15 @@ function buildApproachAngleSVG(releasePosX, throws, angleDeg, percentile) {
   const pw = 10, ph = 8, px = fieldMid, py = plateY;
   const platePath = `M${px - pw/2},${py - ph/2} L${px + pw/2},${py - ph/2} L${px + pw/2},${py} L${px},${py + ph/2} L${px - pw/2},${py} Z`;
 
-  // Angle text placed at the line's midpoint, offset above the line
-  const midX = (releaseX + fieldMid) / 2, midY = (moundY + moundR + (plateY - ph/2)) / 2;
+  // Angle text at the line's midpoint, pushed perpendicular off the line
+  // itself (not just nudged up) so the dashes never run through the digits.
+  const lineX1 = releaseX, lineY1 = moundY + moundR, lineX2 = fieldMid, lineY2 = plateY - ph / 2;
+  const midX = (lineX1 + lineX2) / 2, midY = (lineY1 + lineY2) / 2;
+  const dx = lineX2 - lineX1, dy = lineY2 - lineY1;
+  const len = Math.hypot(dx, dy) || 1;
+  const perpOffset = 9;
+  const labelX = midX + (-dy / len) * perpOffset;
+  const labelY = midY + (dx / len) * perpOffset;
 
   return `
     <div class="rubber-widget">
@@ -498,7 +505,7 @@ function buildApproachAngleSVG(releasePosX, throws, angleDeg, percentile) {
         <rect x="${(fieldMid - rubberW / 2).toFixed(1)}" y="${(moundY - rubberH / 2).toFixed(1)}" width="${rubberW}" height="${rubberH}" rx="0.5" fill="var(--text-muted)"/>
         <line x1="${releaseX.toFixed(1)}" y1="${moundY + moundR}" x2="${fieldMid}" y2="${plateY - ph/2}"
               stroke="var(--accent)" stroke-width="2" stroke-dasharray="4,3"/>
-        ${angleLabel ? `<text x="${midX.toFixed(1)}" y="${(midY - 4).toFixed(1)}" font-size="8" fill="var(--accent)" font-weight="700" text-anchor="middle">${angleLabel}</text>` : ""}
+        ${angleLabel ? `<text x="${labelX.toFixed(1)}" y="${labelY.toFixed(1)}" font-size="8" fill="var(--accent)" font-weight="700" text-anchor="middle">${angleLabel}</text>` : ""}
         <path d="${platePath}" fill="var(--surface)" stroke="var(--text-muted)" stroke-width="1.5"/>
       </svg>
       <div class="gauge-avg" style="text-align:center; margin-top:2px;">${sideLabel}</div>
@@ -949,25 +956,30 @@ function buildSwingTiltGauge(value, leagueAvg, pct) {
 function buildTunnelingPairsTable(pairs) {
   if (!pairs || !pairs.length) return "";
   // Display-only: drops Divergence/Break columns and the pitch-type text
-  // labels (dots + "/" only). Both values stay in `pairs` and keep feeding
-  // the sort below - sort order (by composite_score desc) is unchanged.
-  const rows = pairs.map((p) => {
-    const dot = (type) => `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${pitchColor(type)};"></span>`;
+  // labels (dots + "/" only), and hides (doesn't resort or recompute) any
+  // pair where either pitch type is under 5% of this pitcher's season
+  // usage - pct_a/pct_b come from the backend (n_a/n_b over total season
+  // pitches). Pairs missing pct (no total_pitches available) are kept
+  // rather than silently dropped.
+  const shown = pairs.filter((p) => (p.pct_a === undefined || p.pct_a >= 5) && (p.pct_b === undefined || p.pct_b >= 5));
+  if (!shown.length) return "";
+  const rows = shown.map((p) => {
+    const dot = (type) => `<span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${pitchColor(type)};"></span>`;
     return `<tr>
-      <td style="padding:2px 3px;white-space:nowrap;">${dot(p.type_a)}<span style="margin:0 3px;color:var(--text-muted);">/</span>${dot(p.type_b)}</td>
-      <td style="padding:2px 3px;text-align:right;">${p.commit_distance.toFixed(1)}"</td>
-      <td style="padding:2px 3px;text-align:right;font-weight:600;">${p.composite_score.toFixed(0)}</td>
+      <td style="padding:3px 4px;white-space:nowrap;">${dot(p.type_a)}<span style="margin:0 3px;color:var(--text-muted);">/</span>${dot(p.type_b)}</td>
+      <td style="padding:3px 4px;text-align:right;">${p.commit_distance.toFixed(1)}"</td>
+      <td style="padding:3px 4px;text-align:right;font-weight:600;">${p.composite_score.toFixed(0)}</td>
     </tr>`;
   }).join("");
   return `
     <div class="tunneling-pairs-widget rubber-widget">
       <div class="pitch-usage-title">TUNNEL+ PAIRS</div>
-      <table style="width:100%;border-collapse:collapse;font-size:10px;">
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
         <thead>
           <tr style="border-bottom:1px solid var(--border);">
-            <th style="text-align:left;padding:2px 3px;">Pair</th>
-            <th style="text-align:right;padding:2px 3px;" title="Commit-point distance (inches) — lower = tighter tunnel">Commit</th>
-            <th style="text-align:right;padding:2px 3px;" title="Tunnel+ composite score (plus-scale; higher = better tunnel)">Tunnel+</th>
+            <th style="text-align:left;padding:3px 4px;">Pair</th>
+            <th style="text-align:right;padding:3px 4px;" title="Commit-point distance (inches) — lower = tighter tunnel">Commit</th>
+            <th style="text-align:right;padding:3px 4px;" title="Tunnel+ composite score (plus-scale; higher = better tunnel)">Tunnel+</th>
           </tr>
         </thead>
         <tbody>${rows}</tbody>
@@ -976,31 +988,34 @@ function buildTunnelingPairsTable(pairs) {
   `;
 }
 
-// The Movement Plot's side column (and so the Tunnel+ Pairs card at its
-// bottom) is only as tall as the plot itself - Last 5 Outings in the left
-// column is a separate flex column that isn't guaranteed to match that
-// height. Pad the card's bottom by the measured gap so its bottom edge
-// lines up with Last 5 Outings' bottom edge exactly, instead of guessing a
-// fixed padding that would only work for one particular pair count. Skipped
-// below the 900px breakpoint where the layout stacks to one column and the
-// two cards are no longer side-by-side.
-function _alignTunnelingPairsToLast5() {
+// The Movement Plot (row = SVG + side column) otherwise sizes itself off
+// `.movement-plot-card`'s own 400px min-height, which is taller than Last 5
+// Outings naturally needs - shrink the ROW down to Last 5's real height
+// instead of padding something to stretch up to it, so the SVG itself (and
+// the whole card) actually gets shorter, not just the space below it.
+// Skipped below the 900px breakpoint where the layout stacks to one column
+// and the two cards are no longer side-by-side.
+function _alignMovementPlotToLast5() {
   if (window.innerWidth <= 900) return;
   const last5 = document.getElementById("last-5-mount");
-  const widget = document.querySelector(".tunneling-pairs-widget");
-  if (!last5 || !widget) return;
-  widget.style.paddingBottom = "";
-  const diff = last5.getBoundingClientRect().bottom - widget.getBoundingClientRect().bottom;
-  if (diff > 0) widget.style.paddingBottom = `${diff}px`;
+  const row = document.querySelector(".movement-plot-row");
+  if (!last5 || !row) return;
+  row.style.height = "";
+  row.style.flex = "";
+  const target = last5.getBoundingClientRect().bottom - row.getBoundingClientRect().top;
+  if (target > 0) {
+    row.style.flex = "0 0 auto";
+    row.style.height = `${target}px`;
+  }
 }
 
 // Last 5 Outings' bottom edge can keep drifting for a bit after the first
 // call above - other async content elsewhere on the page (headshots, team
 // logos) still loading in and reflowing things. Re-run on a short settle
-// schedule rather than once, so the final padding reflects the page's
+// schedule rather than once, so the final height reflects the page's
 // actually-settled layout instead of a mid-reflow snapshot.
 function _scheduleAlignSettle() {
-  [0, 300, 700, 1200, 2000, 3500].forEach((ms) => setTimeout(_alignTunnelingPairsToLast5, ms));
+  [0, 300, 700, 1200, 2000, 3500].forEach((ms) => setTimeout(_alignMovementPlotToLast5, ms));
 }
 
 function renderRightPanel(data) {
@@ -1016,11 +1031,13 @@ function renderRightPanel(data) {
     mount.innerHTML = `
       <div class="card movement-plot-card">
         <div class="movement-plot-row">
-          <div class="movement-plot-svg-wrap">${buildMovementPlotSVG(mv.points, mv.arm_angle, rp.throws, mv.peer_avg_movement)}</div>
+          <div class="movement-plot-svg-wrap">
+            ${buildMovementPlotSVG(mv.points, mv.arm_angle, rp.throws, mv.peer_avg_movement)}
+            ${data.babip_against ? `<div class="babip-overlay"><div class="pitch-usage-title">BABIP Against</div><div class="gauge-value">${data.babip_against.value_str}</div></div>` : ""}
+          </div>
           <div class="movement-plot-side-col">
             ${buildMovementSummaryTable(mv.summary)}
             ${buildApproachAngleSVG(rp.release_pos_x, rp.throws, rp.angle_deg, rp.percentile)}
-            ${data.babip_against ? `<div class="babip-widget"><div class="pitch-usage-title">BABIP Against</div><div class="gauge-value" style="text-align:center;">${data.babip_against.value_str}</div></div>` : ""}
             <div id="tunneling-pairs-mount"></div>
           </div>
         </div>
@@ -1728,6 +1745,7 @@ async function loadPlayer() {
   document.getElementById("last-5-title").textContent = state.mode === "pitcher" ? "Last 5 Outings" : "Last 5 Games";
   document.getElementById("last-5-mount").innerHTML = buildLast5Card(data.last_5_games, state.mode, data.il_status);
   if (state.mode === "pitcher") {
+    _scheduleAlignSettle();
     // Tunneling pairs are fetched separately — season_all_pairs() is slow on
     // first call and would block the main player payload. Fill the placeholder
     // after the page is already rendered.
@@ -2054,7 +2072,7 @@ async function defaultToTopPerformer() {
 let _alignResizeTimer = null;
 window.addEventListener("resize", () => {
   clearTimeout(_alignResizeTimer);
-  _alignResizeTimer = setTimeout(_alignTunnelingPairsToLast5, 150);
+  _alignResizeTimer = setTimeout(_alignMovementPlotToLast5, 150);
 });
 
 (async function init() {

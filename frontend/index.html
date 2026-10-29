@@ -29,10 +29,13 @@
        5 rows of content was taller than the right column happened to be. */
     #last-5-mount { flex: 0 0 auto; display: flex; flex-direction: column; }
     #last-5-mount > .card { min-height: 0; overflow-y: hidden; flex: 1; }
-    .movement-plot-card { flex: 1; display: flex; flex-direction: column; min-height: 400px; }
+    .movement-plot-card { flex: 1; display: flex; flex-direction: column; min-height: 200px; }
     .swing-field-card { flex: 1; display: flex; flex-direction: column; }
     .movement-plot-row { display: flex; gap: 14px; flex: 1; }
-    .movement-plot-svg-wrap { flex: 1; min-width: 0; display: flex; }
+    .movement-plot-svg-wrap { flex: 1; min-width: 0; display: flex; position: relative; }
+    .babip-overlay { position: absolute; top: 4px; left: 44px; text-align: left; pointer-events: none; }
+    .babip-overlay .pitch-usage-title { font-size: 9px; margin-bottom: 0; }
+    .babip-overlay .gauge-value { font-size: 16px; }
     /* table.data-table {width:100%} in theme.css otherwise wins on
        specificity (element+class beats a lone class) and the summary table
        swallows the whole row, leaving zero width for the plot next to it. */
@@ -247,7 +250,7 @@
   <script src="js/player-context.js?v=1"></script>
   <script src="js/player-search.js?v=24"></script>
   <script src="js/season-select.js?v=19"></script>
-  <script src="js/player.js?v=57"></script>
+  <script src="js/player.js?v=58"></script>
 </body>
 </html>
 
