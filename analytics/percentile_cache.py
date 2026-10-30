@@ -7,7 +7,7 @@ This module persists them to parquet files so the server doesn't rebuild on ever
 restart or TTL expiry.
 
 Storage layout:
-    scores/percentile_pools/<season>/<player_type>_<split>_<pool_version>.parquet
+    parquets/percentile_pools/<season>/<player_type>_<split>_<pool_version>.parquet
 
 where pool_version is an 8-character hex digest of:
     - analytics/percentiles.py content (code version)
@@ -36,9 +36,9 @@ _locks_mu = threading.Lock()
 def _pools_dir() -> Path:
     global _POOLS_DIR
     if _POOLS_DIR is None:
-        # scores/ is next to this file's package root (project root / scores)
+        # parquets/ is next to this file's package root (project root / parquets)
         here = Path(__file__).resolve().parent.parent
-        _POOLS_DIR = here / "scores" / "percentile_pools"
+        _POOLS_DIR = here / "parquets" / "percentile_pools"
         _POOLS_DIR.mkdir(parents=True, exist_ok=True)
     return _POOLS_DIR
 

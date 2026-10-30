@@ -123,10 +123,10 @@ def _pitcher_scores_from_parquets(pitcher_id, season):
 
     This is preferred over _pitcher_scores_from_db for past seasons because the DB table
     (pitcher_model_scores) may have been populated by an older model version, while the
-    parquets in scores/ always reflect the active model versions (v4, v3, v3)."""
+    parquets in parquets/ always reflect the active model versions (v4, v3, v3)."""
     from pathlib import Path
     import pandas as pd
-    SCORES_DIR = Path(__file__).resolve().parent.parent.parent / "scores"
+    SCORES_DIR = Path(__file__).resolve().parent.parent.parent / "parquets"
 
     result = {}
 

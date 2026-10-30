@@ -319,7 +319,7 @@ def test_stuff_plus_parquet_version_is_v4():
     """Active stuff parquet is v4 (not v3): confirmed by score_meta.json."""
     import json
     from pathlib import Path
-    meta_path = Path(__file__).resolve().parent.parent / "scores" / "score_meta.json"
+    meta_path = Path(__file__).resolve().parent.parent / "parquets" / "score_meta.json"
     if not meta_path.exists():
         pytest.skip("score_meta.json not present")
     meta = json.loads(meta_path.read_text())
@@ -334,7 +334,7 @@ def test_location_plus_parquet_version_is_v3():
     """Active location parquet is v3: confirmed by score_meta.json."""
     import json
     from pathlib import Path
-    meta_path = Path(__file__).resolve().parent.parent / "scores" / "score_meta.json"
+    meta_path = Path(__file__).resolve().parent.parent / "parquets" / "score_meta.json"
     if not meta_path.exists():
         pytest.skip("score_meta.json not present")
     meta = json.loads(meta_path.read_text())
@@ -392,7 +392,7 @@ def test_stuff_plus_parquet_and_db_agree_for_sample_pitchers():
     from pathlib import Path
     from api.db import DB_PATH
 
-    scores_dir = Path(__file__).resolve().parent.parent / "scores"
+    scores_dir = Path(__file__).resolve().parent.parent / "parquets"
     parquet_path = scores_dir / "stuff_plus_v4_2026.parquet"
     if not parquet_path.exists():
         pytest.skip("stuff_plus_v4_2026.parquet not available")

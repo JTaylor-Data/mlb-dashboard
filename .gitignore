@@ -2,11 +2,11 @@
 mlb_data.db
 mlb_data.db.backup-*
 
-# Score cache parquets (large, regenerable via scripts/rescore_models.py)
-scores/*.parquet
+# Score cache parquets (large, regenerable via tools/maintenance/rescore_models.py)
+parquets/*.parquet
 
 # Percentile pool parquets (large, regenerable via tools/build_percentile_pools.py)
-scores/percentile_pools/
+parquets/percentile_pools/
 
 # Research/model-dev artifacts (large parquet/npy files, regenerable via build scripts)
 training/tunneling_v3_artifacts/*.parquet

@@ -33,7 +33,7 @@ from pathlib import Path
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parent.parent
-SCORES_DIR = ROOT / "scores"
+SCORES_DIR = ROOT / "parquets"
 SCORES_DIR.mkdir(exist_ok=True)
 META_PATH = SCORES_DIR / "score_meta.json"
 

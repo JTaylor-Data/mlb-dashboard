@@ -37,7 +37,7 @@ SPLITS = [None, "L", "R"]
 # are now served from disk-persisted percentile pools (see analytics/percentile_cache.py)
 # so their first-request cost is near zero once built.
 
-SCORES_DIR = Path(__file__).resolve().parent.parent / "scores"
+SCORES_DIR = Path(__file__).resolve().parent.parent / "parquets"
 # Parquet-injected raw predictions are given a long TTL so they stay warm
 # for the full day and aren't evicted before the API-layer TTL cache expires.
 _PARQUET_TTL = 14 * 3600  # 14 hours — longer than api/cache.py's 12h TTL
