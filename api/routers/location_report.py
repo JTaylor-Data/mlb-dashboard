@@ -107,11 +107,11 @@ def get_report(season: int, conn=Depends(get_conn)):
 
 
 @router.get("/leaderboard")
-def get_leaderboard(season: int, conn=Depends(get_conn)):
+def get_leaderboard(season: int, n: int = 10, conn=Depends(get_conn)):
     """Season leaderboard — top/bottom by Location+ score.
     Qualification: 300 pitches (111 for 2020)."""
     min_p = 111 if season == 2020 else MIN_PITCHES_QUALIFY
-    return location_leaderboard(conn, season, min_pitches=min_p)
+    return location_leaderboard(conn, season, min_pitches=min_p, top_n=n)
 
 
 @router.get("/pitcher/{pitcher_id}")

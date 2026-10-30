@@ -248,7 +248,8 @@ def composite_leaderboard(conn, season, top_n=15, all_pairs_df=None):
 
     def _rows(d):
         return [
-            dict(pitcher_id=int(r.pitcher_id), name=r.name, team_abbrev=r.team_abbrev,
+            dict(pitcher_id=int(r.pitcher_id), name=r.name,
+                 team_abbrev=None if pd.isna(r.team_abbrev) else r.team_abbrev,
                  total_pitches=int(r.total_pitches), n_pairs=int(r.n_pairs),
                  score=round(float(r.tunneling_plus), 1))
             for r in d.itertuples()

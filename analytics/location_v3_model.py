@@ -305,7 +305,8 @@ def leaderboard(conn, season, min_pitches=None, top_n=15):
     def _rows(d):
         return [
             dict(pitcher_id=int(r.pitcher_id), name=r.name,
-                 team_abbrev=r.team_abbrev, total_pitches=int(r.n_pitches),
+                 team_abbrev=None if pd.isna(r.team_abbrev) else r.team_abbrev,
+                 total_pitches=int(r.n_pitches),
                  score=round(float(r.score), 1),
                  season_flag=season_flag)
             for r in d.itertuples()

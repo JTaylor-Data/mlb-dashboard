@@ -19,23 +19,51 @@
  *  GET /api/location/meta → { version, features, scoring_config, ... }
  */
 
-function leaderboardRows(rows) {
-  return rows.map((r) =>
-    `<tr>
-      <td>${r.name || "#" + r.pitcher_id}${r.team_abbrev ? ` <span class="muted">(${r.team_abbrev})</span>` : ""}</td>
-      <td>${typeof r.score === "number" ? r.score.toFixed(1) : r.score}</td>
-      <td>${(r.total_pitches || r.n_pitches || 0).toLocaleString()}</td>
-    </tr>`
-  ).join("");
+// ──────────────────────────────────────────────────────────── leaderboard (same UI as Stuff+)
+function renderLbList(mountId, entries, onRowClick) {
+  const el = document.getElementById(mountId);
+  if (!el) return;
+  if (!entries || !entries.length) {
+    el.innerHTML = `<div class="muted" style="font-size:13px;">No qualified pitchers for this season.</div>`;
+    return;
+  }
+  el.innerHTML = entries.map((e, i) => {
+    const color = e.score >= 100 ? "#1a7f37" : "#c9302c";
+    const team  = e.team_abbrev ? `<span class="muted"> (${e.team_abbrev})</span>` : "";
+    const flag  = e.season_flag ? ` <span class="lc-asterisk" title="${e.season_flag}">*</span>` : "";
+    return `<div class="lc-lb-row" tabindex="0" role="button"
+        aria-label="${e.name}, Location+ ${e.score}"
+        data-pitcher-id="${e.pitcher_id}" data-name="${e.name || ""}">
+      <div class="lc-lb-rank">${i + 1}</div>
+      <div class="lc-lb-name">${e.name || "—"}${team}${flag}</div>
+      <div class="lc-lb-n">${(e.total_pitches || 0).toLocaleString()} pitches</div>
+      <div class="lc-lb-val" style="color:${color}">${e.score.toFixed(0)}</div>
+    </div>`;
+  }).join("");
+
+  el.querySelectorAll(".lc-lb-row").forEach(row => {
+    const handler = () => {
+      const pid  = Number(row.dataset.pitcherId);
+      const name = row.dataset.name;
+      if (onRowClick) onRowClick(pid, name);
+    };
+    row.addEventListener("click", handler);
+    row.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") handler(); });
+  });
 }
 
-function renderLeaderboard(report) {
-  const lb = report.leaderboard || {};
-  const header = `<thead><tr><th>Pitcher</th><th>Location+</th><th>Pitches</th></tr></thead>`;
-  const top = document.getElementById("lc-top-table");
-  const bottom = document.getElementById("lc-bottom-table");
-  if (top) top.innerHTML = header + `<tbody>${leaderboardRows(lb.top || [])}</tbody>`;
-  if (bottom) bottom.innerHTML = header + `<tbody>${leaderboardRows(lb.bottom || [])}</tbody>`;
+async function loadOverallLeaderboard(season, onRowClick) {
+  const captionEl = document.getElementById("lc-lb-caption");
+  try {
+    const lb = await getJSON(`/api/location/leaderboard?season=${season}&n=10`);
+    renderLbList("lc-lb-top", lb.top || [], onRowClick);
+    renderLbList("lc-lb-bottom", lb.bottom || [], onRowClick);
+    const min = lb.min_pitches || 300;
+    if (captionEl) captionEl.textContent = `Minimum ${min} pitches to qualify. * = 2020, a 60-game season.`;
+  } catch (err) {
+    document.getElementById("lc-lb-top").innerHTML = `<div class="muted">Failed to load.</div>`;
+    document.getElementById("lc-lb-bottom").innerHTML = "";
+  }
 }
 
 function renderPitcherDetail(detail, name, season) {
@@ -72,21 +100,13 @@ async function loadPitcherDetail(playerId, name, season) {
   }
 }
 
-async function loadReport(season) {
-  const report = await getJSON(`/api/location/report?season=${season}`);
-  renderLeaderboard(report);
-  return report;
-}
-
 async function init() {
   let selectedPlayer = null;
 
   const seasonSelect = createSeasonSelect(document.getElementById("season-select"), () => {
-    loadReport(seasonSelect.value);
     if (selectedPlayer) loadPitcherDetail(selectedPlayer.player_id, selectedPlayer.name, seasonSelect.value);
   });
   const defaultSeason = await seasonSelect.load();
-  await loadReport(defaultSeason);
 
   const search = createPlayerSearch(
     document.getElementById("player-search-input"),
@@ -98,6 +118,20 @@ async function init() {
     { roleFilter: "pitcher" }
   );
   await search.load(defaultSeason);
+
+  // ---- Leaderboard (own season selector, independent of pitcher lookup)
+  function onLbRowClick(pitcherId, name) {
+    selectedPlayer = { player_id: pitcherId, name };
+    search.setValue(selectedPlayer);
+    seasonSelect.set(Number(lbSeasonSelect.value));
+    loadPitcherDetail(pitcherId, name, Number(lbSeasonSelect.value));
+    document.getElementById("lc-lookup-card").scrollIntoView({ behavior: "smooth" });
+  }
+  const lbSeasonSelect = createSeasonSelect(document.getElementById("lc-lb-season"), (s) => {
+    loadOverallLeaderboard(s, onLbRowClick);
+  });
+  const lbDefaultSeason = await lbSeasonSelect.load();
+  await loadOverallLeaderboard(lbDefaultSeason, onLbRowClick);
 
   const params = new URLSearchParams(location.search);
   const urlPitcherId = params.get("pitcher_id");
