@@ -51,13 +51,48 @@
 3. Jeff Hoffman ran a near 4.00 ERA despite a 98th percentile K rate (over 100 K's). Hoffman struggled with command (96 Location+) and Holding Runners this year (1st percentile). In addition, he ran a .352 BABIP across 65IP which should be expected to mean revert next year. While his BABIP suggests he was getting extremely unlucky, I'd argue hitters earned a lot of their success by sitting on his (theoretically) elite tailing fastball in-zone and managing to barrel the ball for hard contact. 
 4. 2026 Michael Harris was one of the best young players in baseball despite struggling in 2024 & 2025. However, there don't seem to be many changes in underlying profile YOY for MH-II. He remained consistently bottom of the league in chase% (1st percentile) and BB% (2nd Percentile), relying on infrequent high quality contact instead. His 2026 results seem driven by a modest increase in Pull Air% (~5pp) improving quality of contact metrics, in 2027 he can be expected to return to career norms (<10th percentile) Pull Air % and his offensive production will likely follow.
 
-## Limitations/Future Work
+## Limitations
 
+- Deception+ feature set is relatively thin due to extremely limited pitcher delivery metrics available publicly. This mean that ERA and xFIP correlations appear relatively weak and the model struggles to indepedently predict future results for a player
+-  Multiple iterations of the tunneling model agree broadly on the worst tunnelers in the league, but disagree starkly on the best. Suggests that there might be a larger floor for "Poor tunnelling" than there is a ceiling for "Elite tunnelling" and limits the potential signal capturable by ANY model
+- Certain large computations (percentile pools, SHAP contributions, Model scores) take significant time to pre-load and cache, so requests made to a cold server can be slow to process. 
 
+## Future Work
 
-## If you want to run locally
+1. Computer Vision (YOLO) delivery mechanics pipeline in development to gather additional data for Deception+ inputs
+2. 3D Tunnelling+ visualizer program in development. Showing all pitches, color-coded, with trajectories to visualize pitch divergence on the path to the plate, at commit point, and final destinations
+3.  Tunnelling+ expansion into a broader "Pitch-type optimization" model giving suggested optimal pitches and locations based on game context, at-bat situation, pitcher/hitter characteristics, and previous pitch outcomes (early/late/over/under). 
 
+## Repo Structure
+
+mlb-dashboard/
+├── analytics/          [core model + data logic]
+├── api/                [FastAPI backend, routers]
+├── Archive/             [retired scripts, kept for record]
+├── config/              [model policy, thresholds]
+├── data/                [local data, DB files]
+├── deploy/              [deployment config]
+├── diagnostics/         [model validation scripts]
+├── docs/                [misc documentation]
+├── frontend/             [vanilla JS/HTML site]
+├── Methodology/          [per-model writeups]
+├── models/               [trained model artifacts]
+├── perf/                 [performance audits]
+├── pulls/                [data-pull scripts]
+├── scores/               [computed score outputs]
+├── tests/                 [test suite]
+├── tools/                  [maintenance scripts]
+├── Dockerfile              [container build]
+├── README.md               [this file]
+├── pytest.ini               [test config]
+├── render.yaml               [Render deploy config]
+├── requirements.txt            [pinned dependencies]
+├── schema.sql                   [database schema]
+└── start.sh                      [container start script]
 
 
 ## About
 
+This project is part of an ongoing portfolio exploring data analytics, machine learning, statistics, and my passion for the game of baseball. I'm a third-year Economics student at the University of Toronto (Focus in DA, Statistics Minor). Feel free to reach out if you'd like to talk shop or have feedback on the analysis.
+
+josh.scott.tay@gmail.com | [LinkedIN](https://www.linkedin.com/in/joshua-taylor-86450a32a/)
