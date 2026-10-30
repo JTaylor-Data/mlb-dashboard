@@ -92,8 +92,8 @@ Pre-computed scores are stored in `pitcher_model_scores` (SQLite):
 pitcher_id | season | stuff_plus | tunneling_plus | location_plus | computed_at
 ```
 
-Populated by: `python pulls/precompute_model_scores.py [season]`  
-Re-run after each weekly model retrain for the current season.
+Populated by: `python tools/maintenance/rescore_models.py`  
+Run automatically every Sunday 4 AM by `api/scheduler.py`; can also be re-run manually after a model retrain for the current season.
 
 The career page reads from this table. Individual pitch pages call the model directly.
 

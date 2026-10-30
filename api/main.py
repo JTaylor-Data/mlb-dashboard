@@ -33,7 +33,7 @@ from api.db import get_conn
 from api.routers import (
     analysis, career, deception_report, heatmaps, hitzones, location_report, players, playoffs,
     prospects, similar_players, splits, standings, stuff_model_report, team_card, top_performers,
-    trends, tunneling_report, tunneling_3d, teams, probable_pitchers, news,
+    trends, tunneling_report, tunneling_3d, probable_pitchers, news,
 )
 from api.warmup import warm_cache_background
 
@@ -129,7 +129,6 @@ app.include_router(heatmaps.router)
 app.include_router(hitzones.router)
 app.include_router(similar_players.router)
 app.include_router(playoffs.router)
-app.include_router(teams.router)
 app.include_router(probable_pitchers.router)
 app.include_router(news.router)
 app.include_router(trends.router)
