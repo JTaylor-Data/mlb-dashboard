@@ -33,12 +33,23 @@
 
 ## Architecture
 
-**Backend:**
+**Backend:** FastAPI with 21 routers each serving one of the clickable dashboard pages, mounted onto one larger application.
 
+**Frontend:** Javascript served as static files through the same FastAPI, allows both backend and frontend to originate from the same place for simplicity.
 
-## Fun Facts 
+**Data:** SQLite database, local in dev, and a mounted persistent file for the live site. TTL caching is employed for heavy computations like yearly percentage pools and model scores
 
+**Models:** 3 LightGBM models and a hand-built composite model with their own feature sets, governance rules, and qualifying validation statistics
 
+**Pipeline:** sheduled pull scripts (pulls/, orchestrated by api/pull.py) sourcing from Savant and MLB StatsAPI, feeds the SQLite database
+
+**Deployment:** Dockerized file deployed to Render (render.yaml) with a persistent disk database and an auto generated admin token. 
+
+## Fun Case Studies 
+1. Stuff+ flagged Aaron Ashby as the best Curveball in baseball (Stuff+: 124) before his historic scoreless playoff run
+2. Stuff+ flagged Tatsuya Imai as a bottom 4 pitcher (91 Stuff+). Despite a 78th percentile VAA Imai's intriguing fastball got crushed (.815 OPS) due to below average total movement, poor location+ (92) and because it's his only reliable zone pitch. He struggled to miss any bats with his 4S-FB.
+3. Jeff Hoffman ran a near 4.00 ERA despite a 98th percentile K rate (over 100 K's). Hoffman struggled with command (96 Location+) and Holding Runners this year (1st percentile). In addition, he ran a .352 BABIP across 65IP which should be expected to mean revert next year. While his BABIP suggests he was getting extremely unlucky, I'd argue hitters earned a lot of their success by sitting on his (theoretically) elite tailing fastball in-zone and managing to barrel the ball for hard contact. 
+4. 2026 Michael Harris was one of the best young players in baseball despite struggling in 2024 & 2025. However, there don't seem to be many changes in underlying profile YOY for MH-II. He remained consistently bottom of the league in chase% (1st percentile) and BB% (2nd Percentile), relying on infrequent high quality contact instead. His 2026 results seem driven by a modest increase in Pull Air% (~5pp) improving quality of contact metrics, in 2027 he can be expected to return to career norms (<10th percentile) Pull Air % and his offensive production will likely follow.
 
 ## Limitations/Future Work
 
