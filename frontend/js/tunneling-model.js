@@ -38,7 +38,7 @@ function renderPitcherDetail(detail, name, season) {
     <table class="data-table tn-table" id="tn-pitcher-pairs-table">
       <thead><tr>
         <th>Pair</th>
-        <th>Commit dist.</th><th>Plate dist.</th><th>Divergence</th><th>Shape break</th><th>Composite</th>
+        <th>Commit dist.</th><th>Plate dist.</th><th>Divergence</th><th>Shape break</th><th>Tunneling+</th>
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
@@ -47,7 +47,7 @@ function renderPitcherDetail(detail, name, season) {
       <b>Plate</b>: how far apart they land (100 in brackets = league average; higher = farther apart, better).
       <b>Divergence</b>: plate minus commit, how much separation grows after the hitter has to decide.
       <b>Shape break</b>: how much the pair bends away from a straight line between release and commit.
-      <b>Composite</b> combines all three, z-scored within that pitch-type pair's own season population.
+      <b>Tunneling+</b> combines all three, z-scored within that pitch-type pair's own season population.
     </div>
   `;
 }
