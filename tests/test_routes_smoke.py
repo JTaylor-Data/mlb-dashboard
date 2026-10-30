@@ -35,7 +35,6 @@ ROUTES = [
     "/api/stuff-model/pitch-types?season=2026",
     "/api/team/147/card",
     "/api/hitzones/592518?season=2026",
-    "/api/teams/147/roster",
     "/api/splits/pitch-types?player_id=543037&season=2026",
     "/api/top-performers?season=2026&date=2026-09-27",
     "/api/top-performers?season=2025&date=2025-09-28",
