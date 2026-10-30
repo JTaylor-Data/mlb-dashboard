@@ -1117,7 +1117,7 @@ async function renderSimilarPlayers() {
       const headshot = c.player_id
         ? `<img class="sp-headshot" src="https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_120,q_auto:best/v1/people/${c.player_id}/headshot/67/current" alt="${c.name || ""}" />`
         : "";
-      const url = `index.html?player_id=${c.player_id}&season=${c.season}`;
+      const url = `index.html?player_id=${c.player_id}&season=${c.season}&role=${role}`;
       return `
         <div class="sp-comp" role="button" tabindex="0" onclick="location.href='${url}'" onkeydown="if(event.key==='Enter'||event.key===' ')location.href='${url}'">
           ${headshot}
