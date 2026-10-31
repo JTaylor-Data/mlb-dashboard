@@ -1,9 +1,0 @@
-old_path,new_path,reason,evidence
-training/,Archive/training_scripts/training/,Not imported by live server; training runs happen offline,"grep 'from training\.' api/ -> no results; grep 'import training' api/ -> no results"
-diagnostics/closeout_blend/,Archive/diagnostics/closeout_blend/,Not read by live server or build tools,"grep diagnostics api/ analytics/ tools/ -> build_validation_content only reads diagnostics/stuff_v4/"
-diagnostics/deception_v2/,Archive/diagnostics/deception_v2/,Not read by live server at runtime (deception scores come from parquet),"Static import graph analysis; deception_report.py reads scores/ not diagnostics/"
-diagnostics/location_v3/,diagnostics/location_v3/ [REVERTED — live read by api/routers/location_report.py],REVERTED: location_report.py reads scoring_config.json/gate_results.json/validation_results.json from this dir at runtime,"Confirmed by 500 error on /api/location/leaderboard after move; files restored with git mv"
-diagnostics/stuff_memorization/,Archive/diagnostics/stuff_memorization/,Not read at runtime,"Static import graph analysis"
-project_artifacts/,Archive/artifacts/project_artifacts/,Old pitching_plus_ext model versions not used as live scorers; untracked files,"git ls-files project_artifacts -> empty (all gitignored); not imported anywhere in api/"
-pitcher_cv/,Archive/experimental/pitcher_cv/,R&D CV project not imported by server,"grep pitcher_cv api/ analytics/ -> no results"
-scripts/rescore_models.py,Archive/misc_scripts/scripts/rescore_models.py,Utility script not imported at server startup,"grep 'from scripts' api/ -> no results; scheduler does not import it"

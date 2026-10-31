@@ -1,9 +1,0 @@
-{
-    "chosen_variant":  "S1",
-    "use_shrinkage":  false,
-    "yoy_s1_pooled":  0.659,
-    "leaderboard_min_pitches":  100,
-    "r2_mix":  0.3378,
-    "yoy_s0_pooled":  0.6818,
-    "split_half_300":  0.8145
-}

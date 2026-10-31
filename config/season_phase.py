@@ -10,7 +10,7 @@ SEASON_PHASE controls which behaviors are active:
                    season defaults to completed season; no percentile updating
 
 To transition phases, change SEASON_PHASE below (or set env var SEASON_PHASE).
-See docs/methodology/SEASON_PHASE.md for the full transition checklist.
+See docs/methodology/09_season_phase_guide.md for the full transition checklist.
 """
 import os
 
@@ -124,7 +124,7 @@ def suggest_phase_from_schedule(conn) -> str:
         if suggestion != SEASON_PHASE:
             _log.warning(
                 "season_phase.py: current SEASON_PHASE=%s but schedule suggests %s. "
-                "Update SEASON_PHASE manually when ready (see docs/methodology/SEASON_PHASE.md).",
+                "Update SEASON_PHASE manually when ready (see docs/methodology/09_season_phase_guide.md).",
                 SEASON_PHASE, suggestion,
             )
         return suggestion

@@ -43,11 +43,10 @@ mlb_dashboard/
 ├── data/                   # Reference CSVs (rosters, park factors, schedule)
 ├── tests/                  # pytest suite (198 tests; run against a live server on port 8010)
 ├── tools/                  # Build utilities (validation content, hygiene checks)
-├── Archive/                # Non-live training/diagnostic code (moved with git mv)
-└── docs/                   # Project/process docs
+├── Archive/                # Retired code/scripts/data, gitignored (not tracked); see Archive/README.md
+└── docs/                   # Project/process docs (tracked)
     ├── architecture/       # ARCHITECTURE.md, HOSTING.md, etc.
-    ├── methodology/        # Model methodology, handoff notes, decisions (NEEDS_DECISION.md)
-    └── perf/               # Performance benchmarks
+    └── methodology/        # Model methodology, handoff notes, decisions (02_open_decisions.md)
 ```
 
 ---
@@ -111,7 +110,7 @@ Nightly pulls (via APScheduler) update Statcast pitch data, team standings, rost
 injuries, and probable pitchers. On startup, `warmup.py` loads pre-computed score
 parquets into memory so the first request is fast.
 
-Model retraining is **not** automated — see `docs/methodology/NEEDS_DECISION.md`
+Model retraining is **not** automated — see `docs/methodology/02_open_decisions.md`
 (ND-01) for the annual retrain decision.
 
 ---
@@ -124,5 +123,5 @@ Model retraining is **not** automated — see `docs/methodology/NEEDS_DECISION.m
 | `docs/HOSTING.md` | Render deployment guide |
 | `config/model_policy.py` | Per-model thresholds, active versions, available seasons |
 | `config/season_phase.py` | `SEASON_PHASE` constant and phase-aware helpers |
-| `docs/methodology/HANDOFF.md` | Session-by-session change log, active model versions |
-| `docs/methodology/NEEDS_DECISION.md` | Open decisions requiring owner input |
+| `docs/methodology/01_handoff_log.md` | Session-by-session change log, active model versions |
+| `docs/methodology/02_open_decisions.md` | Open decisions requiring owner input |

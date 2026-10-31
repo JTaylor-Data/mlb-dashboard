@@ -58,8 +58,8 @@ mlb_dashboard/
 │
 ├── docs/methodology/            # Audit docs, decisions, benchmarks, golden snapshots
 │   ├── AUDIT_REPORT.md     # Defects, redundancies, perf items, dead code
-│   ├── LIVE_MANIFEST.md    # ~55 live Python modules documented
-│   ├── SEASON_PHASE.md     # Phase transition guide
+│   ├── 07_live_manifest.md    # ~55 live Python modules documented
+│   ├── 09_season_phase_guide.md     # Phase transition guide
 │   └── golden_snapshots/stage0/   # JSON baselines captured before audit changes
 │
 ├── Archive/                # Non-live code preserved for reference (never imported by server)
@@ -166,7 +166,7 @@ SEASON_PHASE=REGULAR_SEASON  # or POSTSEASON or OFFSEASON
 ```
 
 Defaults to `POSTSEASON` when unset. `api/pull.py` derives `POSTSEASON_MODE` from this.
-See `docs/methodology/SEASON_PHASE.md` for the full transition checklist.
+See `docs/methodology/09_season_phase_guide.md` for the full transition checklist.
 
 ---
 
@@ -189,6 +189,6 @@ See `docs/methodology/SEASON_PHASE.md` for the full transition checklist.
 | LightGBM booster files | `models/` |
 | Pre-computed score parquets | `scores/` (gitignored) |
 | Audit defect list | `docs/methodology/AUDIT_REPORT.md` |
-| Deferred owner decisions | `docs/methodology/NEEDS_DECISION.md` |
+| Deferred owner decisions | `docs/methodology/02_open_decisions.md` |
 | Archived training code | `Archive/training_scripts/` |
 | What files were moved and why | `Archive/MOVED_FILES.csv` |

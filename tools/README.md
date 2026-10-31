@@ -14,4 +14,4 @@ Build utilities and maintenance scripts. These are owner-run tools, not server c
 
 ## Archive
 
-No files archived yet. See `docs/methodology/ARCHIVE_POLICY.md`.
+No files archived yet. See `docs/methodology/06_archive_policy.md`.

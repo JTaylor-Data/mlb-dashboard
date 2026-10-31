@@ -8,7 +8,7 @@ Branch: verify-both (master ← test-fixes ← archive-and-chart, both merged --
 
 20 files changed, 850 insertions(+), 123 deletions(-).  
 **Zero renames, zero deletes.** Every entry is either a new file (9 new READMEs plus
-`ARCHIVE_POLICY.md`, `STARTUP_AND_STORAGE.md`, `check_archive_hygiene.py`, etc.) or an
+`06_archive_policy.md`, `STARTUP_AND_STORAGE.md`, `check_archive_hygiene.py`, etc.) or an
 in-place edit to an existing file (`player.js`, `player_page.py`, `players.py`,
 `season_phase.py`, `index.html`, `trends.js`, `trends.html`).
 

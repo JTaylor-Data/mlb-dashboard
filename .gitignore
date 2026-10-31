@@ -20,13 +20,9 @@ training/location_plus_ext_artifacts/*.parquet
 # All legacy/archived artifacts and model backups
 project_artifacts/
 
-# Archive large binary/parquet files (moved here for organization; too large for git)
-Archive/**/*.parquet
-Archive/**/*.pkl
-Archive/**/*.pt
-Archive/**/*.task
-Archive/**/*.npy
-Archive/**/cross_model_validation_v2_checkpoint.json
+# Archive/ (root): non-live training/diagnostic code and retired-model
+# junk, consolidated here for reference but not tracked in git.
+Archive/
 
 # CV venv (hundreds of MB of DLLs and wheels, never belongs in git)
 pitcher_cv/bcv_venv311/
@@ -70,10 +66,6 @@ derived_cache.db
 derived_cache.db-shm
 derived_cache.db-wal
 mlb_data.db.bak_pre_perf
-docs/perf/archive/golden/
-
-# Stuff v4 large diagnostic artifacts (archived, see diagnostics/archive/)
-diagnostics/archive/stuff_v4/*.parquet
 
 # Location v3 large diagnostic artifacts (regenerable)
 diagnostics/location_v3/*.parquet

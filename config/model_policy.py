@@ -3,7 +3,7 @@ config/model_policy.py — Single source of truth for per-model scoring policy.
 
 Contains minimum qualifying pitch counts, available seasons, and default
 display seasons for every live model. Values here reproduce existing behavior
-exactly (not changing any threshold or logic), so `docs/perf/archive/compare_golden.py`
+exactly (not changing any threshold or logic), so `Archive/perf_archive/compare_golden.py`
 should detect no API response change after this file is added.
 
 Usage:
@@ -33,7 +33,7 @@ STUFF_PLUS = {
         "Leaderboard min_pitches=200 lives in api/routers/stuff_model_report.py:30 "
         "(LEADERBOARD_MIN_PITCHES). Shrinkage K estimated fresh each season, "
         "range 0.4–2.8 pitches. Unseen season (e.g. 2027) uses LightGBM "
-        "missing-category branch; annual retrain recommended (see NEEDS_DECISION.md ND-01)."
+        "missing-category branch; annual retrain recommended (see docs/methodology/02_open_decisions.md ND-01)."
     ),
 }
 
@@ -87,7 +87,7 @@ DECEPTION_PLUS = {
     "min_pitches_scoring": 100,
     "min_pitches_leaderboard": 100,
     # arm_angle available from ~2021; effective scoring range is 2021–2026 even though
-    # the model meta lists 2015–2026 as trained seasons (see NEEDS_DECISION.md ND-02)
+    # the model meta lists 2015–2026 as trained seasons (see docs/methodology/02_open_decisions.md ND-02)
     "available_seasons": list(range(2021, 2027)),
     "default_season": 2026,
     "reason": (
@@ -98,7 +98,7 @@ DECEPTION_PLUS = {
         "MIN_PITCHES=100 check in pitcher_deception_breakdown(); returns None if feat.empty or < 100 after dropna. "
         "Requires pitcher_bio record (height_in, weight_lb). REPORT_SEASON = 2026 "
         "hardcoded in api/routers/deception_report.py:25 — no season selector yet. "
-        "See NEEDS_DECISION.md ND-02 and ND-03."
+        "See docs/methodology/02_open_decisions.md ND-02 and ND-03."
     ),
 }
 

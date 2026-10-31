@@ -17,4 +17,4 @@ Legacy scorers kept for career-page backward compat: `location_model.py`, `locat
 
 ## Archive
 
-No files archived yet. See `docs/methodology/ARCHIVE_POLICY.md`.
+No files archived yet. See `docs/methodology/06_archive_policy.md`.
