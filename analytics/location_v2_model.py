@@ -7,7 +7,7 @@ Replaces location_model.py (v1 single regressor) as the live scorer for the
 /api/location/* routes. The v1 sign-flip issue (ERA r = −0.257, xFIP r = −0.507)
 and stability collapse (YoY r → 0.009 by 2024→2025) are both resolved in v2.
 
-See docs/methodology/in_progress/LOCATION_PLUS_V2_METHODOLOGY_IN_PROGRESS.html.
+See docs/methodology/archive/07_of_42_location_v2_methodology_final.html.
 """
 import json
 import time

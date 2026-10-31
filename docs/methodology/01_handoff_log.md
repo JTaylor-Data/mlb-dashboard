@@ -726,7 +726,7 @@ Earlier methodology docs reported positive ERA r for v2 models — inverted conv
 
 ### Part 2 Summary
 Geometry → plate_x R²=nan, plate_z R²=nan
-Full AUC table in: docs/methodology/in_progress/CROSS_MODEL_VALIDATION_AND_LEAKAGE_TESTS_IN_PROGRESS.html
+Full AUC table in: docs/methodology/archive/20_of_42_cross_model_validation_leakage_tests.html
 
 ### Part 3 Summary
 V0 CV R²=-0.00049, YoY r=+0.495

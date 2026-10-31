@@ -8,7 +8,7 @@ pitch categoricals):
 Replaces tunneling_v3_model.py as the live scorer for /api/tunneling/v3/* routes.
 The v3 sign-flip (ERA r = −0.218, xFIP r = −0.348) is resolved in v2.
 
-See docs/methodology/in_progress/TUNNELING_PLUS_V2_METHODOLOGY_IN_PROGRESS.html.
+See docs/methodology/archive/13_of_42_tunneling_v2_methodology_final.html.
 """
 import json
 import time
