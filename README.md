@@ -64,7 +64,7 @@
 3.  Tunnelling+ expansion into a broader "Pitch-type optimization" model giving suggested optimal pitches and locations based on game context, at-bat situation, pitcher/hitter characteristics, and previous pitch outcomes (early/late/over/under). 
 
 ## Repo Structure
-
+```
 mlb-dashboard/
 ├── analytics/          [core model + data logic]
 ├── api/                [FastAPI backend, routers]
@@ -72,13 +72,10 @@ mlb-dashboard/
 ├── config/              [model policy, thresholds]
 ├── data/                [local data, DB files]
 ├── deploy/              [deployment config]
-├── diagnostics/         [model validation scripts]
-├── docs/                [misc documentation]
+├── diagnostics/         [live validation artifacts]
+├── docs/                [methodology, architecture, perf]
 ├── frontend/             [vanilla JS/HTML site]
-├── Methodology/          [per-model writeups]
 ├── models/               [trained model artifacts]
-├── perf/                 [performance audits]
-├── pulls/                [data-pull scripts]
 ├── scores/               [computed score outputs]
 ├── tests/                 [test suite]
 ├── tools/                  [maintenance scripts]
@@ -89,7 +86,7 @@ mlb-dashboard/
 ├── requirements.txt            [pinned dependencies]
 ├── schema.sql                   [database schema]
 └── start.sh                      [container start script]
-
+```
 
 ## About
 
