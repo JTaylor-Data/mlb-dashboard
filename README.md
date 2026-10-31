@@ -21,6 +21,12 @@
 8. An outing tool allowing in-depth analysis of a single pitcher outing
 9. Prospect scores, rankings, and analysis league-wide and team specific
 
+## Fun Case Studies 
+1. Stuff+ flagged Aaron Ashby as the best Curveball in baseball (Stuff+: 124) before his historic scoreless playoff run
+2. Stuff+ flagged Tatsuya Imai as a bottom 4 pitcher (91 Stuff+). Despite a 78th percentile VAA Imai's intriguing fastball got crushed (.815 OPS) due to below average total movement, poor location+ (92) and because it's his only reliable zone pitch. He struggled to miss any bats with his 4S-FB.
+3. Jeff Hoffman ran a near 4.00 ERA despite a 98th percentile K rate (over 100 K's). Hoffman struggled with command (96 Location+) and Holding Runners this year (1st percentile). In addition, he ran a .352 BABIP across 65IP which should be expected to mean revert next year. While his BABIP suggests he was getting extremely unlucky, I'd argue hitters earned a lot of their success by sitting on his (theoretically) elite tailing fastball in-zone and managing to barrel the ball for hard contact. 
+4. 2026 Michael Harris was one of the best young players in baseball despite struggling in 2024 & 2025. However, there don't seem to be many changes in underlying profile YOY for MH-II. He remained consistently bottom of the league in chase% (1st percentile) and BB% (2nd Percentile), relying on infrequent high quality contact instead. His 2026 results seem driven by a modest increase in Pull Air% (~5pp) improving quality of contact metrics, in 2027 he can be expected to return to career norms (<10th percentile) Pull Air % and his offensive production will likely follow.
+
 ## The Models
 
 1. **Stuff+:** a lightGBM model trained on pitch level data from 2015 - 2026 (excluding 2020). Feature set includes effective speed, release_spin_rate, spin_axis, hb, ivb, vaa_residual, and seperation characteristics from each major fastball as well as a handful of categorical league context variables.
@@ -45,11 +51,6 @@
 
 **Deployment:** Dockerized file deployed to Render (render.yaml) with a persistent disk database and an auto generated admin token. 
 
-## Fun Case Studies 
-1. Stuff+ flagged Aaron Ashby as the best Curveball in baseball (Stuff+: 124) before his historic scoreless playoff run
-2. Stuff+ flagged Tatsuya Imai as a bottom 4 pitcher (91 Stuff+). Despite a 78th percentile VAA Imai's intriguing fastball got crushed (.815 OPS) due to below average total movement, poor location+ (92) and because it's his only reliable zone pitch. He struggled to miss any bats with his 4S-FB.
-3. Jeff Hoffman ran a near 4.00 ERA despite a 98th percentile K rate (over 100 K's). Hoffman struggled with command (96 Location+) and Holding Runners this year (1st percentile). In addition, he ran a .352 BABIP across 65IP which should be expected to mean revert next year. While his BABIP suggests he was getting extremely unlucky, I'd argue hitters earned a lot of their success by sitting on his (theoretically) elite tailing fastball in-zone and managing to barrel the ball for hard contact. 
-4. 2026 Michael Harris was one of the best young players in baseball despite struggling in 2024 & 2025. However, there don't seem to be many changes in underlying profile YOY for MH-II. He remained consistently bottom of the league in chase% (1st percentile) and BB% (2nd Percentile), relying on infrequent high quality contact instead. His 2026 results seem driven by a modest increase in Pull Air% (~5pp) improving quality of contact metrics, in 2027 he can be expected to return to career norms (<10th percentile) Pull Air % and his offensive production will likely follow.
 
 ## Limitations
 
@@ -66,26 +67,26 @@
 ## Repo Structure
 ```
 mlb-dashboard/
-├── analytics/          [core model + data logic]
-├── api/                [FastAPI backend, routers]
+├── analytics/           [core model + data logic]
+├── api/                 [FastAPI backend, routers]
 ├── Archive/             [retired scripts, kept for record]
 ├── config/              [model policy, thresholds]
 ├── data/                [local data, DB files]
 ├── deploy/              [deployment config]
 ├── diagnostics/         [live validation artifacts]
 ├── docs/                [methodology, architecture, perf]
-├── frontend/             [vanilla JS/HTML site]
-├── models/               [trained model artifacts]
-├── scores/               [computed score outputs]
-├── tests/                 [test suite]
-├── tools/                  [maintenance scripts]
-├── Dockerfile              [container build]
-├── README.md               [this file]
-├── pytest.ini               [test config]
-├── render.yaml               [Render deploy config]
-├── requirements.txt            [pinned dependencies]
-├── schema.sql                   [database schema]
-└── start.sh                      [container start script]
+├── frontend/            [vanilla JS/HTML site]
+├── models/              [trained model artifacts]
+├── scores/              [computed score outputs]
+├── tests/               [test suite]
+├── tools/               [maintenance scripts]
+├── Dockerfile           [container build]
+├── README.md            [this file]
+├── pytest.ini           [test config]
+├── render.yaml          [Render deploy config]
+├── requirements.txt     [pinned dependencies]
+├── schema.sql           [database schema]
+└── start.sh             [container start script]
 ```
 
 ## About
