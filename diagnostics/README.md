@@ -12,4 +12,4 @@ Diagnostic artifacts for model validation and quality tracking.
 - `closeout_blend/` — Old closeout blend diagnostics; not read by any live code. **Candidate for move to `Archive/diagnostics/`** but kept here per ARCHIVE_POLICY.md's "unproven" rule until confirmed safe.
 - `deception_v2/` — Deception+ v2 score parquets; scores served from `scores/` parquets, not from here. **Candidate for move to `Archive/diagnostics/`**.
 
-See `Methodology/ARCHIVE_POLICY.md` for the policy on when to move files to Archive/.
+See `docs/methodology/ARCHIVE_POLICY.md` for the policy on when to move files to Archive/.

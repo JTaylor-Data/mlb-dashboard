@@ -112,13 +112,13 @@ See `config/model_policy.py` for:
 
 1. **Stuff+ next-season xFIP** — missed threshold (−0.225 vs −0.30). Provisional acceptance. Track in future retrains.
 2. **Tunneling+ null** — `pitcher_model_scores.tunneling_plus` is NULL for all seasons. Expected until Tunneling+ is brought back in scope.
-3. **Pitch location chart orientation** — may show RHH/LHH reversed vs Savant. Deferred (see `Methodology/NEEDS_DECISION.md`).
+3. **Pitch location chart orientation** — may show RHH/LHH reversed vs Savant. Deferred (see `docs/methodology/NEEDS_DECISION.md`).
 
 ---
 
 ## Deferred Decisions
 
-See `Methodology/NEEDS_DECISION.md` for the full log. Key open items:
+See `docs/methodology/NEEDS_DECISION.md` for the full log. Key open items:
 - ND-LOC-01: Pitch location chart orientation (deferred, low priority)
 
 ---
@@ -126,7 +126,7 @@ See `Methodology/NEEDS_DECISION.md` for the full log. Key open items:
 ## Document Hierarchy
 
 1. `HANDOFF.md` — operational context, who owns what, deployment notes
-2. **`Methodology/MODELS_REFERENCE.md`** (this file) — authoritative model specs and validation
-3. `Methodology/live_models/STUFF_PLUS_V4_FINAL_METHODOLOGY.html` — detailed Stuff+ v4 methodology
-4. `Methodology/NEEDS_DECISION.md` — deferred decision log
-5. `Methodology/archive/` — superseded model docs
+2. **`docs/methodology/MODELS_REFERENCE.md`** (this file) — authoritative model specs and validation
+3. `docs/methodology/live_models/STUFF_PLUS_V4_FINAL_METHODOLOGY.html` — detailed Stuff+ v4 methodology
+4. `docs/methodology/NEEDS_DECISION.md` — deferred decision log
+5. `docs/methodology/archive/` — superseded model docs

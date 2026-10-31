@@ -1,7 +1,7 @@
 """
 Stuff+ - runtime scoring. Loads the model trained offline by
 `training/train_stuff_v3_lgbm.py` (v3 architecture - see
-`Methodology/STUFF_V3_REPORT.md` for the full methodology write-up) and
+`docs/methodology/STUFF_V3_REPORT.md` for the full methodology write-up) and
 scores live pitch data through it. This file has NO fitting logic of its
 own - see that training script for how the model was built and why, and
 `stuff_features.py` for the feature pipeline both files share (that
@@ -30,7 +30,7 @@ v3 removes 4 features that overlapped with Deception+ (`release_extension`,
 velo/movement SEPARATION features (a pitch vs. that pitcher-season's own
 primary reference fastball) plus `axis_differential` (an empirically-
 calibrated seam-shifted-wake proxy). Full methodology, ablation results,
-and validation battery: `Methodology/STUFF_V3_REPORT.md`.
+and validation battery: `docs/methodology/STUFF_V3_REPORT.md`.
 
 Standardization is still done WITHIN each requested season (mean/std of
 that season's own predictions), matching the original "100 = average

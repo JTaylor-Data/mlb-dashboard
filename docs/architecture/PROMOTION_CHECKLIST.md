@@ -12,7 +12,7 @@
 - [ ] `diagnostics/stuff_v4/stuff_v4_scores.parquet` exists with all 11 seasons (2016–2026)
 - [ ] `post-stuff-v4` tag is pushed to `origin`
 - [ ] All Part 4 validation tables are present in `diagnostics/stuff_v4/part4_validation.json`
-- [ ] Owner has reviewed `Methodology/STUFF_V4_REPORT.md` and signed off on feature changes
+- [ ] Owner has reviewed `docs/methodology/STUFF_V4_REPORT.md` and signed off on feature changes
 
 ---
 

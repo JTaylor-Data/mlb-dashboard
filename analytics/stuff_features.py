@@ -1,6 +1,6 @@
 """
 Stuff+ - shared feature engineering (v3 architecture, promoted to
-production; see `Methodology/STUFF_V3_REPORT.md` for the full methodology
+production; see `docs/methodology/STUFF_V3_REPORT.md` for the full methodology
 write-up and why it replaced v2). The prior v2 pipeline is preserved,
 unused, in `stuff_features_v2_legacy.py`.
 
@@ -191,7 +191,7 @@ def merge_pitch_type(df):
 # pitch-quality attempts, so letting them into the season mean/std
 # population measures "how bad is a pitch that was never trying to be
 # good," not stuff. Confirmed empirically before excluding (see
-# Methodology/): PO/UN/EP score systematically far above the population
+# docs/methodology/): PO/UN/EP score systematically far above the population
 # mean predicted run value, and dropping them shifts the season std down
 # ~2-4%, a real if modest standardization effect.
 #   PO - pitchout: a deliberate off-plate lob to set up a steal throw.

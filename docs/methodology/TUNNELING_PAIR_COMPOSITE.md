@@ -283,4 +283,4 @@ The evidence supports **real variance** as the dominant explanation for CU-pair 
 - `frontend/js/player.js` — `buildTunnelingPairsTable()` function + call in `renderRightPanel`
 - `Archive/training_scripts/training/validate_tunneling_pair_composite.py` — validation script
 - `diagnostics/tunneling_pair_composite/validation_results.json` — output
-- `Methodology/TUNNELING_PAIR_COMPOSITE.md` — this document
+- `docs/methodology/TUNNELING_PAIR_COMPOSITE.md` — this document

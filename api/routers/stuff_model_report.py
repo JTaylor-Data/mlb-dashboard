@@ -2,7 +2,7 @@
 /api/stuff-model/* - serves the Stuff+ model's training report, a top/bottom
 Stuff+ leaderboard, and per-pitcher SHAP breakdowns, for the "model
 internals" page (`stuff-model.html`). Promoted to v4 2026-10-02.
-v4 architecture adds haa_residual - see `Methodology/STUFF_V4_COMPLETION.md`.
+v4 architecture adds haa_residual - see `docs/methodology/STUFF_V4_COMPLETION.md`.
 Rollback: set analytics.stuff_model.STUFF_ACTIVE_VERSION = "v3".
 """
 import json

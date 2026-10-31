@@ -24,7 +24,7 @@ Tags: `pre-audit` = d573b90 (baseline before any changes), `post-audit` = see be
 
 7. **`ARCHITECTURE.md`** (NEW at repo root) — folder tree, data flow, active model table, router index, cache docs.
 
-### Deferred items (owner input needed — see Methodology/decisions/NEEDS_DECISION.md)
+### Deferred items (owner input needed — see docs/methodology/decisions/NEEDS_DECISION.md)
 
 - **ND-AUDIT-02/DEF-03/04**: `probable_pitchers.py` and `career.py` import `tunneling_v3_model` and the old `location_model` instead of active versions. Deferred — owner to decide if/when to fix.
 - **ND-AUDIT-03**: `/api/splits?player_id=543037&season=2026&split_by=pitch_type` 500 error. Not investigated — not caused by this audit.
@@ -55,7 +55,7 @@ git clone ..\pre-audit-backup.bundle mlb_dashboard_restored
 - **CURRENT_SEASON = 2026** added to config/model_policy.py as single source of truth.
 
 ### Open items from this merge
-See Methodology/NEEDS_DECISION.md — specifically:
+See docs/methodology/NEEDS_DECISION.md — specifically:
 - ND-DEC-01: /api/deception/meta returns 404 for v2b (needs meta endpoint fix)
 - ND-01: annual model retrain reminder (season feature)
 - ND-02/03: Deception+ arm_angle coverage 2021+ only
@@ -726,7 +726,7 @@ Earlier methodology docs reported positive ERA r for v2 models — inverted conv
 
 ### Part 2 Summary
 Geometry → plate_x R²=nan, plate_z R²=nan
-Full AUC table in: Methodology/in_progress/CROSS_MODEL_VALIDATION_AND_LEAKAGE_TESTS_IN_PROGRESS.html
+Full AUC table in: docs/methodology/in_progress/CROSS_MODEL_VALIDATION_AND_LEAKAGE_TESTS_IN_PROGRESS.html
 
 ### Part 3 Summary
 V0 CV R²=-0.00049, YoY r=+0.495

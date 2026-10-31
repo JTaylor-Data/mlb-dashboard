@@ -13,4 +13,4 @@ LightGBM booster files (.txt) for the active ML models. Marked as binary in `.gi
 ## Archive (unproven)
 
 No files archived yet. Candidate: `location_plus_v2_bip.txt` if career page v2 path confirmed dead.
-See `Methodology/ARCHIVE_POLICY.md`.
+See `docs/methodology/ARCHIVE_POLICY.md`.

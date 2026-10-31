@@ -3,7 +3,7 @@ config/model_policy.py — Single source of truth for per-model scoring policy.
 
 Contains minimum qualifying pitch counts, available seasons, and default
 display seasons for every live model. Values here reproduce existing behavior
-exactly (not changing any threshold or logic), so `perf/compare_golden.py`
+exactly (not changing any threshold or logic), so `docs/perf/archive/compare_golden.py`
 should detect no API response change after this file is added.
 
 Usage:

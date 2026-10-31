@@ -70,7 +70,7 @@ derived_cache.db
 derived_cache.db-shm
 derived_cache.db-wal
 mlb_data.db.bak_pre_perf
-perf/archive/golden/
+docs/perf/archive/golden/
 
 # Stuff v4 large diagnostic artifacts (archived, see diagnostics/archive/)
 diagnostics/archive/stuff_v4/*.parquet

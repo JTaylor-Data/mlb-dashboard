@@ -87,7 +87,7 @@ retained in the retrain.
 **Changes made**:
 - `models/deception_plus_v1_meta.json`: `seasons_trained_on` corrected from [2015..2026] to
   [2020..2026] with an explanatory note.
-- `Methodology/HANDOFF.md`: updated two references to agree on 2020–2026.
+- `docs/methodology/HANDOFF.md`: updated two references to agree on 2020–2026.
 
 **Season selector note**: If a selector is added, restrict display to 2021–2026 for consistency
 (2020 is partial ~75% coverage only).
@@ -161,7 +161,7 @@ separate tool page later, or archive it permanently?
 artifacts are at `models/stuff_plus_v4_lgbm.*` and `diagnostics/stuff_v4/`. Nothing has been
 wired to the live API, leaderboards, or DB.
 
-**Decision needed**: Review `Methodology/STUFF_V4_REPORT.md` and `PROMOTION_CHECKLIST.md`,
+**Decision needed**: Review `docs/methodology/STUFF_V4_REPORT.md` and `PROMOTION_CHECKLIST.md`,
 then decide: promote v4 to production (execute the checklist), or keep v3 as live and archive
 v4 as a research artifact.
 
@@ -282,7 +282,7 @@ Branch: stuff-page-remake. Tags: pre-stuff-page-remake, post-stuff-page-remake. 
 **Context**: Parts 0â€“7 of the deception-v2 pipeline were executed. See `diagnostics/deception_v2/gate_results.json` for the full gate and evidence-bar check. The automated pipeline applies default decisions at each decision point but cannot make the final call on promotion-to-production.
 
 **Items requiring owner decision**:
-1. Review `Methodology/DECEPTION_COMPLETION.md` (completion table with all gate pass/fail results).
+1. Review `docs/methodology/DECEPTION_COMPLETION.md` (completion table with all gate pass/fail results).
 2. Confirm the chosen configuration and feature set are acceptable.
 3. If all correctness gates pass: confirm promotion of v2 to production (`DECEPTION_ACTIVE_VERSION = "v2"` in `config/model_policy.py`).
 4. If any gate fails: review `diagnostics/deception_v2/gate_results.json` for specific failure reasons and decide whether to re-run with adjustments.
@@ -404,9 +404,9 @@ The lower correlation (0.75) confirms these are different algorithms.
 
 - `diagnostics/closeout_blend/` — No live code reads these. Candidate for `Archive/diagnostics/closeout_blend/`.
 - `diagnostics/deception_v2/` — Deception+ v2 scores; served from `scores/` parquets, not this folder. Candidate for `Archive/diagnostics/deception_v2/`.
-- `Methodology/live_models/DECEPTION_PLUS_V1_METHODOLOGY.html` — Superseded by v2b. Candidate for `Methodology/Archive/`.
-- `Methodology/live_models/TUNNELING_PLUS_V2_METHODOLOGY.html` — Superseded by v3. Candidate for `Methodology/Archive/`.
-- `Methodology/live_models/LOCATION_PLUS_V2_METHODOLOGY.html` — Superseded by v3. Candidate for `Methodology/Archive/`.
+- `docs/methodology/live_models/DECEPTION_PLUS_V1_METHODOLOGY.html` — Superseded by v2b. Candidate for `docs/methodology/Archive/`.
+- `docs/methodology/live_models/TUNNELING_PLUS_V2_METHODOLOGY.html` — Superseded by v3. Candidate for `docs/methodology/Archive/`.
+- `docs/methodology/live_models/LOCATION_PLUS_V2_METHODOLOGY.html` — Superseded by v3. Candidate for `docs/methodology/Archive/`.
 
 **Action needed**: Confirm none of these are read by any live route, then move with `git mv` and update `Archive/MOVED_FILES.csv`.
 

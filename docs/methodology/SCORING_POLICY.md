@@ -10,7 +10,7 @@ All evidence cited with file:line or artifact path.
 ### Stuff+ v3
 - **Booster**: `models/stuff_plus_v3_lgbm.txt`
 - **Trained on**: seasons 2016–2026 (11 seasons). 2015 is excluded because `spin_axis` is 0%
-  populated that year. Source: `Methodology/HANDOFF.md` line 76; `models/stuff_plus_v3_lgbm_report.json`
+  populated that year. Source: `docs/methodology/HANDOFF.md` line 76; `models/stuff_plus_v3_lgbm_report.json`
   — earliest holdout season in `cv_folds` is 2016.
 - **One booster scores all seasons**: yes. Scoring calls `model.predict(feat[meta["all_features"]])`
   on whatever season is requested. Source: `analytics/stuff_model.py:168`.
@@ -102,7 +102,7 @@ hidden.
   `analytics/stuff_features.py`, called from `location_v2_model.py:83`. `KC` is mapped to `CU`.
   Source: `analytics/location_v2_model.py:67-70`.
 - **Postseason**: `pull_statcast.py` now keeps only `game_type = "R"` (regular season).
-  Source: `Methodology/HANDOFF.md` line 37. Postseason pitches are not in the database; this
+  Source: `docs/methodology/HANDOFF.md` line 37. Postseason pitches are not in the database; this
   gate was added in September 2026 retroactively.
 
 ---
@@ -167,7 +167,7 @@ All four models include `season` as a categorical feature. At scoring time:
   as part of the v1 tunneling feature pipeline. Used in Tunneling+ v1 (`tunneling_model.py`).
 - `training/part_b_era_resume.py` and `training/part_b_sequencing_plus_v1.py` — used in
   exploratory sequencing research (not a live model).
-- `Methodology/HANDOFF.md`, old diagnostic reports.
+- `docs/methodology/HANDOFF.md`, old diagnostic reports.
 
 **Live models that use it**: Tunneling+ v1 only (which is no longer the live scorer; it still
 serves the Tunneling+ 3D viewer via `api/routers/tunneling_3d.py`).
@@ -196,7 +196,7 @@ Four figures are in circulation. Here is each one's exact source and meaning:
 
 | Figure | Source file | What it actually is |
 |---|---|---|
-| **r = 0.907** | `Methodology/HANDOFF.md:97` | Pearson r computed on consecutive-season pairs for the **live v3 model** (trained on all seasons, scored against full population). This is an in-sample YoY figure — the model has seen every season. |
+| **r = 0.907** | `docs/methodology/HANDOFF.md:97` | Pearson r computed on consecutive-season pairs for the **live v3 model** (trained on all seasons, scored against full population). This is an in-sample YoY figure — the model has seen every season. |
 | **r = 0.831 / 0.845** | `diagnostics/stuff_memorization/memorization_report.json` — `section_A.loso_yoy_mean = 0.8314` and `interpretation.loso_yoy = 0.845` | Leave-one-season-out YoY: model retrained each time with that season held out, scored on the holdout season, then correlated with the following season. Slightly honest than 0.907 but still within-pitcher (the same pitcher appears in the training set under other seasons). Mean of individual season-pair LOS correlations listed in `loso_yoy_reference`. |
 | **r = 0.558** | `diagnostics/stuff_memorization/memorization_report.json` — `section_A.yoy_mean_r = 0.5577` | Leave-one-pitcher-out YoY (LOPO): scores are from the 5-fold CV model which never trained on the scored pitcher's own data at all. Mean across 2016–2025 consecutive-season pairs. This is the most honest generalization figure; range 0.484–0.619 by pair. 95% CI: [0.538, 0.587]. |
 | **r ≈ 0.938** | **Not confirmed as a stability figure** | The value 0.938 appears in `training/v2_artifacts/cross_model_validation_v2_checkpoint.json` only within arrays of individual pitcher Stuff+ score values (scores near 93.8 on the plus scale), not as a named summary statistic. See NEEDS_DECISION.md ND-04. |
