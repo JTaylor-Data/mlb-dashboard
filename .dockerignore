@@ -1,8 +1,8 @@
 # Large directories not needed in the container
 Archive/
-diagnostics/
 project_artifacts/
-Methodology/
+docs/
+security-report/
 deploy/RENDER_DEPLOY.md
 
 # Real database (never bake into image — mounted at runtime via DB_PATH)
@@ -16,9 +16,17 @@ derived_cache.db
 derived_cache.db-shm
 derived_cache.db-wal
 
-# Large model training artifacts (models/*.txt are the trained weights, needed;
-# but .parquet training files are not)
+# Large model training artifacts. The score caches under parquets/ ARE needed
+# at runtime (warmup.py loads them), so only exclude stray training parquets.
 **/*.parquet
+!parquets/*.parquet
+!parquets/percentile_pools/**/*.parquet
+# Runtime inputs the app reads from diagnostics/ (Deception+ scores, Location+
+# scoring tables). Everything else in diagnostics/ stays out of the image.
+diagnostics/**
+!diagnostics/deception_v2/deception_v2_scores.parquet
+!diagnostics/deception_v2/deception_v2b_scores.parquet
+!diagnostics/location_v3/*.json
 
 # Dev/test noise
 __pycache__/
@@ -29,3 +37,9 @@ __pycache__/
 tests/
 .git/
 *.log
+
+# Secrets
+.env
+.env.*
+*.key
+*.pem
