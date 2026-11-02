@@ -136,6 +136,15 @@ app.include_router(career.router)
 
 
 @app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers.setdefault("X-Content-Type-Options", "nosniff")
+    response.headers.setdefault("X-Frame-Options", "DENY")
+    response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    return response
+
+
+@app.middleware("http")
 async def no_cache_static(request, call_next):
     # HTML pages must never be served stale — strip conditional headers so the
     # browser can't 304 itself back to an old page structure. Versioned static
