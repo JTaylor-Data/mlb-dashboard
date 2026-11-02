@@ -129,7 +129,7 @@ def _pitch_location_summary(conn, season, pitcher_id, stand_filter=None):
 @router.get("/heatmaps/{pitcher_id}")
 def get_pitch_heatmap(
     pitcher_id: int,
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     # No "ALL" - averaging pitch location across both batter hands together
     # is close to meaningless for a pitcher (his target shifts by opponent
     # hand), so this always requires a real split.

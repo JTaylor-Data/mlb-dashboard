@@ -102,7 +102,7 @@ def _build_split(df, stand):
 
 
 @router.get("/{pitcher_id}/trajectories")
-def get_trajectories(pitcher_id: int, season: int = Query(...), conn=Depends(get_conn)):
+def get_trajectories(pitcher_id: int, season: int = Query(..., ge=2015, le=2030), conn=Depends(get_conn)):
     name_row = conn.execute("SELECT name FROM players WHERE player_id=?", (pitcher_id,)).fetchone()
     name = name_row[0] if name_row else str(pitcher_id)
     df = _load_pitcher_pitches(conn, pitcher_id, season)

@@ -277,7 +277,7 @@ def _batter_rows(conn, player_id, seasons, pitch_type=None):
 def get_player_trends(
     player_id: int,
     role: str = Query("pitcher"),
-    season: str = Query("2026"),
+    season: str = Query("2026", pattern=r"^(all|\d{4})$"),
     pitch_type: Optional[str] = Query(None),
     conn=Depends(get_conn),
 ):
@@ -408,7 +408,7 @@ def _league_averages_cached(conn, role: str, season: int):
 @router.get("/trends/league-averages")
 def get_league_averages(
     role: str = Query("pitcher"),
-    season: str = Query("2026"),
+    season: str = Query("2026", pattern=r"^(all|\d{4})$"),
     conn=Depends(get_conn),
 ):
     try:

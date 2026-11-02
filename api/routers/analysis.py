@@ -33,7 +33,7 @@ def get_radar(
     player_id: int,
     role: str = Query("pitcher", pattern="^(pitcher|batter)$"),
     split: str = Query("ALL", pattern="^(ALL|L|R)$"),
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     conn=Depends(get_conn),
 ):
     name = _player_name(conn, player_id)
@@ -68,7 +68,7 @@ def compare_players(
     player_id_b: int = Query(...),
     role: str = Query("batter", pattern="^(pitcher|batter)$"),
     split: str = Query("ALL", pattern="^(ALL|L|R)$"),
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     conn=Depends(get_conn),
 ):
     # Same Results/Process/Physical groups the player page itself shows

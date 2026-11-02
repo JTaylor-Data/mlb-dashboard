@@ -188,7 +188,7 @@ def _player_name(conn, player_id):
 @router.get("/probable-pitchers")
 def get_probable_pitchers(
     date: str = Query(None, description="YYYY-MM-DD, defaults to today"),
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     conn=Depends(get_conn),
 ):
     """

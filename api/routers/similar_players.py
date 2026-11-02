@@ -75,7 +75,7 @@ def _resolve_player(conn, player_id):
 def get_similar_players(
     player_id: int,
     role: str = Query(..., pattern="^(pitcher|batter)$"),
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     top_n: int = Query(3, ge=1, le=10),
     conn=Depends(get_conn),
 ):

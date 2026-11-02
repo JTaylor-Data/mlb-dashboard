@@ -17,7 +17,7 @@ def _standings(conn, season):
 
 
 @router.get("/standings")
-def get_standings(league: str = Query("AL", pattern="^(AL|NL)$"), season: int = Query(2026), conn=Depends(get_conn)):
+def get_standings(league: str = Query("AL", pattern="^(AL|NL)$"), season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_conn)):
     standings = _standings(conn, season)
     league_df = standings[standings["league"] == league]
     best_id = best_record_team_id(standings, league)

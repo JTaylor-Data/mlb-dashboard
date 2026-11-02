@@ -83,7 +83,7 @@ def _hit_zone_summary(conn, season, batter_id, throws_filter=None):
 @router.get("/hitzones/{batter_id}")
 def get_hit_zones(
     batter_id: int,
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     split: str = Query("ALL", pattern="^(ALL|L|R)$"),
     conn=Depends(get_conn),
 ):

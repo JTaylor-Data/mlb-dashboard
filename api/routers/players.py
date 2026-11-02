@@ -510,7 +510,7 @@ def _all_players(conn, season):
 
 @router.get("/players/all")
 def list_all_players(
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     q: str = Query(default=""),
     conn=Depends(get_conn),
 ):
@@ -835,7 +835,7 @@ def get_player(
     player_id: int,
     role: str = Query("pitcher", pattern="^(pitcher|batter)$"),
     split: str = Query("ALL", pattern="^(ALL|L|R)$"),
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     conn=Depends(get_conn),
 ):
     for kind, payload in _build_player_steps(conn, player_id, role, split, season):
@@ -849,7 +849,7 @@ def get_player_progress(
     player_id: int,
     role: str = Query("pitcher", pattern="^(pitcher|batter)$"),
     split: str = Query("ALL", pattern="^(ALL|L|R)$"),
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
 ):
     """Newline-delimited-JSON version of GET /player/{id} for the Player
     page's own loading bar: one line per real checkpoint as
@@ -908,7 +908,7 @@ def get_player_progress(
 @router.get("/player/{player_id}/tunneling-pairs")
 def get_tunneling_pairs(
     player_id: int,
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     conn=Depends(get_conn),
 ):
     """Per-pitch-type-pair tunneling composite scores for one pitcher-season.
@@ -979,7 +979,7 @@ def get_player_seasons(player_id: int, conn=Depends(get_conn)):
 @router.get("/players/{player_id}/outings")
 def get_pitcher_outings(
     player_id: int,
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     conn=Depends(get_conn),
 ):
     """
@@ -1024,7 +1024,7 @@ def get_pitcher_outings(
 def get_pitcher_outing(
     player_id: int,
     game_id: int = Query(...),
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     conn=Depends(get_conn),
 ):
     """
@@ -1308,7 +1308,7 @@ def get_pitcher_outing(
 @router.get("/players/{player_id}/rolling-xwoba")
 def get_rolling_xwoba(
     player_id: int,
-    season: int = Query(2026),
+    season: int = Query(2026, ge=2015, le=2030),
     conn=Depends(get_conn),
 ):
     """Raw per-qualifying-PA xwOBA for a batter; client computes horizons and smoothing."""

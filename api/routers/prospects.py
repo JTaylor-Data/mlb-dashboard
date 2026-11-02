@@ -132,7 +132,7 @@ def get_prospect_top_performers(date: str = Query(...), conn=Depends(get_conn)):
 
 
 @router.get("/prospects/farm-rankings")
-def get_farm_rankings(season: int = Query(2026), conn=Depends(get_conn)):
+def get_farm_rankings(season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_conn)):
     return {"season": season, "teams": _farm_rankings(conn, season)}
 
 
@@ -145,15 +145,15 @@ def get_prospect_scouting(mlb_id: int, conn=Depends(get_conn)):
 
 
 @router.get("/prospects/top100")
-def get_top100(season: int = Query(2026), conn=Depends(get_conn)):
+def get_top100(season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_conn)):
     return {"season": season, "prospects": _top100(conn, season)}
 
 
 @router.get("/prospects/team")
-def get_team_prospects(team_id: int = Query(...), season: int = Query(2026), conn=Depends(get_conn)):
+def get_team_prospects(team_id: int = Query(...), season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_conn)):
     return {"season": season, "team_id": team_id, "prospects": _team(conn, season, team_id)}
 
 
 @router.get("/prospects/teams")
-def get_prospect_teams(season: int = Query(2026), conn=Depends(get_conn)):
+def get_prospect_teams(season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_conn)):
     return {"season": season, "teams": _teams_with_prospects(conn, season)}
