@@ -88,8 +88,38 @@ def compute_spray_angle(hc_x, hc_y):
     return np.degrees(np.arctan2(hc_x - _SPRAY_X0, _SPRAY_Y0 - hc_y)) * 0.75
 
 
+def _downcast_pitch_pool(df):
+    """float64 -> float32 for every numeric pitch column (precision far
+    beyond what any of these measurements need or the DB stores - Statcast
+    itself publishes to 1-3 decimal places), and the id column -> int32
+    (MLB player ids fit comfortably). Halves this DataFrame's footprint
+    before the groupby/aggregate passes that follow. Mutates and returns
+    the same frame - caller's copy, not a fresh one.
+
+    hc_x/hc_y are excluded: they feed compute_spray_angle's pull/oppo sign
+    comparison (is_pulled), and float32 rounding was confirmed (before this
+    exclusion) to occasionally flip a batted ball across that exact zero
+    threshold, changing a handful of players' pull_air_pct by up to 0.5
+    percentage points - a discrete classification change, not harmless
+    float noise, so these two stay float64."""
+    # One column at a time, not df[cols] = df[cols].astype(...) - the bulk
+    # sub-frame form briefly holds the sub-frame's own float64 copy AND its
+    # float32 result alongside the original, which measured WORSE than doing
+    # nothing (1558MB vs the original 1316MB peak). Per-column assignment
+    # lets each old float64 Series get freed as it's replaced.
+    float_cols = df.select_dtypes(include=["float64"]).columns.difference(["hc_x", "hc_y"])
+    for col in float_cols:
+        df[col] = df[col].astype("float32")
+    for id_col in ("pitcher_id", "batter_id"):
+        if id_col in df.columns:
+            df[id_col] = df[id_col].astype("int32")
+    return df
+
+
 def _add_shared_flags(df):
-    df = df.copy()
+    """Mutates df in place (caller must not need the pre-call frame
+    afterward - both call sites immediately reassign `df = _add_shared_flags(df)`,
+    so there's nothing left pointing at the original to protect)."""
     df["is_swing"] = df["description"].isin(SWING_DESCRIPTIONS)
     df["is_whiff"] = df["description"].isin(WHIFF_DESCRIPTIONS)
     df["is_strike"] = df["description"].isin(STRIKE_DESCRIPTIONS)
@@ -229,6 +259,7 @@ def pitcher_percentile_metrics(conn, season, min_bf=None, stand_filter=None):
                vy0, vz0, ay, az, woba_denom, estimated_woba_using_speedangle
         FROM pitches {where}
     """, conn, params=params)
+    df = _downcast_pitch_pool(df)
     df = _add_shared_flags(df)
     df["vaa"] = compute_vaa(df["vy0"], df["vz0"], df["ay"], df["az"])
     is_fb = df["pitch_type"].isin(["FF", "FA", "SI"])
@@ -258,7 +289,10 @@ def pitcher_percentile_metrics(conn, season, min_bf=None, stand_filter=None):
     # mismatches across ALL/L/R splits) before replacing it. Same pattern
     # as _rate_metrics_pool above: precompute masked columns once, then one
     # groupby-aggregate pass instead of N per-pitcher pandas calls.
-    d = df.copy()
+    # `df` isn't read again after this point in the function, so this is a
+    # rename, not a copy - avoids duplicating the full (24-column) frame
+    # just to tack on a handful of derived columns.
+    d = df
     d["_fb_speed"] = d["release_speed"].where(is_fb)
     d["_fb_eff_speed"] = d["effective_speed"].where(is_fb)
 
@@ -399,6 +433,7 @@ def batter_percentile_metrics(conn, season, min_pa=None, throws_filter=None):
                estimated_ba_using_speedangle
         FROM pitches {where}
     """, conn, params=params)
+    df = _downcast_pitch_pool(df)
     df = _add_shared_flags(df)
 
     advanced = pd.read_sql(
@@ -436,8 +471,9 @@ def batter_percentile_metrics(conn, season, min_pa=None, throws_filter=None):
     # Vectorized replacement for the per-batter Python loop that used to
     # live here - verified to reproduce that loop's output exactly
     # (float-tolerance, zero mismatches across ALL/L/R splits) before
-    # replacing it. Same pattern as the pitcher side above.
-    d = df.copy()
+    # replacing it. Same pattern as the pitcher side above. `df` isn't read
+    # again after this point, so this is a rename, not a copy.
+    d = df
     qualifying = d["woba_denom"] == 1
     d["_qualifying"] = qualifying
     d["_xwoba_q"] = d["estimated_woba_using_speedangle"].where(qualifying)
