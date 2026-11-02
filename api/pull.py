@@ -175,7 +175,11 @@ def _run(full_warmup):
     except Exception as e:
         _status["state"] = "error"
         _status["detail"] = f"Refresh failed: {e}"
-        log.error("ERROR: %s", e)
+        # Anything above this point failing (including pull_statcast itself)
+        # means warm_cache_sync() below never ran - the cache stays however
+        # it was, which is easy to miss from the error alone, so say it
+        # explicitly rather than leaving it implicit in "which line raised."
+        log.error("pull failed (%s) - warm_cache_sync was NOT run this cycle: %s", type(e).__name__, e)
         traceback.print_exc()
     finally:
         _status["finished_at"] = date.today().isoformat()

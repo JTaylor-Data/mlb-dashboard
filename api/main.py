@@ -7,10 +7,21 @@ mlb_dashboard/ directory with:
 (cwd on sys.path is what lets api/routers/*.py do `from analytics.metrics import ...`
 etc. against the analytics/ package, same as the Streamlit pages did.)
 """
+import logging
 import sys
 from pathlib import Path
 
 import os
+
+# Without this, log.info()/log.warning() calls across the app (pull.py,
+# scheduler.py, warmup.py, etc.) never reach stdout - only bare log.error
+# text makes it out, via Python's unconfigured-logging fallback, with no
+# timestamp or logger name. This makes every level visible in Render's log
+# viewer.
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+)
 
 from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.gzip import GZipMiddleware

@@ -15,6 +15,7 @@ UNIQUE(game_id, at_bat_number, pitch_number) index on `pitches` plus
 INSERT OR IGNORE - re-pulling an already-partially-present day is safe by
 construction, not just by convention.
 """
+import os
 import sys
 import sqlite3
 from datetime import date, timedelta
@@ -22,7 +23,10 @@ from datetime import date, timedelta
 import pandas as pd
 from pybaseball import statcast
 
-DB_PATH = "mlb_data.db"
+# Default to the repo-relative path for local dev; override with DB_PATH env
+# var in hosted environments where the database lives on a persistent volume
+# (see api/db.py, which this must match).
+DB_PATH = os.environ.get("DB_PATH", "mlb_data.db")
 CHUNK_DAYS = 7
 
 # A date gets marked "ingested" in `ingested_dates` the first time ANY row for
