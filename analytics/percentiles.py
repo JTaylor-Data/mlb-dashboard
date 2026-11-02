@@ -8,6 +8,8 @@ Pull Air% uses the community-standard hc_x/hc_y -> spray angle formula (the
 same one behind most public spray-chart tools); Statcast doesn't publish an
 official closed-form version of this either, same situation as Barrel%.
 """
+import gc
+
 import numpy as np
 import pandas as pd
 
@@ -228,28 +230,62 @@ def _rate_metrics_pool(df, id_col):
     return out
 
 
-def pitcher_percentile_metrics(conn, season, min_bf=None, stand_filter=None):
-    """
-    One row per qualified pitcher (>= min_bf batters faced WITHIN this
-    filter - see SAVANT_PA_PER_TEAM_GAME_PITCHER/_team_games_played) with
-    the raw metric values: whiff_pct, k_pct, chase_pct, zone_whiff_pct,
-    perceived_velo, bb_pct, k_minus_bb_pct, avg_exit_velo, barrel_pct,
-    gb_pct, extension, pull_air_pct, release_height, fb_vaa. All "against"
-    (opponent's outcomes).
+# Players are processed in batches of this many at a time (one `WHERE id IN
+# (...)` query per batch) so no single call to pitcher_percentile_metrics/
+# batter_percentile_metrics ever materializes the full season's pitch-level
+# table at once - that full-season read was the actual source of the
+# multi-hundred-MB warmup spike (confirmed: narrowing columns/dtypes alone
+# didn't move the peak, because pandas' read_sql on a raw sqlite3 connection
+# fetches every matching row as Python tuples before any DataFrame exists,
+# regardless of column count or dtype).
+#
+# 200, not ~100: measured under Docker --memory=512m against the current
+# season (2026), None/L/R splits, pitcher+batter pools. 50 and 100 both
+# peaked just OVER the 450MB target (452MB, 457MB); 200 stayed under it
+# across two separate runs (445MB, 409MB) - fewer, larger batches means
+# fewer separate read_sql round-trips, each with its own fixed overhead
+# (connection/cursor setup, column/dtype inference) on top of the
+# per-row cost, so going smaller doesn't reliably help once you're this
+# far below the original ~1.3GB unbached peak.
+_POOL_BATCH_SIZE = 200
 
-    stand_filter ('L'/'R'/None or 'ALL'): when set, the entire pool - both
-    the qualifying threshold and the metrics themselves - is recomputed
-    within pitches against that batter side only, not just re-ranked against
-    the season-wide pool.
-    """
-    if min_bf is None:
-        min_bf = SAVANT_PA_PER_TEAM_GAME_PITCHER * _team_games_played(conn, season)
+_FB_TYPES = ("FF", "FA", "SI")
 
-    where = "WHERE season = ?"
-    params = (season,)
-    if stand_filter and stand_filter != "ALL":
-        where += " AND stand = ?"
-        params += (stand_filter,)
+
+def _pitcher_vaa_height_regression(conn, where, params):
+    """League-wide (every pitcher, not just one batch's ~100) regression of
+    VAA against release height, fit separately per fastball-family pitch
+    type - see pitcher_percentile_metrics' fb_vaa comment for why this
+    adjustment exists. Fitting it from any single batch would give a
+    different (wrong) slope than the real season-wide one, so this is a
+    dedicated query over just the 5 columns the regression needs, run once
+    before batching - not sourced from any per-player batch frame."""
+    narrow = pd.read_sql(f"""
+        SELECT pitch_type, plate_z, vy0, vz0, ay, az
+        FROM pitches {where} AND pitch_type IN ('FF', 'FA', 'SI')
+    """, conn, params=params)
+    narrow["vaa"] = compute_vaa(narrow["vy0"], narrow["vz0"], narrow["ay"], narrow["az"])
+    vaa_height_slope, type_mean_z = {}, {}
+    for pt in _FB_TYPES:
+        sub = narrow.loc[(narrow["pitch_type"] == pt) & narrow["vaa"].notna() & narrow["plate_z"].notna(), ["vaa", "plate_z"]]
+        if len(sub) >= 50:
+            vaa_height_slope[pt] = float(np.polyfit(sub["plate_z"], sub["vaa"], 1)[0])
+            type_mean_z[pt] = float(sub["plate_z"].mean())
+        else:
+            vaa_height_slope[pt] = 0.0
+            type_mean_z[pt] = float(sub["plate_z"].mean()) if len(sub) else np.nan
+    return vaa_height_slope, type_mean_z
+
+
+def _pitcher_pool_batch(conn, where, params, batch_ids, league_hr_fb_rate, vaa_height_slope, type_mean_z, advanced):
+    """One batch of ~_POOL_BATCH_SIZE pitchers: same per-pitcher computation
+    pitcher_percentile_metrics used to do over the whole season at once, just
+    restricted to this batch's own pitches. Every metric here is a per-pitcher
+    mean/sum - the one league-wide piece (the VAA/height regression) is
+    passed in, already computed, not derived from this batch."""
+    placeholders = ",".join("?" * len(batch_ids))
+    batch_where = f"{where} AND pitcher_id IN ({placeholders})"
+    batch_params = params + tuple(batch_ids)
 
     df = pd.read_sql(f"""
         SELECT pitcher_id, pitch_type, description, zone, events, stand, pitch_number,
@@ -257,75 +293,18 @@ def pitcher_percentile_metrics(conn, season, min_bf=None, stand_filter=None):
                release_pos_x, release_spin_rate, plate_z, arm_angle,
                launch_speed, launch_angle, bb_type, hc_x, hc_y,
                vy0, vz0, ay, az, woba_denom, estimated_woba_using_speedangle
-        FROM pitches {where}
-    """, conn, params=params)
+        FROM pitches {batch_where}
+    """, conn, params=batch_params)
     df = _downcast_pitch_pool(df)
     df = _add_shared_flags(df)
     df["vaa"] = compute_vaa(df["vy0"], df["vz0"], df["ay"], df["az"])
     is_fb = df["pitch_type"].isin(["FF", "FA", "SI"])
-    league_hr_fb_rate = _league_hr_per_fb(conn, season)
-
-    # Real season-total xFIP/Barrel% (MLB Stats API sabermetrics / Baseball
-    # Savant - see pulls/pull_sabermetrics.py) have no opposing-batter-hand
-    # split, so they only apply to the unsplit ALL view; a real L/R split
-    # falls back to this project's own pitch-level approximation below.
-    is_all = not stand_filter or stand_filter == "ALL"
-    # Queried unconditionally (not gated by is_all like the xfip/barrel_pct
-    # override below) because holding_runners (running_game_runs_prevented)
-    # has no pitch-level fallback and no real L/R split source at all - same
-    # reasoning as the batter side's sprint_speed/oaa, which also stay fixed
-    # across that page's own split toggle.
-    advanced = pd.read_sql(
-        "SELECT player_id, xfip, barrel_pct_pitching, running_game_runs_prevented FROM player_advanced_stats WHERE season = ?",
-        conn, params=(season,),
-    ).set_index("player_id")
 
     rate_pool = _rate_metrics_pool(df, "pitcher_id")
 
-    # Vectorized replacement for the per-pitcher Python loop that used to
-    # live here (velo/extension/xwoba/xfip/etc, one groupby-mean call per
-    # pitcher via `for pid, group in df.groupby(...)`) - verified to
-    # reproduce that loop's output exactly (float-tolerance, zero
-    # mismatches across ALL/L/R splits) before replacing it. Same pattern
-    # as _rate_metrics_pool above: precompute masked columns once, then one
-    # groupby-aggregate pass instead of N per-pitcher pandas calls.
-    # `df` isn't read again after this point in the function, so this is a
-    # rename, not a copy - avoids duplicating the full (24-column) frame
-    # just to tack on a handful of derived columns.
     d = df
     d["_fb_speed"] = d["release_speed"].where(is_fb)
     d["_fb_eff_speed"] = d["effective_speed"].where(is_fb)
-
-    # FB VAA: (1) PRIMARY fastball only, not FF+SI blended together - a
-    # pitcher who mixes both had his VAA averaged across two pitch shapes
-    # that mean opposite things (flat vs steep is desirable for opposite
-    # reasons), which muddies the number into something that isn't really
-    # anyone's actual pitch. (2) Height-adjusted - VAA is measured at a
-    # fixed distance from the plate (see compute_vaa's VAA_YF), not a fixed
-    # HEIGHT, so two pitches with identical release/movement still read
-    # different VAA if one crosses higher than the other (a ball still
-    # rising toward its target has less time to have fallen) - a pitcher
-    # who happens to have located that day's fastballs up in the zone reads
-    # artificially flat, and vice versa. That's an EXECUTION effect (command
-    # that day), not the delivery/movement TRAIT this metric is meant to
-    # isolate for projecting future shape rather than grading past results.
-    # Fixed with a real per-pitch-type regression adjustment: fit VAA's
-    # actual league-wide slope against plate_z separately for each fastball
-    # type (FF and SI have different typical shapes, so a shared slope
-    # would blur them the same way blending the pitch types themselves
-    # would), then shift every pitch's VAA to what it would have been at
-    # that type's own league-average height before averaging per pitcher.
-    _FB_TYPES = ("FF", "FA", "SI")
-    vaa_height_slope = {}
-    type_mean_z = {}
-    for pt in _FB_TYPES:
-        sub = d.loc[(d["pitch_type"] == pt) & d["vaa"].notna() & d["plate_z"].notna(), ["vaa", "plate_z"]]
-        if len(sub) >= 50:
-            vaa_height_slope[pt] = float(np.polyfit(sub["plate_z"], sub["vaa"], 1)[0])
-            type_mean_z[pt] = float(sub["plate_z"].mean())
-        else:
-            vaa_height_slope[pt] = 0.0
-            type_mean_z[pt] = float(sub["plate_z"].mean()) if len(sub) else np.nan
     d["_vaa_height_adj"] = d["vaa"] - d["pitch_type"].map(vaa_height_slope) * (
         d["plate_z"] - d["pitch_type"].map(type_mean_z)
     )
@@ -357,28 +336,13 @@ def pitcher_percentile_metrics(conn, season, min_bf=None, stand_filter=None):
     extra["velo"] = g["_fb_speed"].mean()
     extra["perceived_velo"] = g["_fb_eff_speed"].mean()
     extra["fb_vaa"] = g["_fb_vaa"].mean()
-    # Side-channel, not a percentile metric itself (not in PITCHER_POLARITY,
-    # so player_percentiles() ignores it) - lets the API layer show a
-    # sinkerballer-specific note next to fb_vaa's percentile (steeper is
-    # GOOD for a sinker; the percentile number itself stays a neutral,
-    # un-flipped "how flat is this fastball vs. the league" rank either way).
     extra["fb_vaa_primary_type"] = primary_fb_type.reindex(extra.index)
     extra["extension"] = g["release_extension"].mean()
     extra["release_height"] = g["release_pos_z"].mean()
     extra["release_side"] = g["release_pos_x"].mean()
     extra["arm_angle"] = g["arm_angle"].mean()
     extra["spin_rate"] = g["release_spin_rate"].mean()
-    # Real runs-prevented-via-running-game value (Baseball Savant, see
-    # pulls/pull_pitcher_running_game.py) - season-total only, no pitch-level
-    # fallback exists, so unlike xfip/barrel_pct below this is never
-    # overridden by anything computed from `d` - it's just reindexed
-    # straight from `advanced`, same as sprint_speed/oaa on the batter side.
     extra["holding_runners"] = advanced["running_game_runs_prevented"].reindex(extra.index)
-    # sum(qualifying)/count(ALL qualifying rows), NOT .mean() - woba_denom==1
-    # also covers walks/HBP/strikeouts (a real xwOBA credit under Statcast's
-    # own convention) which have no estimated_woba_using_speedangle value,
-    # so count(non-null) would undercount the denominator vs. the original
-    # formula this replaces.
     xwoba_denom = g["_qualifying"].sum()
     extra["xwoba"] = _safe_div(g["_xwoba_q"].sum(), xwoba_denom)
     outs_sum = g["_outs"].sum()
@@ -389,7 +353,74 @@ def pitcher_percentile_metrics(conn, season, min_bf=None, stand_filter=None):
     extra["xfip"] = _safe_div((13 * fb_sum * league_hr_fb_rate) + (3 * bb_hbp_sum) - (2 * k_sum), ip) + _FIP_CONSTANT_APPROX
     extra["first_pitch_strike_pct"] = g["_fp_strike"].mean()
 
-    pool = rate_pool.join(extra)
+    return rate_pool.join(extra)
+
+
+def pitcher_percentile_metrics(conn, season, min_bf=None, stand_filter=None):
+    """
+    One row per qualified pitcher (>= min_bf batters faced WITHIN this
+    filter - see SAVANT_PA_PER_TEAM_GAME_PITCHER/_team_games_played) with
+    the raw metric values: whiff_pct, k_pct, chase_pct, zone_whiff_pct,
+    perceived_velo, bb_pct, k_minus_bb_pct, avg_exit_velo, barrel_pct,
+    gb_pct, extension, pull_air_pct, release_height, fb_vaa. All "against"
+    (opponent's outcomes).
+
+    stand_filter ('L'/'R'/None or 'ALL'): when set, the entire pool - both
+    the qualifying threshold and the metrics themselves - is recomputed
+    within pitches against that batter side only, not just re-ranked against
+    the season-wide pool.
+
+    Processes pitchers in batches of _POOL_BATCH_SIZE (see that constant's
+    comment) rather than loading every pitch of the season/split at once.
+    """
+    if min_bf is None:
+        min_bf = SAVANT_PA_PER_TEAM_GAME_PITCHER * _team_games_played(conn, season)
+
+    where = "WHERE season = ?"
+    params = (season,)
+    if stand_filter and stand_filter != "ALL":
+        where += " AND stand = ?"
+        params += (stand_filter,)
+
+    ids = sorted(r[0] for r in conn.execute(f"SELECT DISTINCT pitcher_id FROM pitches {where}", params).fetchall())
+
+    league_hr_fb_rate = _league_hr_per_fb(conn, season)
+
+    # Real season-total xFIP/Barrel% (MLB Stats API sabermetrics / Baseball
+    # Savant - see pulls/pull_sabermetrics.py) have no opposing-batter-hand
+    # split, so they only apply to the unsplit ALL view; a real L/R split
+    # falls back to this project's own pitch-level approximation below.
+    is_all = not stand_filter or stand_filter == "ALL"
+    # Queried unconditionally (not gated by is_all like the xfip/barrel_pct
+    # override below) because holding_runners (running_game_runs_prevented)
+    # has no pitch-level fallback and no real L/R split source at all - same
+    # reasoning as the batter side's sprint_speed/oaa, which also stay fixed
+    # across that page's own split toggle.
+    advanced = pd.read_sql(
+        "SELECT player_id, xfip, barrel_pct_pitching, running_game_runs_prevented FROM player_advanced_stats WHERE season = ?",
+        conn, params=(season,),
+    ).set_index("player_id")
+
+    # FB VAA height adjustment: VAA is measured at a fixed distance from the
+    # plate (see compute_vaa's VAA_YF), not a fixed HEIGHT, so two pitches
+    # with identical release/movement still read different VAA if one
+    # crosses higher than the other. Fixed with a real per-pitch-type
+    # regression adjustment, fit once across every pitcher (not per batch -
+    # see _pitcher_vaa_height_regression).
+    vaa_height_slope, type_mean_z = _pitcher_vaa_height_regression(conn, where, params)
+
+    pool_parts = []
+    for i in range(0, len(ids), _POOL_BATCH_SIZE):
+        batch_pool = _pitcher_pool_batch(
+            conn, where, params, ids[i:i + _POOL_BATCH_SIZE],
+            league_hr_fb_rate, vaa_height_slope, type_mean_z, advanced,
+        )
+        pool_parts.append(batch_pool)
+        del batch_pool
+        gc.collect()
+
+    pool = pd.concat(pool_parts)
+    del pool_parts
     pool["k_minus_bb_pct"] = pool["k_pct"] - pool["bb_pct"]
     pool = pool[pool["n_pa"] >= min_bf].copy()
 
@@ -399,8 +430,80 @@ def pitcher_percentile_metrics(conn, season, min_bf=None, stand_filter=None):
         pool["xfip"] = real_xfip.where(real_xfip.notna(), pool["xfip"])
         pool["barrel_pct"] = real_barrel.where(real_barrel.notna(), pool["barrel_pct"])
 
+    pool = pool.sort_index()
     pool.index.name = "pitcher_id"
     return pool
+
+
+_HIT_EVENTS = {"single", "double", "triple", "home_run"}
+
+
+def _batter_pool_batch(conn, where, params, batch_ids, advanced):
+    """One batch of ~_POOL_BATCH_SIZE batters: same per-batter computation
+    batter_percentile_metrics used to do over the whole season at once, just
+    restricted to this batch's own pitches. Every metric here is a
+    per-batter mean/sum/quantile (attack_direction and the bat-speed-q10
+    threshold are both grouped by batter_id) - unlike the pitcher side,
+    there's no league-wide regression to pull out separately here."""
+    placeholders = ",".join("?" * len(batch_ids))
+    batch_where = f"{where} AND batter_id IN ({placeholders})"
+    batch_params = params + tuple(batch_ids)
+
+    df = pd.read_sql(f"""
+        SELECT batter_id, description, zone, events, stand,
+               launch_speed, launch_angle, bb_type, hc_x, hc_y, bat_speed, swing_length, attack_angle,
+               swing_path_tilt, woba_denom, estimated_woba_using_speedangle, estimated_slg_using_speedangle,
+               estimated_ba_using_speedangle
+        FROM pitches {batch_where}
+    """, conn, params=batch_params)
+    df = _downcast_pitch_pool(df)
+    df = _add_shared_flags(df)
+
+    # Same hits-only, hand-adjusted landing-angle formula field_zone_pcts()
+    # uses (negative=pull, positive=oppo for either batter hand) - computed
+    # here too so it has a real percentile within the pool, not just a
+    # standalone per-player number. Duplicated rather than imported since
+    # player_page.py already imports FROM this module; keeping the direction
+    # one-way avoids a circular import. Grouped by batter_id, so correct per
+    # batch (every one of a given batter's rows lands in the same batch).
+    hits_mask = df["events"].isin(_HIT_EVENTS) & df["hc_x"].notna() & df["hc_y"].notna()
+    hits_df = df[hits_mask]
+    hit_angle = compute_spray_angle(hits_df["hc_x"], hits_df["hc_y"])
+    hit_hand_adj = np.where(hits_df["stand"] == "R", hit_angle, -hit_angle)
+    attack_direction_by_batter = pd.Series(hit_hand_adj, index=hits_df.index).groupby(hits_df["batter_id"]).mean()
+
+    rate_pool = _rate_metrics_pool(df, "batter_id")
+
+    d = df
+    qualifying = d["woba_denom"] == 1
+    d["_qualifying"] = qualifying
+    d["_xwoba_q"] = d["estimated_woba_using_speedangle"].where(qualifying)
+    d["_xslg_q"] = d["estimated_slg_using_speedangle"].where(qualifying)
+    d["_xba_q"] = d["estimated_ba_using_speedangle"].where(qualifying)
+    # fast_swing_bat_speed's per-batter 10th-percentile threshold, computed
+    # once via groupby.transform (pandas' own optimized per-group reduction)
+    # instead of calling the function fresh per batter. Per-batter, so
+    # correct within a batch same as attack_direction above.
+    d["_bs_q10"] = d.groupby("batter_id")["bat_speed"].transform(lambda s: s.quantile(0.10))
+    bs_keep = ((d["bat_speed"] >= d["_bs_q10"]) | ((d["bat_speed"] >= 60) & (d["launch_speed"] >= 90))) & d["bat_speed"].notna()
+    d["_bs_kept"] = d["bat_speed"].where(bs_keep)
+
+    g = d.groupby("batter_id")
+    extra = pd.DataFrame(index=g.size().index)
+    q_denom = g["_qualifying"].sum()
+    extra["xwoba"] = _safe_div(g["_xwoba_q"].sum(), q_denom)
+    extra["xslg"] = _safe_div(g["_xslg_q"].sum(), q_denom)
+    extra["xba"] = _safe_div(g["_xba_q"].sum(), q_denom)
+    extra["bat_speed"] = g["_bs_kept"].mean()
+    extra["swing_length"] = g["swing_length"].mean()
+    extra["attack_angle"] = g["attack_angle"].mean()
+    extra["swing_path_tilt"] = g["swing_path_tilt"].mean()
+    extra["attack_direction"] = attack_direction_by_batter.reindex(extra.index)
+    extra["sprint_speed"] = advanced["sprint_speed"].reindex(extra.index)
+    extra["oaa"] = advanced["oaa"].reindex(extra.index)
+    extra["arm_strength"] = advanced["arm_strength"].reindex(extra.index)
+
+    return rate_pool.join(extra)
 
 
 def batter_percentile_metrics(conn, season, min_pa=None, throws_filter=None):
@@ -416,6 +519,9 @@ def batter_percentile_metrics(conn, season, min_pa=None, throws_filter=None):
     within pitches from that pitcher hand only, not just re-ranked against
     the season-wide pool. sprint_speed/oaa are season-level (not pitch-level)
     so they don't change with this filter - same value regardless of split.
+
+    Processes batters in batches of _POOL_BATCH_SIZE rather than loading
+    every pitch of the season/split at once - see that constant's comment.
     """
     if min_pa is None:
         min_pa = SAVANT_PA_PER_TEAM_GAME_BATTER * _team_games_played(conn, season)
@@ -426,15 +532,7 @@ def batter_percentile_metrics(conn, season, min_pa=None, throws_filter=None):
         where += " AND p_throws = ?"
         params += (throws_filter,)
 
-    df = pd.read_sql(f"""
-        SELECT batter_id, description, zone, events, stand,
-               launch_speed, launch_angle, bb_type, hc_x, hc_y, bat_speed, swing_length, attack_angle,
-               swing_path_tilt, woba_denom, estimated_woba_using_speedangle, estimated_slg_using_speedangle,
-               estimated_ba_using_speedangle
-        FROM pitches {where}
-    """, conn, params=params)
-    df = _downcast_pitch_pool(df)
-    df = _add_shared_flags(df)
+    ids = sorted(r[0] for r in conn.execute(f"SELECT DISTINCT batter_id FROM pitches {where}", params).fetchall())
 
     advanced = pd.read_sql(
         "SELECT player_id, sprint_speed, oaa, barrel_pct_batting, arm_strength FROM player_advanced_stats WHERE season = ?",
@@ -445,73 +543,22 @@ def batter_percentile_metrics(conn, season, min_pa=None, throws_filter=None):
     # reasoning as the pitcher side's xfip/barrel_pct override above.
     is_all = not throws_filter or throws_filter == "ALL"
 
-    # Same hits-only, hand-adjusted landing-angle formula field_zone_pcts()
-    # uses (negative=pull, positive=oppo for either batter hand) - computed
-    # here too so it has a real percentile within the pool, not just a
-    # standalone per-player number. Duplicated rather than imported since
-    # player_page.py already imports FROM this module; keeping the direction
-    # one-way avoids a circular import.
-    #
-    # Vectorized ONCE across the whole pool (not recomputed per batter
-    # inside the groupby loop below) - a real, measured slowdown: the
-    # earlier version called compute_spray_angle/np.where separately for
-    # each of 600+ batters inside the loop, which meaningfully dragged out
-    # every cold-cache pool build (server startup warmup AND "Refresh
-    # data" both call this function for every split). Same math, just done
-    # as one pandas groupby instead of N Python-level calls.
-    _HIT_EVENTS = {"single", "double", "triple", "home_run"}
-    hits_mask = df["events"].isin(_HIT_EVENTS) & df["hc_x"].notna() & df["hc_y"].notna()
-    hits_df = df[hits_mask]
-    hit_angle = compute_spray_angle(hits_df["hc_x"], hits_df["hc_y"])
-    hit_hand_adj = np.where(hits_df["stand"] == "R", hit_angle, -hit_angle)
-    attack_direction_by_batter = pd.Series(hit_hand_adj, index=hits_df.index).groupby(hits_df["batter_id"]).mean()
+    pool_parts = []
+    for i in range(0, len(ids), _POOL_BATCH_SIZE):
+        batch_pool = _batter_pool_batch(conn, where, params, ids[i:i + _POOL_BATCH_SIZE], advanced)
+        pool_parts.append(batch_pool)
+        del batch_pool
+        gc.collect()
 
-    rate_pool = _rate_metrics_pool(df, "batter_id")
-
-    # Vectorized replacement for the per-batter Python loop that used to
-    # live here - verified to reproduce that loop's output exactly
-    # (float-tolerance, zero mismatches across ALL/L/R splits) before
-    # replacing it. Same pattern as the pitcher side above. `df` isn't read
-    # again after this point, so this is a rename, not a copy.
-    d = df
-    qualifying = d["woba_denom"] == 1
-    d["_qualifying"] = qualifying
-    d["_xwoba_q"] = d["estimated_woba_using_speedangle"].where(qualifying)
-    d["_xslg_q"] = d["estimated_slg_using_speedangle"].where(qualifying)
-    d["_xba_q"] = d["estimated_ba_using_speedangle"].where(qualifying)
-    # fast_swing_bat_speed's per-batter 10th-percentile threshold, computed
-    # once via groupby.transform (pandas' own optimized per-group reduction)
-    # instead of calling the function fresh per batter.
-    d["_bs_q10"] = d.groupby("batter_id")["bat_speed"].transform(lambda s: s.quantile(0.10))
-    bs_keep = ((d["bat_speed"] >= d["_bs_q10"]) | ((d["bat_speed"] >= 60) & (d["launch_speed"] >= 90))) & d["bat_speed"].notna()
-    d["_bs_kept"] = d["bat_speed"].where(bs_keep)
-
-    g = d.groupby("batter_id")
-    extra = pd.DataFrame(index=g.size().index)
-    # sum(qualifying)/count(ALL qualifying rows) - see the pitcher side's
-    # xwoba comment for why this isn't .mean() (walks/HBP/Ks count toward
-    # woba_denom but have no estimated_slg/ba_using_speedangle value at all,
-    # only estimated_woba does).
-    q_denom = g["_qualifying"].sum()
-    extra["xwoba"] = _safe_div(g["_xwoba_q"].sum(), q_denom)
-    extra["xslg"] = _safe_div(g["_xslg_q"].sum(), q_denom)
-    extra["xba"] = _safe_div(g["_xba_q"].sum(), q_denom)
-    extra["bat_speed"] = g["_bs_kept"].mean()
-    extra["swing_length"] = g["swing_length"].mean()
-    extra["attack_angle"] = g["attack_angle"].mean()
-    extra["swing_path_tilt"] = g["swing_path_tilt"].mean()
-    extra["attack_direction"] = attack_direction_by_batter.reindex(extra.index)
-    extra["sprint_speed"] = advanced["sprint_speed"].reindex(extra.index)
-    extra["oaa"] = advanced["oaa"].reindex(extra.index)
-    extra["arm_strength"] = advanced["arm_strength"].reindex(extra.index)
-
-    pool = rate_pool.join(extra)
+    pool = pd.concat(pool_parts)
+    del pool_parts
     pool = pool[pool["n_pa"] >= min_pa].copy()
 
     if is_all:
         real_barrel = advanced["barrel_pct_batting"].reindex(pool.index)
         pool["barrel_pct"] = real_barrel.where(real_barrel.notna(), pool["barrel_pct"])
 
+    pool = pool.sort_index()
     pool.index.name = "batter_id"
     return pool
 
