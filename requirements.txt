@@ -5,7 +5,7 @@ uvicorn==0.52.3
 python-multipart==0.0.32
 
 # Async/HTTP
-anyio==4.13.0
+anyio==4.14.2
 httpx==0.28.1
 h11==0.16.0
 
@@ -26,10 +26,10 @@ pybaseball==2.2.7
 # HTTP / networking
 requests==2.33.1
 requests-oauthlib==2.0.0
-urllib3==2.6.3
-certifi==2026.2.25
+urllib3==2.8.0
+certifi==2026.10.18
 charset-normalizer==3.4.1
-idna==3.11
+idna==3.15
 
 # Pydantic (FastAPI validation)
 pydantic==2.13.4
@@ -40,7 +40,7 @@ annotated-types==0.8.0
 slowapi==0.1.10
 
 # Image processing (stadium photo conversion)
-Pillow==12.2.0
+Pillow==12.3.0
 
 # Utilities
 click==8.4.2
