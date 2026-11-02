@@ -16,19 +16,11 @@ from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 
-# Set ADMIN_TOKEN env var to secure the admin endpoints. If unset, every admin
-# request is rejected (fail closed) — local dev must set it too.
-_ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
-
-
-def _require_admin(x_admin_token: str = Header(default="")):
-    if not _ADMIN_TOKEN or x_admin_token != _ADMIN_TOKEN:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from analytics import boxscore as _boxscore
 from api import cache, pull, scheduler
+from api.auth import require_admin as _require_admin
 from api.db import get_conn
 from api.routers import (
     analysis, career, deception_report, heatmaps, hitzones, location_report, players, playoffs,
@@ -87,7 +79,7 @@ def pull_data(_=Depends(_require_admin)):
 
 
 @admin_router.get("/admin/pull-status")
-def pull_status():
+def pull_status(_=Depends(_require_admin)):
     return pull.get_status()
 
 

@@ -57,17 +57,3 @@ def get_news(limit: int = Query(10, ge=1, le=50), conn=Depends(get_conn)):
             for r in rows
         ]
     }
-
-
-@router.post("/news/refresh")
-def refresh_news(conn=Depends(get_conn)):
-    """Manually trigger a news fetch and store. Runs synchronously (fast
-    — just one RSS request + DB upsert)."""
-    import os
-    db_path = os.path.join(str(Path(__file__).resolve().parent.parent.parent), "mlb_data.db")
-    try:
-        from data.news_fetcher import fetch_and_store
-        n = fetch_and_store(db_path)
-        return {"status": "ok", "new_items": n}
-    except Exception as e:
-        return {"status": "error", "detail": str(e)}

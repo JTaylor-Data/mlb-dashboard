@@ -14,8 +14,7 @@ async function loadNews() {
     const data = await getJSON("/api/news?limit=15");
     if (!data.items || !data.items.length) {
       mount.innerHTML = `<div class="no-news">
-        No news items yet. Click "Refresh News" to fetch from MLB.com, or run
-        <code>python pulls/refresh_mlb_stats.py</code> from the server.
+        No news items yet. News updates automatically with the daily data job.
       </div>`;
       return;
     }
@@ -86,21 +85,5 @@ function formatDate(dateStr) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("refresh-btn");
-  btn.addEventListener("click", async () => {
-    btn.disabled = true; btn.textContent = "Refreshing...";
-    try {
-      const result = await postJSON("/api/news/refresh");
-      btn.textContent = result.status === "ok"
-        ? `Done — ${result.new_items} new`
-        : `Error: ${result.detail || "unknown"}`;
-      if (result.status === "ok") await loadNews();
-    } catch (err) {
-      btn.textContent = `Error: ${err.message}`;
-    } finally {
-      btn.disabled = false;
-      setTimeout(() => { btn.textContent = "Refresh News"; }, 3000);
-    }
-  });
   loadNews();
 });

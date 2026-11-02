@@ -63,14 +63,6 @@
       background: var(--surface-alt); border: 1px solid var(--border);
       border-radius: 3px; padding: 1px 5px; color: var(--text-muted);
     }
-
-    .news-actions { margin-bottom: 12px; }
-    .refresh-btn {
-      background: var(--forest); color: #fff; border: none;
-      border-radius: 6px; padding: 7px 16px; font-size: 13px; font-weight: 700;
-      cursor: pointer;
-    }
-    .refresh-btn:disabled { opacity: 0.6; cursor: default; }
     .freshness-note { font-size: 11px; color: var(--text-muted); margin-bottom: 10px; }
     .no-news { font-size: 14px; color: var(--text-muted); margin-top: 24px; }
   </style>
@@ -80,10 +72,6 @@
   <div class="page">
     <h1>MLB News</h1>
     <div class="loading-bar" id="page-loading"><div class="loading-bar-fill"></div></div>
-
-    <div class="news-actions">
-      <button class="refresh-btn" id="refresh-btn" type="button">Refresh News</button>
-    </div>
     <div class="freshness-note" id="freshness-note"></div>
     <div class="news-feed" id="news-mount"></div>
   </div>
