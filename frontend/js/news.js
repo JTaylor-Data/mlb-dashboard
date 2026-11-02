@@ -31,7 +31,7 @@ async function loadNews() {
 
     function metaHtml(item) {
       return `<div class="news-meta">
-        <span>${item.pub_date ? formatDate(item.pub_date) : ""}</span>
+        <span>${item.pub_date ? escHtml(formatDate(item.pub_date)) : ""}</span>
         <span class="news-source-badge">MLB.com</span>
       </div>`;
     }
@@ -41,7 +41,7 @@ async function loadNews() {
     const heroBody = itemBody(hero);
     const heroHtml = `<div class="news-hero">
       <div class="news-eyebrow">Top Story</div>
-      <a class="news-headline-link" href="${hero.source_url}" target="_blank" rel="noopener">${decodeHtml(hero.headline)}</a>
+      <a class="news-headline-link" href="${safeUrl(hero.source_url)}" target="_blank" rel="noopener">${decodeHtml(hero.headline)}</a>
       ${heroBody ? `<div class="news-body">${decodeHtml(heroBody)}</div>` : ""}
       ${metaHtml(hero)}
     </div>`;
@@ -56,7 +56,7 @@ async function loadNews() {
       return `<div class="news-item ${prioCls}">
         <div class="news-headline-row">
           ${priorityBadge}
-          <a class="news-headline-link" href="${item.source_url}" target="_blank" rel="noopener">${decodeHtml(item.headline)}</a>
+          <a class="news-headline-link" href="${safeUrl(item.source_url)}" target="_blank" rel="noopener">${decodeHtml(item.headline)}</a>
         </div>
         ${body ? `<div class="news-body">${decodeHtml(body)}</div>` : ""}
         ${metaHtml(item)}
@@ -65,17 +65,30 @@ async function loadNews() {
 
     mount.innerHTML = heroHtml + `<div class="news-grid">${gridHtml}</div>`;
   } catch (err) {
-    mount.innerHTML = `<div class="empty-state">Failed to load news: ${err.message}</div>`;
+    mount.innerHTML = `<div class="empty-state">Failed to load news: ${escHtml(err.message)}</div>`;
   } finally {
     setPageLoading(false);
   }
 }
 
+function escHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// RSS text can contain HTML entities; decode them once for display, then
+// escape so the result is safe to drop into innerHTML.
 function decodeHtml(s) {
   if (!s) return "";
   const txt = document.createElement("textarea");
   txt.innerHTML = s;
-  return txt.value.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return escHtml(txt.value);
+}
+
+// Only http(s) links from the feed; anything else (javascript:, data:) is dropped.
+function safeUrl(u) {
+  return /^https?:\/\//i.test(u || "") ? escHtml(u) : "#";
 }
 
 function formatDate(dateStr) {
