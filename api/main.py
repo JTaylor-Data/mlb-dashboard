@@ -16,13 +16,13 @@ from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.staticfiles import StaticFiles
 
-# Set ADMIN_TOKEN env var in production to secure the admin endpoints.
-# Unset (or empty) means no auth required — fine for local dev, not for hosting.
+# Set ADMIN_TOKEN env var to secure the admin endpoints. If unset, every admin
+# request is rejected (fail closed) — local dev must set it too.
 _ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
 
 
 def _require_admin(x_admin_token: str = Header(default="")):
-    if _ADMIN_TOKEN and x_admin_token != _ADMIN_TOKEN:
+    if not _ADMIN_TOKEN or x_admin_token != _ADMIN_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
