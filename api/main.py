@@ -148,12 +148,31 @@ app.include_router(trends.router)
 app.include_router(career.router)
 
 
+# Report-only for now: several pages still have inline <script> blocks and
+# JS-generated inline style="" attributes, so script-src/style-src need
+# 'unsafe-inline' to avoid blocking those outright. This header only logs
+# violations to the browser console — see security-report/csp-violations.txt
+# for what it caught. Enforcement is a separate follow-up.
+CSP_REPORT_ONLY_POLICY = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+    "font-src 'self' https://fonts.gstatic.com; "
+    "img-src 'self' data: https://img.mlbstatic.com https://www.mlbstatic.com; "
+    "connect-src 'self'; "
+    "object-src 'none'; "
+    "base-uri 'self'; "
+    "frame-ancestors 'none'"
+)
+
+
 @app.middleware("http")
 async def security_headers(request, call_next):
     response = await call_next(request)
     response.headers.setdefault("X-Content-Type-Options", "nosniff")
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+    response.headers.setdefault("Content-Security-Policy-Report-Only", CSP_REPORT_ONLY_POLICY)
     return response
 
 
