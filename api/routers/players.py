@@ -470,35 +470,45 @@ def _all_players(conn, season):
     # over a career without ever being pitchers, e.g. Jeff Mathis, Miguel
     # Rojas, Josh Harrison. Gating on position fixes that; Ohtani (TWP, 114
     # games pitched) still clears it.
-    df = pd.read_sql("""
-        SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws,
-               'pitcher' AS role, p.latest_season
-        FROM players pl
-        JOIN (
-            SELECT pitcher_id, MAX(season) AS latest_season
-            FROM pitches
-            GROUP BY pitcher_id
-            HAVING COUNT(DISTINCT game_id) >= 3
-        ) p ON pl.player_id = p.pitcher_id
-        WHERE pl.position IN ('P', 'TWP')
-        UNION
-        SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws,
-               'batter' AS role, b.latest_season
-        FROM players pl
-        JOIN (SELECT batter_id, MAX(season) AS latest_season FROM pitches GROUP BY batter_id) b
-          ON pl.player_id = b.batter_id
-        WHERE pl.player_id NOT IN (
-            SELECT pl2.player_id
-            FROM players pl2
-            JOIN (
-                SELECT pitcher_id FROM pitches
-                GROUP BY pitcher_id
-                HAVING COUNT(DISTINCT game_id) >= 3
-            ) p2 ON pl2.player_id = p2.pitcher_id
-            WHERE pl2.position IN ('P', 'TWP')
-        )
-        ORDER BY name
-    """, conn)
+    # The >=3-career-games qualifying-pitcher aggregate (COUNT(DISTINCT
+    # game_id) per pitcher_id, over the full pitches table) used to appear
+    # TWICE in this one statement - once for the pitcher branch's join,
+    # once again inside the batter branch's NOT IN exclusion - and SQLite
+    # doesn't share results across two textually separate subqueries, so
+    # the single most expensive part of this query ran twice per call.
+    # Materializing it once into a temp table and joining to that instead
+    # fixes that - same result, computed once.
+    conn.execute("DROP TABLE IF EXISTS temp.qualified_pitchers")
+    conn.execute("""
+        CREATE TEMP TABLE qualified_pitchers AS
+        SELECT pitcher_id, MAX(season) AS latest_season
+        FROM pitches
+        GROUP BY pitcher_id
+        HAVING COUNT(DISTINCT game_id) >= 3
+    """)
+    try:
+        df = pd.read_sql("""
+            SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws,
+                   'pitcher' AS role, p.latest_season
+            FROM players pl
+            JOIN qualified_pitchers p ON pl.player_id = p.pitcher_id
+            WHERE pl.position IN ('P', 'TWP')
+            UNION
+            SELECT pl.player_id, pl.name, pl.team_id, pl.bats, pl.throws,
+                   'batter' AS role, b.latest_season
+            FROM players pl
+            JOIN (SELECT batter_id, MAX(season) AS latest_season FROM pitches GROUP BY batter_id) b
+              ON pl.player_id = b.batter_id
+            WHERE pl.player_id NOT IN (
+                SELECT pl2.player_id
+                FROM players pl2
+                JOIN qualified_pitchers p2 ON pl2.player_id = p2.pitcher_id
+                WHERE pl2.position IN ('P', 'TWP')
+            )
+            ORDER BY name
+        """, conn)
+    finally:
+        conn.execute("DROP TABLE IF EXISTS qualified_pitchers")
     pitcher_roles = _pitcher_roles(conn, season)
     df = df.merge(
         pitcher_roles[["role"]].rename(columns={"role": "pitcher_role"}),
