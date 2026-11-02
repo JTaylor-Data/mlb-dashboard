@@ -29,7 +29,15 @@ from api.routers import (
 )
 from api.warmup import warm_cache_background
 
-app = FastAPI(title="MLB Dashboard API")
+# API docs (/docs, /redoc, /openapi.json) are off unless ENABLE_API_DOCS=1,
+# so production doesn't publish the full route map.
+_DOCS = os.environ.get("ENABLE_API_DOCS", "") == "1"
+app = FastAPI(
+    title="MLB Dashboard API",
+    docs_url="/docs" if _DOCS else None,
+    redoc_url="/redoc" if _DOCS else None,
+    openapi_url="/openapi.json" if _DOCS else None,
+)
 # Compress API JSON responses ≥1KB — leaderboard/player payloads can be
 # 100KB+; gzip typically cuts that 5-10x on the wire.
 app.add_middleware(GZipMiddleware, minimum_size=1000)
