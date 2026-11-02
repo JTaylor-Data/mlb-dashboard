@@ -36,6 +36,9 @@ pydantic==2.13.4
 pydantic_core==2.46.4
 annotated-types==0.8.0
 
+# Rate limiting
+slowapi==0.1.10
+
 # Image processing (stadium photo conversion)
 Pillow==12.2.0
 

@@ -12,8 +12,12 @@ from pathlib import Path
 
 import os
 
-from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException
+from fastapi import APIRouter, Depends, FastAPI, Header, HTTPException, Request
 from fastapi.middleware.gzip import GZipMiddleware
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+from slowapi.util import get_remote_address
 from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -41,6 +45,11 @@ app = FastAPI(
 # Compress API JSON responses ≥1KB — leaderboard/player payloads can be
 # 100KB+; gzip typically cuts that 5-10x on the wire.
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+# Per-IP limit on everything. Admin routes get a tighter one below.
+limiter = Limiter(key_func=get_remote_address, default_limits=["240/minute"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 
 @app.on_event("startup")
@@ -68,7 +77,8 @@ def get_meta(conn=Depends(get_conn)):
 
 
 @admin_router.post("/admin/refresh-cache")
-def refresh_cache(_=Depends(_require_admin)):
+@limiter.limit("10/minute")
+def refresh_cache(request: Request, _=Depends(_require_admin)):
     """Cache-only refresh - use when you've re-run the pull scripts yourself
     and just want the app to pick up what's already on disk."""
     cache.clear_all()
@@ -78,7 +88,8 @@ def refresh_cache(_=Depends(_require_admin)):
 
 
 @admin_router.post("/admin/pull-data")
-def pull_data(_=Depends(_require_admin)):
+@limiter.limit("10/minute")
+def pull_data(request: Request, _=Depends(_require_admin)):
     """The nav's "Refresh data" button - actually fetches new Statcast/
     schedule data (not just cache invalidation), then re-warms the cache.
     Runs in the background; poll /api/admin/pull-status for progress."""
@@ -87,12 +98,14 @@ def pull_data(_=Depends(_require_admin)):
 
 
 @admin_router.get("/admin/pull-status")
-def pull_status(_=Depends(_require_admin)):
+@limiter.limit("10/minute")
+def pull_status(request: Request, _=Depends(_require_admin)):
     return pull.get_status()
 
 
 @admin_router.get("/admin/cache-stats")
-def cache_stats(_=Depends(_require_admin)):
+@limiter.limit("10/minute")
+def cache_stats(request: Request, _=Depends(_require_admin)):
     """Internal: report cache entry counts per registered function.
     Disabled externally by ADMIN_TOKEN when set (same as other admin endpoints)."""
     import time as _time
