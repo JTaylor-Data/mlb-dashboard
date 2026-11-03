@@ -29,7 +29,7 @@ _SCORES_PATHS = {
 _V1_REPORT_PATH = MODELS_DIR / "deception_plus_v1_report_2026.json"
 
 
-@ttl_cache_all_args()  # 12h TTL; cleared on /api/admin/refresh-cache (replaces @lru_cache which had no TTL)
+@ttl_cache_all_args()  # 36h TTL; cleared on /api/admin/refresh-cache (replaces @lru_cache which had no TTL)
 def _load_scores(version: str) -> pd.DataFrame:
     """Load pre-computed scores for a given version. Cached per version.
     Normalizes v2b column names to the same shape as v2 for downstream compatibility."""

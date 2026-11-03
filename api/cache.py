@@ -13,7 +13,15 @@ import threading
 import time
 from functools import wraps
 
-DEFAULT_TTL_SECONDS = 12 * 3600
+DEFAULT_TTL_SECONDS = 36 * 3600
+
+# Caps how many distinct (args) keys a single cached function can hold at
+# once - without this, a cache keyed by things like player_id/season/split
+# combinations grows without bound over a long-running process. Eviction is
+# plain FIFO (oldest-inserted key goes first, via dict insertion order) -
+# simple rather than true LRU, which is fine here since the point is just to
+# put a ceiling on memory, not to optimize hit rate.
+DEFAULT_MAX_ENTRIES = 5000
 
 _registry = []
 
@@ -25,6 +33,14 @@ def _get_lock(locks, locks_mu, key):
             lock = threading.Lock()
             locks[key] = lock
         return lock
+
+
+def _store_set(store, key, value):
+    """Insert/overwrite a key, then evict oldest entries past the cap."""
+    store.pop(key, None)  # re-insert at the end so a refresh counts as recent
+    store[key] = value
+    while len(store) > DEFAULT_MAX_ENTRIES:
+        store.pop(next(iter(store)))
 
 
 def ttl_cache(ttl_seconds=DEFAULT_TTL_SECONDS):
@@ -41,6 +57,10 @@ def ttl_cache(ttl_seconds=DEFAULT_TTL_SECONDS):
     memory peaks - the second caller blocks, then gets the first caller's
     now-cached result. Different keys (different seasons/splits) still run
     concurrently; this only serializes repeats of the identical call.
+
+    Bounded to DEFAULT_MAX_ENTRIES distinct keys (FIFO eviction) so a
+    long-running process can't accumulate an unbounded number of cached
+    player/season/split combinations.
     """
     def decorator(fn):
         store = {}
@@ -65,7 +85,7 @@ def ttl_cache(ttl_seconds=DEFAULT_TTL_SECONDS):
                     if now < expires_at:
                         return value
                 value = fn(conn, *args, **kwargs)
-                store[key] = (value, time.monotonic() + ttl_seconds)
+                _store_set(store, key, (value, time.monotonic() + ttl_seconds))
             return value
 
         def clear():
@@ -81,7 +101,8 @@ def ttl_cache(ttl_seconds=DEFAULT_TTL_SECONDS):
 def ttl_cache_all_args(ttl_seconds=DEFAULT_TTL_SECONDS):
     """Like ttl_cache, but for functions with no leading `conn` argument to
     exclude from the key (e.g. live external-API calls keyed by player_id).
-    Same single-flight-per-key locking as ttl_cache - see its docstring."""
+    Same single-flight-per-key locking and FIFO entry cap as ttl_cache - see
+    its docstring."""
     def decorator(fn):
         store = {}
         locks = {}
@@ -103,7 +124,7 @@ def ttl_cache_all_args(ttl_seconds=DEFAULT_TTL_SECONDS):
                     if now < expires_at:
                         return value
                 value = fn(*args, **kwargs)
-                store[key] = (value, time.monotonic() + ttl_seconds)
+                _store_set(store, key, (value, time.monotonic() + ttl_seconds))
             return value
 
         def clear():
