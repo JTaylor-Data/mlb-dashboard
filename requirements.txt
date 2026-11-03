@@ -38,9 +38,6 @@ annotated-types==0.8.0
 # Rate limiting
 slowapi==0.1.10
 
-# Image processing (stadium photo conversion)
-Pillow==12.3.0
-
 # Utilities
 click==8.4.2
 packaging==26.0

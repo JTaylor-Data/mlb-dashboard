@@ -42,10 +42,9 @@ log = logging.getLogger("refresh")
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from pulls import pull_players_games
-from pulls import pull_statcast
 from pulls import pull_team_stats
 from pulls import pull_remaining_schedule
-from analytics import boxscore, stuff_model
+from analytics import boxscore
 
 from api import cache
 from api.db import DB_PATH
@@ -61,7 +60,11 @@ from config.season_phase import skip_team_stat_pulls as _skip_team_stats, is_pos
 # becomes cheap forever after - so this constant is a genuine, if small,
 # one-time cost lever, not just documentation.
 EARLIEST_SEASON_START = date(2021, 3, 20)
-PLAYERS_GAMES_RECENT_WINDOW_DAYS = pull_statcast.RECENT_WINDOW_DAYS
+# Mirrors pull_statcast.RECENT_WINDOW_DAYS - not imported from there directly
+# because pull_statcast pulls in pybaseball (and transitively matplotlib/Pillow),
+# which would otherwise be loaded at every boot just for this one module-level
+# constant. pull_statcast itself is imported lazily in _run() below.
+PLAYERS_GAMES_RECENT_WINDOW_DAYS = 3
 
 # POSTSEASON_MODE is now derived from config/season_phase.py (SEASON_PHASE env var
 # or the default set there). Do not change this line; change SEASON_PHASE instead.
@@ -103,6 +106,8 @@ def get_status():
 
 
 def _run(full_warmup):
+    from pulls import pull_statcast
+
     end = date.today()
     pull_succeeded = False
     new_pitches = 0
@@ -202,6 +207,8 @@ def _run(full_warmup):
             # Scheduled/startup refresh with real new data: clear
             # everything including model caches, then do a full warmup
             # (includes L/R splits, similar players, etc.)
+            from analytics import stuff_model
+
             cache.clear_all()
             stuff_model.clear_cache()
             boxscore.clear_cache()
