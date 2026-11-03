@@ -28,7 +28,6 @@ from fastapi.middleware.gzip import GZipMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from slowapi.util import get_remote_address
 from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -56,8 +55,32 @@ app = FastAPI(
 # Compress API JSON responses ≥1KB — leaderboard/player payloads can be
 # 100KB+; gzip typically cuts that 5-10x on the wire.
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+
+def _client_ip(request: Request) -> str:
+    """Real per-visitor IP for rate limiting.
+
+    Render's own edge proxy is the only way any request reaches this
+    process - there's no direct public path to the container - so
+    request.client.host here is always Render's proxy, not the visitor,
+    and slowapi's default get_remote_address would key every visitor on
+    one shared IP (rate-limiting everyone together instead of per-visitor).
+    Render's proxy sets X-Forwarded-For itself, appending the real client
+    IP as the first entry, so trusting its leftmost value is safe in this
+    deployment; it would NOT be safe if this app were ever reachable by
+    any other route in (e.g. direct container access), since a client
+    could then forge that header.
+    """
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        return xff.split(",")[0].strip()
+    if request.client and request.client.host:
+        return request.client.host
+    return "127.0.0.1"
+
+
 # Per-IP limit on everything. Admin routes get a tighter one below.
-limiter = Limiter(key_func=get_remote_address, default_limits=["240/minute"])
+limiter = Limiter(key_func=_client_ip, default_limits=["240/minute"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(SlowAPIMiddleware)
