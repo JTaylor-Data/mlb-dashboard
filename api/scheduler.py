@@ -142,7 +142,27 @@ def start():
     schedule and weekly rescore, all in background threads - the app starts
     accepting requests right away regardless (any request that lands before
     the startup refresh finishes just recomputes/caches on demand, same as
-    any other cold-cache request on this site)."""
-    pull.start_pull(full_warmup=True)
+    any other cold-cache request on this site).
+
+    If a pull finished very recently (see RESTART_PULL_SKIP_WINDOW_SECONDS),
+    this is treated as a restart (crash/redeploy), not a genuinely stale
+    boot: skip the pull and just re-warm from whatever's already in the DB.
+    Without this, a crash-loop (OOM-killed mid-warmup, say) would repeat
+    the same pull + cache-clear + rebuild on every single restart. A
+    restart after a longer gap (a real stale deploy) still pulls fresh
+    data as before - this only guards against *immediate* repeats.
+    """
+    last_finished = pull.last_pull_finished_at()
+    if last_finished is not None and (time.time() - last_finished) < pull.RESTART_PULL_SKIP_WINDOW_SECONDS:
+        age = time.time() - last_finished
+        log.info(
+            "last pull finished %.0fs ago (< %.0fs) - treating this as a restart, "
+            "skipping the pull and warming from existing data only",
+            age, pull.RESTART_PULL_SKIP_WINDOW_SECONDS,
+        )
+        from api.warmup import warm_cache_background
+        warm_cache_background()
+    else:
+        pull.start_pull(full_warmup=True)
     threading.Thread(target=_daily_loop, daemon=True).start()
     threading.Thread(target=_weekly_rescore_loop, daemon=True).start()

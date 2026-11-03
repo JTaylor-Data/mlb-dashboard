@@ -29,8 +29,10 @@ since that's a pure UI-responsiveness tradeoff, not a data-correctness one.
 """
 import logging
 import sqlite3
+import json
 import sys
 import threading
+import time
 import traceback
 from datetime import date, timedelta
 from pathlib import Path
@@ -68,14 +70,45 @@ POSTSEASON_MODE = _is_postseason()
 _status = {"state": "idle", "detail": "", "started_at": None, "finished_at": None}
 _lock = threading.Lock()
 
+# Persisted (survives a restart, unlike _status above) so a crash-loop -
+# the process gets OOM-killed mid-warmup, restarts, and would otherwise
+# immediately re-trigger the exact same pull+clear+rebuild every time -
+# can be detected and the startup pull skipped. Lives next to the DB (same
+# persistent disk on Render), not in the DB itself, so it doesn't need a
+# schema migration or risk corrupting real data.
+_PULL_STATE_FILE = Path(DB_PATH).resolve().parent / "pull_state.json"
+RESTART_PULL_SKIP_WINDOW_SECONDS = 2 * 3600  # 2 hours
+
+
+def last_pull_finished_at():
+    """Unix timestamp of the last pull cycle that completed successfully
+    (didn't except), or None if unknown (first boot ever, or the state
+    file is missing/corrupt - always safe to treat as None, which just
+    means "pull as normal")."""
+    try:
+        return json.loads(_PULL_STATE_FILE.read_text())["finished_at"]
+    except Exception:
+        return None
+
+
+def _record_pull_finished():
+    try:
+        _PULL_STATE_FILE.write_text(json.dumps({"finished_at": time.time()}))
+    except Exception as e:
+        log.warning("could not persist pull_state.json (non-fatal): %s", e)
+
 
 def get_status():
     return dict(_status)
 
 
 def _run(full_warmup):
+    end = date.today()
+    pull_succeeded = False
+    new_pitches = 0
+    games_result = {"games_updated": 0, "players_updated": 0}
+
     try:
-        end = date.today()
         start = EARLIEST_SEASON_START
 
         log.info("checking Statcast data %s to %s for anything missing...", start, end)
@@ -86,6 +119,7 @@ def _run(full_warmup):
         # The real, current-day status is "is today's/recent data in yet."
         _status["detail"] = "Checking for new pitch data..."
         pitches_result = pull_statcast.run(start.isoformat(), end.isoformat())
+        new_pitches = pitches_result["rows_inserted"]
 
         log.info("updating players/games reference data...")
         _status["detail"] = "Updating players/games reference data..."
@@ -129,40 +163,8 @@ def _run(full_warmup):
             except Exception as _pe:
                 log.warning("prospect pull failed (non-fatal): %s", _pe)
 
-        log.info("refreshing computed stats...")
-        _status["detail"] = "Refreshing computed stats..."
-        if full_warmup and not POSTSEASON_MODE:
-            # Scheduled/startup refresh: clear everything including model caches,
-            # then do a full warmup (includes L/R splits, similar players, etc.)
-            cache.clear_all()
-            stuff_model.clear_cache()
-            deception_model.clear_cache()
-            boxscore.clear_cache()
-        elif full_warmup and POSTSEASON_MODE:
-            # Postseason: RS model scores are final — don't nuke and recompute them.
-            # Only clear daily-data caches that change with each new postseason game.
-            boxscore.clear_cache()
-            from api.routers.top_performers import _leaderboard
-            from api.routers.standings import _standings
-            _leaderboard.clear()
-            _standings.clear()
-        else:
-            # Manual refresh button: only clear the daily-data caches. Model
-            # scoring caches (Stuff+, Tunneling+, Deception+, Location+) don't
-            # meaningfully change because of one day's new pitches — clearing and
-            # recomputing them cold costs ~25-35s of LightGBM scoring that the
-            # user's already paid for today. Keep them warm. Only clear what
-            # actually needs to reflect new data: box scores (completed games),
-            # leaderboards (daily top performers), and standings (W/L records).
-            from api.routers.top_performers import _leaderboard
-            from api.routers.standings import _standings
-            boxscore.clear_cache()
-            _leaderboard.clear()
-            _standings.clear()
-        warm_cache_sync(full=full_warmup)
-
-        _status["state"] = "done"
-        new_pitches = pitches_result["rows_inserted"]
+        pull_succeeded = True
+        _record_pull_finished()
         if new_pitches == 0:
             _status["detail"] = f"No new pitches found - already up to date through {end.isoformat()}."
         else:
@@ -171,15 +173,75 @@ def _run(full_warmup):
                 f"{games_result['games_updated']} game(s) updated, "
                 f"{games_result['players_updated']} player(s) checked."
             )
-        log.info("done - %s", _status["detail"])
+        log.info("pull done - %s", _status["detail"])
+    except Exception as e:
+        _status["detail"] = f"Refresh failed: {e}"
+        log.error("pull failed (%s): %s", type(e).__name__, e)
+        traceback.print_exc()
+
+    # Warm-up runs in its OWN try/except, regardless of whether the pull
+    # above succeeded - a network blip from Savant/the MLB Stats API used
+    # to mean warm_cache_sync() never ran at all (it was the last step
+    # inside the pull's own try block), so the site served nothing warmed
+    # until the NEXT scheduled cycle. Now a pull failure just means this
+    # cycle doesn't learn about new data; whatever's already in the DB
+    # still gets (re)warmed.
+    try:
+        log.info("refreshing computed stats...")
+        _status["detail"] = "Refreshing computed stats..."
+        # Only clear caches when this cycle actually found new data -
+        # unconditionally clearing on every full_warmup run (every boot,
+        # every scheduled 6am refresh) defeated the point of the
+        # disk-persisted percentile pools: every restart threw them away
+        # and paid the full rebuild cost again, and a crash mid-warmup
+        # just repeated the same expensive clear+rebuild on the next boot.
+        # pull_succeeded=False (new_pitches stays 0) correctly leaves
+        # existing caches alone - we don't know anything changed, so
+        # don't act like it did.
+        if full_warmup and not POSTSEASON_MODE and new_pitches > 0:
+            # Scheduled/startup refresh with real new data: clear
+            # everything including model caches, then do a full warmup
+            # (includes L/R splits, similar players, etc.)
+            cache.clear_all()
+            stuff_model.clear_cache()
+            deception_model.clear_cache()
+            boxscore.clear_cache()
+        elif full_warmup and POSTSEASON_MODE and new_pitches > 0:
+            # Postseason: RS model scores are final — don't nuke and recompute them.
+            # Only clear daily-data caches that change with each new postseason game.
+            boxscore.clear_cache()
+            from api.routers.top_performers import _leaderboard
+            from api.routers.standings import _standings
+            _leaderboard.clear()
+            _standings.clear()
+        elif not full_warmup and new_pitches > 0:
+            # Manual refresh button, and something actually changed: only
+            # clear the daily-data caches. Model scoring caches (Stuff+,
+            # Tunneling+, Deception+, Location+) don't meaningfully change
+            # because of one day's new pitches — clearing and recomputing
+            # them cold costs ~25-35s of LightGBM scoring that the user's
+            # already paid for today. Keep them warm. Only clear what
+            # actually needs to reflect new data: box scores (completed
+            # games), leaderboards (daily top performers), standings.
+            from api.routers.top_performers import _leaderboard
+            from api.routers.standings import _standings
+            boxscore.clear_cache()
+            _leaderboard.clear()
+            _standings.clear()
+        # else: nothing new (or the pull failed) - skip clearing, just
+        # warm whatever's cold below (first boot ever, or a key that
+        # expired on its own TTL).
+        warm_cache_sync(full=full_warmup)
+        if pull_succeeded:
+            _status["state"] = "done"
+        else:
+            _status["state"] = "error"
+            _status["detail"] += " (warmed from existing data)"
+        log.info("warm-up done")
     except Exception as e:
         _status["state"] = "error"
-        _status["detail"] = f"Refresh failed: {e}"
-        # Anything above this point failing (including pull_statcast itself)
-        # means warm_cache_sync() below never ran - the cache stays however
-        # it was, which is easy to miss from the error alone, so say it
-        # explicitly rather than leaving it implicit in "which line raised."
-        log.error("pull failed (%s) - warm_cache_sync was NOT run this cycle: %s", type(e).__name__, e)
+        _status["detail"] = f"Warm-up failed: {e}"
+        log.error("warm_cache_sync failed (%s): %s", type(e).__name__, e)
         traceback.print_exc()
     finally:
         _status["finished_at"] = date.today().isoformat()
