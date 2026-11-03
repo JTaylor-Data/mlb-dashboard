@@ -82,11 +82,12 @@ def load_pool(conn: sqlite3.Connection, season: int, player_type: str,
     Returns the DataFrame on cache hit, or None on miss/stale.
     player_type: 'pitcher' or 'batter'
     split: None/'ALL' for all batters, 'L' or 'R' for hand filter
-    """
-    from config.model_policy import CURRENT_SEASON
-    if season >= CURRENT_SEASON:
-        return None  # current season is always computed live
 
+    Also used for the current (incomplete) season - _pool_version's row-count
+    fingerprint means a day's new pull changes the version and this just
+    misses (falling through to the stale-file cleanup below) rather than
+    serving outdated data.
+    """
     version = _pool_version(conn, season)
     path = _pool_path(season, player_type, split, version)
     if path.exists():
@@ -117,10 +118,6 @@ def save_pool(conn: sqlite3.Connection, season: int, player_type: str,
     Uses write-to-temp-then-rename so readers never see a partial file.
     Never called if df is empty or if the build raised an exception.
     """
-    from config.model_policy import CURRENT_SEASON
-    if season >= CURRENT_SEASON:
-        return  # never persist the current season
-
     if df is None or df.empty:
         return
 
@@ -149,12 +146,10 @@ def get_or_build_pool(conn: sqlite3.Connection, season: int, player_type: str,
     min_override: passed through to the percentile_metrics function if set
     (used for the threshold=0 unqualified pools which are NOT persisted).
     """
-    from config.model_policy import CURRENT_SEASON
-    from analytics.percentiles import pitcher_percentile_metrics, batter_percentile_metrics
-
-    # Only persist qualified (default-threshold) pools for complete seasons.
-    # Unqualified (min=0) pools are small and built on-demand; no disk cache.
-    should_persist = (season < CURRENT_SEASON) and (min_override is None)
+    # Only persist qualified (default-threshold) pools - every season,
+    # including the current one. Unqualified (min=0) pools are small and
+    # built on-demand; no disk cache.
+    should_persist = min_override is None
 
     if should_persist:
         cached = load_pool(conn, season, player_type, split)

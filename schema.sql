@@ -295,3 +295,17 @@ CREATE TABLE IF NOT EXISTS remaining_schedule (
     home_team_id INTEGER,
     away_team_id INTEGER
 );
+
+-- Precomputed qualifying-player roster for /api/players/all (one row per
+-- (player_id, role) that clears the >=3-career-game threshold - see
+-- analytics/qualified_players.py). Avoids a live GROUP BY scan of the full
+-- `pitches` table (8M+ rows) on every warm-up/cache-miss - confirmed via
+-- live Docker testing to stall 300+ seconds under a memory-constrained
+-- boot. Rebuilt in full by tools/rebuild_qualified_players.py; lazy-built
+-- the same way the first time _all_players finds this table empty.
+CREATE TABLE IF NOT EXISTS qualified_players (
+    player_id     INTEGER NOT NULL,
+    role          TEXT NOT NULL,   -- 'pitcher' or 'batter'
+    latest_season INTEGER NOT NULL,
+    PRIMARY KEY (player_id, role)
+);
