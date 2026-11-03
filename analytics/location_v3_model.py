@@ -201,6 +201,14 @@ def _raw_predictions(conn, season):
     if entry is not None and (time.monotonic() - entry[1]) < _TTL:
         return entry[0]
 
+    # Try the pre-scored parquet before falling back to live scoring below
+    # - see analytics/score_parquet_cache.py's docstring.
+    from analytics.score_parquet_cache import try_load_parquet
+    parquet_df = try_load_parquet(f"location_plus_v3_{season}.parquet")
+    if parquet_df is not None:
+        _cache[key] = (parquet_df, time.monotonic())
+        return parquet_df
+
     meta = _meta()
     feat_cols = meta["feat_cols"] if meta else [
         "plate_x", "plate_z", "balls", "strikes", "pitch_type", "stand", "season"]

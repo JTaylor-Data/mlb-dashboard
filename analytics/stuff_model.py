@@ -174,6 +174,16 @@ def _raw_predictions(conn, season):
     if cached is not None and (time.monotonic() - cached[1]) < RAW_PREDICTIONS_CACHE_TTL_SECONDS:
         return cached[0]
 
+    # Try the pre-scored parquet (written weekly by rescore_models.py)
+    # before falling back to live LightGBM scoring below - lets a season
+    # warmup didn't eagerly inject still load fast, on whichever request
+    # actually needs it, instead of needing every season pre-warmed.
+    from analytics.score_parquet_cache import try_load_parquet
+    parquet_df = try_load_parquet(f"stuff_plus_{STUFF_ACTIVE_VERSION}_{season}.parquet")
+    if parquet_df is not None:
+        _raw_predictions_cache[cache_key] = (parquet_df, time.monotonic())
+        return parquet_df
+
     from analytics.stuff_features import RAW_QUERY_COLUMNS
     from config.qualifiers import regular_season_filter
     df = pd.read_sql(f"""

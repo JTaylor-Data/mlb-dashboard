@@ -2,6 +2,10 @@
 mlb_data.db
 mlb_data.db.backup-*
 
+# Runtime state (last-successful-pull timestamp, used to skip a redundant
+# pull on a crash-loop restart) - local/per-deployment, not source.
+pull_state.json
+
 # Score cache parquets (large, regenerable via tools/maintenance/rescore_models.py)
 parquets/*.parquet
 

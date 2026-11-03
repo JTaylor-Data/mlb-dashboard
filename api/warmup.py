@@ -141,11 +141,16 @@ def _warm(conn, full):
         from analytics.percentile_cache import preload_complete_seasons
         preload_complete_seasons(conn)
 
-        # Inject parquets for current season and all career seasons up front so
-        # every _raw_predictions() call below finds the module-level cache warm
-        # and skips LightGBM entirely.  Missing parquets fall through silently.
-        past_seasons_list = list(range(2021, season))
-        _inject_all_parquets([season] + past_seasons_list)
+        # Only the CURRENT season's parquets are injected eagerly here -
+        # it's needed immediately by the steps right below. Past seasons
+        # used to be injected here too (6 seasons' worth, ~230MB retained
+        # for the rest of the process's life, every boot) even though
+        # nobody necessarily looks at any given past season this session.
+        # Each model's _raw_predictions() now has its own lazy fallback to
+        # read a season's parquet directly on a cache miss (see
+        # analytics/score_parquet_cache.py), so past seasons load on
+        # whichever request actually needs them instead of all at once.
+        _inject_all_parquets([season])
 
         _stuff_plus_table(conn, season)
         _stuff_plus_by_stand_table(conn, season)
@@ -165,23 +170,15 @@ def _warm(conn, full):
             _league_command_pool(conn, season, split)
         _similarity_pool_hitters(conn)
         _similarity_pool_pitchers(conn)
-        from api.routers.stuff_model_report import _raw_predictions_table as _career_stuff_table
-        from api.routers.tunneling_report import _v3_raw_predictions_table as _career_tun_table
-        from api.routers.location_report import _raw_predictions_table as _career_loc_table
-        past_seasons = [s for s in range(2021, CURRENT_SEASON)]
-        for ps in past_seasons:
-            try:
-                _career_stuff_table(conn, ps)
-            except Exception as e:
-                log.warning("career stuff_table(%s) failed: %s", ps, e)
-            try:
-                _career_tun_table(conn, ps)
-            except Exception as e:
-                log.warning("career tun_table(%s) failed: %s", ps, e)
-            try:
-                _career_loc_table(conn, ps)
-            except Exception as e:
-                log.warning("career loc_table(%s) failed: %s", ps, e)
+        # Past-season career tables (Stuff+/Tunneling+/Location+ for every
+        # season 2021-current) used to be pre-built for every past season
+        # here, at every boot - the other half of the ~230MB this warmup
+        # used to hold permanently (see the parquet-injection comment
+        # above). They're not needed unless someone actually opens a
+        # career page for that season, and when they do, _raw_predictions'
+        # new lazy parquet fallback makes that first request fast (a file
+        # read, not live LightGBM scoring) - so this no longer pre-builds
+        # them eagerly; they load on demand instead.
         _stuff_dict(conn, season)
         _tunneling_dict(conn, season)
         _location_dict(conn, season)
