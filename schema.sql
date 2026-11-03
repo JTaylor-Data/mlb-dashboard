@@ -131,6 +131,14 @@ CREATE INDEX IF NOT EXISTS idx_games_season ON games(season);
 -- starts, outing breakdown): season + pitcher_id + game_id lets SQLite resolve
 -- the GROUP BY entirely from the index without touching row data.
 CREATE INDEX IF NOT EXISTS idx_pitches_season_pitcher_game ON pitches(season, pitcher_id, game_id);
+-- All-time qualifying-pitcher aggregate (players/all): MAX(season)/COUNT(DISTINCT
+-- game_id) grouped by pitcher_id across ALL seasons, not just one - the
+-- season-first composite above doesn't cover this. pitcher_id-first with
+-- game_id and season appended lets SQLite answer the whole GROUP BY as a
+-- COVERING INDEX (confirmed via EXPLAIN QUERY PLAN) without touching row data.
+CREATE INDEX IF NOT EXISTS idx_pitches_pitcher_game ON pitches(pitcher_id, game_id, season);
+-- Batter half of the same query already uses idx_pitches_batter as an index
+-- scan, not a full table scan, so it doesn't need its own covering index.
 
 -- Season-level Savant/MLB Stats API leaderboard stats - not derivable from
 -- the pitch-by-pitch pull, genuinely external aggregates pulled separately.
