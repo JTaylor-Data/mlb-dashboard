@@ -207,9 +207,9 @@ def pitcher_score(conn, season, pitcher_id, league_raw=None, min_pitches=MIN_PIT
 
 
 def pitcher_breakdown(conn, season, pitcher_id, league_raw, min_pitches=MIN_PITCHES):
-    """Per-pitcher Location+ v2 score. SHAP breakdown is not available for the
-    decomposed-classifier architecture (contributions span five classifiers +
-    a run-value table, not one interpretable model)."""
+    """Per-pitcher Location+ v2 score (contributions span five classifiers +
+    a run-value table, not one interpretable model, so no per-feature
+    breakdown is computed here)."""
     if league_raw.empty:
         return None
     g = league_raw.groupby("pitcher_id").agg(
@@ -227,5 +227,4 @@ def pitcher_breakdown(conn, season, pitcher_id, league_raw, min_pitches=MIN_PITC
         score=score,
         contributions=[],
         model_version="v2",
-        shap_note="SHAP breakdown not available for v2 classifier architecture",
     )

@@ -66,8 +66,8 @@ past seasons 2021–2025 (Stuff+, Tunneling+, Location+ only; Deception+ warms R
 only). After a manual "Refresh data" click, the model caches are **not** cleared (only standings,
 player list, and non-model pools are re-warmed). Source: `api/warmup.py:103`.
 
-No frozen cached artifacts are read for scoring. Leaderboard numbers and SHAP breakdowns are
-always computed live from the current DB contents.
+No frozen cached artifacts are read for scoring. Leaderboard numbers and per-pitcher breakdowns
+are always computed live from the current DB contents.
 
 **Full spot-check (20 pitcher-seasons, cache vs. live) deferred** — requires a running database
 connection. See 02_open_decisions.md ND-05.

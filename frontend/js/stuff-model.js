@@ -10,27 +10,6 @@
  *           under-the-hood (4 cards + version history).
  */
 
-// ──────────────────────────────────────────────────────────── feature labels
-const FEATURE_LABELS = {
-  release_speed:           "Velocity",
-  effective_speed:         "Perceived velocity",
-  release_spin_rate:       "Spin rate",
-  spin_axis:               "Spin axis",
-  hb:                      "Horizontal break",
-  ivb:                     "Induced vertical break",
-  vaa_residual:            "VAA vs. expected",
-  axis_differential:       "Axis differential (SSW proxy)",
-  velo_sep_vs_primary_fb:  "Velo sep. vs. own fastball",
-  hb_sep_vs_primary_fb:    "H-break sep. vs. own fastball",
-  ivb_sep_vs_primary_fb:   "V-break sep. vs. own fastball",
-  haa_residual:            "Horiz. approach angle residual",
-  pitch_type:              "Pitch type",
-  p_throws:                "Pitcher hand",
-  stand:                   "Batter stand",
-  season:                  "Season",
-};
-function featureLabel(f) { return FEATURE_LABELS[f] || f; }
-
 // pitch-type display names
 const PT_LABELS = {
   FF:"Four-seam (FF)", SI:"Sinker (SI)", FC:"Cutter (FC)", SL:"Slider (SL)",
@@ -199,14 +178,9 @@ function renderPitchTypeTable(breakdown) {
       const score = d.stuff_plus;
       const color = score >= 100 ? "#1a7f37" : "#c9302c";
       const usage = d.n_pitches;
-      // extract avg velo, ivb, hb from contributions' typical values
-      const featMap = {};
-      if (d.contributions) {
-        d.contributions.forEach(([f, _pts, tv]) => { if (tv !== null && tv !== undefined) featMap[f] = tv; });
-      }
-      const velo = featMap["release_speed"] != null ? featMap["release_speed"].toFixed(1) : "—";
-      const ivb  = featMap["ivb"] != null ? featMap["ivb"].toFixed(1) : "—";
-      const hb   = featMap["hb"]  != null ? featMap["hb"].toFixed(1)  : "—";
+      const velo = d.velo != null ? d.velo.toFixed(1) : "—";
+      const ivb  = d.ivb  != null ? d.ivb.toFixed(1)  : "—";
+      const hb   = d.hb   != null ? d.hb.toFixed(1)   : "—";
       const swatch = `<span class="sp-pt-swatch" style="background:${ptColor(pt)}"></span>`;
       return `<tr>
         <td>${swatch}<b>${pt}</b> <span class="muted" style="font-size:11.5px;">${ptLabel(pt).replace(/^.*?\(/, "").replace(")", "")}</span></td>
@@ -254,36 +228,6 @@ function renderCareerTable(career, currentSeason) {
   <div style="font-size:11.5px;color:var(--text-muted);margin-top:6px;">Unqualified rows (unq.) are below 200-pitch minimum.</div>`;
 }
 
-function renderShapContributions(breakdown) {
-  if (!breakdown || !Object.keys(breakdown).length) return "";
-  const sections = Object.entries(breakdown)
-    .sort((a,b) => b[1].n_pitches - a[1].n_pitches)
-    .map(([pt, d]) => {
-      if (!d.contributions || !d.contributions.length) return "";
-      const maxAbs = Math.max(...d.contributions.map(([,v]) => Math.abs(v)), 0.01);
-      const rows = d.contributions.slice(0, 8).map(([f, pts, tv]) => {
-        const halfW = (Math.abs(pts) / maxAbs) * 50;
-        const left  = pts >= 0 ? 50 : 50 - halfW;
-        const clr   = pts >= 0 ? "#1a7f37" : "#c9302c";
-        const tvStr = typeof tv === "number" ? tv.toFixed(2) : (tv === null ? "n/a" : tv);
-        return `<div class="shap-row">
-          <div class="shap-label">${featureLabel(f)} <span class="muted">(${tvStr})</span></div>
-          <div class="shap-track">
-            <div class="shap-zero" style="left:50%"></div>
-            <div class="shap-bar" style="left:${left}%;width:${halfW}%;background:${clr};"></div>
-          </div>
-          <div class="shap-val ${pts>=0?"pos":"neg"}">${pts>=0?"+":""}${pts.toFixed(1)}</div>
-        </div>`;
-      }).join("");
-      const swatch = `<span class="sp-pt-swatch" style="background:${ptColor(pt)}"></span>`;
-      return `<div style="margin-bottom:16px;">
-        <div style="font-size:13px;font-weight:700;color:var(--forest-dark);margin-bottom:8px;">${swatch}${pt}</div>
-        ${rows}
-      </div>`;
-    }).join("");
-  return `<div>${sections}<div class="shap-note">Contributions are in Stuff+ points from the model's unshrunk predictions. The sum may differ from (Stuff+−100) by the shrinkage correction.</div></div>`;
-}
-
 async function loadPitcherLookup(pitcherId, season, playerName, cfg) {
   const statusEl = document.getElementById("sp-lookup-status");
   const loadingBar = document.getElementById("sp-loading");
@@ -311,12 +255,6 @@ async function loadPitcherLookup(pitcherId, season, playerName, cfg) {
           <div id="sp-career-mount"><span class="muted" style="font-size:13px;">Loading…</span></div>
         </div>
       </div>
-      <details style="margin-top:4px;">
-        <summary style="font-size:13px;font-weight:700;cursor:pointer;color:var(--forest-dark);user-select:none;">What drives the grade (feature contributions)</summary>
-        <div style="margin-top:10px;">
-          ${renderShapContributions(breakdown)}
-        </div>
-      </details>
     `;
 
     // Load career and season selector async (non-blocking)

@@ -72,14 +72,11 @@ function renderPitcherDetail(detail, name, season) {
   const pct = detail.percentile !== undefined
     ? ` — ${detail.percentile.toFixed(0)}th percentile` : "";
   const flag = detail.season_flag ? ` <span class="lc-note">(${detail.season_flag})</span>` : "";
-  const note = detail.shap_note
-    ? `<div class="lc-note" style="margin-top:8px;">${detail.shap_note}</div>` : "";
   mount.innerHTML = `
     <div class="lc-arsenal-head">
       <b>${name || `Pitcher #${detail.pitcher_id || ""}`}</b> — Location+ <b style="color:var(--forest-dark);">${typeof detail.score === "number" ? detail.score.toFixed(0) : detail.score}</b>${pct}
       (${(detail.n_pitches || 0).toLocaleString()} pitches, ${season}${flag})
     </div>
-    ${note}
   `;
 }
 

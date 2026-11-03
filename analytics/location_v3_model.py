@@ -378,7 +378,6 @@ def pitcher_breakdown(conn, season, pitcher_id, league_raw=None, min_pitches=Non
         model_version=LOCATION_ACTIVE_VERSION,
         model_hash=meta.get("model_hashes", {}) if meta else {},
         contributions=[],  # event-component decomposition not yet implemented in runtime
-        shap_note="Location+ v3 decomposes into event components (swing, CS, whiff, foul, BIP); SHAP breakdown spans five classifiers and is not available in real-time",
     )
 
 

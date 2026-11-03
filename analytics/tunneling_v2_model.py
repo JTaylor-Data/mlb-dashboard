@@ -242,8 +242,8 @@ def pitcher_score(conn, season, pitcher_id, league_raw=None):
 
 
 def pitcher_breakdown(conn, season, pitcher_id, league_raw):
-    """Per-pitcher Tunneling+ v2 score. SHAP breakdown is not available for
-    the decomposed-classifier architecture."""
+    """Per-pitcher Tunneling+ v2 score (decomposed-classifier architecture;
+    no per-feature breakdown is computed here)."""
     if league_raw.empty or league_raw["xrv"].std() == 0:
         return None
     g = league_raw.groupby("pitcher_id").agg(
@@ -261,5 +261,4 @@ def pitcher_breakdown(conn, season, pitcher_id, league_raw):
         score=score,
         lag_slot_contributions=[],
         model_version="v2",
-        shap_note="SHAP breakdown not available for v2 classifier architecture",
     )

@@ -1,7 +1,7 @@
 """
 /api/stuff-model/* - serves the Stuff+ model's training report, a top/bottom
-Stuff+ leaderboard, and per-pitcher SHAP breakdowns, for the "model
-internals" page (`stuff-model.html`). Promoted to v4 2026-10-02.
+Stuff+ leaderboard, and per-pitcher per-pitch-type breakdowns, for the
+"model internals" page (`stuff-model.html`). Promoted to v4 2026-10-02.
 v4 architecture adds haa_residual - see `docs/methodology/STUFF_V4_COMPLETION.md`.
 Rollback: set analytics.stuff_model.STUFF_ACTIVE_VERSION = "v3".
 """
@@ -15,8 +15,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from analytics.stuff_model import (
     STUFF_ACTIVE_VERSION, _MODEL_FILES,
-    _raw_predictions, compute_stuff_plus, compute_stuff_plus_if_cached, pitcher_shap_breakdown,
+    _raw_predictions, compute_stuff_plus, compute_stuff_plus_if_cached,
 )
+from analytics.player_page import pitcher_pitch_table
 
 from api.cache import ttl_cache
 from api.db import get_conn
@@ -66,13 +67,30 @@ def _raw_predictions_table(conn, season):
 
 
 @ttl_cache()
-def _pitcher_shap_cached(conn, season, pitcher_id):
-    """Per-pitcher SHAP breakdown — cached so repeated player-page loads
-    don't re-run SHAP scoring each time."""
-    league = _raw_predictions_table(conn, season)
-    if league.empty:
+def _pitcher_breakdown_cached(conn, season, pitcher_id):
+    """Per-pitch-type Stuff+ breakdown for one pitcher/season (usage, velo,
+    IVB, HB, grade) - cached so repeated player-page loads don't recompute
+    it each time. Reuses the same pitcher_pitch_table the player page's own
+    pitch table is built from (see analytics/player_page.py), joined to
+    this season's Stuff+ table, so these numbers always agree with what the
+    player page shows."""
+    stuff = compute_stuff_plus(conn, season)
+    if stuff.empty:
         return None
-    return pitcher_shap_breakdown(conn, season, pitcher_id, league)
+    table = pitcher_pitch_table(conn, season, pitcher_id, None, stuff)
+    if table.empty:
+        return {}
+    table = table[table["stuff_plus"].notna()]
+    return {
+        pt: {
+            "n_pitches": int(row["n_pitches"]),
+            "stuff_plus": float(row["stuff_plus"]),
+            "velo": float(row["velo"]) if pd.notna(row["velo"]) else None,
+            "ivb": float(row["ivb"]) if pd.notna(row["ivb"]) else None,
+            "hb": float(row["hb"]) if pd.notna(row["hb"]) else None,
+        }
+        for pt, row in table.iterrows()
+    }
 
 
 @router.get("/report")
@@ -357,11 +375,9 @@ def get_pitcher_summary(pitcher_id: int, season: int, conn=Depends(get_conn)):
 
 @router.get("/pitcher/{pitcher_id}")
 def get_pitcher_breakdown(pitcher_id: int, season: int, conn=Depends(get_conn)):
-    """Per-pitch-type SHAP attribution for one pitcher/season: which
-    inputs are driving each of their pitch types' Stuff+ rating, in
-    Stuff+-point units so it reads on the same scale as the rest of the
-    site."""
-    breakdown = _pitcher_shap_cached(conn, season, pitcher_id)
+    """Per-pitch-type breakdown for one pitcher/season: usage, velo, IVB,
+    HB, and Stuff+ grade for each pitch type they threw."""
+    breakdown = _pitcher_breakdown_cached(conn, season, pitcher_id)
     if breakdown is None:
         raise HTTPException(404, f"No scored pitches for season {season}")
     if not breakdown:

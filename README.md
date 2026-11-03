@@ -56,7 +56,7 @@
 
 - Deception+ feature set is relatively thin due to extremely limited pitcher delivery metrics available publicly. This mean that ERA and xFIP correlations appear relatively weak and the model struggles to indepedently predict future results for a player
 -  Multiple iterations of the tunneling model agree broadly on the worst tunnelers in the league, but disagree starkly on the best. Suggests that there might be a larger floor for "Poor tunnelling" than there is a ceiling for "Elite tunnelling" and limits the potential signal capturable by ANY model
-- Certain large computations (percentile pools, SHAP contributions, Model scores) take significant time to pre-load and cache, so requests made to a cold server can be slow to process. 
+- Certain large computations (percentile pools, Model scores) take significant time to pre-load and cache, so requests made to a cold server can be slow to process. 
 
 ## Future Work
 

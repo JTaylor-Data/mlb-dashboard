@@ -138,7 +138,7 @@ git push origin stuff-v4
 - [ ] Hit `/api/stuff-plus/2020` and verify 2020 data returns with `season_flag`
 - [ ] Hit `/api/stuff-plus/2016` and verify historical data
 - [ ] Compare top-10 leaderboard 2025 vs v3 — expected high correlation (>0.97)
-- [ ] Check SHAP breakdown endpoint still works: `/api/stuff-plus/shap/2025/{pitcher_id}`
+- [ ] Check per-pitcher breakdown endpoint still works: `/api/stuff-model/pitcher/{pitcher_id}?season=2025`
 
 ---
 

@@ -18,11 +18,6 @@ to change at all when the underlying model is promoted)
 - `overall_stuff_plus(stuff_plus_table, pitcher_id)` - usage-weighted
   average across a pitcher's arsenal. Pure aggregation, doesn't touch the
   model at all.
-- `pitcher_shap_breakdown(...)` - per-pitch-type SHAP attribution for one
-  pitcher, i.e. "which specific inputs (velo, movement, VAA shape,
-  fastball separation, axis_differential, ...) are driving this guy's
-  rating, and by how much" - powers the model internals page
-  (`stuff-model.html`) so ratings aren't a black box.
 
 ## What changed in v3, and why
 v3 removes 4 features that overlapped with Deception+ (`release_extension`,
@@ -44,7 +39,6 @@ from pathlib import Path
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
-import shap
 
 from analytics.stuff_features import (
     RAW_QUERY_COLUMNS, add_movement_columns, build_fb_reference_table,
@@ -66,7 +60,6 @@ _MODEL_FILES = {
 
 _model = None
 _meta = None
-_explainer = None
 _loaded_version = None  # track which version is currently loaded
 
 
@@ -80,14 +73,6 @@ def _load():
         _meta = json.loads((MODELS_DIR / meta_file).read_text())
         _loaded_version = STUFF_ACTIVE_VERSION
     return _model, _meta
-
-
-def _get_explainer():
-    global _explainer
-    if _explainer is None:
-        model, _ = _load()
-        _explainer = shap.TreeExplainer(model)
-    return _explainer
 
 
 def _prepare_features(raw_df):
@@ -155,10 +140,9 @@ def _raw_predictions(conn, season):
     """Full-season per-pitch DataFrame: pitcher_id, pitch_type, stand, and
     the model's raw predicted delta_run_exp (`pred`, lower = better pitch
     from the batting team's perspective). This is the shared basis for
-    `compute_stuff_plus`, `compute_stuff_plus_by_stand`, and
-    `pitcher_shap_breakdown` - all three need the same season-wide
-    prediction distribution to convert a raw prediction into a
-    standardized Stuff+ number.
+    `compute_stuff_plus` and `compute_stuff_plus_by_stand` - both need the
+    same season-wide prediction distribution to convert a raw prediction
+    into a standardized Stuff+ number.
 
     Short-lived in-process memoization (10 min, not the API layer's usual
     12h - this is a narrow fix for one specific redundancy, not general
@@ -368,104 +352,3 @@ def overall_stuff_plus(stuff_plus_table, pitcher_id):
         return np.nan
     rows = stuff_plus_table.xs(pitcher_id, level="pitcher_id")
     return np.average(rows["stuff_plus"], weights=rows["n_pitches"])
-
-
-def pitcher_shap_breakdown(conn, season, pitcher_id, league_raw):
-    """
-    Per-pitch-type SHAP attribution for one pitcher: which inputs are
-    pushing their predicted run value down (good) or up (bad), and by how
-    much, converted into the same Stuff+-point scale the rest of the site
-    uses so it reads on the same terms as everything else.
-
-    `league_raw` (the full season's `_raw_predictions`, cached at the API
-    layer same as every other league-wide pool on this site) is the
-    CALLER's job to provide - scoring one pitcher's ~1,000-3,000 pitches
-    through SHAP is cheap; re-scoring the whole league's ~700K pitches on
-    every single pitcher lookup would not be.
-
-    The headline `stuff_plus` per pitch type is shrunk the same way
-    `compute_stuff_plus` shrinks it (see `_shrinkage_params`), so this
-    page never disagrees with the number shown on the player page. The
-    SHAP `contributions`, however, explain the model's RAW (unshrunk)
-    prediction - shrinkage is a statistical correction for small-sample
-    noise, not something attributable to any input feature, so forcing it
-    into the per-feature breakdown would misrepresent what's actually
-    driving the model's output. For a low-n pitch type the contributions
-    will sum to a slightly different number than (stuff_plus - 100); that
-    gap IS the shrinkage adjustment.
-
-    Returns {pitch_type: {n_pitches, stuff_plus, contributions: [(feature,
-    stuff_plus_points, mean_feature_value), ...]}}, contributions sorted
-    by absolute magnitude, largest first.
-    """
-    if league_raw.empty or league_raw["pred"].std() == 0:
-        return {}
-    k_by_type, fallback_k, type_means = _shrinkage_params(league_raw)
-    norm_mean = float(league_raw["pred"].mean())
-    norm_std = float(league_raw["pred"].std())
-    # type_norm is still used to scale SHAP contributions into interpretable
-    # Stuff+ point units per pitch type — but the headline stuff_plus number
-    # uses the global norm (same as compute_stuff_plus) so the two agree.
-    type_norm = _type_norm_params(league_raw)
-    _tn_fallback = type_norm["_global"]
-
-    from config.qualifiers import regular_season_filter
-    df = pd.read_sql(f"""
-        SELECT {', '.join(RAW_QUERY_COLUMNS)} FROM pitches
-        WHERE season = ? AND pitcher_id = ? AND delta_run_exp IS NOT NULL {regular_season_filter()}
-    """, conn, params=(season, pitcher_id))
-    if df.empty:
-        return {}
-
-    feat = _prepare_features(df)
-    model, meta = _load()
-    features = meta["all_features"]
-    preds = model.predict(feat[features])
-    explainer = _get_explainer()
-    shap_values = explainer.shap_values(feat[features])
-
-    result = {}
-    for pitch_type in feat["pitch_type"].cat.categories:
-        mask = (feat["pitch_type"] == pitch_type).to_numpy()
-        n = int(mask.sum())
-        if n == 0:
-            continue
-        tn = type_norm.get(str(pitch_type), _tn_fallback)
-        pt_norm_std = tn["std"]
-        # SHAP contributions scale by -10/norm_std where norm_std is the
-        # global league std (matching the headline Stuff+ normalization).
-        # The per-type std is kept only as a fallback if global is missing.
-        points_per_unit = -10 / norm_std
-        mean_pred = preds[mask].mean()
-        k = k_by_type.get(pitch_type, fallback_k)
-        type_mean = type_means.get(pitch_type, tn["mean"])
-        reliability = n / (n + k)
-        shrunk_mean = type_mean + reliability * (mean_pred - type_mean)
-        stuff_plus = float(_to_stuff_plus(shrunk_mean, norm_mean, norm_std))
-
-        mean_shap = shap_values[mask].mean(axis=0)
-        subset = feat.loc[mask, features]
-
-        def _typical_value(f):
-            # v3's separation features are legitimately NaN for every pitch
-            # in a slice when this pitch type IS the pitcher's own primary
-            # reference (self-comparison exclusion - see
-            # stuff_features.py) - subset[f].mean() over an all-NaN column
-            # returns NaN, which isn't valid JSON (Starlette's
-            # JSONResponse raises rather than serializing a bare
-            # float('nan')) and broke this endpoint with a 500 for any
-            # pitcher whose primary-fastball pitch type was requested.
-            # None (JSON null) is also the honest value here - there IS no
-            # typical value for a feature absent from every pitch shown.
-            if f not in meta["numeric_features"]:
-                return subset[f].mode().iat[0]
-            mean_val = subset[f].mean()
-            return None if pd.isna(mean_val) else float(mean_val)
-
-        typical_values = [_typical_value(f) for f in features]
-        contributions = sorted(
-            zip(features, (mean_shap * points_per_unit).tolist(), typical_values),
-            key=lambda row: -abs(row[1]),
-        )
-        result[pitch_type] = dict(n_pitches=n, stuff_plus=stuff_plus, contributions=contributions)
-    return result

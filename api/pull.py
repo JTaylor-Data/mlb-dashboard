@@ -45,7 +45,7 @@ from pulls import pull_players_games
 from pulls import pull_statcast
 from pulls import pull_team_stats
 from pulls import pull_remaining_schedule
-from analytics import boxscore, deception_model, stuff_model
+from analytics import boxscore, stuff_model
 
 from api import cache
 from api.db import DB_PATH
@@ -204,7 +204,6 @@ def _run(full_warmup):
             # (includes L/R splits, similar players, etc.)
             cache.clear_all()
             stuff_model.clear_cache()
-            deception_model.clear_cache()
             boxscore.clear_cache()
         elif full_warmup and POSTSEASON_MODE and new_pitches > 0:
             # Postseason: RS model scores are final — don't nuke and recompute them.
