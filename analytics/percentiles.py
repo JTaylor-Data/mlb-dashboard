@@ -80,6 +80,29 @@ def _team_games_played(conn, season):
     """, (season, season)).fetchone()
     return row[0] or 0
 
+
+def _split_fraction(conn, season, column, value):
+    """Fraction of this season's pitches where `column` = `value` (e.g.
+    column='p_throws', value='L') - used to scale a full-season qualifying
+    threshold down for a hand-split view.
+
+    The full-season SAVANT_PA_PER_TEAM_GAME_* rate assumes every PA counts
+    toward the threshold; a split view (vs LHP, vs RHP) only ever accumulates
+    the fraction of PAs that happened against that hand, so applying the
+    unscaled full-season rate there is unreachable by construction - e.g. in
+    a season where ~30% of pitches are thrown by LHP, no batter can rack up
+    more than ~30% of a full season's PA total facing lefties, so a raw
+    full-season threshold makes the L-split pool permanently empty (confirmed
+    via live testing: 0 qualifiers despite 650+ batters having real L-split
+    pitches that season). Approximated via pitch counts rather than true PA
+    counts - close enough for a qualifying bar, and avoids a second
+    PA-counting query here."""
+    row = conn.execute(f"""
+        SELECT SUM(CASE WHEN {column} = ? THEN 1 ELSE 0 END) * 1.0 / COUNT(*)
+        FROM pitches WHERE season = ? AND {column} IS NOT NULL
+    """, (value, season)).fetchone()
+    return row[0] if row and row[0] else 1.0
+
 # Standard community constants for converting Statcast hc_x/hc_y into a spray
 # angle in degrees (0 = straight up the middle, negative = left field side).
 _SPRAY_X0, _SPRAY_Y0 = 125.42, 198.27
@@ -368,13 +391,17 @@ def pitcher_percentile_metrics(conn, season, min_bf=None, stand_filter=None):
     stand_filter ('L'/'R'/None or 'ALL'): when set, the entire pool - both
     the qualifying threshold and the metrics themselves - is recomputed
     within pitches against that batter side only, not just re-ranked against
-    the season-wide pool.
+    the season-wide pool. The qualifying threshold itself is scaled down by
+    that hand's real share of plate appearances (see _split_fraction) - the
+    full-season rate alone is otherwise unreachable within a split.
 
     Processes pitchers in batches of _POOL_BATCH_SIZE (see that constant's
     comment) rather than loading every pitch of the season/split at once.
     """
     if min_bf is None:
         min_bf = SAVANT_PA_PER_TEAM_GAME_PITCHER * _team_games_played(conn, season)
+        if stand_filter and stand_filter != "ALL":
+            min_bf *= _split_fraction(conn, season, "stand", stand_filter)
 
     where = "WHERE season = ?"
     params = (season,)
@@ -519,12 +546,21 @@ def batter_percentile_metrics(conn, season, min_pa=None, throws_filter=None):
     within pitches from that pitcher hand only, not just re-ranked against
     the season-wide pool. sprint_speed/oaa are season-level (not pitch-level)
     so they don't change with this filter - same value regardless of split.
+    The qualifying threshold itself is scaled down by that hand's real
+    share of plate appearances (see _split_fraction) - e.g. ~30% of pitches
+    league-wide come from LHP, so the unscaled full-season rate is
+    unreachable within the L split and left the pool permanently empty
+    (confirmed: 0 qualifiers for 2026's L split despite 650+ batters with
+    real L-split pitches that season, max achievable PA ~280 vs. an
+    unscaled threshold of ~340).
 
     Processes batters in batches of _POOL_BATCH_SIZE rather than loading
     every pitch of the season/split at once - see that constant's comment.
     """
     if min_pa is None:
         min_pa = SAVANT_PA_PER_TEAM_GAME_BATTER * _team_games_played(conn, season)
+        if throws_filter and throws_filter != "ALL":
+            min_pa *= _split_fraction(conn, season, "p_throws", throws_filter)
 
     where = "WHERE season = ?"
     params = (season,)
