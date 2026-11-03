@@ -207,6 +207,12 @@ async def security_headers(request, call_next):
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Content-Security-Policy-Report-Only", CSP_REPORT_ONLY_POLICY)
+    # Render terminates TLS in front of this app, so every request this
+    # process actually sees has already gone over HTTPS - safe to tell
+    # browsers to always use HTTPS for this host going forward.
+    response.headers.setdefault(
+        "Strict-Transport-Security", "max-age=63072000; includeSubDomains"
+    )
     return response
 
 
