@@ -9,6 +9,7 @@ restart - this is deliberately better: a short TTL so data doesn't go stale
 forever, plus a manual /api/admin/refresh-cache endpoint (wired to a
 "Refresh data" button in the nav) for right after re-running a pull script.
 """
+import threading
 import time
 from functools import wraps
 
@@ -17,15 +18,34 @@ DEFAULT_TTL_SECONDS = 12 * 3600
 _registry = []
 
 
+def _get_lock(locks, locks_mu, key):
+    with locks_mu:
+        lock = locks.get(key)
+        if lock is None:
+            lock = threading.Lock()
+            locks[key] = lock
+        return lock
+
+
 def ttl_cache(ttl_seconds=DEFAULT_TTL_SECONDS):
     """
     Every cached function in this app takes a fresh sqlite3 connection as its
     first argument (see db.get_conn - a new object every request), so that
     argument is excluded from the cache key on purpose; otherwise every call
     would miss the cache.
+
+    Single-flight per key: a cache miss acquires a lock scoped to that one
+    key before building, so concurrent requests hitting the SAME cold key
+    (two visitors landing on the player page while warm-up is still running,
+    say) don't each trigger their own expensive build and stack their
+    memory peaks - the second caller blocks, then gets the first caller's
+    now-cached result. Different keys (different seasons/splits) still run
+    concurrently; this only serializes repeats of the identical call.
     """
     def decorator(fn):
         store = {}
+        locks = {}
+        locks_mu = threading.Lock()
 
         @wraps(fn)
         def wrapper(conn, *args, **kwargs):
@@ -35,8 +55,17 @@ def ttl_cache(ttl_seconds=DEFAULT_TTL_SECONDS):
                 value, expires_at = store[key]
                 if now < expires_at:
                     return value
-            value = fn(conn, *args, **kwargs)
-            store[key] = (value, now + ttl_seconds)
+            lock = _get_lock(locks, locks_mu, key)
+            with lock:
+                # Re-check: whoever held the lock just before us may have
+                # already built this key while we were waiting for it.
+                now = time.monotonic()
+                if key in store:
+                    value, expires_at = store[key]
+                    if now < expires_at:
+                        return value
+                value = fn(conn, *args, **kwargs)
+                store[key] = (value, time.monotonic() + ttl_seconds)
             return value
 
         def clear():
@@ -51,9 +80,12 @@ def ttl_cache(ttl_seconds=DEFAULT_TTL_SECONDS):
 
 def ttl_cache_all_args(ttl_seconds=DEFAULT_TTL_SECONDS):
     """Like ttl_cache, but for functions with no leading `conn` argument to
-    exclude from the key (e.g. live external-API calls keyed by player_id)."""
+    exclude from the key (e.g. live external-API calls keyed by player_id).
+    Same single-flight-per-key locking as ttl_cache - see its docstring."""
     def decorator(fn):
         store = {}
+        locks = {}
+        locks_mu = threading.Lock()
 
         @wraps(fn)
         def wrapper(*args, **kwargs):
@@ -63,8 +95,15 @@ def ttl_cache_all_args(ttl_seconds=DEFAULT_TTL_SECONDS):
                 value, expires_at = store[key]
                 if now < expires_at:
                     return value
-            value = fn(*args, **kwargs)
-            store[key] = (value, now + ttl_seconds)
+            lock = _get_lock(locks, locks_mu, key)
+            with lock:
+                now = time.monotonic()
+                if key in store:
+                    value, expires_at = store[key]
+                    if now < expires_at:
+                        return value
+                value = fn(*args, **kwargs)
+                store[key] = (value, time.monotonic() + ttl_seconds)
             return value
 
         def clear():
