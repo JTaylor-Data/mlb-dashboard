@@ -13,7 +13,8 @@ from analytics.metrics import classify_pitcher_roles, compute_wrc_plus, league_a
 from analytics.percentiles import fast_swing_bat_speed
 from analytics.splits import (
     SWING_DESCRIPTIONS, WHIFF_DESCRIPTIONS, IN_ZONE_CODES, OUT_ZONE_CODES,
-    STRIKEOUT_EVENTS, WALK_EVENTS, HBP_EVENTS, _pa_outcome_metrics, _pitch_rate_metrics, _barrel_rate,
+    STRIKEOUT_EVENTS, WALK_EVENTS, HBP_EVENTS, SAC_FLY_EVENTS, NOT_AB_EVENTS,
+    _pa_outcome_metrics, _pitch_rate_metrics, _barrel_rate,
 )
 from analytics.stuff_features import EXCLUDED_PITCH_TYPES
 
@@ -102,21 +103,89 @@ def league_average_batter_row(conn, season, throws_filter=None):
     where, params = "WHERE season = ?", (season,)
     if throws_filter and throws_filter != "ALL":
         where, params = "WHERE season = ? AND p_throws = ?", (season, throws_filter)
-    # `SELECT *` was pulling every one of pitches' ~45 columns (a season is
-    # ~700K rows) just to compute 8 columns' worth of metrics - confirmed
-    # the real, single biggest cost in a "Refresh data" click (~19s of a
-    # ~61s warmup) via direct profiling, not assumed. Only what _add_flags/
-    # _pa_outcome_metrics/_pitch_rate_metrics/_barrel_rate actually read.
-    cols = ", ".join(LEAGUE_AVG_BATTER_ROW_COLUMNS + (["p_throws"] if "p_throws" in where else []))
-    df = pd.read_sql(f"SELECT {cols} FROM pitches {where}", conn, params=params)
-    df = _add_flags(df)
-    pa_group = df[df["events"].notna()]
-    row = _pa_outcome_metrics(pa_group)
-    _, whiff_pct, _ = _pitch_rate_metrics(df)
-    row["whiff_pct"] = whiff_pct
-    row["barrel_pct"] = _barrel_rate(pa_group)
-    del row["n_pa"]
-    return row
+    # Originally a `SELECT *` (every one of pitches' ~45 columns), then
+    # narrowed to just the 8 needed and pulled into a pandas DataFrame - but
+    # even that narrower pull still has to materialize ~700K rows as Python
+    # objects before pandas ever sees them (the sqlite3 DB-API cursor has no
+    # way around that). Confirmed via Docker memory tests this session: that
+    # row materialization alone - independent of pandas, independent of any
+    # prior warm-up state - used 150-180MB RSS for one season, and three
+    # calls back-to-back (ALL/L/R splits, each querying/discarding its own
+    # ~700K-row pull) pushed a 512MB-capped container over the edge well
+    # before pandas or glibc fragmentation ever entered into it.
+    #
+    # Every metric this function returns (OPS/wOBA/xwOBA/K%/BABIP/whiff%/
+    # barrel%) is a count or sum over simple per-row conditions, so this
+    # computes them as a single SQL aggregate instead - nothing beyond one
+    # result row ever leaves SQLite. Verified to return byte-identical
+    # output to the previous pandas implementation (see
+    # tests/test_league_average_batter_row.py).
+    swing_list = ",".join("?" * len(SWING_DESCRIPTIONS))
+    whiff_list = ",".join("?" * len(WHIFF_DESCRIPTIONS))
+    walk_list = ",".join("?" * len(WALK_EVENTS))
+    sac_fly_list = ",".join("?" * len(SAC_FLY_EVENTS))
+    not_ab_list = ",".join("?" * len(NOT_AB_EVENTS))
+    strikeout_list = ",".join("?" * len(STRIKEOUT_EVENTS))
+    query = f"""
+        SELECT
+            SUM(CASE WHEN description IN ({swing_list}) THEN 1 ELSE 0 END) AS swings,
+            SUM(CASE WHEN description IN ({whiff_list}) THEN 1 ELSE 0 END) AS whiffs,
+            COUNT(CASE WHEN events IS NOT NULL THEN 1 END) AS n_pa,
+            SUM(CASE WHEN events IN ('single', 'double', 'triple', 'home_run') THEN 1 ELSE 0 END) AS hits,
+            SUM(CASE WHEN events = 'single' THEN 1 WHEN events = 'double' THEN 2
+                     WHEN events = 'triple' THEN 3 WHEN events = 'home_run' THEN 4 ELSE 0 END) AS tb,
+            SUM(CASE WHEN events IN ({walk_list}) THEN 1 ELSE 0 END) AS bb,
+            SUM(CASE WHEN events = 'hit_by_pitch' THEN 1 ELSE 0 END) AS hbp,
+            SUM(CASE WHEN events IN ({sac_fly_list}) THEN 1 ELSE 0 END) AS sf,
+            SUM(CASE WHEN events IN ({not_ab_list}) THEN 1 ELSE 0 END) AS not_ab,
+            SUM(CASE WHEN events IN ({strikeout_list}) THEN 1 ELSE 0 END) AS k,
+            SUM(CASE WHEN events = 'home_run' THEN 1 ELSE 0 END) AS hr,
+            SUM(CASE WHEN woba_denom = 1 THEN 1 ELSE 0 END) AS woba_n,
+            SUM(CASE WHEN woba_denom = 1 THEN woba_value ELSE 0 END) AS woba_sum,
+            SUM(CASE WHEN woba_denom = 1 THEN estimated_woba_using_speedangle ELSE 0 END) AS xwoba_sum,
+            SUM(CASE WHEN events IS NOT NULL AND launch_speed IS NOT NULL THEN 1 ELSE 0 END) AS batted_n,
+            SUM(CASE WHEN events IS NOT NULL AND launch_speed IS NOT NULL
+                     AND launch_angle <= 50 AND launch_speed >= 97
+                     AND (launch_speed * 1.5 - launch_angle) >= 117
+                     AND (launch_speed + launch_angle) >= 123
+                THEN 1 ELSE 0 END) AS barrels
+        FROM pitches
+        {where}
+    """
+    # Placeholders must line up left-to-right with the query text: all six
+    # CASE-WHEN IN-lists come before the WHERE clause's own params (season
+    # [, p_throws]), since {where} is substituted after them, right before
+    # "FROM pitches".
+    query_params = (
+        tuple(SWING_DESCRIPTIONS) + tuple(WHIFF_DESCRIPTIONS)
+        + tuple(WALK_EVENTS) + tuple(SAC_FLY_EVENTS) + tuple(NOT_AB_EVENTS) + tuple(STRIKEOUT_EVENTS)
+        + tuple(params)
+    )
+    r = conn.execute(query, query_params).fetchone()
+    (swings, whiffs, n_pa, hits, tb, bb, hbp, sf, not_ab, k, hr,
+     woba_n, woba_sum, xwoba_sum, batted_n, barrels) = r
+
+    if not n_pa:
+        return dict(OPS=np.nan, wOBA=np.nan, xwOBA=np.nan, K_pct=np.nan, babip=np.nan,
+                    whiff_pct=np.nan, barrel_pct=np.nan)
+
+    ab = n_pa - not_ab
+    obp_den = ab + bb + hbp + sf
+    obp = (hits + bb + hbp) / obp_den if obp_den else np.nan
+    slg = tb / ab if ab else np.nan
+    ops = obp + slg if pd.notna(obp) and pd.notna(slg) else np.nan
+
+    babip_den = ab - k - hr + sf
+    babip = (hits - hr) / babip_den if babip_den > 0 else np.nan
+
+    woba = woba_sum / woba_n if woba_n else np.nan
+    xwoba = xwoba_sum / woba_n if woba_n else np.nan
+
+    return dict(
+        OPS=ops, wOBA=woba, xwOBA=xwoba, K_pct=k / n_pa, babip=babip,
+        whiff_pct=(whiffs / swings if swings else np.nan),
+        barrel_pct=(barrels / batted_n if batted_n else np.nan),
+    )
 
 
 # Knuckle curve is treated as the same pitch as a regular curveball everywhere
@@ -224,25 +293,44 @@ def pitcher_league_avg_row(conn, season, stand_filter=None):
     excl_placeholders = ",".join("?" * len(EXCLUDED_PITCH_TYPES))
     where += f" AND pitch_type NOT IN ({excl_placeholders})"
     params = params + tuple(EXCLUDED_PITCH_TYPES)
-    # Same SELECT * fix as league_average_batter_row above - this is the
-    # pitcher-side equivalent, same full-season/every-column pull, same
-    # real cost (confirmed live: this exact query was the stall behind the
-    # player page's loading bar getting stuck on "Building pitch table").
-    # Only description/zone/events feed _add_flags + the metrics below.
-    cols = ", ".join(["description", "zone", "events"] + (["stand"] if "stand" in where else []))
-    df = pd.read_sql(f"SELECT {cols} FROM pitches {where}", conn, params=params)
-    if df.empty:
+    # Same SQL-aggregate fix as league_average_batter_row above, for the
+    # same reason: materializing a full season's rows as Python objects
+    # (via pd.read_sql, regardless of dtype) was itself the real memory
+    # cost, not anything pandas-specific. Every value below is a count/mean
+    # over simple per-row conditions, computed in one aggregate query so no
+    # row data leaves SQLite. Verified against the previous pandas
+    # implementation - see tests/test_league_average_batter_row.py.
+    swing_list = ",".join("?" * len(SWING_DESCRIPTIONS))
+    whiff_list = ",".join("?" * len(WHIFF_DESCRIPTIONS))
+    strikeout_list = ",".join("?" * len(STRIKEOUT_EVENTS))
+    in_zone_list = ",".join("?" * len(IN_ZONE_CODES))
+    out_zone_list = ",".join("?" * len(OUT_ZONE_CODES))
+    query = f"""
+        SELECT
+            COUNT(*) AS n,
+            SUM(CASE WHEN zone IN ({in_zone_list}) THEN 1 ELSE 0 END) AS in_zone_n,
+            SUM(CASE WHEN description IN ({swing_list}) THEN 1 ELSE 0 END) AS swings,
+            SUM(CASE WHEN zone IN ({out_zone_list}) THEN 1 ELSE 0 END) AS out_zone_n,
+            SUM(CASE WHEN description IN ({swing_list}) AND zone IN ({out_zone_list}) THEN 1 ELSE 0 END) AS chase_n,
+            SUM(CASE WHEN description IN ({whiff_list}) THEN 1 ELSE 0 END) AS whiffs,
+            COUNT(CASE WHEN events IS NOT NULL THEN 1 END) AS n_pa,
+            SUM(CASE WHEN events IN ({strikeout_list}) THEN 1 ELSE 0 END) AS k
+        FROM pitches
+        {where}
+    """
+    query_params = (
+        tuple(IN_ZONE_CODES) + tuple(SWING_DESCRIPTIONS)
+        + tuple(OUT_ZONE_CODES) + tuple(SWING_DESCRIPTIONS) + tuple(OUT_ZONE_CODES)
+        + tuple(WHIFF_DESCRIPTIONS) + tuple(STRIKEOUT_EVENTS) + tuple(params)
+    )
+    n, in_zone_n, swings, out_zone_n, chase_n, whiffs, n_pa, k = conn.execute(query, query_params).fetchone()
+    if not n:
         return {}
-    df = _add_flags(df)
-    swings = df["is_swing"].sum()
-    out_zone_n = df["out_zone"].sum()
-    pa = df[df["events"].notna()]
-    k = pa["events"].isin(STRIKEOUT_EVENTS).sum()
     return dict(
-        zone_pct=df["in_zone"].mean() * 100,
-        chase_pct=(df["is_swing"] & df["out_zone"]).sum() / out_zone_n * 100 if out_zone_n else np.nan,
-        whiff_pct=df["is_whiff"].sum() / swings * 100 if swings else np.nan,
-        k_pct=k / len(pa) * 100 if len(pa) else np.nan,
+        zone_pct=in_zone_n / n * 100,
+        chase_pct=(chase_n / out_zone_n * 100) if out_zone_n else np.nan,
+        whiff_pct=(whiffs / swings * 100) if swings else np.nan,
+        k_pct=(k / n_pa * 100) if n_pa else np.nan,
     )
 
 
@@ -424,26 +512,38 @@ def similar_arm_angle_movement(conn, season, pitcher_id, arm_angles=None):
     if peers.empty:
         return {}
 
+    # Was a pd.read_sql pulling every matching pitch (pitcher_id, pitch_type,
+    # pfx_x, pfx_z, p_throws) for the whole peer group - a season of pitches
+    # for every pitcher sharing this arm slot, which for a common angle is
+    # dozens to low hundreds of pitchers. Confirmed via Docker memory tests
+    # this session: a single cold call to this function on a 1GB-capped
+    # container added ~540MB of RSS in under 10s and OOM-killed it - the
+    # single largest per-page cost found, bigger than the full warm-up.
+    # Every value returned here (mean HB/IVB, pitcher count, pitch count per
+    # pitch type) is a SQL aggregate, so compute it in SQLite and only let
+    # ~10-15 result rows (one per pitch type) leave the DB, same fix as
+    # league_average_batter_row/pitcher_league_avg_row above.
     placeholders = ",".join("?" * len(peers))
-    df = pd.read_sql(f"""
-        SELECT pitcher_id, pitch_type, pfx_x, pfx_z, p_throws
+    merge_case = " ".join(f"WHEN pitch_type = '{k}' THEN '{v}'" for k, v in PITCH_TYPE_MERGE.items())
+    query = f"""
+        SELECT
+            CASE {merge_case} ELSE pitch_type END AS pt,
+            AVG(pfx_x * 12 * CASE WHEN p_throws = 'R' THEN -1 ELSE 1 END) AS hb,
+            AVG(pfx_z * 12) AS ivb,
+            COUNT(DISTINCT pitcher_id) AS n_pitchers,
+            COUNT(*) AS n_pitches
         FROM pitches
         WHERE season = ? AND pitcher_id IN ({placeholders}) AND pfx_x IS NOT NULL AND pfx_z IS NOT NULL
-    """, conn, params=(season, *peers.tolist()))
-    if df.empty:
+            AND pitch_type IS NOT NULL
+        GROUP BY pt
+    """
+    rows = conn.execute(query, (season, *peers.tolist())).fetchall()
+    if not rows:
         return {}
-    df["pitch_type"] = df["pitch_type"].replace(PITCH_TYPE_MERGE)
-    df = _add_arm_side_hb(df)
-    df["IVB"] = df["pfx_z"] * 12
-
-    g = df.groupby("pitch_type")
-    out = pd.DataFrame({
-        "hb": g["hb"].mean(),
-        "ivb": g["IVB"].mean(),
-        "n_pitchers": g["pitcher_id"].nunique(),
-        "n_pitches": g.size(),
-    })
-    return out.to_dict("index")
+    return {
+        pt: {"hb": hb, "ivb": ivb, "n_pitchers": n_pitchers, "n_pitches": n_pitches}
+        for pt, hb, ivb, n_pitchers, n_pitches in rows
+    }
 
 
 _COUNTING_COLS = ["events", "woba_denom", "woba_value", "estimated_woba_using_speedangle", "game_id"]
