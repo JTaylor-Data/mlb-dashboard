@@ -19,13 +19,73 @@ from ~90s to effectively zero.  If a parquet is missing (first deploy, or
 between a model-version bump and the next weekly rescore) the functions fall
 back to live scoring exactly as before.
 """
+import ctypes
+import gc
 import logging
+import os
 import sqlite3
+import sys
 import threading
 import time as _time
 from pathlib import Path
 
 log = logging.getLogger("warmup")
+
+_INSTRUMENT = os.environ.get("BOOT_INSTRUMENT") == "1"
+_step_start = None
+
+
+def _rss_mb():
+    try:
+        with open("/proc/self/status") as f:
+            for line in f:
+                if line.startswith("VmRSS:"):
+                    return int(line.split()[1]) / 1024
+    except Exception:
+        pass
+    return -1.0
+
+
+def _step(label):
+    """Flushed start/end markers for boot-condition instrumentation.
+    No-op unless BOOT_INSTRUMENT=1 (see diagnostics/boot_test for the harness
+    that reads these); never runs in normal boots."""
+    global _step_start
+    if not _INSTRUMENT:
+        return
+    now = _time.monotonic()
+    if label.startswith("end:") and _step_start is not None:
+        elapsed = now - _step_start
+        print(f"BOOTSTEP {label} elapsed={elapsed:.1f}s rss={_rss_mb():.1f}MB", flush=True, file=sys.stderr)
+    else:
+        _step_start = now
+        print(f"BOOTSTEP {label} rss={_rss_mb():.1f}MB", flush=True, file=sys.stderr)
+
+try:
+    _libc = ctypes.CDLL("libc.so.6")
+except OSError:
+    _libc = None  # not glibc/Linux (e.g. local Windows dev) - nothing to trim
+
+
+def _trim_memory():
+    """Return freed heap pages to the OS after a pandas-heavy step.
+
+    gc.collect() alone isn't enough here: pulling a full season's pitches
+    into a DataFrame and discarding it frees the memory to glibc's malloc,
+    but glibc keeps those pages mapped in the process (arena fragmentation)
+    rather than handing them back to the kernel - so RSS keeps climbing
+    across successive warm-up steps even though each one's own data is
+    short-lived. Confirmed via Docker memory tests this session: three
+    back-to-back calls that each build and discard a ~700K-row DataFrame
+    pushed RSS from ~290MB to 440MB+ with nothing live to show for it.
+    malloc_trim(0) is glibc-specific and a no-op (never called) elsewhere.
+    """
+    gc.collect()
+    if _libc is not None:
+        try:
+            _libc.malloc_trim(0)
+        except Exception:
+            pass
 
 from api.db import DB_PATH
 
@@ -117,7 +177,7 @@ def _warm(conn, full):
     from api.routers.heatmaps import _league_command_pool
     from api.routers.players import (
         _all_players, _all_pitcher_arm_angles, _batter_pool, _league_avg_batter_row, _league_hr_fb,
-        _pitcher_pool, _pitcher_roles, _stuff_plus_by_stand_table, _stuff_plus_table,
+        _pitcher_league_avg_row, _pitcher_pool, _pitcher_roles, _stuff_plus_by_stand_table, _stuff_plus_table,
     )
     from api.routers.deception_report import REPORT_SEASON as DECEPTION_REPORT_SEASON, _raw_predictions_table as _deception_raw_predictions_table
     from api.routers.tunneling_report import _v3_raw_predictions_table
@@ -138,8 +198,10 @@ def _warm(conn, full):
         # Pre-check disk for complete-season percentile pools. This is a fast
         # read-only scan; missing pools will be built lazily on first request
         # and persisted so subsequent restarts don't rebuild them.
+        _step("start:preload_complete_seasons")
         from analytics.percentile_cache import preload_complete_seasons
         preload_complete_seasons(conn)
+        _step("end:preload_complete_seasons")
 
         # Only the CURRENT season's parquets are injected eagerly here -
         # it's needed immediately by the steps right below. Past seasons
@@ -150,26 +212,64 @@ def _warm(conn, full):
         # read a season's parquet directly on a cache miss (see
         # analytics/score_parquet_cache.py), so past seasons load on
         # whichever request actually needs them instead of all at once.
+        _step("start:inject_all_parquets")
         _inject_all_parquets([season])
+        _step("end:inject_all_parquets")
 
+        _step("start:stuff_plus_table")
         _stuff_plus_table(conn, season)
+        _step("end:stuff_plus_table")
+        _step("start:stuff_plus_by_stand_table")
         _stuff_plus_by_stand_table(conn, season)
+        _step("end:stuff_plus_by_stand_table")
+        _step("start:pitcher_roles")
         _pitcher_roles(conn, season)
+        _step("end:pitcher_roles")
+        _step("start:league_hr_fb")
         _league_hr_fb(conn, season)
+        _step("end:league_hr_fb")
+        _step("start:deception_raw_predictions")
         _deception_raw_predictions_table(conn, DECEPTION_REPORT_SEASON)
+        _step("end:deception_raw_predictions")
+        _step("start:v3_raw_predictions")
         _v3_raw_predictions_table(conn, season)
+        _step("end:v3_raw_predictions")
+        _step("start:location_raw_predictions")
         _location_raw_predictions_table(conn, season)
+        _step("end:location_raw_predictions")
+        _step("start:stuff_leaderboard")
         _stuff_leaderboard(conn, season)
+        _step("end:stuff_leaderboard")
+        _step("start:cached_rows_and_ranks")
         _cached_rows_and_ranks(conn, season)
+        _step("end:cached_rows_and_ranks")
+        _step("start:cached_sos")
         _cached_sos(conn, season)
+        _step("end:cached_sos")
         for split in SPLITS:
+            _step(f"start:pitcher_pool[{split}]")
             _pitcher_pool(conn, season, split)
+            _step(f"end:pitcher_pool[{split}]")
+            _step(f"start:batter_pool[{split}]")
             _batter_pool(conn, season, split)
+            _step(f"end:batter_pool[{split}]")
+            _step(f"start:league_avg_batter_row[{split}]")
             _league_avg_batter_row(conn, season, split)
+            _step(f"end:league_avg_batter_row[{split}]")
+            _step(f"start:pitcher_league_avg_row[{split}]")
+            _pitcher_league_avg_row(conn, season, split)
+            _step(f"end:pitcher_league_avg_row[{split}]")
+            _trim_memory()
         for split in ("L", "R"):
+            _step(f"start:league_command_pool[{split}]")
             _league_command_pool(conn, season, split)
+            _step(f"end:league_command_pool[{split}]")
+            _trim_memory()
+        _step("start:similarity_pools")
         _similarity_pool_hitters(conn)
         _similarity_pool_pitchers(conn)
+        _trim_memory()
+        _step("end:similarity_pools")
         # Past-season career tables (Stuff+/Tunneling+/Location+ for every
         # season 2021-current) used to be pre-built for every past season
         # here, at every boot - the other half of the ~230MB this warmup
@@ -179,14 +279,23 @@ def _warm(conn, full):
         # new lazy parquet fallback makes that first request fast (a file
         # read, not live LightGBM scoring) - so this no longer pre-builds
         # them eagerly; they load on demand instead.
+        _step("start:career_dicts")
         _stuff_dict(conn, season)
         _tunneling_dict(conn, season)
         _location_dict(conn, season)
         _deception_dict(conn)
+        _step("end:career_dicts")
+        _step("start:standings")
         _standings(conn, season)
+        _step("end:standings")
+        _step("start:all_players")
         _all_players(conn, season)
+        _step("end:all_players")
+        _step("start:all_pitcher_arm_angles")
         _all_pitcher_arm_angles(conn, season)
+        _step("end:all_pitcher_arm_angles")
         # Warm last 10 game dates for the "Top performer" badge on player pages.
+        _step("start:leaderboard_10_dates")
         recent_dates = [r[0] for r in conn.execute(
             "SELECT DISTINCT game_date FROM games ORDER BY game_date DESC LIMIT 10"
         ).fetchall()]
@@ -195,6 +304,12 @@ def _warm(conn, full):
                 _leaderboard(conn, d)
             except Exception as e:
                 log.warning("_leaderboard(%s) failed: %s", d, e)
+            _trim_memory()
+        _step("end:leaderboard_10_dates")
+        if _INSTRUMENT:
+            mods = {m: (m in sys.modules) for m in ("lightgbm", "sklearn", "shap")}
+            print(f"BOOTSTEP sys_modules {mods} rss={_rss_mb():.1f}MB", flush=True, file=sys.stderr)
+        _step("warmup_complete")
     else:
         # Manual "Refresh data" click: model scoring caches weren't cleared
         # (one day of new pitches doesn't meaningfully change Stuff+/Tunneling+/
