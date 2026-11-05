@@ -49,7 +49,7 @@
 
 **Pipeline:** sheduled pull scripts (pulls/, orchestrated by api/pull.py) sourcing from Savant and MLB StatsAPI, feeds the SQLite database
 
-**Deployment:** Dockerized file deployed to Render (render.yaml) with a persistent disk database and an auto generated admin token. 
+**Deployment:** Dockerized app deployed to Fly.io (fly.toml) with a persistent volume database and an admin token set as a Fly secret.
 
 
 ## Limitations
@@ -84,7 +84,7 @@ mlb-dashboard/
 ├── Dockerfile             [container build]
 ├── README.md              [this file]
 ├── pytest.ini             [test config]
-├── render.yaml            [Render deploy config]
+├── fly.toml               [Fly deploy config]
 ├── requirements.txt       [pinned dependencies]
 ├── schema.sql             [database schema]
 └── start.sh               [container start script]

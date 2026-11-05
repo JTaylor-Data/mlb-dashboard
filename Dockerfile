@@ -12,8 +12,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-# DB_PATH is overridden at runtime to point at the Render persistent disk.
-# SEASON_PHASE defaults to POSTSEASON; set via Render env var.
+# DB_PATH is overridden at runtime to point at the Fly volume.
+# SEASON_PHASE defaults to POSTSEASON; set via fly.toml [env].
 ENV DB_PATH=/data/mlb_data.db
 ENV SEASON_PHASE=POSTSEASON
 
@@ -23,7 +23,7 @@ COPY start.sh .
 RUN chmod +x start.sh
 
 # Run as a non-root user. /app is all this process needs to read; /data
-# (the Render persistent disk) is mounted and permissioned at runtime.
+# (the Fly volume) is mounted and permissioned at runtime.
 RUN useradd --uid 1000 --create-home --shell /usr/sbin/nologin appuser \
     && chown -R appuser:appuser /app
 USER appuser

@@ -79,7 +79,7 @@ _lock = threading.Lock()
 # the process gets OOM-killed mid-warmup, restarts, and would otherwise
 # immediately re-trigger the exact same pull+clear+rebuild every time -
 # can be detected and the startup pull skipped. Lives next to the DB (same
-# persistent disk on Render), not in the DB itself, so it doesn't need a
+# persistent volume), not in the DB itself, so it doesn't need a
 # schema migration or risk corrupting real data.
 _PULL_STATE_FILE = Path(DB_PATH).resolve().parent / "pull_state.json"
 RESTART_PULL_SKIP_WINDOW_SECONDS = 2 * 3600  # 2 hours

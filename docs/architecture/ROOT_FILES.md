@@ -2,12 +2,12 @@
 
 Files at the project root. Moved to `docs/` 2026-10-27.
 
-## Build / deploy (stay at root — required by Render and Docker)
+## Build / deploy (stay at root — required by Fly and Docker)
 
 | File | Purpose |
 |---|---|
-| `Dockerfile` | Docker image definition; read by Render build |
-| `render.yaml` | Render service config (runtime, disk, env vars) |
+| `Dockerfile` | Docker image definition; read by the Fly build |
+| `fly.toml` | Fly app config (region, volume mount, env, VM size) |
 | `requirements.txt` | Python dependency list |
 | `start.sh` | Container entrypoint; seeds stub DB on cold boot |
 | `schema.sql` | Database DDL reference; used when re-creating DB from scratch |

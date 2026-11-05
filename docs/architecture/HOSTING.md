@@ -1,69 +1,21 @@
 # Hosting Guide
 
-## Platform: Render
+## Platform: Fly.io
 
-This app is configured for [Render](https://render.com). The repo includes a `Dockerfile` and
-`render.yaml` that Render uses directly — no manual build config needed.
+The app deploys to [Fly.io](https://fly.io) using `fly.toml` and the repo's `Dockerfile`.
+Full steps are in `deploy/FLY_DEPLOY.md`.
 
-Why Render:
-- Docker-native (uses the `Dockerfile` in this repo)
-- **Persistent disks** — required for SQLite (`mlb_data.db` is ~4 GB and must survive redeploys)
-- `render.yaml` auto-wires the service config (disk mount, env vars, start command)
-
----
-
-## One-time Setup
-
-1. Push this repo to GitHub (already done — remote is set)
-
-2. Go to [render.com](https://render.com) → New → Web Service → Connect your GitHub repo
-
-3. Render auto-detects `render.yaml` and pre-fills:
-   - Build: Docker (uses the `Dockerfile`)
-   - Disk: 10 GB, mounted at `/data`
-   - `DB_PATH=/data/mlb_data.db`
-   - `SEASON_PHASE=POSTSEASON`
-
-4. Set `ADMIN_TOKEN` in the Render dashboard (Render can generate one) — secures the
-   `/api/admin/pull-data` and `/api/admin/refresh-cache` endpoints.
-
-5. Deploy. The app boots immediately; the startup scheduler runs a data pull in the background.
-
----
-
-## First Deploy — Seeding the Database
-
-`mlb_data.db` (~4 GB) is not in git. Two options:
-
-**Option A — Smoke test with the stub DB** (verify mechanics first)
-
-The `start.sh` entrypoint auto-copies `deploy/mlb_stub.db` to `/data/mlb_data.db` if the disk
-is empty. Deploy as-is and `GET /api/meta` should respond — data will be minimal/empty but the
-app boots cleanly.
-
-**Option B — Upload the real DB before first use**
-
-```bash
-# Render CLI: npm install -g @render-com/cli
-render ssh <service-id>
-# in the shell:
-rsync -avz mlb_data.db <render-ssh-user>@<host>:/data/mlb_data.db
-```
-
-After copying, restart the service — it picks up the DB on next boot.
+- App config (region `yyz`, 1 shared CPU, 1 GB RAM, one volume at `/data`): `fly.toml`
+- `DB_PATH=/data/mlb_data.db` and `SEASON_PHASE=POSTSEASON` are set in `fly.toml [env]`
+- `ADMIN_TOKEN` is a Fly secret, never in `fly.toml`
+- The machine stays running; the daily refresh runs at 04:00 America/Toronto
 
 ---
 
 ## How Updates Work After Hosting
 
-Push to GitHub → Render auto-redeploys. The persistent disk keeps `mlb_data.db` untouched
-across deploys. The daily 6 AM scheduler keeps data current — nothing to trigger manually.
-
-```bash
-git add -p
-git commit -m "..."
-git push   # Render picks this up automatically
-```
+`fly deploy` rebuilds and replaces the machine. The volume keeps `mlb_data.db` across deploys.
+The 04:00 Toronto scheduler keeps data current, so nothing needs to be triggered by hand.
 
 ---
 
@@ -71,7 +23,7 @@ git push   # Render picks this up automatically
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `DB_PATH` | Yes | `/data/mlb_data.db` | Path to the SQLite database on the persistent disk |
+| `DB_PATH` | Yes | `/data/mlb_data.db` | Path to the SQLite database on the Fly volume |
 | `SEASON_PHASE` | Yes | `POSTSEASON` | `REGULAR_SEASON`, `POSTSEASON`, or `OFFSEASON` |
 | `ADMIN_TOKEN` | Recommended | (no auth) | Secures admin data-pull and cache-refresh endpoints |
 
@@ -90,7 +42,7 @@ No env vars needed — defaults to `mlb_data.db` in the repo root with no admin 
 ## Files That Don't Go to the Host
 
 `.gitignore` already excludes:
-- `mlb_data.db` — lives on the persistent disk, not in git
+- `mlb_data.db` — lives on the Fly volume, not in git
 - `scores/*.parquet`, `Archive/`, `diagnostics/` — not needed at runtime (see `.dockerignore`)
 - `__pycache__/`, `*.pyc`
 
@@ -100,4 +52,4 @@ No env vars needed — defaults to `mlb_data.db` in the repo root with no admin 
 
 Railway is a similar Docker-friendly platform. It works with this codebase too — add a
 persistent volume at `/data`, set `DB_PATH=/data/mlb_data.db`, and use `./start.sh` as the
-start command. No `render.yaml` equivalent; configure through Railway's dashboard.
+start command. Configure through Railway's dashboard.

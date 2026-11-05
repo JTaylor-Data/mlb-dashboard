@@ -1,7 +1,7 @@
 """
 Automatic daily data refresh - runs the full pull + cache-warm pipeline
-once at server startup and again every day at DAILY_REFRESH_HOUR (local
-server time), so the site is current without anyone needing to click
+once at server startup and again every day at DAILY_REFRESH_HOUR (America/Toronto),
+so the site is current without anyone needing to click
 "Refresh data" and wait on it. That manual button still exists (see
 api/pull.py) as an on-demand fallback for "I want this exact second," but
 the schedule is the primary mechanism now - clicking through a ~30-70s
@@ -27,43 +27,55 @@ import subprocess
 import sys
 import threading
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 log = logging.getLogger("scheduler")
 
 from api import pull
 from config.season_phase import SEASON_PHASE, REGULAR_SEASON
 
-DAILY_REFRESH_HOUR = 6  # 6:00 AM local server time - by then, essentially
-                         # all of the previous day's games have finished
-                         # and their Statcast data has settled.
+SCHEDULE_TZ = ZoneInfo("America/Toronto")
+
+DAILY_REFRESH_HOUR = 4  # 4:00 AM Toronto - the previous day's games have finished
+                        # and their Statcast data has settled.
 
 WEEKLY_RESCORE_WEEKDAY = 6   # Sunday (0=Monday, 6=Sunday)
-WEEKLY_RESCORE_HOUR    = 4   # 4:00 AM local server time
+WEEKLY_RESCORE_HOUR    = 5   # 5:00 AM Toronto - moved from 4 so it doesn't
+                             # run alongside the 4:00 daily refresh on Sundays
 
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def _seconds_until_next_run():
-    now = datetime.now()
+def _next_daily_run():
+    now = datetime.now(SCHEDULE_TZ)
     target = now.replace(hour=DAILY_REFRESH_HOUR, minute=0, second=0, microsecond=0)
     if target <= now:
         target += timedelta(days=1)
-    return (target - now).total_seconds()
+    return target
+
+
+def _seconds_between(now, target):
+    return (target.astimezone(timezone.utc) - now.astimezone(timezone.utc)).total_seconds()
+
+
+def _seconds_until_next_run():
+    now = datetime.now(SCHEDULE_TZ)
+    return _seconds_between(now, _next_daily_run())
 
 
 def _seconds_until_next_sunday_rescore():
-    """Seconds until next Sunday 4 AM."""
-    now = datetime.now()
+    """Seconds until next Sunday 5 AM Toronto."""
+    now = datetime.now(SCHEDULE_TZ)
     days_until_sunday = (WEEKLY_RESCORE_WEEKDAY - now.weekday()) % 7
-    # If today is Sunday but we've already passed 4 AM, aim for NEXT Sunday.
+    # If today is Sunday but we've already passed the rescore hour, aim for NEXT Sunday.
     if days_until_sunday == 0 and now.hour >= WEEKLY_RESCORE_HOUR:
         days_until_sunday = 7
     target = (now + timedelta(days=days_until_sunday)).replace(
         hour=WEEKLY_RESCORE_HOUR, minute=0, second=0, microsecond=0
     )
-    return max(0.0, (target - now).total_seconds())
+    return max(0.0, _seconds_between(now, target))
 
 
 def _wait_for_pull_to_finish(poll_seconds=5):
@@ -168,5 +180,6 @@ def start():
         warm_cache_background()
     else:
         pull.start_pull(full_warmup=True)
+    log.info("daily refresh scheduled for %s (America/Toronto)", _next_daily_run().isoformat())
     threading.Thread(target=_daily_loop, daemon=True).start()
     threading.Thread(target=_weekly_rescore_loop, daemon=True).start()

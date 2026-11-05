@@ -16,7 +16,7 @@ import os
 # Without this, log.info()/log.warning() calls across the app (pull.py,
 # scheduler.py, warmup.py, etc.) never reach stdout - only bare log.error
 # text makes it out, via Python's unconfigured-logging fallback, with no
-# timestamp or logger name. This makes every level visible in Render's log
+# timestamp or logger name. This makes every level visible in the Fly log
 # viewer.
 logging.basicConfig(
     level=logging.INFO,
@@ -60,14 +60,14 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 def _client_ip(request: Request) -> str:
     """Real per-visitor IP for rate limiting.
 
-    Render's own edge proxy is the only way any request reaches this
-    process - there's no direct public path to the container - so
-    request.client.host here is always Render's proxy, not the visitor,
+    The hosting platform's edge proxy is the only way any request reaches
+    this process - there's no direct public path to the container - so
+    request.client.host here is always that proxy, not the visitor,
     and slowapi's default get_remote_address would key every visitor on
     one shared IP (rate-limiting everyone together instead of per-visitor).
-    Render's proxy sets X-Forwarded-For itself, appending the real client
-    IP as the first entry, so trusting its leftmost value is safe in this
-    deployment; it would NOT be safe if this app were ever reachable by
+    The proxy sets X-Forwarded-For itself, with the real client IP as the
+    first entry, so trusting its leftmost value is safe in this
+    deployment (verify on each new platform); it would NOT be safe if this app were ever reachable by
     any other route in (e.g. direct container access), since a client
     could then forge that header.
     """
@@ -207,7 +207,7 @@ async def security_headers(request, call_next):
     response.headers.setdefault("X-Frame-Options", "DENY")
     response.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
     response.headers.setdefault("Content-Security-Policy-Report-Only", CSP_REPORT_ONLY_POLICY)
-    # Render terminates TLS in front of this app, so every request this
+    # The platform terminates TLS in front of this app, so every request this
     # process actually sees has already gone over HTTPS - safe to tell
     # browsers to always use HTTPS for this host going forward.
     response.headers.setdefault(
