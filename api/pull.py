@@ -28,8 +28,10 @@ cache gets rewarmed afterward (`full_warmup`) - see warmup.py's docstring -
 since that's a pure UI-responsiveness tradeoff, not a data-correctness one.
 """
 import logging
+import os
 import sqlite3
 import json
+import subprocess
 import sys
 import threading
 import time
@@ -103,6 +105,31 @@ def _record_pull_finished():
 
 def get_status():
     return dict(_status)
+
+
+def _precompute_tunneling_pairs(season):
+    """Regenerate the season's tunneling parquets so the player page reads
+    fresh precomputed data. Runs in a subprocess (its memory is released when
+    it exits) and has its own failure boundary: an error is logged and never
+    blocks warm-up."""
+    script = Path(__file__).resolve().parent.parent / "tools" / "precompute_tunneling_pairs.py"
+    started = time.monotonic()
+    try:
+        result = subprocess.run(
+            [sys.executable, str(script), str(season)],
+            capture_output=True, text=True, timeout=1200,
+            env={**os.environ, "DB_PATH": str(DB_PATH)},
+        )
+        elapsed = time.monotonic() - started
+        if result.returncode == 0:
+            summary = result.stdout.strip().splitlines()[-1] if result.stdout.strip() else ""
+            log.info("tunneling precompute ok: season=%s elapsed=%.1fs %s", season, elapsed, summary)
+        else:
+            log.error("tunneling precompute failed: season=%s exit=%s elapsed=%.1fs %s",
+                      season, result.returncode, elapsed, result.stderr[-1000:])
+    except Exception as e:
+        log.error("tunneling precompute failed: season=%s elapsed=%.1fs %s: %s",
+                  season, time.monotonic() - started, type(e).__name__, e)
 
 
 def _run(full_warmup):
@@ -237,6 +264,11 @@ def _run(full_warmup):
         # else: nothing new (or the pull failed) - skip clearing, just
         # warm whatever's cold below (first boot ever, or a key that
         # expired on its own TTL).
+        # Runs after every successful pull, not only ones with new pitches:
+        # the reference-data updates above also touch mlb_data.db, and the
+        # tunneling readers reject any parquet older than the database.
+        if pull_succeeded:
+            _precompute_tunneling_pairs(season)
         warm_cache_sync(full=full_warmup)
         if pull_succeeded:
             _status["state"] = "done"
