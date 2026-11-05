@@ -5,6 +5,7 @@ modules it did, just packaged as JSON instead of Streamlit widgets/HTML.
 """
 import json
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -29,7 +30,7 @@ from analytics.stuff_model import compute_stuff_plus, compute_stuff_plus_by_stan
 from analytics.wpa import find_walkoff_batter
 
 from api.cache import ttl_cache, ttl_cache_all_args
-from api.db import get_conn
+from api.db import DB_PATH, get_conn
 from api.presentation import (
     BATTER_FMT, BATTER_GROUPS, BATTER_LABELS, BATTER_TABLE_COLUMNS,
     PITCHER_FMT, PITCHER_GROUPS, PITCHER_LABELS, PITCHER_TABLE_COLUMNS,
@@ -39,7 +40,9 @@ from api.routers.deception_report import _bracket as _deception_bracket
 from api.routers.location_report import _raw_predictions_table as _location_raw_predictions_table
 from analytics.location_v3_model import pitcher_score as location_v3_pitcher_score
 from api.routers.top_performers import _leaderboard
-from analytics.tunneling_pair_composite import season_all_pairs, pitcher_pairs_from_season, pitcher_composite_scores
+from analytics.tunneling_pair_composite import (
+    _qualifying_total_pitches, season_all_pairs, pitcher_pairs_from_season, pitcher_composite_scores,
+)
 
 router = APIRouter(prefix="/api")
 
@@ -347,7 +350,7 @@ def _tunneling_plus_badge(conn, season, player_id):
         all_pairs = _tunneling_pair_season(conn, season)
         if all_pairs is None or all_pairs.empty:
             return None
-        g = pitcher_composite_scores(conn, season, all_pairs_df=all_pairs)
+        g = pitcher_composite_scores(conn, season, all_pairs_df=all_pairs, total_pitches=_tunneling_totals_season(conn, season))
         row = g[g["pitcher_id"] == player_id]
         if row.empty:
             return None
@@ -369,11 +372,27 @@ def _location_plus_badge(conn, season, player_id):
         return None
 
 
+def _read_precomputed(name, season):
+    """parquets/<name>_<season>.parquet written by tools/precompute_tunneling_pairs.py,
+    or None when it is missing or older than the database (stale data must
+    never be served - the caller falls back to live compute)."""
+    path = Path(__file__).resolve().parent.parent.parent / "parquets" / f"{name}_{season}.parquet"
+    try:
+        if not path.exists() or path.stat().st_mtime < Path(DB_PATH).stat().st_mtime:
+            return None
+        return pd.read_parquet(path)
+    except Exception:
+        return None
+
+
 @ttl_cache()
 def _tunneling_pair_season(conn, season):
     """Precomputes all qualifying pitcher-season pairs with composite scores
-    for one season. Expensive (~minutes), cached at the season grain so every
-    subsequent pitcher page hit in the same session is a fast filter."""
+    for one season. Read from parquets/ when a fresh precomputed file exists;
+    otherwise computed live (expensive, cached at the season grain)."""
+    pre = _read_precomputed("tunneling_pairs", season)
+    if pre is not None:
+        return pre
     from api.warmup import _trim_memory
     try:
         pairs = season_all_pairs(conn, season)
@@ -381,6 +400,14 @@ def _tunneling_pair_season(conn, season):
         return None
     _trim_memory()
     return pairs
+
+
+@ttl_cache()
+def _tunneling_totals_season(conn, season):
+    pre = _read_precomputed("tunneling_totals", season)
+    if pre is not None:
+        return pre.set_index("pitcher_id")["total_pitches"]
+    return _qualifying_total_pitches(conn, season)
 
 
 def _il_status(conn, player_id):

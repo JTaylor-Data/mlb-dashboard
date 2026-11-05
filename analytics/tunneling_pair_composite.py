@@ -180,7 +180,7 @@ def _qualifying_total_pitches(conn, season):
     return qualifying.groupby("pitcher_id")["n_pitches"].sum().rename("total_pitches")
 
 
-def pitcher_composite_scores(conn, season, all_pairs_df=None):
+def pitcher_composite_scores(conn, season, all_pairs_df=None, total_pitches=None):
     """League-wide, one row per qualifying pitcher: usage-weighted mean of
     that pitcher's own pair composite_scores (the SAME composite the player
     page's pair table shows, aggregated up into a single headline number).
@@ -204,7 +204,8 @@ def pitcher_composite_scores(conn, season, all_pairs_df=None):
         if all_pairs_df.empty:
             return pd.DataFrame(columns=["pitcher_id", "tunneling_plus", "n_pairs", "total_pitches"])
         pairs = all_pairs_df
-        total_pitches = _qualifying_total_pitches(conn, season)
+        if total_pitches is None:
+            total_pitches = _qualifying_total_pitches(conn, season)
 
     pairs = pairs.copy()
     pairs["weighted_score"] = pairs["composite_score"] * pairs["pair_weight"]
