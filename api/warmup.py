@@ -177,7 +177,7 @@ def _warm(conn, full):
     from api.routers.heatmaps import _league_command_pool
     from api.routers.players import (
         _all_players, _all_pitcher_arm_angles, _batter_pool, _league_avg_batter_row, _league_hr_fb,
-        _pitcher_league_avg_row, _pitcher_pool, _pitcher_roles, _stuff_plus_by_stand_table, _stuff_plus_table,
+        _pitcher_league_avg_row, _pitcher_pool, _pitcher_pool_unqualified, _pitcher_roles, _stuff_plus_by_stand_table, _stuff_plus_table,
     )
     from api.routers.deception_report import REPORT_SEASON as DECEPTION_REPORT_SEASON, _raw_predictions_table as _deception_raw_predictions_table
     from api.routers.tunneling_report import _v3_raw_predictions_table
@@ -259,6 +259,9 @@ def _warm(conn, full):
             _step(f"start:pitcher_league_avg_row[{split}]")
             _pitcher_league_avg_row(conn, season, split)
             _step(f"end:pitcher_league_avg_row[{split}]")
+            _step(f"start:pitcher_pool_unqualified[{split}]")
+            _pitcher_pool_unqualified(conn, season, split)
+            _step(f"end:pitcher_pool_unqualified[{split}]")
             _trim_memory()
         for split in ("L", "R"):
             _step(f"start:league_command_pool[{split}]")
