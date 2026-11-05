@@ -92,11 +92,12 @@ def load_pitches(conn, season, pitcher_id=None):
     if pitcher_id is not None:
         where += " AND pitcher_id = ?"
         params.append(pitcher_id)
-    df = pd.read_sql(f"""
+    chunks = list(pd.read_sql(f"""
         SELECT {', '.join(RAW_QUERY_COLUMNS)}
         FROM pitches
         {where}
-    """, conn, params=params)
+    """, conn, params=params, chunksize=100_000))
+    df = pd.concat(chunks, ignore_index=True) if chunks else pd.DataFrame(columns=RAW_QUERY_COLUMNS)
     df["pitch_type"] = df["pitch_type"].replace({"KC": "CU"})
     df = df[~df["pitch_type"].isin(EXCLUDED_PITCH_TYPES)]
     required = ["release_pos_x", "release_pos_z", "vx0", "vy0", "vz0", "ax", "ay", "az", "plate_x", "plate_z"]

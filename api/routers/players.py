@@ -374,10 +374,13 @@ def _tunneling_pair_season(conn, season):
     """Precomputes all qualifying pitcher-season pairs with composite scores
     for one season. Expensive (~minutes), cached at the season grain so every
     subsequent pitcher page hit in the same session is a fast filter."""
+    from api.warmup import _trim_memory
     try:
-        return season_all_pairs(conn, season)
+        pairs = season_all_pairs(conn, season)
     except Exception:
         return None
+    _trim_memory()
+    return pairs
 
 
 def _il_status(conn, player_id):
