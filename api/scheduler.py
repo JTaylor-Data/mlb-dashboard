@@ -22,6 +22,7 @@ weekly job also invalidates the model TTL caches so the parquets are re-injected
 on the next request (which hits warmup's usual background path).
 """
 import logging
+import os
 import subprocess
 import sys
 import threading
@@ -152,6 +153,9 @@ def start():
     restart after a longer gap (a real stale deploy) still pulls fresh
     data as before - this only guards against *immediate* repeats.
     """
+    if os.environ.get("SKIP_WARMUP") == "1":
+        log.info("SKIP_WARMUP=1 - scheduler and warm-up not started")
+        return
     last_finished = pull.last_pull_finished_at()
     if last_finished is not None and (time.time() - last_finished) < pull.RESTART_PULL_SKIP_WINDOW_SECONDS:
         age = time.time() - last_finished
