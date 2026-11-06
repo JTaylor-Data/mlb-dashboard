@@ -12,7 +12,7 @@ function createSeasonSelect(selectEl, onChange) {
   return {
     async load() {
       const meta = await getJSON("/api/meta");
-      _allSeasons = meta.available_seasons && meta.available_seasons.length ? meta.available_seasons : [2026];
+      _allSeasons = meta.available_seasons && meta.available_seasons.length ? meta.available_seasons : [meta.current_season];
       selectEl.innerHTML = _allSeasons.map((s) => `<option value="${s}">${s}</option>`).join("");
       return _allSeasons[0];
     },

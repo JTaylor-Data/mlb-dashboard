@@ -204,10 +204,11 @@ async function loadGames(startDate, windowDays = 7) {
   const motdMount = document.getElementById("motd-mount");
   const note = document.getElementById("freshness-note");
   try {
+    const { current_season: season } = await getJSON("/api/meta");
     // Fetch all days in parallel
     const dates = Array.from({ length: windowDays }, (_, i) => dateOffsetStr(startDate, i));
     const results = await Promise.all(dates.map(d =>
-      getJSON(`/api/probable-pitchers?date=${d}&season=2026`).catch(() => null)
+      getJSON(`/api/probable-pitchers?date=${d}&season=${season}`).catch(() => null)
     ));
 
     const latestPull = results.map(r => r && r.pulled_at).filter(Boolean).sort().pop();

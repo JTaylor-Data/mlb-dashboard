@@ -53,7 +53,7 @@
 
   // ── State ─────────────────────────────────────────────────────────────────
   let playerId   = null;
-  let season     = 2026;
+  let season     = null;
   let activeSide = "main";
   let lastData   = null;
 
@@ -67,6 +67,7 @@
 
   // ── Player search ─────────────────────────────────────────────────────────
   async function initSearch() {
+    season = (await getJSON("/api/meta")).current_season;
     const inputEl    = document.getElementById("outing-player-search");
     const dropdownEl = document.getElementById("outing-player-dropdown");
     const search = createPlayerSearch(inputEl, dropdownEl, async (p) => {
