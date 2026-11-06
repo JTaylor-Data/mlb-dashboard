@@ -265,10 +265,10 @@ def _run(full_warmup):
         # else: nothing new (or the pull failed) - skip clearing, just
         # warm whatever's cold below (first boot ever, or a key that
         # expired on its own TTL).
-        # Runs after every successful pull, not only ones with new pitches:
-        # the reference-data updates above also touch mlb_data.db, and the
-        # tunneling readers reject any parquet older than the database.
-        if pull_succeeded:
+        # Only when this pull injected new pitches: the precompute loads a
+        # full season of pitches, which is memory-heavy, and the readers use
+        # the committed parquet whenever it exists.
+        if pull_succeeded and new_pitches > 0:
             _precompute_tunneling_pairs(season)
         warm_cache_sync(full=full_warmup)
         if pull_succeeded:
