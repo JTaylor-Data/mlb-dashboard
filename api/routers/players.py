@@ -20,7 +20,7 @@ from analytics.percentiles import (
     pitcher_percentile_metrics, player_percentiles, player_percentiles_allow_unqualified,
 )
 from analytics.player_page import (
-    all_pitcher_arm_angles, batter_counting_stats, batter_pitch_type_table, batter_rolling_xwoba,
+    all_pitcher_arm_angles, approach_angle_pool, peer_movement_table, batter_counting_stats, batter_pitch_type_table, batter_rolling_xwoba,
     batter_wrc_plus, field_zone_pcts, league_avg_xwoba, league_average_batter_row, league_average_swing_profile,
     league_hr_per_fb, movement_plot_data, pitch_usage_by_stand, pitcher_arm_angle,
     pitcher_approach_angle_percentile, pitcher_counting_stats, pitcher_league_avg_row, pitcher_pitch_table, pitcher_rubber_position,
@@ -246,8 +246,17 @@ def _all_pitcher_arm_angles(conn, season):
 
 
 @ttl_cache()
+def _peer_movement_table(conn, season):
+    # Season-wide like _all_pitcher_arm_angles: one grouped scan shared by every pitcher.
+    return peer_movement_table(conn, season)
+
+
+@ttl_cache()
 def _similar_arm_angle_movement(conn, season, player_id):
-    return similar_arm_angle_movement(conn, season, player_id, arm_angles=_all_pitcher_arm_angles(conn, season))
+    return similar_arm_angle_movement(
+        conn, season, player_id, arm_angles=_all_pitcher_arm_angles(conn, season),
+        peer_table=_peer_movement_table(conn, season),
+    )
 
 
 @ttl_cache()
@@ -266,8 +275,15 @@ def _pitcher_rubber_position(conn, season, player_id):
 
 
 @ttl_cache()
+def _approach_angle_pool(conn, season, throws):
+    # Same-hand league pool: identical for every pitcher, so scanned once per season.
+    return approach_angle_pool(conn, season, throws)
+
+
+@ttl_cache()
 def _pitcher_approach_angle_percentile(conn, season, player_id, throws):
-    return pitcher_approach_angle_percentile(conn, season, player_id, throws)
+    pool = _approach_angle_pool(conn, season, throws) if throws else None
+    return pitcher_approach_angle_percentile(conn, season, player_id, throws, pool=pool)
 
 
 @ttl_cache()

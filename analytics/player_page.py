@@ -409,7 +409,25 @@ def pitcher_rubber_position(conn, season, pitcher_id):
 APPROACH_ANGLE_DISTANCE_FT = 55
 
 
-def pitcher_approach_angle_percentile(conn, season, pitcher_id, throws, min_pitches=100):
+def approach_angle_pool(conn, season, throws, min_pitches=100):
+    """Season-average release_pos_x of every same-hand pitcher with at least
+    min_pitches pitches. Identical for every pitcher of that hand, so the
+    router caches it once per (season, throws) instead of rescanning the
+    whole season for each new pitcher viewed."""
+    return pd.read_sql(
+        """
+        SELECT AVG(p.release_pos_x) AS rpx
+        FROM pitches p
+        JOIN players pl ON pl.player_id = p.pitcher_id
+        WHERE p.season = ? AND pl.throws = ? AND p.release_pos_x IS NOT NULL
+        GROUP BY p.pitcher_id
+        HAVING COUNT(*) >= ?
+        """,
+        conn, params=(season, throws, min_pitches),
+    )["rpx"]
+
+
+def pitcher_approach_angle_percentile(conn, season, pitcher_id, throws, min_pitches=100, pool=None):
     """This pitcher's season-avg release_pos_x, as a degree angle off the
     release-to-plate centerline, plus a percentile rank against OTHER
     pitchers who throw the same hand (same-season, same `throws`).
@@ -433,17 +451,8 @@ def pitcher_approach_angle_percentile(conn, season, pitcher_id, throws, min_pitc
     if this_rpx is None or not throws:
         return None
 
-    pool = pd.read_sql(
-        """
-        SELECT AVG(p.release_pos_x) AS rpx
-        FROM pitches p
-        JOIN players pl ON pl.player_id = p.pitcher_id
-        WHERE p.season = ? AND pl.throws = ? AND p.release_pos_x IS NOT NULL
-        GROUP BY p.pitcher_id
-        HAVING COUNT(*) >= ?
-        """,
-        conn, params=(season, throws, min_pitches),
-    )["rpx"]
+    if pool is None:
+        pool = approach_angle_pool(conn, season, throws, min_pitches)
     if pool.empty:
         return None
 
@@ -483,7 +492,25 @@ def all_pitcher_arm_angles(conn, season):
     """, conn, params=(season,))
 
 
-def similar_arm_angle_movement(conn, season, pitcher_id, arm_angles=None):
+def peer_movement_table(conn, season):
+    """Per (pitcher, merged pitch type) movement sums for the whole season,
+    in one grouped scan. similar_arm_angle_movement sums the rows of its peer
+    pitchers out of this instead of querying their pitches again for every
+    new pitcher viewed (a cold scan of dozens of pitchers' seasons)."""
+    merge_case = " ".join(f"WHEN pitch_type = '{k}' THEN '{v}'" for k, v in PITCH_TYPE_MERGE.items())
+    return pd.read_sql(f"""
+        SELECT pitcher_id,
+               CASE {merge_case} ELSE pitch_type END AS pt,
+               SUM(pfx_x * 12 * CASE WHEN p_throws = 'R' THEN -1 ELSE 1 END) AS hb_sum,
+               SUM(pfx_z * 12) AS ivb_sum,
+               COUNT(*) AS n
+        FROM pitches
+        WHERE season = ? AND pfx_x IS NOT NULL AND pfx_z IS NOT NULL AND pitch_type IS NOT NULL
+        GROUP BY pitcher_id, pt
+    """, conn, params=(season,))
+
+
+def similar_arm_angle_movement(conn, season, pitcher_id, arm_angles=None, peer_table=None):
     """Real league-wide average movement (HB/IVB), per pitch type, among
     OTHER pitchers whose own season-average arm angle is within +/-3deg of
     this pitcher's - the movement plot's "average movement" reference
@@ -523,6 +550,20 @@ def similar_arm_angle_movement(conn, season, pitcher_id, arm_angles=None):
     # pitch type) is a SQL aggregate, so compute it in SQLite and only let
     # ~10-15 result rows (one per pitch type) leave the DB, same fix as
     # league_average_batter_row/pitcher_league_avg_row above.
+    if peer_table is not None:
+        rows = peer_table[peer_table["pitcher_id"].isin(peers)]
+        if rows.empty:
+            return {}
+        grouped = rows.groupby("pt").agg(
+            hb_sum=("hb_sum", "sum"), ivb_sum=("ivb_sum", "sum"),
+            n_pitchers=("pitcher_id", "nunique"), n_pitches=("n", "sum"),
+        )
+        return {
+            pt: {"hb": r.hb_sum / r.n_pitches, "ivb": r.ivb_sum / r.n_pitches,
+                 "n_pitchers": int(r.n_pitchers), "n_pitches": int(r.n_pitches)}
+            for pt, r in grouped.iterrows()
+        }
+
     placeholders = ",".join("?" * len(peers))
     merge_case = " ".join(f"WHEN pitch_type = '{k}' THEN '{v}'" for k, v in PITCH_TYPE_MERGE.items())
     query = f"""

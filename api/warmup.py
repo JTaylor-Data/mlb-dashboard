@@ -176,7 +176,7 @@ def _warm(conn, full):
     refresh paying for splits that may not get viewed at all this session."""
     from api.routers.heatmaps import _league_command_pool
     from api.routers.players import (
-        _all_players, _all_pitcher_arm_angles, _batter_pool, _league_avg_batter_row, _league_hr_fb,
+        _all_players, _all_pitcher_arm_angles, _approach_angle_pool, _peer_movement_table, _batter_pool, _league_avg_batter_row, _league_hr_fb,
         _pitcher_league_avg_row, _pitcher_pool, _pitcher_pool_unqualified, _pitcher_roles, _stuff_plus_by_stand_table, _stuff_plus_table,
     )
     from api.routers.deception_report import REPORT_SEASON as DECEPTION_REPORT_SEASON, _raw_predictions_table as _deception_raw_predictions_table
@@ -301,6 +301,11 @@ def _warm(conn, full):
         _step("start:all_pitcher_arm_angles")
         _all_pitcher_arm_angles(conn, season)
         _step("end:all_pitcher_arm_angles")
+        _step("start:pitcher_page_season_pools")
+        _peer_movement_table(conn, season)
+        for hand in ("L", "R"):
+            _approach_angle_pool(conn, season, hand)
+        _step("end:pitcher_page_season_pools")
         # Warm last 10 game dates for the "Top performer" badge on player pages.
         _step("start:leaderboard_10_dates")
         recent_dates = [r[0] for r in conn.execute(
