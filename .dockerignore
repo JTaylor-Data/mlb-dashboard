@@ -3,6 +3,8 @@ Archive/
 project_artifacts/
 docs/
 security-report/
+_memtest_tmp/
+scores/
 deploy/FLY_DEPLOY.md
 
 # Real database (never bake into image — mounted at runtime via DB_PATH)
