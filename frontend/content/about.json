@@ -5,16 +5,15 @@
   },
   "goal": {
     "status": "draft",
-    "text": "This dashboard is built to be the one tab you need: Baseball Savant's pitch-level detail plus FanGraphs' league context, in one place, without flipping between sites or scrolling past metrics you'll never use. Four independent models (Stuff+, Location+, Deception+, and Tunneling+) grade a pitcher on separate axes, each scaled so 100 is league average and 10 points is one standard deviation. The interesting cases are where they disagree."
+    "text": "I built this site to be the one place you need when watching your daily game. Want to check out that funky lefty coming out of the pen, or see why your favorite star is in a slump? The site combines Baseball Savant’s easy visual comparisons with FanGraphs’ detailed stats and models, so you can see what’s driving a player’s success without three tabs open."
   },
   "about_me": {
     "status": "draft",
-    "text": "I'm a third-year Economics student at the University of Toronto, trying to find my way into sports or data analytics. The data-driven habit actually started on the field: I've spent 4+ years coaching and instructing athletics programs, and you learn fast that gut feel and the box score don't always agree. On the analytics side, I recently built Luck+, a Ridge-regression model that quantifies and forecasts MLB team luck, and this dashboard is the bigger project that grew out of that. Mostly, I'm just a baseball fan who got curious enough to start building. I'm looking for summer and entry-level opportunities in data analytics, finance, business, or consulting."
+    "text": "I’m a third-year economics student at the University of Toronto, and I’ve always loved watching baseball and studying sabermetrics. I haven’t played baseball at a high level, but I’m a competitive Muay Thai fighter and coach. In my spare time, I build any model or graph I find myself wondering about while watching the game. I also built Luck+, a model of MLB team luck, and this dashboard grew out of that work."
   },
   "links": {
     "linkedin": "https://www.linkedin.com/in/joshua-taylor-86450a32a/",
-    "github": "https://github.com/JTaylor-Data/mlb-dashboard",
-    "resume": null
+    "github": "https://github.com/JTaylor-Data/mlb-dashboard"
   },
   "model_blurbs": {
     "status": "draft",
