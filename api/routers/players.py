@@ -30,7 +30,7 @@ from analytics.stuff_model import compute_stuff_plus, compute_stuff_plus_by_stan
 from analytics.wpa import find_walkoff_batter
 
 from api.cache import ttl_cache, ttl_cache_all_args
-from api.db import DB_PATH, get_conn
+from api.db import get_conn
 from api.presentation import (
     BATTER_FMT, BATTER_GROUPS, BATTER_LABELS, BATTER_TABLE_COLUMNS,
     PITCHER_FMT, PITCHER_GROUPS, PITCHER_LABELS, PITCHER_TABLE_COLUMNS,
@@ -373,13 +373,12 @@ def _location_plus_badge(conn, season, player_id):
 
 
 def _read_precomputed(name, season):
-    """parquets/<name>_<season>.parquet written by tools/precompute_tunneling_pairs.py,
-    or None when it is missing or older than the database (stale data must
-    never be served - the caller falls back to live compute)."""
+    """parquets/<name>_<season>.parquet, or None when the file is absent
+    (the caller then computes live)."""
     path = Path(__file__).resolve().parent.parent.parent / "parquets" / f"{name}_{season}.parquet"
+    if not path.exists():
+        return None
     try:
-        if not path.exists() or path.stat().st_mtime < Path(DB_PATH).stat().st_mtime:
-            return None
         return pd.read_parquet(path)
     except Exception:
         return None
@@ -388,7 +387,7 @@ def _read_precomputed(name, season):
 @ttl_cache()
 def _tunneling_pair_season(conn, season):
     """Precomputes all qualifying pitcher-season pairs with composite scores
-    for one season. Read from parquets/ when a fresh precomputed file exists;
+    for one season. Read from parquets/ when the precomputed file exists;
     otherwise computed live (expensive, cached at the season grain)."""
     pre = _read_precomputed("tunneling_pairs", season)
     if pre is not None:

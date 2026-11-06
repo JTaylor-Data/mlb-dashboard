@@ -1,7 +1,7 @@
 """Write the season tunneling pair table and qualifying pitch totals to parquets/.
 
 Run after the pitch data for a season changes (the app falls back to live
-compute when these files are missing or older than mlb_data.db).
+compute when these files are missing).
 
     python tools/precompute_tunneling_pairs.py 2026 2025
 """
