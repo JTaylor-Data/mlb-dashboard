@@ -5,17 +5,36 @@
 // as the player page's own checkpoint-driven bar (see index.html's
 // .load-progress), just a plain indeterminate animation instead of real
 // checkpoints, for pages whose backend is a single opaque fetch.
-function setPageLoading(active) {
+// The bar is shown whenever a page holds it on (setPageLoading) or any getJSON
+// fetch is still in flight, so every data-fetching page that has the element
+// shows it for its whole load - including the first /api/meta call, which used
+// to run before a page turned the bar on.
+let _barManual = false;
+let _barInflight = 0;
+
+function _syncLoadingBar() {
   const el = document.getElementById("page-loading");
-  if (el) el.classList.toggle("active", active);
+  if (el) el.classList.toggle("active", _barManual || _barInflight > 0);
+}
+
+function setPageLoading(active) {
+  _barManual = active;
+  _syncLoadingBar();
 }
 
 async function getJSON(url) {
-  const resp = await fetch(url);
-  if (!resp.ok) {
-    throw new Error(`${url} -> HTTP ${resp.status}`);
+  _barInflight++;
+  _syncLoadingBar();
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) {
+      throw new Error(`${url} -> HTTP ${resp.status}`);
+    }
+    return await resp.json();
+  } finally {
+    _barInflight--;
+    _syncLoadingBar();
   }
-  return resp.json();
 }
 
 // Prefetch cache: background fetches fired on player-page load so probable-

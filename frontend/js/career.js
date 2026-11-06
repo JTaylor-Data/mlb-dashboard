@@ -345,7 +345,7 @@ async function renderCareer() {
   if (!careerState.playerId) return;
   const mount = document.getElementById("career-mount");
   const title = document.getElementById("career-title");
-  mount.innerHTML = `<div class="empty-state">Loading…</div>`;
+  mount.innerHTML = "";
   title.textContent = "";
   careerState.selectedSeasons.clear();
 
@@ -379,7 +379,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   });  // No roleFilter → all players
 
   const meta = await getJSON("/api/meta").catch(() => null);
-  const season = (meta && meta.season) || 2026;
+  const season = meta && meta.current_season;
   await _careerSearch.load(season);
 
   // Seed from PlayerContext if available
