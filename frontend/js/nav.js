@@ -55,7 +55,7 @@ function initNav() {
 
   mount.innerHTML = `
     <div class="nav-inner">
-      <div class="nav-brand">MLB Dashboard</div>
+      <div class="nav-brand">The Whole Nine</div>
       <div class="nav-links">${links}</div>
       <div class="nav-meta">
         <span id="nav-data-as-of">Data as of &mdash;</span>
