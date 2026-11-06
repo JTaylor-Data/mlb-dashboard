@@ -182,7 +182,9 @@ def _warm(conn, full):
     from api.routers.deception_report import REPORT_SEASON as DECEPTION_REPORT_SEASON, _raw_predictions_table as _deception_raw_predictions_table
     from api.routers.tunneling_report import _v3_raw_predictions_table
     from api.routers.location_report import _raw_predictions_table as _location_raw_predictions_table
-    from api.routers.similar_players import _similarity_pool_hitters, _similarity_pool_pitchers
+    from api.routers.similar_players import (
+        _pitcher_arsenal_pool, _pitcher_hands, _similarity_pool_hitters, _similarity_pool_pitchers,
+    )
     from api.routers.probable_pitchers import _stuff_dict, _tunneling_dict, _location_dict, _deception_dict
     from api.routers.standings import _standings
     from api.routers.stuff_model_report import _stuff_leaderboard_overall as _stuff_leaderboard
@@ -271,6 +273,8 @@ def _warm(conn, full):
         _step("start:similarity_pools")
         _similarity_pool_hitters(conn)
         _similarity_pool_pitchers(conn)
+        _pitcher_hands(conn)
+        _pitcher_arsenal_pool(conn)
         _trim_memory()
         _step("end:similarity_pools")
         # Past-season career tables (Stuff+/Tunneling+/Location+ for every

@@ -2,7 +2,9 @@
 
 The Career page needs, for every season a player played, the league HR/FB rate,
 the sorted per-pitcher strikeout and per-batter home-run counts, and each
-pitcher's Stuff+/Tunneling+/Location+. The first three are full-season scans of
+pitcher's Stuff+/Tunneling+/Location+. It also stores each pitcher's arsenal
+(pitch types thrown at least ARSENAL_MIN_USAGE of the time) per season, which
+the similar-players endpoint otherwise builds with a scan of every pitch. The first three are full-season scans of
 the pitches table and the scores need full-season score parquets read and
 normalized league-wide; this computes them once for every season before
 CURRENT_SEASON. Rerun it if past-season pitch data is ever
@@ -25,6 +27,7 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 from analytics.player_page import league_hr_per_fb  # noqa: E402
+from analytics.similarity import build_pitcher_arsenal_pool  # noqa: E402
 from api.routers.career import (  # noqa: E402
     _compute_season_batter_hr_counts, _compute_season_pitcher_k_counts, _compute_season_pitcher_scores,
 )
@@ -36,7 +39,7 @@ OUT = REPO / "parquets" / "career_season_aggregates.json"
 def main():
     db_path = os.environ.get("DB_PATH", str(REPO / "mlb_data.db"))
     conn = sqlite3.connect(db_path)
-    snap = {"hr_fb": {}, "pitcher_k": {}, "batter_hr": {}, "pitcher_scores": {}}
+    snap = {"hr_fb": {}, "pitcher_k": {}, "batter_hr": {}, "pitcher_scores": {}, "pitcher_arsenal": {}}
     for season in range(EARLIEST_SEASON, CURRENT_SEASON):
         t0 = time.time()
         snap["hr_fb"][str(season)] = float(league_hr_per_fb(conn, season))
@@ -44,6 +47,10 @@ def main():
         snap["batter_hr"][str(season)] = [int(c) for c in _compute_season_batter_hr_counts(conn, season)]
         snap["pitcher_scores"][str(season)] = {
             str(pid): scores for pid, scores in _compute_season_pitcher_scores(season).items()
+        }
+        arsenal = build_pitcher_arsenal_pool(conn, [season])
+        snap["pitcher_arsenal"][str(season)] = {
+            str(int(pid)): sorted(types) for (pid, _), types in arsenal.items()
         }
         print(f"{season}: {len(snap['pitcher_k'][str(season)])} pitchers, "
               f"{len(snap['batter_hr'][str(season)])} batters, "

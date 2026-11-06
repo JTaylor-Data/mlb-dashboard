@@ -8,6 +8,7 @@ player page is warm here too, no duplicate work) and exposes it as an
 endpoint with names/teams resolved for display.
 """
 
+import pandas as pd
 from fastapi import APIRouter, Depends, Query
 
 
@@ -17,6 +18,7 @@ from analytics.similarity import (
 )
 from api.cache import ttl_cache
 from api.db import available_seasons, get_conn
+from api.routers.career import _past_season_snapshot
 from api.routers.players import _batter_pool, _pitcher_pool
 
 router = APIRouter(prefix="/api")
@@ -60,10 +62,30 @@ def _pitcher_hands(conn):
 # EXPLORATORY (see analytics/similarity.py's module docstring) - the
 # arsenal-overlap pool feeding find_comps()'s first-attempt arsenal-
 # similarity blend.
+def _arsenal_from_snapshot(season, snap):
+    """The snapshot's {pitcher_id: [pitch types]} for one season, as the same
+    (pitcher_id, season) -> set Series build_pitcher_arsenal_pool returns."""
+    index = pd.MultiIndex.from_tuples([(int(pid), season) for pid in snap], names=["pitcher_id", "season"])
+    return pd.Series([set(types) for types in snap.values()], index=index, dtype=object)
+
+
 @ttl_cache()
 def _pitcher_arsenal_pool(conn):
-    seasons = _all_seasons(conn)
-    return build_pitcher_arsenal_pool(conn, seasons)
+    """build_pitcher_arsenal_pool is one grouped scan over every pitch of every
+    season (about a minute locally, far worse on a cold 1 GiB machine), and a
+    complete season never changes. Complete seasons come from the snapshot
+    written by tools/precompute_career_aggregates.py; only seasons missing from
+    it (the current one) are scanned live. Built at boot by the warm-up."""
+    live, parts = [], []
+    for season in _all_seasons(conn):
+        snap = _past_season_snapshot("pitcher_arsenal", season)
+        if snap is None:
+            live.append(season)
+        else:
+            parts.append(_arsenal_from_snapshot(season, snap))
+    if live:
+        parts.append(build_pitcher_arsenal_pool(conn, live))
+    return pd.concat(parts).sort_index() if parts else pd.Series(dtype=object)
 
 
 def _resolve_player(conn, player_id):
