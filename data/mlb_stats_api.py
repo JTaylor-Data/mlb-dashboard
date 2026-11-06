@@ -16,6 +16,7 @@ Caches pulled data in mlb_data.db in two new tables:
 All functions write to the DB and also return the fetched data for immediate
 use by callers that don't want to hit the DB just to get what was just pulled.
 """
+import os
 import sqlite3
 from datetime import datetime, date
 from typing import Optional
@@ -23,7 +24,7 @@ import requests
 
 BASE_URL = "https://statsapi.mlb.com/api/v1"
 TIMEOUT = 30  # seconds per request
-DB_PATH = "mlb_data.db"
+DB_PATH = os.environ.get("DB_PATH", "mlb_data.db")
 
 VALID_ROSTER_TYPES = {"fullRoster", "40Man", "active", "depthChart",
                       "postseasonRoster"}

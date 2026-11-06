@@ -18,6 +18,7 @@ as refresh_mlb_stats; refresh_mlb_stats()` inside api/scheduler.py's
 daily job function. That is intentionally NOT done automatically here to
 avoid modifying scheduler.py without the user's review.
 """
+import os
 import sys
 from pathlib import Path
 from datetime import date, timedelta
@@ -25,7 +26,7 @@ from datetime import date, timedelta
 # Allow running from any directory
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-DB_PATH = "mlb_data.db"
+DB_PATH = os.environ.get("DB_PATH", "mlb_data.db")
 
 
 def refresh_rosters(season: int = 2026, postseason: bool = False) -> None:
