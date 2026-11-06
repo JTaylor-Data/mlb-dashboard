@@ -31,6 +31,7 @@ from analytics.wpa import find_walkoff_batter
 
 from api.cache import ttl_cache, ttl_cache_all_args
 from api.db import get_conn
+from config.model_policy import CURRENT_SEASON
 from api.presentation import (
     BATTER_FMT, BATTER_GROUPS, BATTER_LABELS, BATTER_TABLE_COLUMNS,
     PITCHER_FMT, PITCHER_GROUPS, PITCHER_LABELS, PITCHER_TABLE_COLUMNS,
@@ -95,17 +96,39 @@ def _batter_pool(conn, season, throws_filter):
 # player's own raw value without ever letting their row into the
 # population the percentile is RANKED against). Cached the same way, so a
 # second unqualified player viewed in the same session doesn't re-pay this.
-# Unqualified pools are NOT disk-persisted (they're used rarely, built fast
-# once the qualified pool is warm, and their use cases don't justify the
-# 6x disk footprint for 12 extra files per season).
+# Complete seasons never change, and rebuilding one is a full-season scan
+# (about 7 s locally, much more on a cold 1 GiB machine) paid by the first
+# unqualified pitcher or batter viewed per season and split after every
+# restart - relievers hit it constantly. So a complete season's pool is built
+# once and persisted next to the qualified pools (under its own "_unq" name,
+# which the qualified pools' stale-file cleanup never matches). The current
+# season is always built live: it changes with every pull.
+def _persisted_unqualified(conn, season, kind, split, build):
+    if season >= CURRENT_SEASON:
+        return build()
+    from analytics.percentile_cache import load_pool, save_pool
+    cached = load_pool(conn, season, f"{kind}_unq", split)
+    if cached is not None:
+        return cached
+    df = build()
+    save_pool(conn, season, f"{kind}_unq", split, df)
+    return df
+
+
 @ttl_cache()
 def _pitcher_pool_unqualified(conn, season, stand_filter):
-    return pitcher_percentile_metrics(conn, season, min_bf=0, stand_filter=stand_filter)
+    return _persisted_unqualified(
+        conn, season, "pitcher", stand_filter,
+        lambda: pitcher_percentile_metrics(conn, season, min_bf=0, stand_filter=stand_filter),
+    )
 
 
 @ttl_cache()
 def _batter_pool_unqualified(conn, season, throws_filter):
-    return batter_percentile_metrics(conn, season, min_pa=0, throws_filter=throws_filter)
+    return _persisted_unqualified(
+        conn, season, "batter", throws_filter,
+        lambda: batter_percentile_metrics(conn, season, min_pa=0, throws_filter=throws_filter),
+    )
 
 
 @ttl_cache()
@@ -288,11 +311,29 @@ def _leaderboard_for_date(day_str):
 
 
 @ttl_cache()
-def _last_5_games(conn, season, player_id, role):
+def _last_5_basic(conn, season, player_id, role):
+    """The last five games with their walk-off flag but WITHOUT the
+    top-performer check, which needs up to five full-day leaderboards (box
+    scores for every game of each day - several seconds when those days
+    haven't been seen since the last restart, and past seasons' never have).
+    The page renders from this and fills the top-performer highlight in from
+    _last_5_games below, via /player/{id}/last-5."""
     try:
         games = player_last_n_games(conn, season, player_id, role, 5)
     except Exception:
         return []
+    for g in games:
+        game_id = g.get("game_id")
+        g["walkoff"] = role == "batter" and game_id is not None and find_walkoff_batter(conn, game_id) == player_id
+        g["top_performer"] = False
+    return games
+
+
+@ttl_cache()
+def _last_5_games(conn, season, player_id, role):
+    games = [dict(g) for g in _last_5_basic(conn, season, player_id, role)]
+    if not games:
+        return games
 
     # Each game's "was this player a top performer that day" check needs
     # that DAY's full leaderboard - up to 5 of these, one per game, each
@@ -313,8 +354,6 @@ def _last_5_games(conn, season, player_id, role):
                     boards[d] = None
 
     for g in games:
-        game_id = g.get("game_id")
-        g["walkoff"] = role == "batter" and game_id is not None and find_walkoff_batter(conn, game_id) == player_id
         board = boards.get(g["date"])
         g["top_performer"] = bool(board) and any(e["player_id"] == player_id for e in board["entries"])
     return games
@@ -561,7 +600,8 @@ def _build_player_steps(conn, player_id, role, split, season):
     split_filter = _norm_split(split)
 
     base = {"player_id": player_id, "name": name, "team_id": team_id, "position": position, "role": role, "split": split, "season": season}
-    base["last_5_games"] = _last_5_games(conn, season, player_id, role)
+    base["last_5_games"] = _last_5_basic(conn, season, player_id, role)
+    base["last_5_pending"] = True
     base["il_status"] = _il_status(conn, player_id)
     if role == "pitcher":
         # SP/RP, not L/RHP - handedness is dropped here per direction (it's
@@ -852,6 +892,19 @@ def get_player(
         if kind == "done":
             return payload
     raise HTTPException(status_code=500, detail="Player payload generator produced no result")
+
+
+@router.get("/player/{player_id}/last-5")
+def get_player_last_5(
+    player_id: int,
+    role: str = Query("pitcher", pattern="^(pitcher|batter)$"),
+    season: int = Query(CURRENT_SEASON, ge=2015, le=2030),
+    conn=Depends(get_conn),
+):
+    """Last five games with the top-performer highlight filled in - the part of
+    the player payload that needs full-day leaderboards, split out so the page
+    doesn't wait on it."""
+    return {"last_5_games": _last_5_games(conn, season, player_id, role)}
 
 
 @router.get("/player/{player_id}/progress")

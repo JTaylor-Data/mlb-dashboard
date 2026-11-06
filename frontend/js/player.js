@@ -1763,6 +1763,21 @@ async function loadPlayer() {
   renderRightPanel(data);
   document.getElementById("last-5-title").textContent = state.mode === "pitcher" ? "Last 5 Outings" : "Last 5 Games";
   document.getElementById("last-5-mount").innerHTML = buildLast5Card(data.last_5_games, state.mode, data.il_status);
+  if (data.last_5_pending) {
+    // The top-performer highlight needs full-day leaderboards (slow on days not
+    // seen since the last restart), so the payload carries the games without it
+    // and this fills it in once the leaderboards are ready.
+    const last5Id = requestId;
+    const last5Mode = state.mode;
+    fetch(`/api/player/${state.playerId}/last-5?role=${last5Mode}&season=${state.season}`)
+      .then(r => r.json())
+      .then(full => {
+        if (last5Id !== loadPlayerRequestId) return;
+        document.getElementById("last-5-mount").innerHTML = buildLast5Card(full.last_5_games, last5Mode, data.il_status);
+        if (last5Mode === "pitcher") _scheduleAlignSettle();
+      })
+      .catch(() => {});
+  }
   if (state.mode === "pitcher") {
     _scheduleAlignSettle();
     // Tunneling pairs are fetched separately — season_all_pairs() is slow on
