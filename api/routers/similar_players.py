@@ -16,14 +16,14 @@ from analytics.similarity import (
     build_pitcher_arsenal_pool, build_similarity_pool, find_comps,
 )
 from api.cache import ttl_cache
-from api.db import get_conn
+from api.db import available_seasons, get_conn
 from api.routers.players import _batter_pool, _pitcher_pool
 
 router = APIRouter(prefix="/api")
 
 
 def _all_seasons(conn):
-    return [r[0] for r in conn.execute("SELECT DISTINCT season FROM pitches ORDER BY season").fetchall()]
+    return sorted(available_seasons(conn))
 
 
 # Unsplit (ALL) pools only - a career trait profile (this is what's being

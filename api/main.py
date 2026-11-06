@@ -35,7 +35,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from analytics import boxscore as _boxscore
 from api import cache, pull, scheduler
 from api.auth import require_admin as _require_admin
-from api.db import get_conn
+from api.db import available_seasons, get_conn
 from api.routers import (
     analysis, career, deception_report, heatmaps, hitzones, location_report, players, playoffs,
     prospects, similar_players, splits, standings, stuff_model_report, team_card, top_performers,
@@ -103,7 +103,7 @@ admin_router = APIRouter(prefix="/api")
 def get_meta(conn=Depends(get_conn)):
     row = conn.execute("SELECT MAX(game_date) FROM games").fetchone()
     sched_row = conn.execute("SELECT MAX(game_date) FROM schedule_games WHERE game_date <= date('now')").fetchone()
-    seasons = [r[0] for r in conn.execute("SELECT DISTINCT season FROM pitches ORDER BY season DESC")]
+    seasons = available_seasons(conn)
     return {
         "latest_game_date": row[0] if row else None,
         "latest_schedule_date": sched_row[0] if sched_row else None,

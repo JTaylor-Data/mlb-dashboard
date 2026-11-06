@@ -34,6 +34,19 @@ PRAGMA mmap_size=268435456;
 """
 
 
+def available_seasons(conn):
+    """Distinct seasons in pitches, newest first. SELECT DISTINCT season scans
+    the whole 8M-entry season index on every call (30+ s on a cold 1 GiB
+    machine, and every page load asks for this); each MAX(season) below is a
+    single index seek instead."""
+    seasons = []
+    season = conn.execute("SELECT MAX(season) FROM pitches").fetchone()[0]
+    while season is not None:
+        seasons.append(season)
+        season = conn.execute("SELECT MAX(season) FROM pitches WHERE season < ?", (season,)).fetchone()[0]
+    return seasons
+
+
 def get_conn():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.executescript(_PER_CONN_PRAGMAS)
