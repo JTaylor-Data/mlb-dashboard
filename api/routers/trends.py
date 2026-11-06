@@ -18,6 +18,7 @@ from analytics.splits import (
 )
 from api.cache import ttl_cache
 from api.db import get_conn
+from config.model_policy import CURRENT_SEASON
 
 router = APIRouter(prefix="/api")
 
@@ -277,7 +278,7 @@ def _batter_rows(conn, player_id, seasons, pitch_type=None):
 def get_player_trends(
     player_id: int,
     role: str = Query("pitcher"),
-    season: str = Query("2026", pattern=r"^(all|\d{4})$"),
+    season: str = Query(str(CURRENT_SEASON), pattern=r"^(all|\d{4})$"),
     pitch_type: Optional[str] = Query(None),
     conn=Depends(get_conn),
 ):
@@ -293,7 +294,7 @@ def get_player_trends(
         try:
             seasons = [int(season)]
         except ValueError:
-            seasons = [2026]
+            seasons = [CURRENT_SEASON]
 
     metrics = PITCHER_METRICS if role == "pitcher" else BATTER_METRICS
     if not seasons:
@@ -408,11 +409,11 @@ def _league_averages_cached(conn, role: str, season: int):
 @router.get("/trends/league-averages")
 def get_league_averages(
     role: str = Query("pitcher"),
-    season: str = Query("2026", pattern=r"^(all|\d{4})$"),
+    season: str = Query(str(CURRENT_SEASON), pattern=r"^(all|\d{4})$"),
     conn=Depends(get_conn),
 ):
     try:
         s = int(season)
     except ValueError:
-        s = 2026
+        s = CURRENT_SEASON
     return _league_averages_cached(conn, role, s)
