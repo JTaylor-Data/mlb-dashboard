@@ -8,6 +8,8 @@ pull_state.json
 
 # Score cache parquets (large, regenerable via tools/maintenance/rescore_models.py)
 parquets/*.parquet
+# Precomputed snapshots committed for the Fly launch (top level only; subfolders stay ignored)
+!parquets/*.parquet
 
 # Percentile pool parquets (large, regenerable via tools/build_percentile_pools.py)
 parquets/percentile_pools/
@@ -87,3 +89,7 @@ security-report/
 .env.*
 *.key
 *.pem
+
+# Local scratch folders, never committed
+scores/
+_memtest_tmp/
