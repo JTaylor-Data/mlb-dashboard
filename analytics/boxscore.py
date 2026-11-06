@@ -9,6 +9,8 @@ every player on every day when only ~10 a day ever get looked at.
 """
 import requests
 
+from config.model_policy import CURRENT_SEASON
+
 BOXSCORE_URL = "https://statsapi.mlb.com/api/v1/game/{game_id}/boxscore"
 PERSON_STATS_URL = "https://statsapi.mlb.com/api/v1/people/{player_id}/stats"
 
@@ -40,7 +42,7 @@ def clear_cache():
     _boxscore_cache.clear()
 
 
-def season_era(player_id, season=2026):
+def season_era(player_id, season=CURRENT_SEASON):
     """Live season ERA from the MLB Stats API - same reasoning as the rest
     of this module: Statcast pitch data has no earned/unearned run
     distinction at all, so ERA can't be derived from our own DB, only

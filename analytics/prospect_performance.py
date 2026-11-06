@@ -29,6 +29,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import requests
 
 from analytics.boxscore import fetch_boxscore
+from config.model_policy import CURRENT_SEASON
 
 SCHEDULE_URL = "https://statsapi.mlb.com/api/v1/schedule"
 MILB_SPORT_IDS = "11,12,13,14,16"  # AAA, AA, A+, A, Rookie (see api/v1/sports)
@@ -122,7 +123,8 @@ def top_prospect_performers(conn, date_str, n=10):
     # you'd actually recognize.
     prospect_rows = conn.execute(
         "SELECT mlb_id, name, is_pitcher, team_id, headshot_url, level, ops, era "
-        "FROM prospects WHERE season = 2026 AND top100_rank IS NOT NULL"
+        "FROM prospects WHERE season = ? AND top100_rank IS NOT NULL",
+        (CURRENT_SEASON,),
     ).fetchall()
     prospects_by_id = {
         r[0]: {
