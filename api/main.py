@@ -42,6 +42,7 @@ from api.routers import (
     trends, tunneling_report, tunneling_3d, probable_pitchers, news,
 )
 from api.warmup import warm_cache_background
+from config.model_policy import CURRENT_SEASON
 
 # API docs (/docs, /redoc, /openapi.json) are off unless ENABLE_API_DOCS=1,
 # so production doesn't publish the full route map.
@@ -107,6 +108,7 @@ def get_meta(conn=Depends(get_conn)):
         "latest_game_date": row[0] if row else None,
         "latest_schedule_date": sched_row[0] if sched_row else None,
         "available_seasons": seasons,
+        "current_season": CURRENT_SEASON,
     }
 
 
