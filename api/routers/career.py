@@ -150,6 +150,16 @@ def _pitcher_scores_from_db(conn, pitcher_id):
 
 
 def _pitcher_scores_from_parquets(pitcher_id, season):
+    """Complete seasons read the precomputed snapshot (see
+    tools/precompute_career_aggregates.py); the current season, and any season
+    missing from the snapshot, use the live per-pitcher computation."""
+    snap = _past_season_snapshot("pitcher_scores", season)
+    if snap is not None:
+        return snap.get(str(pitcher_id))
+    return _pitcher_scores_from_parquets_live(pitcher_id, season)
+
+
+def _pitcher_scores_from_parquets_live(pitcher_id, season):
     """Read Stuff+ and Location+ for a past season directly from the active score parquets.
     Returns {stuff_plus, tunneling_plus, location_plus} or None if parquets not available.
 
@@ -224,6 +234,83 @@ def _pitcher_scores_from_parquets(pitcher_id, season):
     result.setdefault("tunneling_plus", None)
     result.setdefault("location_plus", None)
     return result
+
+
+def _compute_season_pitcher_scores(season):
+    """{pitcher_id: scores} for every pitcher in a season's score parquets, with
+    the same formulas as _pitcher_scores_from_parquets_live but one pass per
+    parquet instead of one pass per pitcher."""
+    SCORES_DIR = Path(__file__).resolve().parent.parent.parent / "parquets"
+    stuff, tun, loc = {}, {}, {}
+
+    try:
+        from analytics.stuff_model import STUFF_ACTIVE_VERSION, _shrinkage_params, _shrunk_group_means
+        sp_path = SCORES_DIR / f"stuff_plus_{STUFF_ACTIVE_VERSION}_{season}.parquet"
+        if sp_path.exists():
+            raw = pd.read_parquet(sp_path)
+            norm_mean = float(raw["pred"].mean())
+            norm_std = float(raw["pred"].std())
+            if norm_std > 0:
+                k_by_type, fallback_k, type_means = _shrinkage_params(raw)
+                g = _shrunk_group_means(raw, ["pitcher_id", "pitch_type"], k_by_type, fallback_k, type_means)
+                for pid, pg in g.groupby("pitcher_id"):
+                    try:
+                        stuff[int(pid)] = round(float(np.average(
+                            to_plus_scale(pg["shrunk_mean"], norm_mean, norm_std),
+                            weights=pg["n_pitches"],
+                        )), 1)
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+
+    try:
+        tun_path = SCORES_DIR / f"tunneling_plus_v3_{season}.parquet"
+        if tun_path.exists():
+            raw = pd.read_parquet(tun_path)
+            m, s = raw["xrv"].mean(), raw["xrv"].std()
+            if s > 0:
+                for pid, sub in raw.groupby("pitcher_id")["xrv"]:
+                    try:
+                        tun[int(pid)] = round(float(to_plus_scale(sub.mean(), m, s)), 1)
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+
+    try:
+        from analytics.location_v3_model import _min_pitches
+        loc_path = SCORES_DIR / f"location_plus_v3_{season}.parquet"
+        if loc_path.exists():
+            raw = pd.read_parquet(loc_path)
+            min_p = _min_pitches(season)
+            g = raw.groupby("pitcher_id").agg(mean_xrv=("xrv", "mean"), n=("xrv", "size"))
+            qual = g[g["n"] >= min_p]
+            if not qual.empty and qual["mean_xrv"].std() > 0:
+                m, s = qual["mean_xrv"].mean(), qual["mean_xrv"].std()
+                for pid, sub in raw.groupby("pitcher_id")["xrv"]:
+                    if len(sub) >= min_p:
+                        try:
+                            loc[int(pid)] = round(float(to_plus_scale(sub.mean(), m, s)), 1)
+                        except Exception:
+                            pass
+    except Exception:
+        pass
+
+    out = {}
+    for pid in set(stuff) | set(tun) | set(loc):
+        res = {}
+        if pid in stuff:
+            res["stuff_plus"] = stuff[pid]
+        if pid in tun:
+            res["tunneling_plus"] = tun[pid]
+        if pid in loc:
+            res["location_plus"] = loc[pid]
+        res.setdefault("stuff_plus", None)
+        res.setdefault("tunneling_plus", None)
+        res.setdefault("location_plus", None)
+        out[pid] = res
+    return out
 
 
 def _pitcher_scores_live(pitcher_id, season):
