@@ -12,6 +12,7 @@ Changes from v1:
 - Awards placeholder column
 """
 import json
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -36,6 +37,7 @@ from api.routers.deception_report import (
 )
 
 router = APIRouter(prefix="/api")
+log = logging.getLogger("career")
 
 
 # League-wide per-season aggregates for COMPLETE seasons, written by
@@ -54,7 +56,9 @@ def _past_season_snapshot(kind, season):
     if _snapshot is None:
         try:
             _snapshot = json.loads(_SNAPSHOT_PATH.read_text())
-        except Exception:
+        except Exception as e:
+            log.warning("career snapshot %s unavailable (%s: %s) - Career page will scan the "
+                        "pitches table for each season", _SNAPSHOT_PATH.name, type(e).__name__, e)
             _snapshot = {}
     return _snapshot.get(kind, {}).get(str(season))
 

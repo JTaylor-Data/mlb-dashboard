@@ -5,7 +5,9 @@ and the sorted per-pitcher strikeout and per-batter home-run counts. Each is a
 full-season scan of the pitches table; this computes them once for every
 season before CURRENT_SEASON. Rerun it if past-season pitch data is ever
 re-pulled or corrected (the app falls back to live queries when an entry is
-missing).
+missing). The file records when it was built and each season's pitch-row count
+at that time under "_meta", so a stale snapshot can be spotted by comparing
+those counts with the database.
 
     python tools/precompute_career_aggregates.py
 """
@@ -14,6 +16,7 @@ import os
 import sqlite3
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
@@ -37,6 +40,12 @@ def main():
         snap["batter_hr"][str(season)] = [int(c) for c in _compute_season_batter_hr_counts(conn, season)]
         print(f"{season}: {len(snap['pitcher_k'][str(season)])} pitchers, "
               f"{len(snap['batter_hr'][str(season)])} batters, {time.time() - t0:.1f}s", flush=True)
+    counts = dict(conn.execute("SELECT season, COUNT(*) FROM pitches WHERE season < ? GROUP BY season",
+                               (CURRENT_SEASON,)).fetchall())
+    snap["_meta"] = {
+        "built_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "pitch_rows_by_season": {str(k): int(v) for k, v in sorted(counts.items())},
+    }
     conn.close()
     OUT.write_text(json.dumps(snap))
     print(f"wrote {OUT} ({OUT.stat().st_size / 1024:.0f} KB)")

@@ -10,6 +10,8 @@ Build utilities and maintenance scripts. These are owner-run tools, not server c
 - `verify_stuff_page.py` — Smoke-checks the Stuff+ model page output
 - `model_correlation_heatmap.py` — Generates model correlation heatmap for diagnostics
 - `maintenance/rescore_models.py` — Scheduled weekly rescore pipeline (also run by APScheduler)
+- `precompute_tunneling_pairs.py` — Writes the current season's tunneling pair and total parquets (run by the daily pull when new pitches arrive)
+- `precompute_career_aggregates.py` — Writes `parquets/career_season_aggregates.json`, the per-season league aggregates the Career page reads for complete seasons. Rerun it whenever a past season's pitch data is re-pulled or corrected, and at each season rollover after bumping `CURRENT_SEASON`; the file's `_meta` records the build time and per-season pitch-row counts so staleness can be checked
 - `maintenance/check_archive_hygiene.py` — Lists unreferenced live files as Archive candidates
 
 ## Archive
