@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 DB_PATH = "mlb_data.db"
 FIRST_SEASON = 2015
-CURRENT_SEASON = 2026
+from config.model_policy import CURRENT_SEASON
 
 
 def _ensure_columns(conn):
