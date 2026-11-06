@@ -11,6 +11,9 @@ Changes from v1:
 - Column group metadata for vertical dividers
 - Awards placeholder column
 """
+import json
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from fastapi import APIRouter, Depends, Query
@@ -22,6 +25,7 @@ from analytics.player_page import (
 from analytics.splits import STRIKEOUT_EVENTS, WALK_EVENTS, IN_ZONE_CODES
 from api.cache import ttl_cache
 from api.db import get_conn
+from config.model_policy import CURRENT_SEASON
 from analytics.stuff_model import compute_stuff_plus_if_cached, overall_stuff_plus
 from analytics.tunneling_v2_model import raw_predictions_if_cached as _tun_raw_if_cached
 from analytics.location_v3_model import raw_predictions_if_cached as _loc_raw_if_cached
@@ -34,8 +38,32 @@ from api.routers.deception_report import (
 router = APIRouter(prefix="/api")
 
 
+# League-wide per-season aggregates for COMPLETE seasons, written by
+# tools/precompute_career_aggregates.py. Each one otherwise costs a full-season
+# scan of the pitches table on the first Career page load, and a player's
+# career touches every season they played. The current season is never read
+# from the snapshot, and any missing entry falls back to the live query.
+_SNAPSHOT_PATH = Path(__file__).resolve().parent.parent.parent / "parquets" / "career_season_aggregates.json"
+_snapshot = None
+
+
+def _past_season_snapshot(kind, season):
+    global _snapshot
+    if season >= CURRENT_SEASON:
+        return None
+    if _snapshot is None:
+        try:
+            _snapshot = json.loads(_SNAPSHOT_PATH.read_text())
+        except Exception:
+            _snapshot = {}
+    return _snapshot.get(kind, {}).get(str(season))
+
+
 @ttl_cache()
 def _league_hr_fb(conn, season):
+    snap = _past_season_snapshot("hr_fb", season)
+    if snap is not None:
+        return snap
     return league_hr_per_fb(conn, season)
 
 
@@ -234,10 +262,7 @@ def _pitcher_scores_live(pitcher_id, season):
     return {"stuff_plus": stuff_plus, "tunneling_plus": tunneling_plus, "location_plus": location_plus}
 
 
-@ttl_cache()
-def _season_pitcher_k_counts(conn, season):
-    """Sorted list of per-pitcher K counts for a season — cached to avoid
-    per-season full-scan N+1 inside the career loop."""
+def _compute_season_pitcher_k_counts(conn, season):
     rows = conn.execute(
         "SELECT pitcher_id, COUNT(*) AS v FROM pitches WHERE season = ? "
         "AND events IN ('strikeout','strikeout_double_play') GROUP BY pitcher_id",
@@ -246,15 +271,32 @@ def _season_pitcher_k_counts(conn, season):
     return sorted((r[1] for r in rows), reverse=True)
 
 
-@ttl_cache()
-def _season_batter_hr_counts(conn, season):
-    """Sorted list of per-batter HR counts for a season — cached."""
+def _compute_season_batter_hr_counts(conn, season):
     rows = conn.execute(
         "SELECT batter_id, COUNT(*) AS v FROM pitches WHERE season = ? "
         "AND events = 'home_run' GROUP BY batter_id",
         (season,),
     ).fetchall()
     return sorted((r[1] for r in rows), reverse=True)
+
+
+@ttl_cache()
+def _season_pitcher_k_counts(conn, season):
+    """Sorted list of per-pitcher K counts for a season — cached to avoid
+    per-season full-scan N+1 inside the career loop."""
+    snap = _past_season_snapshot("pitcher_k", season)
+    if snap is not None:
+        return snap
+    return _compute_season_pitcher_k_counts(conn, season)
+
+
+@ttl_cache()
+def _season_batter_hr_counts(conn, season):
+    """Sorted list of per-batter HR counts for a season — cached."""
+    snap = _past_season_snapshot("batter_hr", season)
+    if snap is not None:
+        return snap
+    return _compute_season_batter_hr_counts(conn, season)
 
 
 def _top10_rank_pitcher(conn, season, metric_val, metric):
