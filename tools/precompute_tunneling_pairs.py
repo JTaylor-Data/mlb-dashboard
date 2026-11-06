@@ -14,6 +14,7 @@ REPO = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO))
 
 from analytics.tunneling_pair_composite import _qualifying_total_pitches, season_all_pairs  # noqa: E402
+from config.model_policy import CURRENT_SEASON  # noqa: E402
 
 PARQUET_DIR = REPO / "parquets"
 
@@ -32,4 +33,4 @@ def main(seasons):
 
 
 if __name__ == "__main__":
-    main([int(s) for s in sys.argv[1:]] or [2026])
+    main([int(s) for s in sys.argv[1:]] or [CURRENT_SEASON])

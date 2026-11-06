@@ -38,11 +38,11 @@ SCORES_DIR.mkdir(exist_ok=True)
 META_PATH = SCORES_DIR / "score_meta.json"
 
 FIRST_SEASON = 2015
-CURRENT_SEASON = 2026
 
 sys.path.insert(0, str(ROOT))
 
 from api.db import DB_PATH
+from config.model_policy import CURRENT_SEASON
 
 
 # ---------------------------------------------------------------------------

@@ -51,6 +51,7 @@ from analytics import boxscore
 from api import cache
 from api.db import DB_PATH
 from api.warmup import warm_cache_sync
+from config.model_policy import CURRENT_SEASON
 from config.season_phase import skip_team_stat_pulls as _skip_team_stats, is_postseason as _is_postseason
 
 # A few days before 2021's actual opening day (~April 1) - close enough
@@ -158,7 +159,7 @@ def _run(full_warmup):
         recent_cutoff = (end - timedelta(days=PLAYERS_GAMES_RECENT_WINDOW_DAYS)).isoformat()
         games_result = pull_players_games.run(since_date=recent_cutoff)
 
-        season = end.year
+        season = CURRENT_SEASON
 
         if not POSTSEASON_MODE:
             log.info("updating team stats...")

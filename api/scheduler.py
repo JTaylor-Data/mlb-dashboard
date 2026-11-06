@@ -14,7 +14,7 @@ at a button, which is what full_warmup=False (the button's default) is for.
 
 Weekly rescore
 --------------
-Every Sunday at 4:00 AM the score cache is refreshed: tools/maintenance/rescore_models.py
+Every Sunday at 5:00 AM America/Toronto the score cache is refreshed: tools/maintenance/rescore_models.py
 is run for the current season (past seasons are static and never need a rescore).
 The fresh parquets are picked up on the NEXT server restart or cache refresh.
 To get them into the live cache immediately after the rescore finishes, the
