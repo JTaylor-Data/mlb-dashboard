@@ -36,6 +36,7 @@ everything. Not wired into the nav's "Refresh data" button -
 rankings/stats don't change day to day the way live games do, so this is
 meant to be run by hand occasionally, same as pull_teams.py.
 """
+import os
 import re
 import sqlite3
 import sys
@@ -45,7 +46,7 @@ from datetime import datetime, timezone
 import requests
 from playwright.sync_api import sync_playwright
 
-DB_PATH = "mlb_data.db"
+DB_PATH = os.environ.get("DB_PATH", "mlb_data.db")
 STATSAPI_BASE = "https://statsapi.mlb.com/api/v1"
 DEFAULT_SEASON = 2026
 

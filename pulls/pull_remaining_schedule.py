@@ -11,6 +11,7 @@ correct, yesterday's is stale) - not an upsert/merge, a full replace.
 Usage:
     python pull_remaining_schedule.py [SEASON]   # defaults to 2026
 """
+import os
 import sqlite3
 import sys
 from datetime import date
@@ -18,7 +19,7 @@ from pathlib import Path
 
 import requests
 
-DB_PATH = Path(__file__).resolve().parent.parent / "mlb_data.db"
+DB_PATH = os.environ.get("DB_PATH") or str(Path(__file__).resolve().parent.parent / "mlb_data.db")
 STATSAPI_BASE = "https://statsapi.mlb.com/api/v1"
 DEFAULT_SEASON = 2026
 

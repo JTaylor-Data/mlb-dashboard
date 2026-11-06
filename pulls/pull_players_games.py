@@ -18,12 +18,13 @@ can call this the same way on every run, whether it's the nightly schedule
 or someone clicking the button, without needing a separate "full rescan"
 mode.
 """
+import os
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 
 import requests
 
-DB_PATH = "mlb_data.db"
+DB_PATH = os.environ.get("DB_PATH", "mlb_data.db")
 STATSAPI_BASE = "https://statsapi.mlb.com/api/v1"
 PEOPLE_BATCH_SIZE = 100
 

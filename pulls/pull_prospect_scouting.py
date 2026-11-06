@@ -29,6 +29,7 @@ sizeable page per player; a fully sequential pull would take much longer for
 no benefit. Upserts, so re-running refreshes everything.
 """
 import json
+import os
 import re
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -37,7 +38,7 @@ from datetime import datetime, timezone
 import requests
 from bs4 import BeautifulSoup
 
-DB_PATH = "mlb_data.db"
+DB_PATH = os.environ.get("DB_PATH", "mlb_data.db")
 SAVANT_PLAYER_URL = "https://baseballsavant.mlb.com/savant-player/{}"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 MAX_WORKERS = 10

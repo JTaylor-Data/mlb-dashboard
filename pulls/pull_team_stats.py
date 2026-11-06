@@ -24,6 +24,7 @@ for that one metric rather than guess.
 Usage:
     python pull_team_stats.py [SEASON]   # defaults to 2026
 """
+import os
 import sqlite3
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -32,7 +33,7 @@ from pathlib import Path
 
 import requests
 
-DB_PATH = Path(__file__).resolve().parent.parent / "mlb_data.db"
+DB_PATH = os.environ.get("DB_PATH") or str(Path(__file__).resolve().parent.parent / "mlb_data.db")
 STATSAPI_BASE = "https://statsapi.mlb.com/api/v1"
 DEFAULT_SEASON = 2026
 FIP_CONSTANT_APPROX = 3.10   # matches analytics/player_page.py's xFIP constant
