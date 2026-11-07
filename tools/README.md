@@ -18,3 +18,9 @@ Build utilities and maintenance scripts. These are owner-run tools, not server c
 ## Archive
 
 No files archived yet. See `docs/methodology/06_archive_policy.md`.
+
+## precompute_past_season_pitcher_page.py
+
+Writes `parquets/past_season_pitcher_page.json`: for every complete season, the season-wide tables the pitcher page (arm angles, peer movement, approach-angle pools) and Trends page (league averages) would otherwise scan live on the first view after each restart. The app falls back to the live query when an entry is missing. Rerun if past-season pitch data is re-pulled or corrected.
+
+    python tools/precompute_past_season_pitcher_page.py

@@ -19,6 +19,7 @@ from analytics.percentiles import (
     BATTER_POLARITY, PITCHER_POLARITY, batter_percentile_metrics,
     pitcher_percentile_metrics, player_percentiles, player_percentiles_allow_unqualified,
 )
+from api import past_season_snapshot
 from analytics.player_page import (
     all_pitcher_arm_angles, approach_angle_pool, peer_movement_table, batter_counting_stats, batter_pitch_type_table, batter_rolling_xwoba,
     batter_wrc_plus, field_zone_pcts, league_avg_xwoba, league_average_batter_row, league_average_swing_profile,
@@ -242,12 +243,19 @@ def _all_pitcher_arm_angles(conn, season):
     # for why this was split out and cached separately from the per-pitcher
     # function below (was a real, confirmed ~20s cost paid again for every
     # NEW pitcher a user looked at).
+    snap = past_season_snapshot.get("arm_angles", season)
+    if snap is not None:
+        return pd.DataFrame({"pitcher_id": pd.array([int(p) for p in snap], dtype="int64"),
+                             "arm_angle": pd.array(list(snap.values()), dtype="float64")})
     return all_pitcher_arm_angles(conn, season)
 
 
 @ttl_cache()
 def _peer_movement_table(conn, season):
     # Season-wide like _all_pitcher_arm_angles: one grouped scan shared by every pitcher.
+    snap = past_season_snapshot.get("peer_movement", season)
+    if snap is not None:
+        return pd.DataFrame(snap, columns=["pitcher_id", "pt", "hb_sum", "ivb_sum", "n"])
     return peer_movement_table(conn, season)
 
 
@@ -277,6 +285,9 @@ def _pitcher_rubber_position(conn, season, player_id):
 @ttl_cache()
 def _approach_angle_pool(conn, season, throws):
     # Same-hand league pool: identical for every pitcher, so scanned once per season.
+    snap = past_season_snapshot.get("approach_pool", season)
+    if snap is not None and throws in snap:
+        return pd.Series(snap[throws], name="rpx", dtype="float64")
     return approach_angle_pool(conn, season, throws)
 
 

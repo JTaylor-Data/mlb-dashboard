@@ -16,6 +16,7 @@ from analytics.splits import (
     IN_ZONE_CODES, OUT_ZONE_CODES, STRIKEOUT_EVENTS, WALK_EVENTS,
     SWING_DESCRIPTIONS, WHIFF_DESCRIPTIONS,
 )
+from api import past_season_snapshot
 from api.cache import ttl_cache
 from api.db import get_conn
 from config.model_policy import CURRENT_SEASON
@@ -349,6 +350,14 @@ def _tally(totals, df):
 
 @ttl_cache()
 def _league_averages_cached(conn, role: str, season: int):
+    snap = past_season_snapshot.get("league_avgs", season)
+    if snap is not None and role in snap:
+        return snap[role]
+    return compute_league_averages(conn, role, season)
+
+
+def compute_league_averages(conn, role: str, season: int):
+    """The live full-season scan (also what the precompute tool writes out)."""
     t = {}
     if role == "pitcher":
         row = conn.execute("""
