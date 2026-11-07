@@ -23,6 +23,7 @@ from analytics.strength_of_schedule import remaining_sos
 from analytics.team_card import _all_team_rows_and_ranks, team_card, team_metric_rankings
 
 from api.cache import ttl_cache
+from config.model_policy import CURRENT_SEASON
 from api.db import get_conn
 
 router = APIRouter(prefix="/api")
@@ -39,7 +40,7 @@ def _cached_sos(conn, season):
 
 
 @router.get("/team/{team_id}/card")
-def get_team_card(team_id: int, season: int = 2026, conn=Depends(get_conn)):
+def get_team_card(team_id: int, season: int = CURRENT_SEASON, conn=Depends(get_conn)):
     card = team_card(conn, team_id, season, rows_and_ranks=_cached_rows_and_ranks(conn, season), sos_by_team=_cached_sos(conn, season))
     if card is None:
         raise HTTPException(404, f"No team stats snapshot for team {team_id}/{season} - run pull_team_stats.py first")
@@ -47,7 +48,7 @@ def get_team_card(team_id: int, season: int = 2026, conn=Depends(get_conn)):
 
 
 @router.get("/team/metric-rankings/{metric}")
-def get_metric_rankings(metric: str, season: int = 2026, conn=Depends(get_conn)):
+def get_metric_rankings(metric: str, season: int = CURRENT_SEASON, conn=Depends(get_conn)):
     """Full 30-team ranked list for one team-card metric - powers the
     per-metric expand arrow."""
     teams = team_metric_rankings(conn, season, metric, rows_and_ranks=_cached_rows_and_ranks(conn, season))

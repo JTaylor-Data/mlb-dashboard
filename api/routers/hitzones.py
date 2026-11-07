@@ -29,6 +29,7 @@ from fastapi import APIRouter, Depends, Query
 
 
 from api.cache import ttl_cache
+from config.model_policy import CURRENT_SEASON
 from api.db import get_conn
 
 router = APIRouter(prefix="/api")
@@ -83,7 +84,7 @@ def _hit_zone_summary(conn, season, batter_id, throws_filter=None):
 @router.get("/hitzones/{batter_id}")
 def get_hit_zones(
     batter_id: int,
-    season: int = Query(2026, ge=2015, le=2030),
+    season: int = Query(CURRENT_SEASON, ge=2015, le=2030),
     split: str = Query("ALL", pattern="^(ALL|L|R)$"),
     conn=Depends(get_conn),
 ):

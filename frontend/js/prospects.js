@@ -99,11 +99,16 @@ function renderList(prospects, rankKey) {
   state.rankKey = rankKey;
   const filtered = prospects.filter((p) => matchesPosition(p, state.position));
   state.prospects = filtered;
+  // The Top 100 comes from a weekly pull, so say so above the list rather than
+  // leaving visitors to wonder whether it is current.
+  const refreshNote = rankKey === "top100_rank"
+    ? `<div class="muted" style="font-size:13px; margin-bottom:10px;">The Top 100 refreshes weekly on Monday morning.</div>`
+    : "";
   if (!filtered.length) {
-    prospectsMount.innerHTML = `<div class="empty-state">No prospects found${state.position ? ` at ${state.position}` : ""}.</div>`;
+    prospectsMount.innerHTML = `${refreshNote}<div class="empty-state">No prospects found${state.position ? ` at ${state.position}` : ""}.</div>`;
     return;
   }
-  prospectsMount.innerHTML = `<div class="prospects-list">${filtered.map((p) => prospectRowHtml(p[rankKey], p)).join("")}</div>`;
+  prospectsMount.innerHTML = `${refreshNote}<div class="prospects-list">${filtered.map((p) => prospectRowHtml(p[rankKey], p)).join("")}</div>`;
 }
 
 async function loadTeamOptions() {
@@ -389,6 +394,7 @@ prospectsMount.addEventListener("click", (e) => {
 });
 
 async function loadProspects() {
+  beginLoad();
   prospectsMount.innerHTML = `<div class="empty-state">Loading...</div>`;
   if (state.view === "league") await loadLeagueWide();
   else if (state.view === "team") await loadTeamSpecific();

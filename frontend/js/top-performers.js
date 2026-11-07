@@ -90,6 +90,7 @@ function renderPerformers(entries) {
 }
 
 async function loadTopPerformers() {
+  beginLoad();
   const day = dateInput.value;
   const walkoffMount = document.getElementById("walkoff-mount");
   setPageLoading(true);

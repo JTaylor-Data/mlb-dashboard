@@ -4,7 +4,7 @@
 let allTeams = [];
 let deceptionSeason = null;
 let currentLeague = "ALL";
-let currentSeason = 2026;
+let currentSeason = null;   // newest season with data, set on load
 let sortKey = "name";
 let sortAsc = true;
 
@@ -325,7 +325,7 @@ async function loadTeams(season) {
   renderTeamList();
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // League toggle
   document.getElementById("league-toggle").addEventListener("click", e => {
     const btn = e.target.closest("button[data-value]");
@@ -341,5 +341,6 @@ document.addEventListener("DOMContentLoaded", () => {
     loadTeams(season);
   };
 
+  currentSeason = await getLatestSeason();
   loadTeams(currentSeason);
 });

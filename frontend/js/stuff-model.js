@@ -146,7 +146,7 @@ async function loadOverallLeaderboard(season, cfg, onRowClick) {
 // ──────────────────────────────────────────────────────────── pitcher lookup
 let _selectedPitcherId = null;
 let _selectedPitcherName = "";
-let _lookupSeason = 2026;
+let _lookupSeason = null;   // set from the report config on load
 
 function renderPitcherSummary(summary, cfg) {
   const score = summary.stuff_plus;
@@ -365,7 +365,7 @@ async function init() {
   // ---- Leaderboard season selector
   const lbSeasonEl = document.getElementById("sp-lb-season");
   const seasons = cfg.available_seasons || [];
-  const defaultSeason = Number(getParam("season")) || cfg.default_season || 2026;
+  const defaultSeason = Number(getParam("season")) || cfg.default_season || (seasons.length ? seasons[seasons.length - 1] : undefined);
   lbSeasonEl.innerHTML = seasons.slice().reverse().map(s =>
     `<option value="${s}"${s===defaultSeason?" selected":""}>${s}</option>`
   ).join("");

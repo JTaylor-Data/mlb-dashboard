@@ -124,6 +124,7 @@ function playerPanelHtml(player) {
 
 let loadCompareRequestId = 0;
 async function loadCompare() {
+  beginLoad();
   if (state.playerIdA === null || state.playerIdB === null) return;
   const requestId = ++loadCompareRequestId;
   setPageLoading(true);

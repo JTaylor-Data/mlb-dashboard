@@ -11,6 +11,7 @@ from analytics.metrics import classify_pitcher_archetype
 from analytics.splits import compute_batter_splits, compute_pitcher_splits
 
 from api.cache import ttl_cache
+from config.model_policy import CURRENT_SEASON
 from api.db import get_conn
 
 router = APIRouter(prefix="/api")
@@ -30,7 +31,7 @@ def _cached_pitcher_archetype(conn, season):
 def splits_pitch_types(
     role: str = Query("pitcher", pattern="^(pitcher|batter)$"),
     player_id: int = Query(...),
-    season: int = Query(2026, ge=2015, le=2030),
+    season: int = Query(CURRENT_SEASON, ge=2015, le=2030),
     conn=Depends(get_conn),
 ):
     id_col = "pitcher_id" if role == "pitcher" else "batter_id"
@@ -51,7 +52,7 @@ def get_splits(
     player_id: int = Query(...),
     split_by: str = Query(...),
     pitch_type: str | None = Query(None),
-    season: int = Query(2026, ge=2015, le=2030),
+    season: int = Query(CURRENT_SEASON, ge=2015, le=2030),
     conn=Depends(get_conn),
 ):
     valid = _VALID_PITCHER_SPLITS if role == "pitcher" else _VALID_BATTER_SPLITS

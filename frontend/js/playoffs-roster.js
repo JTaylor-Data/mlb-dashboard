@@ -149,6 +149,7 @@ async function loadTeams() {
 }
 
 async function loadRoster() {
+  beginLoad();
   const mount = document.getElementById("roster-mount");
   mount.innerHTML = `<div class="empty-state">Loading roster...</div>`;
   const data = await getJSON(`/api/playoffs/roster?team_id=${state.teamId}&season=${state.season}`);

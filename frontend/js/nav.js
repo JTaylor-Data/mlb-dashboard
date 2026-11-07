@@ -63,7 +63,7 @@ function initNav() {
     </div>
   `;
 
-  getJSON("/api/meta")
+  getMeta()
     .then((meta) => {
       const el = document.getElementById("nav-data-as-of");
       if (el) {
@@ -215,12 +215,12 @@ async function toggleMetricExpand(btn) {
   }
   btn.classList.add("open");
   body.style.display = "block";
-  const season = btn.dataset.season || 2026;
+  const season = btn.dataset.season || await getLatestSeason();
   const cacheKey = `${metric}-${season}`;
   if (!metricRankingsCache[cacheKey]) {
     body.innerHTML = `<div class="tc-expand-loading">Loading...</div>`;
     try {
-      metricRankingsCache[cacheKey] = await getJSON(`/api/team/metric-rankings/${metric}?season=${season}`);
+      metricRankingsCache[cacheKey] = await getJSON(`/api/team/metric-rankings/${metric}?season=${season}`, { persist: true });
     } catch (err) {
       body.innerHTML = `<div class="tc-expand-loading">Couldn't load full list.</div>`;
       return;
@@ -248,7 +248,7 @@ async function openTeamCard(teamId) {
   document.getElementById("team-card-body").innerHTML = `<div class="empty-state">Loading...</div>`;
   const requestId = ++teamCardRequestId;
   try {
-    const data = await getJSON(`/api/team/${teamId}/card`);
+    const data = await getJSON(`/api/team/${teamId}/card`, { persist: true });
     if (requestId !== teamCardRequestId) return; // a later click won the race
     renderTeamCard(data);
   } catch (err) {

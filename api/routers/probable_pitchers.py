@@ -24,6 +24,7 @@ from api.routers.deception_report import _raw_predictions_table as _dec_scores_t
 
 from api.cache import ttl_cache
 from api.db import get_conn
+from config.model_policy import CURRENT_SEASON
 from api.routers.deception_report import REPORT_SEASON as DECEPTION_REPORT_SEASON
 
 router = APIRouter(prefix="/api")
@@ -59,7 +60,7 @@ def _tunneling_dict(conn, season):
 @ttl_cache()
 def _location_dict(conn, season):
     # location_v3_model uses "xrv" column; plus-scale: 100 - 10*(v-mu)/sigma
-    from config.model_policy import LOCATION_PLUS
+    from config.model_policy import LOCATION_PLUS, CURRENT_SEASON
     min_pitches = LOCATION_PLUS.get("min_pitches_2020", 111) if season == 2020 else LOCATION_PLUS["min_pitches_leaderboard"]
     raw = _loc_raw(conn, season)
     if raw.empty:
@@ -188,7 +189,7 @@ def _player_name(conn, player_id):
 @router.get("/probable-pitchers")
 def get_probable_pitchers(
     date: str = Query(None, description="YYYY-MM-DD, defaults to today"),
-    season: int = Query(2026, ge=2015, le=2030),
+    season: int = Query(CURRENT_SEASON, ge=2015, le=2030),
     conn=Depends(get_conn),
 ):
     """

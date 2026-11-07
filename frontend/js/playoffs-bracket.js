@@ -291,6 +291,7 @@ function drawConnectors() {
 }
 
 async function loadBracket() {
+  beginLoad();
   setPageLoading(true);
   try {
     const data = await getJSON(`/api/playoffs/bracket?season=${state.season}`);

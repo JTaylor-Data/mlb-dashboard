@@ -59,6 +59,7 @@ async function loadPitchTypes() {
 }
 
 async function loadSplits() {
+  beginLoad();
   if (state.playerId === null) return;
   const splitBy = splitBySelect.value;
   const pitchType = pitchTypeSelect.value;

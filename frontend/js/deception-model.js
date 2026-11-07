@@ -272,7 +272,7 @@ async function wirePlayerSearch() {
 
 // ──────────────────────────────────────────────────────── main init
 (async function init() {
-  const initSeason = Number(getParam("season")) || 2026;
+  const initSeason = Number(getParam("season")) || await getLatestSeason();
   await loadPlayerNames(initSeason);
   loadVersionMeta();
   loadLabelBadge();

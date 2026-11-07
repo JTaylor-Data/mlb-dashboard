@@ -18,8 +18,15 @@ async function loadNews() {
       </div>`;
       return;
     }
-    const latest = data.items[0].fetched_at;
-    if (latest) note.textContent = `Last fetched: ${latest.slice(0, 19)} UTC`;
+    // Items arrive sorted by priority, not time, so take the newest fetch time.
+    const latest = data.items.map((i) => i.fetched_at).filter(Boolean).sort().pop();
+    if (latest) {
+      const when = new Date(latest.slice(0, 19).replace(" ", "T") + "Z");   // stored as UTC
+      if (!isNaN(when)) {
+        note.textContent = `Newest story added ${when.toLocaleString(undefined, { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })} (${timeAgo(when)})`;
+        note.title = "Headlines are checked for during the daily data refresh; this is when the newest one was added.";
+      }
+    }
 
     function itemBody(item) {
       const desc    = (item.description || "").trim();
@@ -69,6 +76,17 @@ async function loadNews() {
   } finally {
     setPageLoading(false);
   }
+}
+
+// "3 hours ago" / "2 days ago" - plain-language age of a past moment.
+function timeAgo(date) {
+  const mins = Math.max(0, Math.round((Date.now() - date.getTime()) / 60000));
+  if (mins < 2) return "just now";
+  if (mins < 60) return `${mins} minutes ago`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 24) return `${hrs} hour${hrs === 1 ? "" : "s"} ago`;
+  const days = Math.round(hrs / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
 }
 
 function escHtml(s) {

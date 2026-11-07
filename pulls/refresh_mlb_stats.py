@@ -28,8 +28,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 DB_PATH = os.environ.get("DB_PATH", "mlb_data.db")
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from config.model_policy import CURRENT_SEASON  # noqa: E402
 
-def refresh_rosters(season: int = 2026, postseason: bool = False) -> None:
+
+def refresh_rosters(season: int = CURRENT_SEASON, postseason: bool = False) -> None:
     from data.mlb_stats_api import pull_all_rosters
     print("Pulling active rosters...")
     n = pull_all_rosters("active", season, DB_PATH)
@@ -47,7 +50,7 @@ def refresh_rosters(season: int = 2026, postseason: bool = False) -> None:
                 print(f"  {round_key}: skipped ({e})")
 
 
-def refresh_schedule(days_ahead: int = 7, season: int = 2026) -> None:
+def refresh_schedule(days_ahead: int = 7, season: int = CURRENT_SEASON) -> None:
     from data.mlb_stats_api import schedule
     today = date.today()
     start = today.isoformat()
@@ -64,7 +67,7 @@ def refresh_news() -> None:
     print(f"  {n} new news items stored")
 
 
-def run(season: int = 2026, skip_news: bool = False, postseason: bool = False) -> None:
+def run(season: int = CURRENT_SEASON, skip_news: bool = False, postseason: bool = False) -> None:
     refresh_schedule(days_ahead=14, season=season)
     refresh_rosters(season, postseason=postseason)
     if not skip_news:
@@ -75,5 +78,5 @@ def run(season: int = 2026, skip_news: bool = False, postseason: bool = False) -
 
 
 if __name__ == "__main__":
-    season = int(sys.argv[1]) if len(sys.argv) > 1 else 2026
+    season = int(sys.argv[1]) if len(sys.argv) > 1 else CURRENT_SEASON
     run(season)

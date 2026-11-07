@@ -342,6 +342,7 @@ function bindRowSelection() {
 
 // ── Main render ─────────────────────────────────────────────────
 async function renderCareer() {
+  beginLoad();
   if (!careerState.playerId) return;
   const mount = document.getElementById("career-mount");
   const title = document.getElementById("career-title");

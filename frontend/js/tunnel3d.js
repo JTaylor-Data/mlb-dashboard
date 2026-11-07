@@ -479,6 +479,7 @@ function solveTPlateFromPoints(points) {
 }
 
 async function loadPitcher(pitcherId, season) {
+  beginLoad();
   currentPitcherId = pitcherId;
   currentSeason = season;
   legendEl.innerHTML = `<h1>Loading...</h1>`;

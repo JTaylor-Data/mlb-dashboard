@@ -51,6 +51,7 @@ function divisionTableHtml(division) {
 }
 
 async function loadStandings() {
+  beginLoad();
   setPageLoading(true);
   try {
     const data = await getJSON(`/api/standings?league=${currentLeague}&season=${state.season}`);

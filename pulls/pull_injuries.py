@@ -37,7 +37,10 @@ import requests
 
 DB_PATH = Path(__file__).resolve().parent.parent / "mlb_data.db"
 STATSAPI_BASE = "https://statsapi.mlb.com/api/v1"
-DEFAULT_SEASON = 2026
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+from config.model_policy import CURRENT_SEASON as DEFAULT_SEASON  # noqa: E402  (bump CURRENT_SEASON, not this)
 
 # Minimum stint length per IL type - a real MLB roster rule, not a guess.
 MIN_STINT_DAYS = {"D7": 7, "D10": 10, "D15": 15, "D60": 60}

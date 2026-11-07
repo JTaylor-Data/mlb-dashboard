@@ -1738,6 +1738,7 @@ function setLoadProgress(active) {
 }
 
 async function loadPlayer() {
+  beginLoad();
   if (state.playerId === null || state.playerId === "") return;
   const requestId = ++loadPlayerRequestId;
   const requestMode = state.mode;

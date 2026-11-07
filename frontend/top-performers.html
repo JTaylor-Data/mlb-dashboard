@@ -42,7 +42,7 @@
       <span class="rs-freeze-banner-icon">&#128197;</span>
       Data includes postseason results.
     </div>
-    <script>(function(){var d=new Date().toISOString().slice(0,10);if(d>='2026-10-01')document.getElementById('rs-freeze-banner').style.display='flex';})();</script>
+    <script>fetch('/api/meta').then(function(r){return r.json();}).then(function(m){if(m.season_phase&&m.season_phase!=='REGULAR_SEASON'){document.getElementById('rs-freeze-banner').style.display='flex';var y=document.getElementById('rs-freeze-year');if(y)y.textContent=m.current_season;}}).catch(function(){});</script>
     <div class="muted" style="font-size:12px; margin-bottom:14px;">
       Ranked by a per-day weighted score (batters: HR, then H, then RBI, then SB; pitchers: ER (lower is better),
       then IP, then K, then H allowed). WPA (Win Probability Added, straight from Statcast's own per-pitch win
@@ -53,11 +53,11 @@
     <div id="performers-mount"></div>
   </div>
 
-  <script src="js/api.js?v=19"></script>
+  <script src="js/api.js?v=20"></script>
   <script src="js/gradient.js?v=23"></script>
-  <script src="js/nav.js?v=116"></script>
+  <script src="js/nav.js?v=117"></script>
   <script src="js/player-context.js?v=1"></script>
-  <script src="js/top-performers.js?v=12"></script>
+  <script src="js/top-performers.js?v=13"></script>
 </body>
 </html>
 

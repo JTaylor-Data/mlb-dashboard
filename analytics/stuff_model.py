@@ -187,12 +187,17 @@ def _raw_predictions(conn, season):
     return out
 
 
-def clear_cache():
+def clear_cache(season=None):
     """Called after a data pull lands new pitches - without this, a
     refresh could show stale predictions for up to
     RAW_PREDICTIONS_CACHE_TTL_SECONDS even after the underlying data
-    changed."""
-    _raw_predictions_cache.clear()
+    changed. With `season`, only that season's entries go (a finished
+    season's predictions never change)."""
+    if season is None:
+        _raw_predictions_cache.clear()
+        return
+    for key in [k for k in _raw_predictions_cache if k[1] == season]:
+        _raw_predictions_cache.pop(key, None)
 
 
 DEFAULT_SHRINKAGE_K = 1.5  # fallback for pitch types too rare to estimate their own (see below)

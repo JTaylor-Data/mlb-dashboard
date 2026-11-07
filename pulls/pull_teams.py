@@ -12,7 +12,10 @@ import sys
 import requests
 
 DB_PATH = "mlb_data.db"
-DEFAULT_SEASON = 2026
+import sys as _sys
+from pathlib import Path as _Path
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+from config.model_policy import CURRENT_SEASON as DEFAULT_SEASON  # noqa: E402  (bump CURRENT_SEASON, not this)
 
 
 def run(season: int):

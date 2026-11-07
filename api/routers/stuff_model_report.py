@@ -20,6 +20,7 @@ from analytics.stuff_model import (
 from analytics.player_page import pitcher_pitch_table
 
 from api.cache import ttl_cache
+from config.model_policy import CURRENT_SEASON
 from api.db import get_conn
 from config.qualifiers import STUFF_MIN_PITCHES_LEADERBOARD
 
@@ -216,7 +217,7 @@ def _stuff_leaderboard_by_type(conn, season, pitch_type, n=15):
 
 @router.get("/leaderboard")
 def get_stuff_leaderboard(
-    season: int = Query(default=2026, ge=2016, le=2026, description="Season (2016–2026)"),
+    season: int = Query(default=CURRENT_SEASON, ge=2016, le=CURRENT_SEASON, description="Season (2016 through the current season)"),
     pitch_type: str = Query(default=None, description="Pitch type filter (e.g. FF, SL, CU); omit for overall"),
     n: int = Query(default=15, ge=1, le=50, description="Number of entries per side"),
     direction: str = Query(default="both", description="top, bottom, or both"),
@@ -269,7 +270,7 @@ def _stuff_pitch_types_cached(conn, season):
 
 @router.get("/pitch-types")
 def get_pitch_types(
-    season: int = Query(default=2026, ge=2016, le=2026),
+    season: int = Query(default=CURRENT_SEASON, ge=2016, le=CURRENT_SEASON),
     conn=Depends(get_conn),
 ):
     """Pitch types that have qualifying pitchers (>= 100 pitches of that type) in the season."""

@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from analytics.playoffs import division_leaders, playoff_teams, projected_roster, unified_bracket, wildcard_race
 
 from api.cache import ttl_cache
+from config.model_policy import CURRENT_SEASON
 from api.db import get_conn
 from api.routers.standings import _standings  # shared cached wrapper — one cache for both routers
 
@@ -15,12 +16,12 @@ router = APIRouter(prefix="/api/playoffs")
 
 
 @router.get("/division-leaders")
-def get_division_leaders(season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_conn)):
+def get_division_leaders(season: int = Query(CURRENT_SEASON, ge=2015, le=2030), conn=Depends(get_conn)):
     return {"season": season, "leaders": division_leaders(conn, season, _standings(conn, season))}
 
 
 @router.get("/wildcard")
-def get_wildcard_race(league: str = Query("AL", pattern="^(AL|NL)$"), season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_conn)):
+def get_wildcard_race(league: str = Query("AL", pattern="^(AL|NL)$"), season: int = Query(CURRENT_SEASON, ge=2015, le=2030), conn=Depends(get_conn)):
     return {"season": season, "league": league, "race": wildcard_race(conn, season, _standings(conn, season), league)}
 
 
@@ -30,7 +31,7 @@ def _bracket(conn, season):
 
 
 @router.get("/bracket")
-def get_bracket(season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_conn)):
+def get_bracket(season: int = Query(CURRENT_SEASON, ge=2015, le=2030), conn=Depends(get_conn)):
     """Both leagues at once (no `league` param - the bracket page always
     shows both). Real results when they exist for this season, else the
     live standings projection - see analytics/playoffs.py's unified_bracket."""
@@ -38,7 +39,7 @@ def get_bracket(season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_co
 
 
 @router.get("/teams")
-def get_playoff_teams(league: str = Query("AL", pattern="^(AL|NL)$"), season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_conn)):
+def get_playoff_teams(league: str = Query("AL", pattern="^(AL|NL)$"), season: int = Query(CURRENT_SEASON, ge=2015, le=2030), conn=Depends(get_conn)):
     """Team picker options for the Rosters tab - the 6 teams currently in
     bracket position for `league`, with name/abbreviation resolved."""
     standings = _standings(conn, season)
@@ -60,5 +61,5 @@ def _roster(conn, season, team_id):
 
 
 @router.get("/roster")
-def get_projected_roster(team_id: int = Query(...), season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_conn)):
+def get_projected_roster(team_id: int = Query(...), season: int = Query(CURRENT_SEASON, ge=2015, le=2030), conn=Depends(get_conn)):
     return _roster(conn, season, team_id)

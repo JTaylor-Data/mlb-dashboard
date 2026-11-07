@@ -237,8 +237,10 @@ def _run(full_warmup):
             # (includes L/R splits, similar players, etc.)
             from analytics import stuff_model
 
-            cache.clear_all()
-            stuff_model.clear_cache()
+            # Only the current season's entries: finished seasons are unchanged
+            # and rebuilding them is slow on the small production machine.
+            cache.clear_current_season(CURRENT_SEASON)
+            stuff_model.clear_cache(CURRENT_SEASON)
             boxscore.clear_cache()
         elif full_warmup and POSTSEASON_MODE and new_pitches > 0:
             # Postseason: RS model scores are final — don't nuke and recompute them.

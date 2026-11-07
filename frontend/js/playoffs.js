@@ -93,6 +93,7 @@ async function loadWildcard() {
 }
 
 async function loadAll() {
+  beginLoad();
   setPageLoading(true);
   try {
     await Promise.all([loadDivisionLeaders(), loadWildcard()]);

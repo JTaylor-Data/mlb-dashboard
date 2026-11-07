@@ -42,6 +42,7 @@ from api.routers import (
     trends, tunneling_report, tunneling_3d, probable_pitchers, news,
 )
 from api.warmup import warm_cache_background
+from config.season_phase import SEASON_PHASE
 from config.model_policy import CURRENT_SEASON
 
 # API docs (/docs, /redoc, /openapi.json) are off unless ENABLE_API_DOCS=1,
@@ -109,6 +110,9 @@ def get_meta(conn=Depends(get_conn)):
         "latest_schedule_date": sched_row[0] if sched_row else None,
         "available_seasons": seasons,
         "current_season": CURRENT_SEASON,
+        # REGULAR_SEASON / POSTSEASON / OFFSEASON (config/season_phase.py) - the
+        # frontend's freeze banners key off this instead of a hardcoded date.
+        "season_phase": SEASON_PHASE,
         # When the last data pull completed (unix seconds), whether or not it
         # found anything new - lets the nav tell visitors the site is being
         # kept up to date even in the offseason. None if unknown.

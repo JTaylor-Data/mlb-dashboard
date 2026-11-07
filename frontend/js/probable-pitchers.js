@@ -199,6 +199,7 @@ function formatDateLabel(dateStr) {
 }
 
 async function loadGames(startDate, windowDays = 7) {
+  beginLoad();
   setPageLoading(true);
   const mount = document.getElementById("games-mount");
   const motdMount = document.getElementById("motd-mount");

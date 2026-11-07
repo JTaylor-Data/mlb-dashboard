@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, Query
 
 
 from api.cache import ttl_cache
+from config.model_policy import CURRENT_SEASON
 from api.db import get_conn
 
 router = APIRouter(prefix="/api")
@@ -129,7 +130,7 @@ def _pitch_location_summary(conn, season, pitcher_id, stand_filter=None):
 @router.get("/heatmaps/{pitcher_id}")
 def get_pitch_heatmap(
     pitcher_id: int,
-    season: int = Query(2026, ge=2015, le=2030),
+    season: int = Query(CURRENT_SEASON, ge=2015, le=2030),
     # No "ALL" - averaging pitch location across both batter hands together
     # is close to meaningless for a pitcher (his target shifts by opponent
     # hand), so this always requires a real split.

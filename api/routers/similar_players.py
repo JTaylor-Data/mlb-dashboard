@@ -17,6 +17,7 @@ from analytics.similarity import (
     build_pitcher_arsenal_pool, build_similarity_pool, find_comps,
 )
 from api.cache import ttl_cache
+from config.model_policy import CURRENT_SEASON
 from api.db import available_seasons, get_conn
 from api.routers.career import _past_season_snapshot
 from api.routers.players import _batter_pool, _pitcher_pool, _team_for_season
@@ -101,7 +102,7 @@ def _resolve_player(conn, player_id, season, role):
 def get_similar_players(
     player_id: int,
     role: str = Query(..., pattern="^(pitcher|batter)$"),
-    season: int = Query(2026, ge=2015, le=2030),
+    season: int = Query(CURRENT_SEASON, ge=2015, le=2030),
     top_n: int = Query(3, ge=1, le=10),
     conn=Depends(get_conn),
 ):

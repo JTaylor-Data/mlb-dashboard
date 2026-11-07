@@ -8,6 +8,18 @@ const INNER_H = CHART_H - PAD.top - PAD.bottom;
 const LINE_COLORS = ["#2d6a4f","#1f77b4","#e6a020","#c9302c","#8c564b","#a040c0","#17becf","#e377c2"];
 const MONTH_ABBR = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sept","Oct","Nov","Dec"];
 
+let latestSeason = null;   // newest season with pitch data (from /api/meta)
+
+// The year picker: the latest three seasons with data, then All. Built from the
+// data rather than hardcoded so it rolls over to the new season on its own.
+function buildYearSelect(latest) {
+  const sel = document.getElementById("year-select");
+  if (!sel) return;
+  const years = [latest, latest - 1, latest - 2];
+  sel.innerHTML = years.map((y) => `<option value="${y}">${y}</option>`).join("") + '<option value="all">All</option>';
+  sel.value = String(latest);
+}
+
 function fmtDate(iso) {
   // "2026-09-06" → "Sept 6"
   const parts = iso.split("-");
@@ -18,7 +30,7 @@ function fmtDate(iso) {
 
 let state = {
   role: "pitcher",
-  season: "2026",
+  season: null,   // set to the latest season with data on load
   activeCat: "Physical",
   horizon: "days365",   // e.g. "games5", "days180", "pa50", "career"
   showLgAvg: true,
@@ -50,7 +62,7 @@ async function initTrendsSearch(role) {
     state.compatibleUnit = null;
     render();
   }, { roleFilter: role });
-  const season = state.season === "all" ? "2026" : state.season;
+  const season = state.season === "all" ? String(latestSeason) : state.season;
   await _trendsSearch.load(season);
 }
 
@@ -418,6 +430,7 @@ function removeDisplay(key) {
 
 async function render() {
   if (!state.playerId) return;
+  beginLoad();
   const chartMount = document.getElementById("chart-mount");
   chartMount.innerHTML = `<div class="trend-empty">Loading…</div>`;
   clearActiveChips();
@@ -466,7 +479,7 @@ async function render() {
 async function fetchLgAvg() {
   try {
     state.lgAvgs = await getJSON(
-      `/api/trends/league-averages?role=${state.role}&season=${state.season === "all" ? "2026" : state.season}`
+      `/api/trends/league-averages?role=${state.role}&season=${state.season === "all" ? latestSeason : state.season}`
     );
   } catch {
     state.lgAvgs = null;
@@ -550,7 +563,9 @@ function renderChart() {
 // ── controls wiring ───────────────────────────────────────────────────────
 
 document.addEventListener("DOMContentLoaded", async () => {
-  state.season = "2026";
+  latestSeason = await getLatestSeason();
+  buildYearSelect(latestSeason);
+  state.season = String(latestSeason);
   state.horizon = "days365";
   document.getElementById("lg-avg-toggle").checked = true;
 

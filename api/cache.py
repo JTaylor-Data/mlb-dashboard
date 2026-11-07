@@ -43,6 +43,18 @@ def _store_set(store, key, value):
         store.pop(next(iter(store)))
 
 
+def _is_past_season_key(key, current_season):
+    """True when a cache key names a season (a 2000-2100 int argument) and every
+    such season is a finished one. A finished season's numbers never change, so
+    new pitches only invalidate keys that involve the current season or no
+    season at all (cross-season aggregates, per-player and per-date entries).
+    MLB player, game and team ids never fall in 2000-2100."""
+    args, kwargs = key
+    seasons = [a for a in list(args) + [v for _, v in kwargs]
+               if isinstance(a, int) and not isinstance(a, bool) and 2000 <= a <= 2100]
+    return bool(seasons) and all(x < current_season for x in seasons)
+
+
 def ttl_cache(ttl_seconds=DEFAULT_TTL_SECONDS):
     """
     Every cached function in this app takes a fresh sqlite3 connection as its
@@ -91,7 +103,12 @@ def ttl_cache(ttl_seconds=DEFAULT_TTL_SECONDS):
         def clear():
             store.clear()
 
+        def clear_current(current_season):
+            for key in [k for k in store if not _is_past_season_key(k, current_season)]:
+                store.pop(key, None)
+
         wrapper.clear = clear
+        wrapper.clear_current = clear_current
         _registry.append(wrapper)
         return wrapper
 
@@ -130,7 +147,12 @@ def ttl_cache_all_args(ttl_seconds=DEFAULT_TTL_SECONDS):
         def clear():
             store.clear()
 
+        def clear_current(current_season):
+            for key in [k for k in store if not _is_past_season_key(k, current_season)]:
+                store.pop(key, None)
+
         wrapper.clear = clear
+        wrapper.clear_current = clear_current
         _registry.append(wrapper)
         return wrapper
 
@@ -140,3 +162,11 @@ def ttl_cache_all_args(ttl_seconds=DEFAULT_TTL_SECONDS):
 def clear_all():
     for cached_fn in _registry:
         cached_fn.clear()
+
+
+def clear_current_season(current_season):
+    """What a scheduled refresh with new pitches should clear: everything that
+    could involve the current season, but not the finished seasons' entries,
+    which are unchanged and costly to rebuild on a small machine."""
+    for cached_fn in _registry:
+        cached_fn.clear_current(current_season)

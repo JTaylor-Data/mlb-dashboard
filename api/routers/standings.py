@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from analytics.standings import best_record_team_id, compute_standings
 
 from api.cache import ttl_cache
+from config.model_policy import CURRENT_SEASON
 from api.db import get_conn
 
 router = APIRouter(prefix="/api")
@@ -17,7 +18,7 @@ def _standings(conn, season):
 
 
 @router.get("/standings")
-def get_standings(league: str = Query("AL", pattern="^(AL|NL)$"), season: int = Query(2026, ge=2015, le=2030), conn=Depends(get_conn)):
+def get_standings(league: str = Query("AL", pattern="^(AL|NL)$"), season: int = Query(CURRENT_SEASON, ge=2015, le=2030), conn=Depends(get_conn)):
     standings = _standings(conn, season)
     league_df = standings[standings["league"] == league]
     best_id = best_record_team_id(standings, league)
