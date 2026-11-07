@@ -67,10 +67,17 @@ function initNav() {
     .then((meta) => {
       const el = document.getElementById("nav-data-as-of");
       if (el) {
+        // "Refreshed" = when the last scheduled pull completed (it runs daily and,
+        // in the offseason, usually finds nothing new). "Games through" = the
+        // last game with pitch data. Both, so a quiet offseason doesn't read as stale.
         const pitchDate = meta.latest_game_date;
-        const schedDate = meta.latest_schedule_date;
-        const displayDate = (schedDate && (!pitchDate || schedDate > pitchDate)) ? schedDate : pitchDate;
-        if (displayDate) el.textContent = `Data as of ${displayDate}`;
+        const refreshed = meta.last_pull_at
+          ? new Date(meta.last_pull_at * 1000).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+          : null;
+        const parts = [];
+        if (refreshed) parts.push(`Refreshed ${refreshed}`);
+        if (pitchDate) parts.push(`games through ${pitchDate}`);
+        if (parts.length) el.textContent = parts.join(" · ");
       }
     })
     .catch(() => {});
