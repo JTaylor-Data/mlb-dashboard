@@ -16,7 +16,7 @@ from api.presentation import (
     BATTER_FMT, BATTER_GROUPS, BATTER_LABELS, PITCHER_FMT, PITCHER_GROUPS, PITCHER_LABELS,
     RADAR_METRICS, format_value,
 )
-from api.routers.players import _batter_pool, _clean, _norm_split, _percentile_groups, _pitcher_pool
+from api.routers.players import _batter_pool, _clean, _norm_split, _percentile_groups, _pitcher_pool, _team_for_season
 
 router = APIRouter(prefix="/api")
 
@@ -86,7 +86,8 @@ def compare_players(
     result = []
     for player_id in (player_id_a, player_id_b):
         name = _player_name(conn, player_id)
-        team_id = conn.execute("SELECT team_id FROM players WHERE player_id = ?", (player_id,)).fetchone()[0]
+        team_id = _team_for_season(conn, player_id, season, role) or conn.execute(
+            "SELECT team_id FROM players WHERE player_id = ?", (player_id,)).fetchone()[0]
         pct = player_percentiles(pool, player_id, polarity)
         groups = _percentile_groups(pct, labels, fmt, groups_def)
         result.append({"player_id": player_id, "name": name, "team_id": team_id, "groups": groups})

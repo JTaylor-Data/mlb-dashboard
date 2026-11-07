@@ -71,6 +71,8 @@ SIMILARITY_METRIC_LABELS = {
     "oaa": "OAA", "gb_pct": "GB%", "velo": "FB Velo", "arm_angle": "Arm Angle",
 }
 
+MIN_SHARED_METRICS = 5  # a season with fewer measured similarity metrics than this gets no comps
+
 ARSENAL_MIN_USAGE = 0.10  # a pitch type needs >= 10% season usage to count toward a pitcher's arsenal set - see module docstring
 ARSENAL_BLEND_WEIGHT = 0.3  # how much the arsenal-overlap penalty (0-100 scale) counts toward the final distance, alongside the percentile-difference term (also 0-100 scale) - see module docstring
 
@@ -92,8 +94,15 @@ def build_similarity_pool(season_pools, metrics):
         present = [m for m in metrics if m in pool_df.columns]
         if len(present) < len(metrics):
             continue
+        # A metric nobody has that season (sprint speed / OAA before 2020, arm
+        # angle before 2020) wasn't measured then. Judge completeness on the
+        # metrics that exist that season, so old seasons still get comps on
+        # the shared ones instead of being dropped wholesale.
+        usable = [m for m in metrics if pool_df[m].notna().any()]
+        if len(usable) < MIN_SHARED_METRICS:
+            continue
         pct = pool_df[metrics].rank(pct=True) * 100
-        pct = pct.dropna(how="any").copy()
+        pct = pct.dropna(subset=usable).copy()
         if pct.empty:
             continue
         pct["season"] = season
@@ -172,6 +181,12 @@ def find_comps(pool, player_id, season, metrics, top_n=3, p_throws_by_player=Non
     if others.empty:
         return []
 
+    # Metrics a season never measured are NaN; `metrics` is already narrowed
+    # to the ones the query player-season has, so only candidates that have
+    # all of those can be compared on equal terms.
+    others = others.dropna(subset=metrics)
+    if others.empty:
+        return []
     diffs = (others[metrics] - target).abs().mean(axis=1)
     if arsenal_pool is not None and key in arsenal_pool.index:
         target_arsenal = arsenal_pool.loc[key]

@@ -20,6 +20,7 @@ from analytics.percentiles import (
     pitcher_percentile_metrics, player_percentiles, player_percentiles_allow_unqualified,
 )
 from api import past_season_snapshot
+from analytics.metrics import league_average_woba
 from analytics.player_page import (
     all_pitcher_arm_angles, approach_angle_pool, peer_movement_table, batter_counting_stats, batter_pitch_type_table, batter_rolling_xwoba,
     batter_wrc_plus, field_zone_pcts, league_avg_xwoba, league_average_batter_row, league_average_swing_profile,
@@ -193,9 +194,28 @@ def _league_hr_fb(conn, season):
     return league_hr_per_fb(conn, season)
 
 
+def _split_key(split_filter):
+    return split_filter if split_filter in ("L", "R") else "ALL"
+
+
 @ttl_cache()
 def _league_avg_batter_row(conn, season, throws_filter):
+    snap = past_season_snapshot.get("league_batter_row", season)
+    if snap is not None and _split_key(throws_filter) in snap:
+        return dict(snap[_split_key(throws_filter)])
     return league_average_batter_row(conn, season, throws_filter)
+
+
+@ttl_cache()
+def _league_woba(conn, season):
+    snap = past_season_snapshot.get("league_woba", season)
+    return snap if snap is not None else league_average_woba(conn, season)
+
+
+@ttl_cache()
+def _league_avg_xwoba(conn, season):
+    snap = past_season_snapshot.get("league_xwoba", season)
+    return snap if snap is not None else league_avg_xwoba(conn, season)
 
 
 # Mirrors _league_avg_batter_row above - pitcher_league_avg_row does a full
@@ -207,11 +227,17 @@ def _league_avg_batter_row(conn, season, throws_filter):
 # table live; now it's a cache hit after the first pitcher/split combo.
 @ttl_cache()
 def _pitcher_league_avg_row(conn, season, stand_filter):
+    snap = past_season_snapshot.get("league_pitcher_row", season)
+    if snap is not None and _split_key(stand_filter) in snap:
+        return dict(snap[_split_key(stand_filter)])
     return pitcher_league_avg_row(conn, season, stand_filter)
 
 
 @ttl_cache()
 def _league_swing_profile(conn, season):
+    snap = past_season_snapshot.get("league_swing_profile", season)
+    if snap is not None:
+        return dict(snap)
     return league_average_swing_profile(conn, season)
 
 
@@ -280,6 +306,26 @@ def _pitch_usage_by_stand(conn, season, player_id):
 @ttl_cache()
 def _pitcher_rubber_position(conn, season, player_id):
     return pitcher_rubber_position(conn, season, player_id)
+
+
+@ttl_cache()
+def _team_for_season(conn, player_id, season, role):
+    """The team this player appeared for most in `season` (what the logo should
+    show), not players.team_id, which is wherever they are now. Same derivation
+    as /players/{id}/seasons: a pitcher pitches for the home team in the Top
+    half, a batter bats for the away team in the Top half. None if no data."""
+    id_col, home_when_top = ("pitcher_id", True) if role == "pitcher" else ("batter_id", False)
+    top_team, bot_team = ("g.home_team", "g.away_team") if home_when_top else ("g.away_team", "g.home_team")
+    row = conn.execute(
+        f"""
+        SELECT CASE p.inning_topbot WHEN 'Top' THEN {top_team} ELSE {bot_team} END AS team_id, COUNT(*) AS n
+        FROM pitches p JOIN games g ON p.game_id = g.game_id
+        WHERE p.season = ? AND p.{id_col} = ?
+        GROUP BY team_id ORDER BY n DESC LIMIT 1
+        """,
+        (season, player_id),
+    ).fetchone()
+    return int(row[0]) if row and row[0] else None
 
 
 @ttl_cache()
@@ -626,6 +672,7 @@ def _build_player_steps(conn, player_id, role, split, season):
     name, team_id, bats, throws, position = player_row
     split_filter = _norm_split(split)
 
+    team_id = _team_for_season(conn, player_id, season, role) or team_id
     base = {"player_id": player_id, "name": name, "team_id": team_id, "position": position, "role": role, "split": split, "season": season}
     base["last_5_games"] = _last_5_basic(conn, season, player_id, role)
     base["last_5_pending"] = True
@@ -810,7 +857,7 @@ def _build_player_steps(conn, player_id, role, split, season):
         is_all_split = not split_filter or split_filter == "ALL"
         real_wrc = _real_sabermetric(conn, season, player_id, "wrc_plus") if is_all_split else None
         wrc_label = "wRC+" if real_wrc is not None else "wRC+ (approx)"
-        wrc_value = real_wrc if real_wrc is not None else batter_wrc_plus(conn, season, player_id, split_filter)
+        wrc_value = real_wrc if real_wrc is not None else batter_wrc_plus(conn, season, player_id, split_filter, league_woba=_league_woba(conn, season))
         real_war = _real_sabermetric(conn, season, player_id, "war_batting")
 
         base["card"] = [
@@ -1403,5 +1450,5 @@ def get_rolling_xwoba(
 ):
     """Raw per-qualifying-PA xwOBA for a batter; client computes horizons and smoothing."""
     points = batter_rolling_xwoba(conn, season, player_id)
-    lg_avg = league_avg_xwoba(conn, season)
+    lg_avg = _league_avg_xwoba(conn, season)
     return {"points": points, "league_avg": lg_avg}

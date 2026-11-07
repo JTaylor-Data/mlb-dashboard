@@ -19,7 +19,7 @@ from analytics.similarity import (
 from api.cache import ttl_cache
 from api.db import available_seasons, get_conn
 from api.routers.career import _past_season_snapshot
-from api.routers.players import _batter_pool, _pitcher_pool
+from api.routers.players import _batter_pool, _pitcher_pool, _team_for_season
 
 router = APIRouter(prefix="/api")
 
@@ -88,9 +88,13 @@ def _pitcher_arsenal_pool(conn):
     return pd.concat(parts).sort_index() if parts else pd.Series(dtype=object)
 
 
-def _resolve_player(conn, player_id):
+def _resolve_player(conn, player_id, season, role):
+    """Name, plus the team they were on in the comp's own season (the current
+    players.team_id is only the fallback when that season has no team)."""
     row = conn.execute("SELECT name, team_id FROM players WHERE player_id = ?", (player_id,)).fetchone()
-    return {"name": row[0], "team_id": row[1]} if row else {"name": None, "team_id": None}
+    if not row:
+        return {"name": None, "team_id": None}
+    return {"name": row[0], "team_id": _team_for_season(conn, player_id, season, role) or row[1]}
 
 
 @router.get("/player/{player_id}/similar")
@@ -104,17 +108,23 @@ def get_similar_players(
     if role == "pitcher":
         pool = _similarity_pool_pitchers(conn)
         metrics = PITCHER_SIMILARITY_METRICS
+    else:
+        pool = _similarity_pool_hitters(conn)
+        metrics = HITTER_SIMILARITY_METRICS
+    qualified = (player_id, season) in pool.index
+    if qualified:
+        # only the metrics measured in the query's season (see build_similarity_pool)
+        row = pool.loc[(player_id, season), metrics]
+        metrics = [m for m in metrics if row[m] == row[m]]
+    if role == "pitcher":
         comps = find_comps(
             pool, player_id, season, metrics, top_n=top_n,
             p_throws_by_player=_pitcher_hands(conn), arsenal_pool=_pitcher_arsenal_pool(conn),
         )
     else:
-        pool = _similarity_pool_hitters(conn)
-        metrics = HITTER_SIMILARITY_METRICS
         comps = find_comps(pool, player_id, season, metrics, top_n=top_n)
-    qualified = (player_id, season) in pool.index
     for c in comps:
-        c.update(_resolve_player(conn, c["player_id"]))
+        c.update(_resolve_player(conn, c["player_id"], c["season"], role))
 
     return {
         "player_id": player_id,

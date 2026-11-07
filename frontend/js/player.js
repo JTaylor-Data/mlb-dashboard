@@ -1068,15 +1068,25 @@ function renderRightPanel(data) {
     const sf = data.swing_field;
     const sw = data.swing_3d;
     const lg = sw.league_avg;
+    // Attack angle, swing length and swing tilt come from bat tracking, which
+    // the data only has from 2023; an empty gauge reading "Not qualified" in
+    // earlier seasons would mislead, so those are left out when there's no
+    // data. Attack direction is derived from batted-ball pull angle, so it
+    // exists in every season.
+    const gauges = [
+      sw.attack_angle != null ? buildAttackAngleGauge(sw.attack_angle, lg.attack_angle, sw.attack_angle_pct) : "",
+      sw.attack_direction != null ? buildAttackDirectionGauge(sw.attack_direction, lg.attack_direction, sw.attack_direction_pct) : "",
+      sw.swing_length != null ? buildSwingLengthGauge(sw.swing_length, lg.swing_length, sw.swing_length_pct) : "",
+      sw.swing_path_tilt != null ? buildSwingTiltGauge(sw.swing_path_tilt, lg.swing_path_tilt, sw.swing_path_tilt_pct) : "",
+    ].join("");
+    const noTracking = sw.attack_angle == null && sw.swing_length == null && sw.swing_path_tilt == null;
     mount.innerHTML = `
       <div class="card swing-field-card">
         ${buildFieldSprayChart(sf.lf, sf.cf, sf.rf, sf.locations, sf.highlight_side, sf.highlight_opacity)}
         <div class="gauge-grid">
-          ${buildAttackAngleGauge(sw.attack_angle, lg.attack_angle, sw.attack_angle_pct)}
-          ${buildAttackDirectionGauge(sw.attack_direction, lg.attack_direction, sw.attack_direction_pct)}
-          ${buildSwingLengthGauge(sw.swing_length, lg.swing_length, sw.swing_length_pct)}
-          ${buildSwingTiltGauge(sw.swing_path_tilt, lg.swing_path_tilt, sw.swing_path_tilt_pct)}
+          ${gauges}
         </div>
+        ${noTracking ? `<div class="movement-plot-caption">Bat-tracking metrics (attack angle, swing length, swing tilt) were not measured this season &mdash; Statcast bat tracking starts in 2023.</div>` : ""}
         <div id="similar-players-mount"></div>
       </div>
     `;
