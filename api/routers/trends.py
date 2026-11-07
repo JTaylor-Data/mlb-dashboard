@@ -317,8 +317,39 @@ def get_player_trends(
     return {"games": games, "metrics": metrics, "seasons": seasons, "pitch_types": pitch_types}
 
 
+_CHUNK_ROWS = 100_000
+
+
+def _season_chunks(conn, sql, season):
+    """A season's pitches in chunks, so a league-wide aggregate never holds the
+    whole season (about 700k rows with text columns) in memory at once."""
+    return pd.read_sql(sql, conn, params=[season], chunksize=_CHUNK_ROWS)
+
+
+def _tally(totals, df):
+    """Add one chunk's counts into totals. Every count is additive, so the sum
+    over chunks equals the count over the whole season."""
+    df = _add_flags(df)
+    in_z = df["zone"].isin(IN_ZONE_CODES)
+    out_z = df["zone"].isin(OUT_ZONE_CODES)
+    pa = df[df["events"].notna()]
+    bip = df[df["bb_type"].notna()]
+    counts = {
+        "n": len(df), "swings": df["is_swing"].sum(), "whiffs": df["is_whiff"].sum(),
+        "n_pa": len(pa), "k": pa["events"].isin(STRIKEOUT_EVENTS).sum(), "bb": pa["events"].isin(WALK_EVENTS).sum(),
+        "in_z": in_z.sum(), "out_z": out_z.sum(),
+        "called_s": (df["description"] == "called_strike").sum(),
+        "n_bip": len(bip), "gb": (bip["bb_type"] == "ground_ball").sum(),
+        "chase_sw": (df["is_swing"] & out_z).sum(), "zone_sw": (df["is_swing"] & in_z).sum(),
+        "zone_con": (df["is_swing"] & in_z & ~df["is_whiff"]).sum(),
+    }
+    for key, value in counts.items():
+        totals[key] = totals.get(key, 0) + int(value)
+
+
 @ttl_cache()
 def _league_averages_cached(conn, role: str, season: int):
+    t = {}
     if role == "pitcher":
         row = conn.execute("""
             SELECT AVG(release_speed), MAX(release_speed), AVG(release_spin_rate)
@@ -329,66 +360,44 @@ def _league_averages_cached(conn, role: str, season: int):
             FROM pitches WHERE season = ? AND pitch_type IN ('FF','SI','FA')
             AND release_speed IS NOT NULL
         """, (season,)).fetchone()
-        df = pd.read_sql(
-            "SELECT description, zone, events, bb_type FROM pitches WHERE season = ?",
-            conn, params=[season],
-        )
-        df = _add_flags(df)
-        swings = int(df["is_swing"].sum())
-        whiffs = int(df["is_whiff"].sum())
-        pa = df[df["events"].notna()]
-        n_pa = len(pa)
-        n = len(df)
-        k = int(pa["events"].isin(STRIKEOUT_EVENTS).sum())
-        bb = int(pa["events"].isin(WALK_EVENTS).sum())
-        in_z = int(df["zone"].isin(IN_ZONE_CODES).sum())
-        out_z = int(df["zone"].isin(OUT_ZONE_CODES).sum())
-        called_s = int((df["description"] == "called_strike").sum())
-        csw = called_s + whiffs
-        bip = df[df["bb_type"].notna()]
-        gb = int((bip["bb_type"] == "ground_ball").sum())
-        chase_sw = int((df["is_swing"] & df["zone"].isin(OUT_ZONE_CODES)).sum())
-        zone_sw = int((df["is_swing"] & df["zone"].isin(IN_ZONE_CODES)).sum())
-        zone_con = int((df["is_swing"] & df["zone"].isin(IN_ZONE_CODES) & ~df["is_whiff"]).sum())
+        for chunk in _season_chunks(conn, "SELECT description, zone, events, bb_type FROM pitches WHERE season = ?", season):
+            _tally(t, chunk)
+        n, n_pa, swings, whiffs = t.get("n", 0), t.get("n_pa", 0), t.get("swings", 0), t.get("whiffs", 0)
+        csw = t.get("called_s", 0) + whiffs
         return {
             "fb_avg_velo": _cf(fb_row[0], 1) if fb_row else None,
             "fb_avg_spin": _cf(fb_row[1], 0) if fb_row else None,
             "avg_velo":    _cf(row[0], 1) if row else None,
-            "k_pct":       _cf(k / n_pa * 100, 1) if n_pa else None,
-            "bb_pct":      _cf(bb / n_pa * 100, 1) if n_pa else None,
-            "zone_pct":    _cf(in_z / n * 100, 1) if n else None,
+            "k_pct":       _cf(t.get("k", 0) / n_pa * 100, 1) if n_pa else None,
+            "bb_pct":      _cf(t.get("bb", 0) / n_pa * 100, 1) if n_pa else None,
+            "zone_pct":    _cf(t.get("in_z", 0) / n * 100, 1) if n else None,
             "csw_pct":     _cf(csw / n * 100, 1) if n else None,
             "whiff_pct":   _cf(whiffs / swings * 100, 1) if swings else None,
-            "chase_pct":   _cf(chase_sw / out_z * 100, 1) if out_z else None,
-            "zone_contact_pct": _cf(zone_con / zone_sw * 100, 1) if zone_sw else None,
-            "gb_pct":      _cf(gb / len(bip) * 100, 1) if len(bip) else None,
+            "chase_pct":   _cf(t.get("chase_sw", 0) / t["out_z"] * 100, 1) if t.get("out_z") else None,
+            "zone_contact_pct": _cf(t.get("zone_con", 0) / t["zone_sw"] * 100, 1) if t.get("zone_sw") else None,
+            "gb_pct":      _cf(t.get("gb", 0) / t["n_bip"] * 100, 1) if t.get("n_bip") else None,
         }
     else:
-        df = pd.read_sql(
+        # EV / launch angle / xwOBA keep their float values (small) so the mean
+        # and 90th percentile come out exactly as over the whole season.
+        evs, las, xwobas = [], [], []
+        for chunk in _season_chunks(
+            conn,
             "SELECT launch_speed, launch_angle, description, zone, events, bb_type,"
             " estimated_woba_using_speedangle FROM pitches WHERE season = ?",
-            conn, params=[season],
-        )
-        df = _add_flags(df)
-        ev = df["launch_speed"].dropna()
-        la = df["launch_angle"].dropna()
+            season,
+        ):
+            _tally(t, chunk)
+            evs.append(chunk["launch_speed"].dropna())
+            las.append(chunk["launch_angle"].dropna())
+            xwobas.append(chunk["estimated_woba_using_speedangle"].dropna())
+        ev = pd.concat(evs, ignore_index=True)
+        la = pd.concat(las, ignore_index=True)
+        xwoba_vals = pd.concat(xwobas, ignore_index=True)
         hard = int((ev >= 95).sum())
-        pa = df[df["events"].notna()]
-        n_pa = len(pa)
-        n = len(df)
-        k = int(pa["events"].isin(STRIKEOUT_EVENTS).sum())
-        bb = int(pa["events"].isin(WALK_EVENTS).sum())
-        swings = int(df["is_swing"].sum())
-        whiffs = int(df["is_whiff"].sum())
-        xwoba_vals = df["estimated_woba_using_speedangle"].dropna()
+        n, n_pa, swings, whiffs = t.get("n", 0), t.get("n_pa", 0), t.get("swings", 0), t.get("whiffs", 0)
         sweet_spot = int(la.between(8, 32).sum()) if len(la) else 0
         n_ev = len(ev)
-        out_z = int(df["zone"].isin(OUT_ZONE_CODES).sum())
-        zone_sw = int((df["is_swing"] & df["zone"].isin(IN_ZONE_CODES)).sum())
-        zone_con = int((df["is_swing"] & df["zone"].isin(IN_ZONE_CODES) & ~df["is_whiff"]).sum())
-        chase_sw = int((df["is_swing"] & df["zone"].isin(OUT_ZONE_CODES)).sum())
-        bip = df[df["bb_type"].notna()]
-        gb = int((bip["bb_type"] == "ground_ball").sum())
         return {
             "avg_ev":         _cf(ev.mean(), 1) if n_ev else None,
             "ev_90th":        _cf(ev.quantile(0.9), 1) if n_ev >= 5 else None,
@@ -397,12 +406,12 @@ def _league_averages_cached(conn, role: str, season: int):
             "hard_hit_pct":   _cf(hard / n_ev * 100, 1) if n_ev else None,
             "xwoba":          _cf(xwoba_vals.mean(), 3) if len(xwoba_vals) else None,
             "whiff_pct":      _cf(whiffs / swings * 100, 1) if swings else None,
-            "k_pct":          _cf(k / n_pa * 100, 1) if n_pa else None,
-            "bb_pct":         _cf(bb / n_pa * 100, 1) if n_pa else None,
-            "chase_pct":      _cf(chase_sw / out_z * 100, 1) if out_z else None,
-            "zone_contact_pct": _cf(zone_con / zone_sw * 100, 1) if zone_sw else None,
+            "k_pct":          _cf(t.get("k", 0) / n_pa * 100, 1) if n_pa else None,
+            "bb_pct":         _cf(t.get("bb", 0) / n_pa * 100, 1) if n_pa else None,
+            "chase_pct":      _cf(t.get("chase_sw", 0) / t["out_z"] * 100, 1) if t.get("out_z") else None,
+            "zone_contact_pct": _cf(t.get("zone_con", 0) / t["zone_sw"] * 100, 1) if t.get("zone_sw") else None,
             "swing_pct":      _cf(swings / n * 100, 1) if n else None,
-            "gb_pct":         _cf(gb / len(bip) * 100, 1) if len(bip) else None,
+            "gb_pct":         _cf(t.get("gb", 0) / t["n_bip"] * 100, 1) if t.get("n_bip") else None,
         }
 
 

@@ -305,6 +305,9 @@ def _warm(conn, full):
         _peer_movement_table(conn, season)
         for hand in ("L", "R"):
             _approach_angle_pool(conn, season, hand)
+        from api.routers.trends import _league_averages_cached
+        for role in ("pitcher", "batter"):
+            _league_averages_cached(conn, role, season)
         _step("end:pitcher_page_season_pools")
         # Warm last 10 game dates for the "Top performer" badge on player pages.
         _step("start:leaderboard_10_dates")
