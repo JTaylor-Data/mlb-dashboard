@@ -48,49 +48,6 @@ function _superseded(err, opts) {
   return err && err.name === "AbortError" && !(opts && opts.persist);
 }
 
-// The server answers 503 {"busy": true, "message": ...} when too many heavy
-// requests are running. Surface that message (err.busy === true) instead of a
-// bare "HTTP 503", and show a banner for any page that doesn't handle it itself.
-function _busyError(message) {
-  const err = new Error(message || "Busy right now, try again in a moment");
-  err.busy = true;
-  return err;
-}
-
-async function _httpError(url, resp) {
-  if (resp.status === 503) {
-    try {
-      const body = await resp.json();
-      if (body && body.busy) return _busyError(body.message);
-    } catch (e) { /* fall through to the generic error */ }
-  }
-  return new Error(`${url} -> HTTP ${resp.status}`);
-}
-
-function showBusyBanner(message) {
-  let el = document.getElementById("busy-banner");
-  if (!el) {
-    el = document.createElement("div");
-    el.id = "busy-banner";
-    el.setAttribute("role", "alert");
-    el.style.cssText = "position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:9999;" +
-      "background:#fff3cd;color:#664d03;border:1px solid #ffda6a;border-radius:6px;padding:10px 16px;" +
-      "font:14px/1.3 system-ui,sans-serif;box-shadow:0 2px 8px rgba(0,0,0,.2);max-width:90vw;";
-    document.body.appendChild(el);
-  }
-  el.textContent = message || "Busy right now, try again in a moment";
-  el.style.display = "block";
-  clearTimeout(showBusyBanner._t);
-  showBusyBanner._t = setTimeout(() => { el.style.display = "none"; }, 10000);
-}
-
-window.addEventListener("unhandledrejection", (ev) => {
-  if (ev.reason && ev.reason.busy) {
-    showBusyBanner(ev.reason.message);
-    ev.preventDefault();
-  }
-});
-
 async function getJSON(url, opts) {
   _barInflight++;
   _syncLoadingBar();
@@ -98,7 +55,7 @@ async function getJSON(url, opts) {
     const signal = _requestSignal(opts);
     const resp = await fetch(url, signal ? { signal } : undefined);
     if (!resp.ok) {
-      throw await _httpError(url, resp);
+      throw new Error(`${url} -> HTTP ${resp.status}`);
     }
     return await resp.json();
   } catch (err) {
@@ -169,7 +126,7 @@ async function getJSONStreamed(url, onProgress, opts) {
 async function _readStream(url, onProgress, signal) {
   const resp = await fetch(url, signal ? { signal } : undefined);
   if (!resp.ok) {
-    throw await _httpError(url, resp);
+    throw new Error(`${url} -> HTTP ${resp.status}`);
   }
   const reader = resp.body.getReader();
   const decoder = new TextDecoder();
@@ -189,8 +146,6 @@ async function _readStream(url, onProgress, signal) {
         onProgress && onProgress(evt);
       } else if (evt.type === "done") {
         result = evt.data;
-      } else if (evt.type === "busy") {
-        throw _busyError(evt.message);
       }
     }
   }

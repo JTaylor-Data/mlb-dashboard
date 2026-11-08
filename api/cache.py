@@ -13,8 +13,6 @@ import threading
 import time
 from functools import wraps
 
-from api.heavy_limiter import cold_slot
-
 DEFAULT_TTL_SECONDS = 36 * 3600
 
 # Caps how many distinct (args) keys a single cached function can hold at
@@ -98,8 +96,7 @@ def ttl_cache(ttl_seconds=DEFAULT_TTL_SECONDS):
                     value, expires_at = store[key]
                     if now < expires_at:
                         return value
-                with cold_slot():
-                    value = fn(conn, *args, **kwargs)
+                value = fn(conn, *args, **kwargs)
                 _store_set(store, key, (value, time.monotonic() + ttl_seconds))
             return value
 
@@ -143,8 +140,7 @@ def ttl_cache_all_args(ttl_seconds=DEFAULT_TTL_SECONDS):
                     value, expires_at = store[key]
                     if now < expires_at:
                         return value
-                with cold_slot():
-                    value = fn(*args, **kwargs)
+                value = fn(*args, **kwargs)
                 _store_set(store, key, (value, time.monotonic() + ttl_seconds))
             return value
 

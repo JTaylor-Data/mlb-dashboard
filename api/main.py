@@ -28,7 +28,6 @@ from fastapi.middleware.gzip import GZipMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
-from api.heavy_limiter import BusyError, HeavyRequestMarker, RETRY_AFTER_S, busy_body
 from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -86,15 +85,7 @@ def _client_ip(request: Request) -> str:
 limiter = Limiter(key_func=_client_ip, default_limits=["240/minute"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
-
-
-@app.exception_handler(BusyError)
-async def _busy_handler(request, exc):
-    from fastapi.responses import JSONResponse
-    return JSONResponse(busy_body(), status_code=503, headers={"Retry-After": str(RETRY_AFTER_S)})
 app.add_middleware(SlowAPIMiddleware)
-# At most 10 cold heavy builds (player, trends, compare) run at once; see api/heavy_limiter.py.
-app.add_middleware(HeavyRequestMarker)
 
 
 @app.on_event("startup")
