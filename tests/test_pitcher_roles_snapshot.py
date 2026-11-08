@@ -28,3 +28,14 @@ def test_last_games_same_with_or_without_roles():
     for pid in (roles[roles.role == "SP"].index[0], roles[roles.role == "RP"].index[0]):
         assert player_last_n_games(conn, 2022, int(pid), "pitcher", 5) == \
             player_last_n_games(conn, 2022, int(pid), "pitcher", 5, roles=roles)
+
+
+def test_snapshot_row_count_and_hr_fb_match_live():
+    from analytics.percentile_cache import _season_row_count
+    from analytics.player_page import league_hr_per_fb
+    from api.routers.players import _league_hr_fb
+    conn = sqlite3.connect(DB)
+    for season in (2021, 2024):
+        assert _season_row_count(conn, season) == conn.execute(
+            "SELECT COUNT(*) FROM pitches WHERE season = ?", (season,)).fetchone()[0]
+        assert _league_hr_fb(conn, season) == pytest.approx(league_hr_per_fb(conn, season))

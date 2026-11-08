@@ -43,14 +43,37 @@ def _pools_dir() -> Path:
     return _POOLS_DIR
 
 
+_ROW_COUNTS: dict = {}
+
+
+def _season_row_count(conn: sqlite3.Connection, season: int) -> int:
+    """Pitch rows in `season`. A finished season's count never changes, so it comes from
+    the past-season snapshot (recorded when it was built) or, failing that, is counted
+    once per process; it used to be a season-wide COUNT(*) scan on EVERY pool load
+    (seconds each on the small production machine). The current season is always
+    counted live, since every pull changes it."""
+    from config.model_policy import CURRENT_SEASON
+    if season >= CURRENT_SEASON:
+        return conn.execute("SELECT COUNT(*) FROM pitches WHERE season = ?", (season,)).fetchone()[0]
+    if season not in _ROW_COUNTS:
+        n = None
+        try:
+            from api import past_season_snapshot
+            n = past_season_snapshot.pitch_rows(season)
+        except Exception:
+            n = None
+        if n is None:
+            n = conn.execute("SELECT COUNT(*) FROM pitches WHERE season = ?", (season,)).fetchone()[0]
+        _ROW_COUNTS[season] = n
+    return _ROW_COUNTS[season]
+
+
 def _pool_version(conn: sqlite3.Connection, season: int) -> str:
     """8-char hex: hash of code + thresholds + season row count."""
     from analytics.percentiles import SAVANT_PA_PER_TEAM_GAME_PITCHER, SAVANT_PA_PER_TEAM_GAME_BATTER
     code_path = Path(__file__).resolve().parent / "percentiles.py"
     code_bytes = code_path.read_bytes()
-    row_count = conn.execute(
-        "SELECT COUNT(*) FROM pitches WHERE season = ?", (season,)
-    ).fetchone()[0]
+    row_count = _season_row_count(conn, season)
     payload = (
         code_bytes
         + str(SAVANT_PA_PER_TEAM_GAME_PITCHER).encode()

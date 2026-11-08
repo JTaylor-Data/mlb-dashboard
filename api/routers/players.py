@@ -199,6 +199,9 @@ def _pitcher_roles(conn, season):
 
 @ttl_cache()
 def _league_hr_fb(conn, season):
+    snap = past_season_snapshot.get("league_hr_fb", season)
+    if snap is not None:
+        return float(snap) if snap == snap else float("nan")
     return league_hr_per_fb(conn, season)
 
 

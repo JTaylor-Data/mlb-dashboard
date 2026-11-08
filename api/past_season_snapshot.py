@@ -16,6 +16,17 @@ PATH = Path(__file__).resolve().parent.parent / "parquets" / "past_season_pitche
 _snapshot = None
 
 
+def pitch_rows(season):
+    """The season's pitch-row count recorded when the snapshot was built (None for the
+    current season or when unknown). Percentile pools key their files on this count, so
+    reading it here spares a season-wide COUNT(*) scan on every pool load."""
+    if season >= CURRENT_SEASON:
+        return None
+    get("_meta", season)  # loads the file
+    n = (_snapshot or {}).get("_meta", {}).get("pitch_rows_by_season", {}).get(str(season))
+    return int(n) if n is not None else None
+
+
 def get(kind, season):
     global _snapshot
     if season >= CURRENT_SEASON:

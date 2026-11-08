@@ -26,6 +26,7 @@ sys.path.insert(0, str(REPO))
 os.environ.setdefault("SKIP_WARMUP", "1")
 
 from analytics.metrics import classify_pitcher_roles, league_average_woba  # noqa: E402
+from analytics.player_page import league_hr_per_fb  # noqa: E402
 from analytics.player_page import (  # noqa: E402
     all_pitcher_arm_angles, approach_angle_pool, league_avg_xwoba, league_average_batter_row,
     league_average_swing_profile, peer_movement_table, pitcher_league_avg_row,
@@ -40,7 +41,7 @@ def main():
     conn = sqlite3.connect(db_path)
     snap = {"arm_angles": {}, "peer_movement": {}, "approach_pool": {}, "league_avgs": {},
             "league_batter_row": {}, "league_pitcher_row": {}, "league_swing_profile": {},
-            "league_woba": {}, "league_xwoba": {}, "pitcher_roles": {}}
+            "league_woba": {}, "league_xwoba": {}, "pitcher_roles": {}, "league_hr_fb": {}}
     for season in range(EARLIEST_SEASON, CURRENT_SEASON):
         t0 = time.time()
         key = str(season)
@@ -69,6 +70,7 @@ def main():
             str(int(p)): [int(gp), int(gs), r]
             for p, gp, gs, r in zip(roles.index, roles["games_pitched"], roles["games_started"], roles["role"])
         }
+        snap["league_hr_fb"][key] = float(league_hr_per_fb(conn, season))
         snap["league_woba"][key] = float(league_average_woba(conn, season))
         snap["league_xwoba"][key] = float(league_avg_xwoba(conn, season))
         print(f"{season}: {len(arm)} arm angles, {len(peer)} peer rows, {time.time() - t0:.1f}s", flush=True)
