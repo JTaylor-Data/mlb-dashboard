@@ -91,6 +91,9 @@ def compare_players(
             "SELECT team_id FROM players WHERE player_id = ?", (player_id,)).fetchone()[0]
         pct = player_percentiles(pool, player_id, polarity)
         groups = _percentile_groups(pct, labels, fmt, groups_def)
-        result.append({"player_id": player_id, "name": name, "team_id": team_id, "groups": groups})
+        # Not in the qualified pool = didn't reach the PA (batters) / batters-faced
+        # (pitchers) minimum, so there are no percentiles to show; the page says so.
+        result.append({"player_id": player_id, "name": name, "team_id": team_id, "groups": groups,
+                       "qualified": player_id in pool.index})
 
     return {"split": split, "role": role, "players": result}

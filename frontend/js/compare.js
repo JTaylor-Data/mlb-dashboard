@@ -101,7 +101,7 @@ function barRowsHtml(rows) {
     .join("");
 }
 
-function playerPanelHtml(player) {
+function playerPanelHtml(player, role) {
   const logo = player.team_id ? `https://www.mlbstatic.com/team-logos/${player.team_id}.svg` : "";
   const groupsHtml = player.groups
     .map((g) => `
@@ -111,13 +111,16 @@ function playerPanelHtml(player) {
       </div>
     `)
     .join("");
+  const body = player.qualified === false || !player.groups.length
+    ? `<div style="padding:24px 16px;text-align:center;color:var(--muted,#6b7280);font-size:15px">This player ${role === "pitcher" ? "didn't face enough batters" : "didn't get enough PAs"} to qualify this season.</div>`
+    : groupsHtml;
   return `
     <div class="compare-player-header">
       ${logo ? `<img src="${logo}" onerror="this.style.display='none'" />` : ""}
       <div class="name">${player.name}</div>
     </div>
     <div class="card rt-panel">
-      ${groupsHtml}
+      ${body}
     </div>
   `;
 }
@@ -138,8 +141,8 @@ async function loadCompare() {
     if (requestId === loadCompareRequestId) setPageLoading(false); // only the latest in-flight request controls the bar
   }
   if (requestId !== loadCompareRequestId) return;
-  document.getElementById("panel-a").innerHTML = playerPanelHtml(data.players[0]);
-  document.getElementById("panel-b").innerHTML = playerPanelHtml(data.players[1]);
+  document.getElementById("panel-a").innerHTML = playerPanelHtml(data.players[0], data.role);
+  document.getElementById("panel-b").innerHTML = playerPanelHtml(data.players[1], data.role);
 }
 
 window.onDataRefresh = async () => {
