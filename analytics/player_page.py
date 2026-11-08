@@ -722,7 +722,7 @@ def _game_opponent(conn, game_id, team_id):
     return (f"{'vs' if is_home else '@'} {abbrev[0]}") if abbrev else ""
 
 
-def player_last_n_games(conn, season, player_id, role, n=5):
+def player_last_n_games(conn, season, player_id, role, n=5, roles=None):
     """Last n games with real, live box-score stats (RBI/SB/ER aren't
     derivable from Statcast alone - same reasoning as boxscore.py's own
     module docstring), most recent first.
@@ -734,12 +734,16 @@ def player_last_n_games(conn, season, player_id, role, n=5):
     Relievers: every appearance, no start filter - a reliever's "last 5
     outings" naturally means his last 5 times pitching, not his last 5
     starts (he may have none).
-    Batters: any game with a real plate appearance, no filter."""
+    Batters: any game with a real plate appearance, no filter.
+
+    `roles`: the season's classify_pitcher_roles() table if the caller already has it
+    (the API keeps it cached); without it, every call re-scans the whole season."""
     team_row = conn.execute("SELECT team_id FROM players WHERE player_id = ?", (player_id,)).fetchone()
     team_id = int(team_row[0]) if team_row and team_row[0] is not None else None
 
     if role == "pitcher":
-        roles = classify_pitcher_roles(conn, season)
+        if roles is None:
+            roles = classify_pitcher_roles(conn, season)
         is_starter = player_id in roles.index and roles.loc[player_id, "role"] == "SP"
         if is_starter:
             rows = conn.execute("""

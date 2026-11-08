@@ -186,6 +186,14 @@ def _stuff_breakdown(stuff_all, stuff_by_stand, overall_stuff, pitcher_id, pitch
 
 @ttl_cache()
 def _pitcher_roles(conn, season):
+    snap = past_season_snapshot.get("pitcher_roles", season)
+    if snap is not None:
+        df = pd.DataFrame.from_dict(snap, orient="index", columns=["games_pitched", "games_started", "role"])
+        df.index = df.index.astype(int)
+        df.index.name = "pitcher_id"
+        df[["games_pitched", "games_started"]] = df[["games_pitched", "games_started"]].astype(int)
+        df["start_pct"] = df["games_started"] / df["games_pitched"]
+        return df[["games_pitched", "games_started", "start_pct", "role"]]
     return classify_pitcher_roles(conn, season)
 
 
@@ -392,7 +400,8 @@ def _last_5_basic(conn, season, player_id, role):
     The page renders from this and fills the top-performer highlight in from
     _last_5_games below, via /player/{id}/last-5."""
     try:
-        games = player_last_n_games(conn, season, player_id, role, 5)
+        games = player_last_n_games(conn, season, player_id, role, 5,
+                                    roles=_pitcher_roles(conn, season) if role == "pitcher" else None)
     except Exception:
         return []
     for g in games:
