@@ -12,6 +12,8 @@ import pandas as pd
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 
+from api.heavy_limiter import BusyError, busy_body
+
 from analytics.archetypes import ARCHETYPE_DESCRIPTIONS, classify_batter_archetype
 from analytics.boxscore import fetch_boxscore, pitcher_daily_stats, season_era
 from analytics.metrics import classify_pitcher_roles
@@ -1032,6 +1034,9 @@ def get_player_progress(
                     yield json.dumps({"type": "progress", "step": payload, "index": index, "total": PLAYER_LOAD_STEPS}) + "\n"
                 else:
                     yield json.dumps({"type": "done", "data": payload}) + "\n"
+        except BusyError:
+            # The 200 is already committed, so busy arrives as a final stream line.
+            yield json.dumps({"type": "busy", **busy_body()}) + "\n"
         finally:
             conn.close()
 

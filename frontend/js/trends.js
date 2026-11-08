@@ -472,7 +472,7 @@ async function render() {
     buildMetricGrid();
     renderChart();
   } catch (err) {
-    chartMount.innerHTML = `<div class="trend-empty">Error: ${err.message}</div>`;
+    chartMount.innerHTML = `<div class="trend-empty">${err.busy ? "" : "Error: "}${err.message}</div>`;
   }
 }
 
