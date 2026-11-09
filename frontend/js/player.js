@@ -704,11 +704,36 @@ function buildFieldSprayChart(lfPct, cfPct, rfPct, locations, highlightSide, hig
   const cropTop = Math.max(0, homeY - maxDist - 24);
   const cropH = size - cropTop;
 
+  // Infield, drawn to scale: Statcast's hit-coordinate units are ~2.5 ft, so
+  // `scale` px per unit puts one foot at scale/2.5 px. Bases 90 ft apart, the
+  // mound 60.5 ft from home, the infield dirt reaching ~95 ft from the mound.
+  // Clipped to fair territory; drawn above the pull/oppo shading and below the
+  // foul lines and dots. Bases are drawn a little larger than true size so
+  // they stay visible.
+  const pxFt = scale / 2.5;
+  const moundY = homeY - 60.5 * pxFt;
+  const baseOff = 63.64 * pxFt; // first/third base: 90 ft along the foul lines
+  const baseY = homeY - baseOff;
+  const secondY = homeY - 127.28 * pxFt;
+  const baseSq = (bx, by) =>
+    `<rect x="${(bx - 3.5).toFixed(1)}" y="${(by - 3.5).toFixed(1)}" width="7" height="7" fill="#fff" transform="rotate(45 ${bx.toFixed(1)} ${by.toFixed(1)})"/>`;
+  const infield = `
+      <clipPath id="spray-fair"><path d="M ${homeX},${homeY} L ${foulLx.toFixed(1)},${foulLy.toFixed(1)} L ${foulRx.toFixed(1)},${foulRy.toFixed(1)} Z"/></clipPath>
+      <g clip-path="url(#spray-fair)">
+        <circle cx="${homeX}" cy="${moundY.toFixed(1)}" r="${(95 * pxFt).toFixed(1)}" fill="#c9a06b"/>
+        <circle cx="${homeX}" cy="${homeY}" r="${(13 * pxFt + 3).toFixed(1)}" fill="#c9a06b"/>
+        <polygon points="${homeX},${homeY - 12} ${(homeX + baseOff - 5).toFixed(1)},${baseY.toFixed(1)} ${homeX},${(secondY + 6).toFixed(1)} ${(homeX - baseOff + 5).toFixed(1)},${baseY.toFixed(1)}" fill="#5b8c3a"/>
+        <circle cx="${homeX}" cy="${moundY.toFixed(1)}" r="${(9 * pxFt + 1).toFixed(1)}" fill="#c9a06b"/>
+      </g>
+      ${baseSq(homeX + baseOff, baseY)}${baseSq(homeX - baseOff, baseY)}${baseSq(homeX, secondY)}
+      <rect x="${homeX - 3}" y="${(moundY - 1).toFixed(1)}" width="6" height="2" fill="#fff"/>`;
+
   return `
     <div style="display:flex; justify-content:center; margin-top:14px;">
     <svg viewBox="0 ${cropTop.toFixed(1)} ${size} ${cropH.toFixed(1)}" width="100%" style="max-width:480px; background:transparent;">
       <path d="M ${homeX},${homeY} L ${flx.toFixed(1)},${fly.toFixed(1)}${fenceArc} L ${frx.toFixed(1)},${fry.toFixed(1)} Z" fill="#5b8c3a"/>
       ${highlightWedge}
+      ${infield}
       <line x1="${homeX}" y1="${homeY}" x2="${foulLx.toFixed(1)}" y2="${foulLy.toFixed(1)}" stroke="#fff" stroke-width="2"/>
       <line x1="${homeX}" y1="${homeY}" x2="${foulRx.toFixed(1)}" y2="${foulRy.toFixed(1)}" stroke="#fff" stroke-width="2"/>
       <line x1="${homeX}" y1="${homeY}" x2="${dlx.toFixed(1)}" y2="${dly.toFixed(1)}" stroke="#ffffff99" stroke-width="1" stroke-dasharray="4,3"/>
