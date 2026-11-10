@@ -11,9 +11,6 @@ parquets/*.parquet
 # Precomputed snapshots committed for the Fly launch (top level only; subfolders stay ignored)
 !parquets/*.parquet
 
-# Percentile pool parquets (large, regenerable via tools/build_percentile_pools.py)
-parquets/percentile_pools/
-
 # Research/model-dev artifacts (large parquet/npy files, regenerable via build scripts)
 training/tunneling_v3_artifacts/*.parquet
 training/tunneling_v3_artifacts/*.npy
@@ -78,8 +75,10 @@ diagnostics/location_v3/*.parquet
 diagnostics/location_v3/v2_outputs/*.parquet
 training/location_v3_checkpoints/
 
-# Deception v2 large diagnostic artifacts (regenerable)
+# Deception v2 large diagnostic artifacts (regenerable) - except the two score files the app reads
 diagnostics/deception_v2/*.parquet
+!diagnostics/deception_v2/deception_v2_scores.parquet
+!diagnostics/deception_v2/deception_v2b_scores.parquet
 # Note: *.log is already covered by the *.log rule above
 security-report/
 
@@ -93,3 +92,4 @@ security-report/
 # Local scratch folders, never committed
 scores/
 _memtest_tmp/
+.claude/

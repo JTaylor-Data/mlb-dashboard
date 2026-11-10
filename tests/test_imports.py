@@ -12,12 +12,14 @@ if ROOT not in sys.path:
     sys.path.insert(0, ROOT)
 
 # Modules to skip (e.g. training scripts that need heavyweight deps not in venv)
-SKIP_PATTERNS = ["pitcher_cv", "training/", "__pycache__"]
+# Archive/ is dead-code storage (see tests/test_no_archive_refs.py): never imported, and some of its
+# scripts run downloads at import time.
+SKIP_PATTERNS = ["pitcher_cv", "training/", "__pycache__", "Archive"]
 
 MODULES = []
 for dirpath, dirnames, filenames in os.walk(ROOT):
     # Skip hidden dirs, __pycache__, and heavy dirs
-    dirnames[:] = [d for d in dirnames if not d.startswith(".") and d != "__pycache__"
+    dirnames[:] = [d for d in dirnames if not d.startswith(".") and d != "__pycache__" and d != "Archive"
                    and "pitcher_cv" not in dirpath and "training" not in dirpath]
     for fname in filenames:
         if fname.endswith(".py") and not fname.startswith("."):
