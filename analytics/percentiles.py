@@ -7,6 +7,12 @@ park-adjusted.
 Pull Air% uses the community-standard hc_x/hc_y -> spray angle formula (the
 same one behind most public spray-chart tools); Statcast doesn't publish an
 official closed-form version of this either, same situation as Barrel%.
+It follows Savant's reading of the stat: "air" is every batted ball that is not
+a grounder (fly ball, line drive AND popup), "pulled" is the pull third of the
+field (more than 15 degrees toward the pull side of dead center), and the
+denominator is all batted balls. For Bregman 2026 this gives 25.8% vs Savant's
+25.6% (one batted ball apart); the earlier 0-degree pull cutoff with popups
+excluded gave 30.9%.
 """
 import gc
 
@@ -106,11 +112,17 @@ def _split_fraction(conn, season, column, value):
 # Standard community constants for converting Statcast hc_x/hc_y into a spray
 # angle in degrees (0 = straight up the middle, negative = left field side).
 _SPRAY_X0, _SPRAY_Y0 = 125.42, 198.27
+_SPRAY_SCALE = 0.75
+# A ball is "pulled" (for Pull Air%) when it is more than 15 true degrees toward
+# the pull side; compute_spray_angle() is scaled by _SPRAY_SCALE, so the cutoff
+# in those units is 15 * 0.75.
+PULL_ZONE_DEG = 15.0
+_PULL_ZONE_SCALED = PULL_ZONE_DEG * _SPRAY_SCALE
 
 
 def compute_spray_angle(hc_x, hc_y):
     hc_x, hc_y = np.asarray(hc_x, dtype=float), np.asarray(hc_y, dtype=float)
-    return np.degrees(np.arctan2(hc_x - _SPRAY_X0, _SPRAY_Y0 - hc_y)) * 0.75
+    return np.degrees(np.arctan2(hc_x - _SPRAY_X0, _SPRAY_Y0 - hc_y)) * _SPRAY_SCALE
 
 
 def _downcast_pitch_pool(df):
@@ -151,8 +163,9 @@ def _add_shared_flags(df):
     df["in_zone"] = df["zone"].isin(IN_ZONE_CODES)
     df["out_zone"] = df["zone"].isin(OUT_ZONE_CODES)
     df["spray_angle"] = compute_spray_angle(df["hc_x"], df["hc_y"])
-    df["is_pulled"] = np.where(df["stand"] == "R", df["spray_angle"] < 0, df["spray_angle"] > 0)
-    df["is_air"] = df["bb_type"].isin(["fly_ball", "line_drive"])
+    df["is_pulled"] = np.where(df["stand"] == "R", df["spray_angle"] < -_PULL_ZONE_SCALED,
+                               df["spray_angle"] > _PULL_ZONE_SCALED)
+    df["is_air"] = df["bb_type"].isin(["fly_ball", "line_drive", "popup"])
     df["is_batted_ball"] = df["bb_type"].notna()
     return df
 
