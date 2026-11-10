@@ -29,7 +29,7 @@ from analytics.splits import (
 # module already imports fast_swing_bat_speed FROM this one, so importing
 # back would be circular. Same values, same source of truth conceptually
 # (this project already tolerates this exact kind of small constant
-# duplication - FIP_CONSTANT_APPROX also appears in pulls/pull_team_stats.py).
+# duplication - FIP_CONSTANT_APPROX also appears in pulls/daily/pull_team_stats.py).
 _OUTS_PER_EVENT = {
     "strikeout": 1, "strikeout_double_play": 2, "field_out": 1, "force_out": 1,
     "grounded_into_double_play": 2, "double_play": 2, "triple_play": 3,
@@ -427,7 +427,7 @@ def pitcher_percentile_metrics(conn, season, min_bf=None, stand_filter=None):
     league_hr_fb_rate = _league_hr_per_fb(conn, season)
 
     # Real season-total xFIP/Barrel% (MLB Stats API sabermetrics / Baseball
-    # Savant - see pulls/pull_sabermetrics.py) have no opposing-batter-hand
+    # Savant - see pulls/annual/pull_sabermetrics.py) have no opposing-batter-hand
     # split, so they only apply to the unsplit ALL view; a real L/R split
     # falls back to this project's own pitch-level approximation below.
     is_all = not stand_filter or stand_filter == "ALL"
@@ -587,7 +587,7 @@ def batter_percentile_metrics(conn, season, min_pa=None, throws_filter=None):
         "SELECT player_id, sprint_speed, oaa, barrel_pct_batting, arm_strength FROM player_advanced_stats WHERE season = ?",
         conn, params=(season,),
     ).set_index("player_id")
-    # Real Barrel% (Baseball Savant, see pulls/pull_sabermetrics.py) has no
+    # Real Barrel% (Baseball Savant, see pulls/annual/pull_sabermetrics.py) has no
     # opposing-pitcher-hand split; only applies to the unsplit ALL view, same
     # reasoning as the pitcher side's xfip/barrel_pct override above.
     is_all = not throws_filter or throws_filter == "ALL"
@@ -624,7 +624,7 @@ PITCHER_POLARITY = {
     "ev_90th": False, "avg_la_95plus": True, "xwoba": False,
     "release_side": None, "spin_rate": None,
     "xfip": False, "first_pitch_strike_pct": True,
-    "holding_runners": True,  # higher runs-prevented-via-running-game = better; replaces fb_pct here per direction, see pulls/pull_pitcher_running_game.py
+    "holding_runners": True,  # higher runs-prevented-via-running-game = better; replaces fb_pct here per direction, see pulls/annual/pull_pitcher_running_game.py
 }
 BATTER_POLARITY = {
     "xwoba": True, "xslg": True, "xba": True, "avg_exit_velo": True, "barrel_pct": True,

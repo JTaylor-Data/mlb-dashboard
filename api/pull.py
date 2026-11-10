@@ -43,9 +43,9 @@ log = logging.getLogger("refresh")
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from pulls import pull_players_games
-from pulls import pull_team_stats
-from pulls import pull_remaining_schedule
+from pulls.daily import pull_players_games
+from pulls.daily import pull_team_stats
+from pulls.daily import pull_remaining_schedule
 from analytics import boxscore
 
 from api import cache
@@ -134,7 +134,7 @@ def _precompute_tunneling_pairs(season):
 
 
 def _run(full_warmup):
-    from pulls import pull_statcast
+    from pulls.daily import pull_statcast
 
     end = date.today()
     pull_succeeded = False
@@ -180,7 +180,7 @@ def _run(full_warmup):
         log.info("updating rosters + schedule via MLB Stats API...")
         _status["detail"] = "Updating rosters/schedule..."
         try:
-            from pulls.refresh_mlb_stats import run as _refresh_mlb_stats
+            from pulls.daily.refresh_mlb_stats import run as _refresh_mlb_stats
             _refresh_mlb_stats(season=season, skip_news=False, postseason=POSTSEASON_MODE)
         except Exception as _me:
             log.warning("refresh_mlb_stats failed (non-fatal): %s", _me)
@@ -190,7 +190,7 @@ def _run(full_warmup):
             log.info("updating prospect rankings + scouting (weekly Monday run)...")
             _status["detail"] = "Updating prospect rankings..."
             try:
-                from pulls import pull_prospects, pull_prospect_scouting
+                from pulls.daily import pull_prospects, pull_prospect_scouting
                 pull_prospects.run(season)
                 pull_prospect_scouting.run()
             except Exception as _pe:

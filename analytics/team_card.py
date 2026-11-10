@@ -123,7 +123,7 @@ def _team_war(conn, season):
 
 
 def _team_il_counts(conn):
-    """Current IL headcount per team - see pulls/pull_injuries.py."""
+    """Current IL headcount per team - see pulls/annual/pull_injuries.py."""
     rows = conn.execute("SELECT team_id, COUNT(*) FROM il_status GROUP BY team_id").fetchall()
     return {tid: n for tid, n in rows}
 

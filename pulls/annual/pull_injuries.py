@@ -24,7 +24,7 @@ bound (start_date + that IL type's minimum stint length in days, a hard
 roster rule), not a guess.
 
 Usage:
-    python pull_injuries.py [SEASON]   # defaults to 2026
+    python pulls/annual/pull_injuries.py [SEASON]   # defaults to 2026
 """
 import re
 import sqlite3
@@ -35,11 +35,11 @@ from pathlib import Path
 
 import requests
 
-DB_PATH = Path(__file__).resolve().parent.parent / "mlb_data.db"
+DB_PATH = Path(__file__).resolve().parent.parent.parent / "mlb_data.db"
 STATSAPI_BASE = "https://statsapi.mlb.com/api/v1"
 import sys as _sys
 from pathlib import Path as _Path
-_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent.parent))
 from config.model_policy import CURRENT_SEASON as DEFAULT_SEASON  # noqa: E402  (bump CURRENT_SEASON, not this)
 
 # Minimum stint length per IL type - a real MLB roster rule, not a guess.

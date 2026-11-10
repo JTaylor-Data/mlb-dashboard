@@ -21,7 +21,7 @@ Pipeline-listed level (AAA/AA/A+/A/ROK) - genuinely official numbers, not
 scraped off the rankings page (which has none).
 
 Usage:
-    python pull_prospects.py [SEASON]   # defaults to 2026
+    python pulls/daily/pull_prospects.py [SEASON]   # defaults to 2026
 
 Rankings pages take a few seconds each to render (31 page loads: Top 100 +
 30 team pages) - that part is inherently sequential (one shared Playwright
@@ -50,7 +50,7 @@ DB_PATH = os.environ.get("DB_PATH", "mlb_data.db")
 STATSAPI_BASE = "https://statsapi.mlb.com/api/v1"
 import sys as _sys
 from pathlib import Path as _Path
-_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent.parent))
 from config.model_policy import CURRENT_SEASON as DEFAULT_SEASON  # noqa: E402  (bump CURRENT_SEASON, not this)
 
 TEAM_SLUGS = {

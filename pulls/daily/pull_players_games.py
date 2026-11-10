@@ -3,7 +3,7 @@ Populate players and games reference tables from the MLB Stats API, keyed off
 the distinct player_ids and game_ids already present in the pitches table.
 
 Usage:
-    python pull_players_games.py
+    python pulls/daily/pull_players_games.py
 
 Both tables are upserted (INSERT ... ON CONFLICT DO UPDATE), so re-running is
 safe and just refreshes team/active-status/final-score info.
@@ -183,7 +183,7 @@ def run(since_date=None):
     """`since_date` (an ISO date string) restricts both the players and
     games lookups to recent activity only - see `get_distinct_player_ids`'s
     docstring for why. Omit for a full historical pass (the default, used
-    by manual `python pull_players_games.py` runs and one-off backfills).
+    by manual `python pulls/daily/pull_players_games.py` runs and one-off backfills).
     Returns a small summary dict the caller can surface to a user."""
     conn = sqlite3.connect(DB_PATH)
 

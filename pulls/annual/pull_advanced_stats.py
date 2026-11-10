@@ -4,7 +4,7 @@ Average) into player_advanced_stats. These aren't in the pitch-by-pitch
 Statcast pull - separate leaderboards, genuinely external season aggregates.
 
 Usage:
-    python pull_advanced_stats.py [SEASON]   # defaults to 2026
+    python pulls/annual/pull_advanced_stats.py [SEASON]   # defaults to 2026
 
 Upserts, so re-running just refreshes the numbers.
 """
@@ -16,7 +16,7 @@ from pybaseball import statcast_sprint_speed, statcast_outs_above_average
 DB_PATH = "mlb_data.db"
 import sys as _sys
 from pathlib import Path as _Path
-_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent.parent))
 from config.model_policy import CURRENT_SEASON as DEFAULT_SEASON  # noqa: E402  (bump CURRENT_SEASON, not this)
 
 

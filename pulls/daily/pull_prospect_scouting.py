@@ -19,7 +19,7 @@ whatever "Name: NN" pairs appear on the "Scouting grades:" line rather than
 assumed to be a fixed set, and stored as JSON.
 
 Usage:
-    python pull_prospect_scouting.py
+    python pulls/daily/pull_prospect_scouting.py
 
 Not every prospect has a report yet (very new, unscouted-since-signing
 prospects genuinely have no "Scouting Report" section on the page at all) -

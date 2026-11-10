@@ -4,7 +4,7 @@ the MLB Stats API into the `teams` table. Static data, so this rarely needs
 re-running - just once, or after an offseason realignment.
 
 Usage:
-    python pull_teams.py [SEASON]   # defaults to 2026
+    python pulls/annual/pull_teams.py [SEASON]   # defaults to 2026
 """
 import sqlite3
 import sys
@@ -14,7 +14,7 @@ import requests
 DB_PATH = "mlb_data.db"
 import sys as _sys
 from pathlib import Path as _Path
-_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent.parent))
 from config.model_policy import CURRENT_SEASON as DEFAULT_SEASON  # noqa: E402  (bump CURRENT_SEASON, not this)
 
 

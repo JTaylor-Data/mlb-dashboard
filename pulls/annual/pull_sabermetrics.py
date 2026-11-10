@@ -28,7 +28,7 @@ unblocked sources instead:
     the per-position arm_1b/arm_of/etc. columns also in the CSV.
 
 Usage:
-    python pull_sabermetrics.py [SEASON]   # defaults to 2026
+    python pulls/annual/pull_sabermetrics.py [SEASON]   # defaults to 2026
 
 Upserts, so re-running just refreshes the numbers. Players missing from
 these leaderboards (too few PA/BF/throws) simply keep NULL here - the API
@@ -46,7 +46,7 @@ from pybaseball import statcast_batter_exitvelo_barrels, statcast_pitcher_exitve
 DB_PATH = "mlb_data.db"
 import sys as _sys
 from pathlib import Path as _Path
-_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent.parent))
 from config.model_policy import CURRENT_SEASON as DEFAULT_SEASON  # noqa: E402  (bump CURRENT_SEASON, not this)
 STATS_URL = "https://statsapi.mlb.com/api/v1/stats"
 ARM_STRENGTH_URL = "https://baseballsavant.mlb.com/leaderboard/arm-strength"

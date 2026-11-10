@@ -2,7 +2,7 @@
 Daily refresh script for MLB Stats API data (rosters, schedule) and news.
 
 Run manually from the mlb_dashboard/ directory:
-    python pulls/refresh_mlb_stats.py
+    python pulls/daily/refresh_mlb_stats.py
 
 There is no built-in scheduler or cron daemon in this Windows environment.
 The existing api/scheduler.py runs a daily 6 AM data pull for Statcast data
@@ -24,11 +24,11 @@ from pathlib import Path
 from datetime import date, timedelta
 
 # Allow running from any directory
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 DB_PATH = os.environ.get("DB_PATH", "mlb_data.db")
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 from config.model_policy import CURRENT_SEASON  # noqa: E402
 
 

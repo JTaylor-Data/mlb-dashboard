@@ -52,7 +52,7 @@ Not scheduled at all: the Stats-API/FanGraphs side pulls (section 5).
 
 | # | Step | Source | Writes to | Notes |
 |---|---|---|---|---|
-| 1 | Statcast pitches | pybaseball | `pitches`, `ingested_dates` | Checks 2021-03-20 -> today against a skip-list; always re-checks the last 3 days. **Regular season only** (`KEEP_GAME_TYPES = {"R"}` in `pulls/pull_statcast.py`). Postseason pitches are never ingested. |
+| 1 | Statcast pitches | pybaseball | `pitches`, `ingested_dates` | Checks 2021-03-20 -> today against a skip-list; always re-checks the last 3 days. **Regular season only** (`KEEP_GAME_TYPES = {"R"}` in `pulls/daily/pull_statcast.py`). Postseason pitches are never ingested. |
 | 2 | Players and games | MLB Stats API | `players`, `games` | Recent-days window plus anything never seen. |
 | 3 | Team stats snapshot | MLB Stats API | `team_stats_snapshot` | **Skipped when `SEASON_PHASE` is POSTSEASON/OFFSEASON.** |
 | 4 | Upcoming schedule (14 days) | MLB Stats API | `schedule_games` | Includes probable pitchers. |

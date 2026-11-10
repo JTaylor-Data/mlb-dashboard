@@ -67,7 +67,7 @@
 
 | ID | Finding | Locations | Action |
 |----|---------|-----------|--------|
-| RED-01 | `CURRENT_SEASON = 2026` defined in 4 places | `config/model_policy.py:120`, `scripts/rescore_models.py:41`, `pulls/backfill_career_stats.py:27`, `pulls/precompute_model_scores.py:21`, `pulls/pull_awards.py:21`, `pulls/pull_career_extras.py:22` | Consolidate to `config/model_policy.py` |
+| RED-01 | `CURRENT_SEASON = 2026` defined in 4 places | `config/model_policy.py:120`, `scripts/rescore_models.py:41`, `pulls/annual/backfill_career_stats.py:27`, `pulls/precompute_model_scores.py:21`, `pulls/annual/pull_awards.py:21`, `pulls/pull_career_extras.py:22` | Consolidate to `config/model_policy.py` |
 | RED-02 | `POSTSEASON_MODE = True` hardcoded in `api/pull.py:63` | Single location but magic boolean | Move to `config/season_phase.py` (Stage 2) |
 | RED-03 | `REPORT_SEASON = 2025` in `api/routers/deception_report.py:122` vs `CURRENT_SEASON=2026` | Mismatch: deception serving 2025 data while everything else serves 2026 | Document; fix in Stage 2 |
 | RED-04 | `game_type='R'` literal appears in 15+ SQL queries across training scripts | Not in live runtime SQL | Low priority for training scripts |

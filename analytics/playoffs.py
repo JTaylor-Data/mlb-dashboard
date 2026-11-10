@@ -722,7 +722,7 @@ def _team_affiliation(conn, season, id_col, side_expr):
 def _season_position(conn, season, player_id, fallback_position):
     """players.position is only ever the player's CURRENT real-world
     position (overwritten on every roster pull - see
-    pulls/pull_players_games.py), so it's only trustworthy for the live
+    pulls/daily/pull_players_games.py), so it's only trustworthy for the live
     current season. For a past season it can be flatly wrong for anyone
     who's since changed position (e.g. Bo Bichette: players.position says
     '3B', his current Mets spot, but he was really the Blue Jays' SS in

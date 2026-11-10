@@ -7,8 +7,8 @@ WAR comes from the sabermetrics group (same source as pull_sabermetrics.py but
 applied to all historical seasons, not just the current one).
 
 Run once to populate all seasons:
-    python pulls/backfill_career_stats.py            # 2015-present
-    python pulls/backfill_career_stats.py 2023       # single season
+    python pulls/annual/backfill_career_stats.py            # 2015-present
+    python pulls/annual/backfill_career_stats.py 2023       # single season
 
 Uses MLBAM player IDs directly — no crosswalk needed.
 """
@@ -19,7 +19,7 @@ from pathlib import Path
 
 import requests
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 DB_PATH = "mlb_data.db"
 STATS_URL = "https://statsapi.mlb.com/api/v1/stats"

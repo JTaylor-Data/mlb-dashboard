@@ -2,8 +2,8 @@
 Incremental Statcast pitch-level ingestion into mlb_data.db.
 
 Usage:
-    python pull_statcast.py START_DATE END_DATE
-    python pull_statcast.py               # uses DEFAULT_START / DEFAULT_END below
+    python pulls/daily/pull_statcast.py START_DATE END_DATE
+    python pulls/daily/pull_statcast.py               # uses DEFAULT_START / DEFAULT_END below
 
 Pulls in weekly chunks, inserting after each chunk completes. Dates already
 present in the `ingested_dates` tracking table are skipped UNLESS they fall
@@ -288,5 +288,5 @@ if __name__ == "__main__":
     elif len(sys.argv) == 1:
         run(DEFAULT_START, DEFAULT_END)
     else:
-        print("Usage: python pull_statcast.py [START_DATE END_DATE]")
+        print("Usage: python pulls/daily/pull_statcast.py [START_DATE END_DATE]")
         sys.exit(1)

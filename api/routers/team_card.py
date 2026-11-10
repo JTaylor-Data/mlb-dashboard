@@ -3,7 +3,7 @@
 (frontend/js/team-card.js), event-delegated so EVERY team logo on EVERY
 page opens through this same endpoint - hit constantly across a session,
 including repeat clicks on the same team. See analytics/team_card.py for
-the actual data assembly and pulls/pull_team_stats.py for where the
+the actual data assembly and pulls/daily/pull_team_stats.py for where the
 numbers come from.
 
 _all_team_rows_and_ranks/remaining_sos each do a real season-wide

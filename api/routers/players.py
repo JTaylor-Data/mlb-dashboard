@@ -52,7 +52,7 @@ router = APIRouter(prefix="/api")
 
 def _real_sabermetric(conn, season, player_id, col):
     """Real season-total value from player_advanced_stats (see
-    pulls/pull_sabermetrics.py), or None if this player isn't covered.
+    pulls/annual/pull_sabermetrics.py), or None if this player isn't covered.
     Season-total only - no opposing-hand split exists for wRC+/xFIP, so
     callers only use this on the unsplit ALL view."""
     row = conn.execute(
@@ -534,7 +534,7 @@ def _tunneling_totals_season(conn, season):
 
 
 def _il_status(conn, player_id):
-    """Current IL entry for this player, if any - see pulls/pull_injuries.py
+    """Current IL entry for this player, if any - see pulls/annual/pull_injuries.py
     for how start_date/injury are real (parsed from the transactions feed)
     and min_return_date is a real computed lower bound, not a guess.
 
@@ -713,7 +713,7 @@ def _build_player_steps(conn, player_id, role, split, season):
         overall_stuff = overall_stuff_plus(stuff, player_id)
         era = _season_era(player_id, season)
 
-        # Real xFIP (MLB Stats API sabermetrics, see pulls/pull_sabermetrics.py)
+        # Real xFIP (MLB Stats API sabermetrics, see pulls/annual/pull_sabermetrics.py)
         # has no opposing-batter-hand split, same reasoning as ERA above - use
         # it on the unsplit ALL view, fall back to this project's own
         # pitch-level xFIP approximation (and label it as such) on L/R.
@@ -863,7 +863,7 @@ def _build_player_steps(conn, player_id, role, split, season):
 
         stats = batter_counting_stats(conn, season, player_id, split_filter)
 
-        # Real wRC+ (MLB Stats API sabermetrics, see pulls/pull_sabermetrics.py)
+        # Real wRC+ (MLB Stats API sabermetrics, see pulls/annual/pull_sabermetrics.py)
         # has no opposing-pitcher-hand split - use it on the unsplit ALL view,
         # fall back to this project's own wOBA-based approximation on L/R.
         is_all_split = not split_filter or split_filter == "ALL"

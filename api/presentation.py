@@ -63,7 +63,7 @@ BATTER_FMT = {
 # same as xFIP/wRC+/Barrel% - but real per-player arm strength turned out to
 # be directly available from Baseball Savant's own arm-strength leaderboard
 # (baseballsavant.mlb.com/leaderboard/arm-strength?csv=true, real MLBAM ids,
-# not Cloudflare-gated) - see pulls/pull_sabermetrics.py. Season-total only,
+# not Cloudflare-gated) - see pulls/annual/pull_sabermetrics.py. Season-total only,
 # same as the other three.
 PITCHER_GROUPS = [
     ("Results", ["xfip", "avg_exit_velo", "barrel_pct", "gb_pct", "holding_runners"]),

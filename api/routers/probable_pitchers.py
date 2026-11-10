@@ -5,7 +5,7 @@ Returns today's (or a given date's) games from the schedule_games cache
 (populated by data/mlb_stats_api.py), with probable starters and their
 model scores joined from the live model scoring path.
 
-Data freshness is bounded by when pulls/refresh_mlb_stats.py was last run
+Data freshness is bounded by when pulls/daily/refresh_mlb_stats.py was last run
 (daily cadence). The pulled_at timestamp is included in the response so the
 frontend can display it visibly.
 """

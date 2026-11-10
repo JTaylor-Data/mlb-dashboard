@@ -41,7 +41,7 @@
 3. Run the smoke tests: `pytest tests/test_routes_smoke.py -q`
 
 4. For REGULAR_SEASON transition specifically:
-   - Run `pulls/pull_team_stats.py` once manually to get fresh W/L records
+   - Run `pulls/daily/pull_team_stats.py` once manually to get fresh W/L records
    - Re-run `tools/build_percentile_pools.py` if the new season's pool is stale
 
 5. For OFFSEASON transition:

@@ -506,7 +506,7 @@ predictive improvement.
 
 ## Data pipeline
 
-**Statcast**: `pulls/pull_statcast.py`. Weekly chunked pull (Mon→Sun windows). Filters
+**Statcast**: `pulls/daily/pull_statcast.py`. Weekly chunked pull (Mon→Sun windows). Filters
 `KEEP_GAME_TYPES = frozenset({"R"})` — regular season only. Spring training / postseason / all-star
 games are dropped at ingest. The `game_type` column is stored in `pitches` for audit purposes.
 

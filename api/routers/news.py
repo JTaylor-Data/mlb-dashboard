@@ -1,6 +1,6 @@
 """
 /api/news — serves MLB news items from the news_items table (populated by
-data/news_fetcher.py, triggered by pulls/refresh_mlb_stats.py daily).
+data/news_fetcher.py, triggered by pulls/daily/refresh_mlb_stats.py daily).
 """
 from pathlib import Path
 
@@ -29,7 +29,7 @@ def _ensure_table(conn):
 
 @router.get("/news")
 def get_news(limit: int = Query(10, ge=1, le=50), conn=Depends(get_conn)):
-    """Latest MLB news, newest-first. Populated by pulls/refresh_mlb_stats.py."""
+    """Latest MLB news, newest-first. Populated by pulls/daily/refresh_mlb_stats.py."""
     _ensure_table(conn)
     rows = conn.execute(
         """SELECT id, headline, source_url, pub_date, summary,

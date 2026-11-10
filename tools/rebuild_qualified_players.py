@@ -4,7 +4,7 @@ tools/rebuild_qualified_players.py — Full rebuild of the `qualified_players` t
 Usage:
     python tools/rebuild_qualified_players.py
 
-Run this after each day's pull (pulls/pull_statcast.py) so /api/players/all
+Run this after each day's pull (pulls/daily/pull_statcast.py) so /api/players/all
 reflects newly-qualifying players without ever running a live scan of the
 full `pitches` table. If the table is ever empty (e.g. a fresh DB),
 api/routers/players.py's _all_players lazy-builds it inline on first use -

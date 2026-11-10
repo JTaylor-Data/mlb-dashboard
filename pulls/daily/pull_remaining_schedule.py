@@ -9,7 +9,7 @@ Overwrites remaining_schedule fully on each run (today's "remaining" set is
 correct, yesterday's is stale) - not an upsert/merge, a full replace.
 
 Usage:
-    python pull_remaining_schedule.py [SEASON]   # defaults to 2026
+    python pulls/daily/pull_remaining_schedule.py [SEASON]   # defaults to 2026
 """
 import os
 import sqlite3
@@ -19,11 +19,11 @@ from pathlib import Path
 
 import requests
 
-DB_PATH = os.environ.get("DB_PATH") or str(Path(__file__).resolve().parent.parent / "mlb_data.db")
+DB_PATH = os.environ.get("DB_PATH") or str(Path(__file__).resolve().parent.parent.parent / "mlb_data.db")
 STATSAPI_BASE = "https://statsapi.mlb.com/api/v1"
 import sys as _sys
 from pathlib import Path as _Path
-_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent))
+_sys.path.insert(0, str(_Path(__file__).resolve().parent.parent.parent))
 from config.model_policy import CURRENT_SEASON as DEFAULT_SEASON  # noqa: E402  (bump CURRENT_SEASON, not this)
 
 

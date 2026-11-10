@@ -67,7 +67,7 @@ def season_primary_position(player_id, season):
     """Live position actually played in `season`, from the MLB Stats API's
     fielding-by-position season split - NOT the same as players.position,
     which is only ever the player's CURRENT real-world primary position
-    (overwritten on every roster pull, see pulls/pull_players_games.py) and
+    (overwritten on every roster pull, see pulls/daily/pull_players_games.py) and
     is wrong for any season before a position change. Real example: Bo
     Bichette's players.position is '3B' (his current Mets position, 2026),
     but he was really the Blue Jays' SS in 2025 - using the static field

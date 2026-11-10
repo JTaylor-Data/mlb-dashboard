@@ -2,8 +2,8 @@
 Pulls major MLB awards (All-Star, MVP, Cy Young, ROY, Silver Slugger, Gold Glove)
 from the MLB Stats API into the player_awards table.
 
-    python pulls/pull_awards.py            # 2015-2026
-    python pulls/pull_awards.py 2024       # single season
+    python pulls/annual/pull_awards.py            # 2015-2026
+    python pulls/annual/pull_awards.py 2024       # single season
 
 Uses MLBAM player IDs directly — no crosswalk needed.
 """
@@ -14,7 +14,7 @@ from pathlib import Path
 
 import requests
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 DB_PATH = "mlb_data.db"
 FIRST_SEASON = 2015
