@@ -229,6 +229,12 @@ const pctColor = (pct) => gradientColor(pct);
 // real bars, ranked against the real qualified population, but shaded/
 // muted rather than shown identically to a qualified player's - matching
 // Baseball Savant's own convention, rather than hiding them outright.
+// Definitions for metrics whose exact meaning visitors ask about; shown as the
+// info-icon tooltip on the percentile row unless the backend sent its own note.
+const METRIC_DEFINITIONS = {
+  pull_air_pct: "Pull Air%: fly balls, line drives and popups hit more than 15° toward the pull side, as a share of all batted balls.",
+};
+
 function renderPercentileGroups(groups, colorFn, layout) {
   const anyUnqualified = groups.some((g) => g.metrics.some((m) => m.qualified === false));
   const sections = groups
@@ -238,7 +244,8 @@ function renderPercentileGroups(groups, colorFn, layout) {
           const pct = m.pct !== null ? m.pct : 0;
           const color = m.pct !== null ? colorFn(pct) : "#ccc";
           const pctLabel = m.pct !== null ? m.pct.toFixed(0) : "-";
-          const noteIcon = m.note ? `<span class="rt-note-icon" title="${m.note}">&#9432;</span>` : "";
+          const noteText = m.note || METRIC_DEFINITIONS[m.key];
+          const noteIcon = noteText ? `<span class="rt-note-icon" title="${noteText}">&#9432;</span>` : "";
           const rowCls = m.qualified === false ? "rt-row rt-row-unqualified" : "rt-row";
           const unqTitle = m.qualified === false ? ` title="Doesn't meet the qualifying threshold this season/split - shown against the real qualified population, shaded to distinguish it from a qualified player's percentile."` : "";
           return `

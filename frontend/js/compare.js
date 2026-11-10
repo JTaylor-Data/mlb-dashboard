@@ -89,7 +89,7 @@ function barRowsHtml(rows) {
       const pctLabel = m.pct !== null ? m.pct.toFixed(0) : "-";
       return `
         <div class="rt-row">
-          <div class="rt-label">${m.label}</div>
+          <div class="rt-label"${m.key === "pull_air_pct" ? ' title="Fly balls, line drives and popups hit more than 15&deg; toward the pull side, as a share of all batted balls."' : ""}>${m.label}</div>
           <div class="rt-track">
             <div class="rt-fill" style="width:${pct}%; background:${color};"></div>
             <div class="rt-badge" style="left:${pct}%; background:${color};">${pctLabel}</div>
