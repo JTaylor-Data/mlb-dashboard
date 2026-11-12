@@ -11,6 +11,7 @@ import pandas as pd
 from fastapi import APIRouter, Depends, Query
 
 
+from api import past_season_snapshot
 from api.cache import ttl_cache
 from config.model_policy import CURRENT_SEASON
 from api.db import get_conn
@@ -33,8 +34,22 @@ PITCH_TYPE_MERGE = {"KC": "CU"}   # same merge convention as analytics/player_pa
 MIN_PITCHES_FOR_COMMAND_PCT = 20
 
 
+def _split_key(stand_filter):
+    return stand_filter if stand_filter in ("L", "R") else "ALL"
+
+
 @ttl_cache()
 def _league_command_pool(conn, season, stand_filter=None):
+    """Snapshot-first for finished seasons (tools/precompute_past_season_pitcher_page.py): a
+    finished season's pool never changes, and building it is a full-season scan that took
+    20-30 s on the production machine for whoever opened that season and split first."""
+    snap = past_season_snapshot.get("command_pool", season)
+    if snap is not None and _split_key(stand_filter) in snap:
+        return {int(pid): dict(by_type) for pid, by_type in snap[_split_key(stand_filter)].items()}
+    return compute_league_command_pool(conn, season, stand_filter)
+
+
+def compute_league_command_pool(conn, season, stand_filter=None):
     """Real command percentile pool: for every (pitcher, pitch type) with
     at least MIN_PITCHES_FOR_COMMAND_PCT real pitches this season/split,
     the pitcher's own location spread (combined stddev of plate_x/plate_z -
@@ -60,11 +75,12 @@ def _league_command_pool(conn, season, stand_filter=None):
     df["pitch_type"] = df["pitch_type"].replace(PITCH_TYPE_MERGE)
 
     g = df.groupby(["pitcher_id", "pitch_type"])
-    agg = g.agg(
-        std_x=("plate_x", lambda s: s.std(ddof=0)),
-        std_z=("plate_z", lambda s: s.std(ddof=0)),
-        n_pitches=("plate_x", "size"),
-    ).reset_index()
+    # Built-in vectorized std (ddof=0), not a Python lambda per group: same numbers, far less CPU.
+    agg = pd.DataFrame({
+        "std_x": g["plate_x"].std(ddof=0),
+        "std_z": g["plate_z"].std(ddof=0),
+        "n_pitches": g.size(),
+    }).reset_index()
     agg["spread"] = np.hypot(agg["std_x"], agg["std_z"])
     agg = agg[agg["n_pitches"] >= MIN_PITCHES_FOR_COMMAND_PCT].copy()
     if agg.empty:

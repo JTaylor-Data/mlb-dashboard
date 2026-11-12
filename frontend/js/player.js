@@ -1354,8 +1354,7 @@ async function renderHitZones() {
   const cacheKey = `${state.playerId}|${state.season}|${state.split}`;
   let d = hitzoneCache.get(cacheKey);
   if (!d) {
-    d = await getJSON(`/api/hitzones/${state.playerId}?season=${state.season}&split=${state.split}`);
-    hitzoneCache.set(cacheKey, d);
+    d = await fetchShared(hitzoneCache, cacheKey, `/api/hitzones/${state.playerId}?season=${state.season}&split=${state.split}`);
   }
   const bats = (currentPlayerBats || "R");
   if (!d.has_data) {
@@ -1472,6 +1471,21 @@ const playerDataInFlight = new Map(); // same key -> in-progress prefetch Promis
 const similarPlayersCache = new Map();
 const heatmapCache = new Map();
 const hitzoneCache = new Map();
+// One request per player/season/split: the background prefetch and the card that
+// shows the result used to fire the same request separately, and every duplicate
+// is another scan on the server. These are shared lookups, so they are not
+// cancelled when the page navigates (a cancelled request never settles, which
+// would leave a stuck entry here).
+const sharedInFlight = new Map();
+function fetchShared(cache, key, url) {
+  if (cache.has(key)) return Promise.resolve(cache.get(key));
+  if (!sharedInFlight.has(url)) {
+    sharedInFlight.set(url, getJSON(url, { persist: true })
+      .then((d) => { cache.set(key, d); return d; })
+      .finally(() => sharedInFlight.delete(url)));
+  }
+  return sharedInFlight.get(url);
+}
 
 function playerCacheKey(playerId, mode, split, season) {
   return `${playerId}|${mode}|${split}|${season}`;
@@ -1514,16 +1528,14 @@ function prefetchOtherSplits(playerId, mode, season) {
     for (const split of ["L", "R"]) {
       const key = `${playerId}|${season}|${split}`;
       if (heatmapCache.has(key)) continue;
-      getJSON(`/api/heatmaps/${playerId}?season=${season}&split=${split}`)
-        .then((d) => heatmapCache.set(key, d))
+      fetchShared(heatmapCache, key, `/api/heatmaps/${playerId}?season=${season}&split=${split}`)
         .catch(() => {});
     }
   } else {
     for (const split of ["ALL", "L", "R"]) {
       const key = `${playerId}|${season}|${split}`;
       if (hitzoneCache.has(key)) continue;
-      getJSON(`/api/hitzones/${playerId}?season=${season}&split=${split}`)
-        .then((d) => hitzoneCache.set(key, d))
+      fetchShared(hitzoneCache, key, `/api/hitzones/${playerId}?season=${season}&split=${split}`)
         .catch(() => {});
     }
   }
@@ -1726,8 +1738,7 @@ async function renderPitchLocations() {
   const cacheKey = `${state.playerId}|${state.season}|${state.heatmapSplit}`;
   let d = heatmapCache.get(cacheKey);
   if (!d) {
-    d = await getJSON(`/api/heatmaps/${state.playerId}?season=${state.season}&split=${state.heatmapSplit}`);
-    heatmapCache.set(cacheKey, d);
+    d = await fetchShared(heatmapCache, cacheKey, `/api/heatmaps/${state.playerId}?season=${state.season}&split=${state.heatmapSplit}`);
   }
   // Card-local toggle - independent of the page's main split toggle, but
   // the main toggle overrides it when set to a real L/R value (see

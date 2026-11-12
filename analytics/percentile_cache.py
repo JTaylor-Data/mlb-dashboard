@@ -68,11 +68,17 @@ def _season_row_count(conn: sqlite3.Connection, season: int) -> int:
     return _ROW_COUNTS[season]
 
 
+# Bump this whenever a change to analytics/percentiles.py alters what a pool contains (a metric's
+# definition, a threshold, a column). It used to be a hash of the file's raw bytes, so even a
+# comment edit renamed every pool file: on the next boot the app treated them all as stale,
+# deleted them and rebuilt them on demand (slow, and enough memory to get the machine killed).
+POOL_CODE_VERSION = "pull-air-15deg-1"
+
+
 def _pool_version(conn: sqlite3.Connection, season: int) -> str:
-    """8-char hex: hash of code + thresholds + season row count."""
+    """8-char hex: hash of POOL_CODE_VERSION + thresholds + season row count."""
     from analytics.percentiles import SAVANT_PA_PER_TEAM_GAME_PITCHER, SAVANT_PA_PER_TEAM_GAME_BATTER
-    code_path = Path(__file__).resolve().parent / "percentiles.py"
-    code_bytes = code_path.read_bytes()
+    code_bytes = POOL_CODE_VERSION.encode()
     row_count = _season_row_count(conn, season)
     payload = (
         code_bytes
